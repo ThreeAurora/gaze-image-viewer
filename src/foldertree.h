@@ -1,0 +1,35 @@
+#pragma once
+#include <QTreeWidget>
+#include <QProxyStyle>
+#include <QIcon>
+#include <QPainter>
+
+// ── 自定义展开箭头 ──
+class ArrowStyle : public QProxyStyle {
+public:
+    void drawPrimitive(PrimitiveElement element, const QStyleOption* option,
+                       QPainter* painter, const QWidget* widget = nullptr) const override;
+};
+
+// ── 文件夹树 ──
+class FolderTree : public QTreeWidget {
+    Q_OBJECT
+public:
+    explicit FolderTree(QWidget* parent = nullptr);
+
+    void loadDrives();
+    void loadChildren(QTreeWidgetItem* item);
+    void focusPath(const QString& dirPath);
+
+signals:
+    void folderSelected(const QString& path);
+
+protected:
+private:
+    void onItemClicked(QTreeWidgetItem* item, int column);
+    void makeIcons();
+
+    QIcon m_folderIcon;
+    QIcon m_driveIcon;
+    QIcon m_desktopIcon;
+};
