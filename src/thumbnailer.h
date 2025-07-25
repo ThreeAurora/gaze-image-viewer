@@ -1,0 +1,83 @@
+#pragma once
+#include <QObject>
+#include <QPixmap>
+#include <QThreadPool>
+#include <QMutex>
+#include <QSqlDatabase>
+#include <unordered_map>
+#include <unordered_set>
+#include <queue>
+#include <cstdint>
+
+class Thumbnailer : public QObject {
+    Q_OBJECT
+public:
+    static Thumbnailer& instance();
+    ~Thumbnailer();
+
+    void enqueue(const QString& filePath, int size, bool isVideo);
+    void clearQueue();
+    QImage generate(const QString& filePath, int size, bool isVideo);
+
+    // Windows Shell 缩略图(供 PDF 等外部格式的预览回退使用)
+    static QImage shellThumbFor(const QString& filePath, int size);
+
+signals:
+    // 注意：worker 线程生成，跨线程以 QImage 传递（QPixmap 仅限 GUI 线程），
+    // 接收方（主线程）自行 QPixmap::fromImage
+    void thumbnailReady(const QString& filePath, const QImage& image);
+
+private:
+    Thumbnailer();
+
+    // ── 图片缩略图（QImage直接缩放） ──
+    QImage imageThumb(const QString& filePath, int size);
+
+    // ── 视频缩略图（FFmpeg C API）──
+    QImage videoThumbFFmpeg(const QString& filePath, int size);
+    // 回退方案：QProcess fork ffmpeg
+    QImage videoThumbFallback(const QString& filePath, int size);
+
+    // ── 缓存 ──
+    QString cacheKey(const QString& filePath, int size) const;
+    bool    cacheLookup(const QString& key, double mtime, QImage& out);
+    void    cacheStore(const QString& key, const QImage& pix, double mtime);
+    void    initDatabase();
+    void    evictIfNeeded();
+
+    // ── Pixmap → PNG bytes ──
+    QByteArray pixmapToPng(const QPixmap& pix) const;
+
+    QThreadPool* m_pool = nullptr;
+
+    // 任务去重：已经在队列中的 (filePath, size) 不再重复添加
+    QMutex                 m_queueMutex;
+    std::unordered_set<QString> m_pending;
+
+    // 内存 LRU 缓存
+    QMutex m_cacheMutex;
+    struct CacheEntry {
+        QPixmap pixmap;
+        double  mtime = 0.0;
+        int64_t lastAccess = 0;
+    };
+    std::unordered_map<QString, CacheEntry> m_memCache;
+    int64_t m_memCacheBytes = 0;
+    static constexpr int64_t MAX_MEM_CACHE = 200LL * 1024 * 1024; // 200MB
+
+    // SQLite
+    QSqlDatabase m_db;
+    static constexpr int64_t MAX_DB_MB = 500;
+};
+
+// ── 后台缩略图任务 ──
+class ThumbTask : public QRunnable {
+public:
+    ThumbTask(const QString& path, int size, bool isVideo)
+        : m_path(path), m_size(size), m_isVideo(isVideo) {}
+    void run() override;
+private:
+    QString m_path;
+    int     m_size;
+    bool    m_isVideo;
+};
