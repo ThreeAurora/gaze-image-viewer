@@ -1,0 +1,128 @@
+#pragma once
+
+// ═══════════════════════════════════════════
+// thumbnailer.cpp 拆分(#129)后的跨编译单元共享实现件
+//   这里只放"被两个以上 .cpp 用到"的东西;单 TU 私有的 helper
+//   (video: ffmpegExe / probeDurationSec 及其 memo / seekMsForPct,
+//    folder: FolderFrame / folderFrame / paintFolderBack)
+//   原样留在各自的 .cpp,不进本头。
+//   搬移本身零行为改动,唯一必要的形态变化是 linkage:
+//     static -> inline(函数) / 函数局部 static 引用访问器(带状态的数据),
+//   以保持"全程序单实例 + 每线程一份连接"的原有语义。
+// ═══════════════════════════════════════════
+#include <algorithm>   // 必须在 windows.h 之前:min/max 宏会咬坏 libstdc++ 头
+
+#include <windows.h>
+#include <shobjidl.h>
+#include <shlguid.h>
+
+#include <QString>
+#include <QImage>
+#include <QThread>
+#include <QSqlDatabase>
+#include <QSqlQuery>
+#include <QMutex>
+
+#include "settings.h"
+
+namespace th_impl {
+
+// ═══════════════════════════════════════════
+// 每线程独立 SQLite 连接
+//   QSqlDatabase 连接只能在创建线程使用；线程池 worker 各自持有连接，
+//   靠 WAL 模式支持多连接并发——修复 qsqlite.dll AV 崩溃（跨线程共用 m_db）
+// ═══════════════════════════════════════════
+inline QMutex& dbCreateMutex() {
+    // 原来是文件级 static 数据:搬进头文件后每个 TU 会各生成一份,
+    // 锁就不再互斥。改成返回函数局部 static 引用的 inline 访问器,全程序仍是一份。
+    static QMutex s_dbCreateMutex;
+    return s_dbCreateMutex;
+}
+
+// Cache/dbCacheMB → PRAGMA cache_size(负值=KB)。连接按线程各一份,故每线程记住
+// 已应用值:设置改动后,该线程下次用到连接时自动重设,无需重启
+inline void applyDbCache(const QSqlDatabase& db, int mb) {
+    static thread_local int applied = -1;
+    if (applied == mb) return;
+    QSqlQuery q(db);
+    q.exec(QString("PRAGMA cache_size=-%1").arg(mb * 1024));
+    applied = mb;
+}
+
+inline QSqlDatabase threadDb(int cacheMB) {
+    const QString connName = QStringLiteral("thumb_") + QString::number(
+        reinterpret_cast<quintptr>(QThread::currentThreadId()), 16);
+
+    if (!QSqlDatabase::contains(connName)) {
+        QMutexLocker lk(&dbCreateMutex());
+        // 双检：并发首建时避免重复 add 同名连接
+        if (!QSqlDatabase::contains(connName)) {
+            QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE", connName);
+            db.setDatabaseName(
+                AppSettings::instance().dataDir() + "/thumbnails.db");
+            if (db.open()) {
+                QSqlQuery q(db);
+                q.exec("PRAGMA journal_mode=WAL");
+                q.exec("PRAGMA synchronous=NORMAL");
+                q.exec("CREATE TABLE IF NOT EXISTS thumbs "
+                       "(key TEXT PRIMARY KEY, png BLOB, mtime REAL, atime REAL DEFAULT 0)");
+                q.exec("CREATE INDEX IF NOT EXISTS idx_atime ON thumbs(atime)");
+            }
+        }
+    }
+    QSqlDatabase db = QSqlDatabase::database(connName);
+    if (db.isOpen()) applyDbCache(db, cacheMB);
+    return db;
+}
+
+// ═══════════════════════════════════════════
+// Windows Shell 缩略图缓存（Everything 1.5a 同款方案）
+//   直接读 Windows thumbcache_*.db，无需解码
+//   图片视频通吃，通常是 0-5ms 级别
+// ═══════════════════════════════════════════
+inline QImage windowsShellThumb(const QString& filePath, int size) {
+    // 每个线程独立初始化 COM（QThreadPool 线程默认未初始化）
+    HRESULT coHr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    bool needUninit = SUCCEEDED(coHr) && coHr != S_FALSE;
+
+    IShellItemImageFactory* factory = nullptr;
+    std::wstring wpath = filePath.toStdWString();
+    HRESULT hr = SHCreateItemFromParsingName(wpath.c_str(), nullptr,
+                                              IID_PPV_ARGS(&factory));
+    if (FAILED(hr) || !factory) {
+        if (needUninit) CoUninitialize();
+        return {};
+    }
+
+    HBITMAP hbmp = nullptr;
+    SIZE sz = {size, size};
+    hr = factory->GetImage(sz, SIIGBF_RESIZETOFIT, &hbmp);
+    factory->Release();
+    if (FAILED(hr) || !hbmp) {
+        if (needUninit) CoUninitialize();
+        return {};
+    }
+
+    // HBITMAP → QPixmap
+    BITMAP bm;
+    GetObjectW(hbmp, sizeof(BITMAP), &bm);
+    BITMAPINFOHEADER bi = {};
+    bi.biSize = sizeof(BITMAPINFOHEADER);
+    bi.biWidth = bm.bmWidth;
+    bi.biHeight = -bm.bmHeight;
+    bi.biPlanes = 1;
+    bi.biBitCount = 32;
+    bi.biCompression = BI_RGB;
+
+    QImage img(bm.bmWidth, bm.bmHeight, QImage::Format_ARGB32);
+    HDC hdc = GetDC(NULL);
+    GetDIBits(hdc, hbmp, 0, bm.bmHeight, img.bits(),
+              reinterpret_cast<BITMAPINFO*>(&bi), DIB_RGB_COLORS);
+    ReleaseDC(NULL, hdc);
+    DeleteObject(hbmp);
+
+    if (needUninit) CoUninitialize();
+    return img;
+}
+
+} // namespace th_impl
