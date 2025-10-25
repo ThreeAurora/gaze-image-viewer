@@ -1,0 +1,481 @@
+#include "settings_dialog.h"
+#include "settings.h"
+#include "integration.h"
+#include "labelstore.h"
+#include "constants.h"
+#include "dbprefix.h"
+#include "viewerhotkeys.h"
+
+#include <QHBoxLayout>
+#include <QVBoxLayout>
+#include <QGridLayout>
+#include <QFormLayout>
+#include <QGroupBox>
+#include <QPushButton>
+#include <QLabel>
+#include <QFileDialog>
+#include <QMessageBox>
+#include <QProcess>
+#include <QMessageBox>
+#include <QTableWidget>
+#include <QHeaderView>
+#include <QKeySequenceEdit>
+#include <QMenuBar>
+#include <QScrollArea>
+#include <QFrame>
+#include <QTreeWidget>
+#include <QListWidget>
+#include <QPalette>
+#include <QSqlDatabase>
+#include <QSqlQuery>
+#include <QStyledItemDelegate>
+#include <QStyleOptionViewItem>
+#include <QToolButton>
+#include <QMenu>
+#include <QColorDialog>
+#include <QRadioButton>
+#include <QRegularExpression>
+#include <QSet>
+#include <functional>
+#include "dbmaintenance.h"
+
+// 窄列中段省略(C:\Use...der\ 形式;列宽可拖动配合)
+class ElideMiddleDelegate : public QStyledItemDelegate {
+public:
+    using QStyledItemDelegate::QStyledItemDelegate;
+    void initStyleOption(QStyleOptionViewItem* o, const QModelIndex& i) const override {
+        QStyledItemDelegate::initStyleOption(o, i);
+        o->textElideMode = Qt::ElideMiddle;
+    }
+};
+
+// ── 维护页:缩略图库统计 + 四列目录表(可拖列宽/中段省略) + 操作按钮 ──
+QWidget* SettingsDialog::pageMaintenance() {
+    auto* root = new QVBoxLayout;
+    root->setSpacing(9);
+
+    // 数据库统计行
+    auto* summary = new QLabel;
+    summary->setStyleSheet("color:#D0D0D0;background:transparent;");
+    root->addWidget(summary);
+
+    // 筛选框
+    auto* filter = new QLineEdit;
+    filter->setPlaceholderText(QString::fromUtf8("筛选"));
+    root->addWidget(filter);
+
+    // 四列目录表:列宽可拖动,窄列中段省略
+    auto* table = new QTableWidget(0, 4);
+    table->setHorizontalHeaderLabels({QString::fromUtf8("缓存目录"),
+        QString::fromUtf8("文件"), QString::fromUtf8("元数据"),
+        QString::fromUtf8("缩略图")});
+    table->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
+    table->horizontalHeader()->setStretchLastSection(true);
+    table->verticalHeader()->setVisible(false);
+    table->setSelectionBehavior(QAbstractItemView::SelectRows);
+    table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    table->setItemDelegate(new ElideMiddleDelegate(table));
+    table->setStyleSheet(
+        QString::fromUtf8("QTableWidget{background:%1;color:%2;border:1px solid %3;}"
+        "QHeaderView::section{background:%1;color:%2;"
+        "border:none;padding:4px;}").arg(C_CONTENT, C_TEXT, C_SEPARATOR));
+    table->setColumnWidth(0, 260);
+    table->setColumnWidth(1, 90);
+    table->setColumnWidth(2, 110);
+    root->addWidget(table, 1);
+
+    // 按钮组(两行)
+    auto* row1 = new QHBoxLayout;
+    row1->setSpacing(8);
+    auto* delSelBtn = new QPushButton(QString::fromUtf8("删除"));
+    auto* maintBtn = new QPushButton(QString::fromUtf8("维护..."));
+    auto* syncBtn = new QPushButton(QString::fromUtf8("同步文件夹..."));
+    row1->addWidget(delSelBtn);
+    row1->addStretch();
+    row1->addWidget(maintBtn);
+    row1->addWidget(syncBtn);
+    root->addLayout(row1);
+
+    auto* row2 = new QHBoxLayout;
+    row2->setSpacing(8);
+    auto* delAllBtn = new QPushButton(QString::fromUtf8("删除全部"));
+    auto* rebuildBtn = new QPushButton(QString::fromUtf8("重建缩略图"));
+    row2->addWidget(delAllBtn);
+    row2->addStretch();
+    row2->addWidget(rebuildBtn);
+    root->addLayout(row2);
+
+    // ── 数据访问(thumbs 表:key/png/mtime/atime;独立连接名) ──
+    auto db = []() -> QSqlDatabase {
+        const QString conn = QStringLiteral("settings_maint_db");
+        if (!QSqlDatabase::contains(conn)) {
+            QSqlDatabase d = QSqlDatabase::addDatabase("QSQLITE", conn);
+            d.setDatabaseName(AppSettings::instance().dataDir() + "/thumbnails.db");
+            d.open();
+        }
+        return QSqlDatabase::database(conn);
+    };
+
+    auto reload = [db, summary, table, filter]() {
+        QSqlDatabase d = db();
+        struct Rec { int count = 0; qint64 meta = 0; qint64 thumb = 0; };
+        QHash<QString, Rec> byDir;
+        qint64 totalThumb = 0, totalMeta = 0;
+        int total = 0;
+        QSqlQuery q(d);
+        // 元数据字节 = key 长度 + mtime/atime 两个 double(估算)
+        if (q.exec("SELECT key, LENGTH(png), LENGTH(key) FROM thumbs")) {
+            while (q.next()) {
+                const QString p = q.value(0).toString();
+                const qint64 thumbB = q.value(1).toLongLong();
+                const qint64 metaB = q.value(2).toLongLong() + 16;
+                totalThumb += thumbB;
+                totalMeta += metaB;
+                ++total;
+                int slash = p.lastIndexOf('/');
+                if (slash < 0) slash = p.lastIndexOf('\\');
+                QString dir = slash > 0 ? p.left(slash + 1) : p;
+                Rec& r = byDir[dir];
+                r.count += 1;
+                r.meta += metaB;
+                r.thumb += thumbB;
+            }
+        }
+        QFileInfo fi(d.databaseName());
+        summary->setText(QString::fromUtf8(
+            "数据库 [目录:%1  →  元数据:%2  →  缩略图:%3]")
+            .arg(QString::asprintf("%.2f MB", (fi.size() + totalMeta) / 1048576.0))
+            .arg(QString::asprintf("%.2f MB", totalMeta / 1048576.0))
+            .arg(QString::asprintf("%.2f MB", totalThumb / 1048576.0)));
+
+        QVector<QPair<QString, Rec>> rows;
+        for (auto it = byDir.constBegin(); it != byDir.constEnd(); ++it)
+            rows.append({it.key(), it.value()});
+        std::sort(rows.begin(), rows.end(),
+                  [](auto& a, auto& b) { return a.second.thumb > b.second.thumb; });
+
+        const QString f = filter->text().trimmed();
+        table->setRowCount(0);
+        for (const auto& row : rows) {
+            if (!f.isEmpty() && !row.first.contains(f, Qt::CaseInsensitive)) continue;
+            int r = table->rowCount();
+            table->insertRow(r);
+            table->setItem(r, 0, new QTableWidgetItem(row.first));
+            table->setItem(r, 1, new QTableWidgetItem(QString::number(row.second.count)));
+            table->setItem(r, 2, new QTableWidgetItem(
+                QString::asprintf("%.2f KB", row.second.meta / 1024.0)));
+            table->setItem(r, 3, new QTableWidgetItem(
+                QString::asprintf("%.2f KB", row.second.thumb / 1024.0)));
+        }
+    };
+
+    connect(filter, &QLineEdit::textChanged, this, reload);
+    connect(delSelBtn, &QPushButton::clicked, this, [this, table, db, reload]() {
+        auto sel = table->selectedItems();
+        if (sel.isEmpty()) return;
+        QString dir = table->item(sel.first()->row(), 0)->text();
+        if (QMessageBox::question(this, QString::fromUtf8("删除"),
+            QString::fromUtf8("删除该目录的全部缓存条目?\n%1").arg(dir))
+            != QMessageBox::Yes) return;
+        QSqlQuery q(db());
+        q.prepare("DELETE FROM thumbs WHERE key LIKE ? ESCAPE '\\'");
+        q.addBindValue(likePrefixPattern(dir));
+        q.exec();
+        reload();
+    });
+    connect(delAllBtn, &QPushButton::clicked, this, [this, db, reload]() {
+        if (QMessageBox::question(this, QString::fromUtf8("删除全部"),
+            QString::fromUtf8("确认清空全部缩略图缓存?(浏览时会自动重建)"))
+            != QMessageBox::Yes) return;
+        QSqlQuery q(db());
+        q.exec("DELETE FROM thumbs");
+        reload();
+    });
+    connect(rebuildBtn, &QPushButton::clicked, this, [this, db, reload]() {
+        if (QMessageBox::question(this, QString::fromUtf8("重建缩略图"),
+            QString::fromUtf8("清空缓存后,下次浏览文件夹时将按当前设置自动重建缩略图。继续?"))
+            != QMessageBox::Yes) return;
+        QSqlQuery q(db());
+        q.exec("DELETE FROM thumbs");
+        reload();
+    });
+    // 同步文件夹:从库中删除"文件已不存在"的孤立条目
+    connect(syncBtn, &QPushButton::clicked, this, [this, db, reload]() {
+        if (QMessageBox::question(this, QString::fromUtf8("缓存数据库 - 同步目录"),
+            QString::fromUtf8("警告!\n此操作将从缓存数据库中删除全部的孤立条目。\n是否继续?"),
+            QMessageBox::Yes | QMessageBox::No)
+            != QMessageBox::Yes) return;
+        QSqlDatabase d = db();
+        QStringList gone;
+        QSqlQuery q(d);
+        if (q.exec("SELECT key FROM thumbs")) {
+            while (q.next()) {
+                const QString p = q.value(0).toString();
+                if (!QFileInfo::exists(p)) gone << p;
+            }
+        }
+        d.transaction();
+        QSqlQuery del(d);
+        del.prepare("DELETE FROM thumbs WHERE key = ?");
+        for (const auto& p : gone) { del.addBindValue(p); del.exec(); }
+        d.commit();
+        QMessageBox::information(this, QString::fromUtf8("同步目录"),
+            QString::fromUtf8("已移除 %1 条孤立条目。").arg(gone.size()));
+        reload();
+    });
+    // 维护...:优化数据库(VACUUM)/核对全目录/清除缩略图
+    connect(maintBtn, &QPushButton::clicked, this, [this, db, reload]() {
+        QDialog dlg(this);
+        dlg.setWindowTitle(QString::fromUtf8("缓存维护"));
+        dlg.setFixedWidth(320);
+        auto* v = new QVBoxLayout(&dlg);
+        auto* optChk = new QCheckBox(QString::fromUtf8("优化数据库(处理时间长)"));
+        auto* lblClean = new QLabel(QString::fromUtf8("清理"));
+        auto* scanChk = new QCheckBox(QString::fromUtf8("核对全目录(移除孤立条目)"));
+        scanChk->setChecked(true);
+        auto* lblPurge = new QLabel(QString::fromUtf8("清除"));
+        auto* thumbChk = new QCheckBox(QString::fromUtf8("清除缩略图"));
+        for (auto* w : std::vector<QWidget*>{ optChk, lblClean, scanChk, lblPurge, thumbChk }) {
+            if (auto* c = qobject_cast<QCheckBox*>(w)) c->setMinimumHeight(24);
+            v->addWidget(w);
+        }
+        auto* btns = new QHBoxLayout;
+        btns->addStretch();
+        auto* runBtn = new QPushButton(QString::fromUtf8("运行"));
+        // 显式默认:否则 Enter 与"空格=确认"按**创建顺序**挑按钮(全靠 runBtn 恰好先建)
+        runBtn->setDefault(true);
+        auto* cancelBtn = new QPushButton(QString::fromUtf8("取消"));
+        btns->addWidget(runBtn);
+        btns->addWidget(cancelBtn);
+        v->addLayout(btns);
+        connect(cancelBtn, &QPushButton::clicked, &dlg, &QDialog::reject);
+        connect(runBtn, &QPushButton::clicked, &dlg, [&]() {
+            QSqlDatabase d = db();
+            if (optChk->isChecked()) {
+                QSqlQuery q(d);
+                q.exec("VACUUM");
+            }
+            if (scanChk->isChecked()) {
+                QStringList gone;
+                QSqlQuery q(d);
+                if (q.exec("SELECT key FROM thumbs")) {
+                    while (q.next()) {
+                        const QString p = q.value(0).toString();
+                        if (!QFileInfo::exists(p)) gone << p;
+                    }
+                }
+                d.transaction();
+                QSqlQuery del(d);
+                del.prepare("DELETE FROM thumbs WHERE key = ?");
+                for (const auto& p : gone) { del.addBindValue(p); del.exec(); }
+                d.commit();
+            }
+            if (thumbChk->isChecked()) {
+                QSqlQuery q(d);
+                q.exec("DELETE FROM thumbs");
+            }
+            dlg.accept();
+            reload();
+        });
+        dlg.exec();
+    });
+
+    reload();
+    return wrapTitled(QString::fromUtf8("维护"), root);
+}
+
+QWidget* SettingsDialog::pageIntegration() {
+    auto* root = new QVBoxLayout;
+    root->setSpacing(10);   // 分组框页:组间距收紧(组框自身已有边距)
+
+    // 分组"右键菜单"
+    auto* fMenu = new QFormLayout;
+    fMenu->setVerticalSpacing(10);
+    auto* browseChk = new QCheckBox(
+        QString::fromUtf8("将\"用 Gaze 浏览\"添加到系统右键菜单(HKCU,免管理员)"));
+    browseChk->setChecked(Integration::isBrowseMenuInstalled());
+    connect(browseChk, &QCheckBox::toggled, this, [](bool on) {
+        bool ok = on ? Integration::addBrowseContextMenu()
+                     : Integration::removeBrowseContextMenu();
+        QMessageBox::information(nullptr, QString::fromUtf8("系统集成"),
+            ok ? QString::fromUtf8(on ? "已添加右键菜单,资源管理器中即时生效。"
+                                      : "已移除右键菜单。")
+               : QString::fromUtf8("注册表写入失败。"));
+    });
+    fMenu->addRow(browseChk);
+    fMenu->addRow(chk("Integration/shellMenu",
+        QString::fromUtf8("添加 shell 至右键菜单"), true));
+    root->addWidget(group(QString::fromUtf8("右键菜单"), fMenu));
+
+    // 分组"文件关联"(醒目大按钮)
+    auto* fAssoc = new QFormLayout;
+    fAssoc->setVerticalSpacing(10);
+    auto* regBtn = new QPushButton(QString::fromUtf8("注册应用(加入\"打开方式\"列表)"));
+    connect(regBtn, &QPushButton::clicked, this, []() {
+        bool ok = Integration::registerOpenWith();
+        QMessageBox::information(nullptr, QString::fromUtf8("注册应用"),
+            ok ? QString::fromUtf8("已注册。右键文件 → 打开方式 中可选 Gaze。")
+               : QString::fromUtf8("注册失败。"));
+    });
+    fAssoc->addRow(regBtn);
+    auto* defAppBtn = new QPushButton(QString::fromUtf8("打开系统\"默认应用程序\"设置"));
+    connect(defAppBtn, &QPushButton::clicked, this, []() {
+        QProcess::startDetached("ms-settings:defaultapps");
+    });
+    fAssoc->addRow(defAppBtn);
+    root->addWidget(group(QString::fromUtf8("文件关联"), fAssoc));
+
+    // 分组"配置文件"
+    auto* fIni = new QFormLayout;
+    fIni->setVerticalSpacing(6);
+    auto* iniCombo = new QComboBox;
+    iniCombo->addItems({QString::fromUtf8("程序文件夹(便携)"),
+                        QString::fromUtf8("系统文件夹 %APPDATA%(下次启动生效)"),
+                        QString::fromUtf8("自定义...(下次启动生效)")});
+    iniCombo->setCurrentIndex(qBound(0,
+        AppSettings::instance().get("Integration/iniLocation", 0).toInt(), 2));
+    connect(iniCombo, &QComboBox::currentIndexChanged, this,
+            [iniCombo](int idx) {
+                if (idx == 2) {
+                    // 调用 Windows 原生资源管理器对话框选择目录
+                    QString dir = QFileDialog::getExistingDirectory(
+                        nullptr, QString::fromUtf8("选择配置文件目录"));
+                    if (dir.isEmpty()) {   // 取消:回退到原选项,不写任何键
+                        iniCombo->blockSignals(true);
+                        iniCombo->setCurrentIndex(qBound(0,
+                            AppSettings::instance().get("Integration/iniLocation", 0).toInt(), 2));
+                        iniCombo->blockSignals(false);
+                        return;
+                    }
+                    AppSettings::instance().set("Integration/customIniDir", dir);
+                }
+                AppSettings::instance().set("Integration/iniLocation", idx);
+                // #122:值在改动当下已由 settings.cpp 复制到目标;换的是"下次启动读哪里",
+                // 这句必须如实说明,别让人以为立刻搬家、也别让人以为要手动搬。
+                const QString target = AppSettings::iniPathForLocation(
+                    idx, AppSettings::instance().get("Integration/customIniDir").toString());
+                QMessageBox::information(nullptr, QString::fromUtf8("配置文件"),
+                    QString::fromUtf8("下次启动起,配置文件改用:\n%1\n\n"
+                                      "当前设置已复制到该位置(目标已有文件时不覆盖)。")
+                        .arg(QDir::toNativeSeparators(target)));
+            });
+    fIni->addRow(QString::fromUtf8("位置"), iniCombo);
+    auto* iniPath = new QLineEdit(AppSettings::instance().iniPath());
+    iniPath->setReadOnly(true);
+    fIni->addRow(QString::fromUtf8("当前文件"), iniPath);
+    root->addWidget(group(QString::fromUtf8("配置文件"), fIni));
+    return wrapTitled(QString::fromUtf8("系统集成"), root);
+}
+
+// ── 以文搜图:万象图搜(imgseek)服务位置/生命周期/测试连接 ──
+// 键:ImgSearch/dir python port killOnExit(消费方在 imgsearch.h 与
+// mainwindow closeEvent;改动即时落 ini)
+QWidget* SettingsDialog::pageImgSearch() {
+    auto* root = new QVBoxLayout;
+    root->setSpacing(9);
+
+    // 分组"服务位置"
+    auto* fLoc = new QFormLayout;
+    fLoc->setVerticalSpacing(6);
+    // 项目目录:输入 + 浏览 + main.py 存在性指示
+    auto* dirEdit = edit("ImgSearch/dir", ImgSearch::defaultDir());
+    auto* dirState = new QLabel;
+    auto probeDir = [dirEdit, dirState] {
+        const QString d = dirEdit->text().trimmed();
+        const bool ok = !d.isEmpty() && QFileInfo::exists(d + "/main.py");
+        dirState->setText(ok ? QString::fromUtf8("✓ 找到 main.py")
+                             : QString::fromUtf8("✗ 未找到 main.py"));
+        dirState->setStyleSheet(QString("background:transparent;color:%1;")
+                                    .arg(ok ? "#7BC97B" : "#E07070"));
+    };
+    auto* dirBrowse = new QPushButton(QString::fromUtf8("浏览…"));
+    connect(dirBrowse, &QPushButton::clicked, this, [this, dirEdit] {
+        const QString d = QFileDialog::getExistingDirectory(
+            this, QString::fromUtf8("选择万象图搜项目目录"), dirEdit->text());
+        if (!d.isEmpty()) dirEdit->setText(d);
+    });
+    connect(dirEdit, &QLineEdit::textChanged, dirEdit, probeDir);
+    probeDir();
+    auto* dirRow = new QWidget;
+    auto* dirLay = new QHBoxLayout(dirRow);
+    dirLay->setContentsMargins(0, 0, 0, 0);
+    dirLay->setSpacing(6);
+    dirLay->addWidget(dirEdit, 1);
+    dirLay->addWidget(dirBrowse);
+    dirLay->addWidget(dirState);
+    fLoc->addRow(QString::fromUtf8("项目目录"), dirRow);
+
+    // Python 解释器:输入 + 浏览 + 存在性指示
+    auto* pyEdit = edit("ImgSearch/python",
+                        QStringLiteral("C:/miniconda3"));
+    auto* pyState = new QLabel;
+    auto probePy = [pyEdit, pyState] {
+        const bool ok = QFileInfo::exists(pyEdit->text().trimmed());
+        pyState->setText(ok ? QString::fromUtf8("✓ 存在")
+                            : QString::fromUtf8("✗ 未找到"));
+        pyState->setStyleSheet(QString("background:transparent;color:%1;")
+                                   .arg(ok ? "#7BC97B" : "#E07070"));
+    };
+    auto* pyBrowse = new QPushButton(QString::fromUtf8("浏览…"));
+    connect(pyBrowse, &QPushButton::clicked, this, [this, pyEdit] {
+        const QString f = QFileDialog::getOpenFileName(
+            this, QString::fromUtf8("选择 Python 解释器"), pyEdit->text(),
+            QString::fromUtf8("可执行文件 (python*.exe)"));
+        if (!f.isEmpty()) pyEdit->setText(QDir::toNativeSeparators(f));
+    });
+    connect(pyEdit, &QLineEdit::textChanged, pyEdit, probePy);
+    probePy();
+    auto* pyRow = new QWidget;
+    auto* pyLay = new QHBoxLayout(pyRow);
+    pyLay->setContentsMargins(0, 0, 0, 0);
+    pyLay->setSpacing(6);
+    pyLay->addWidget(pyEdit, 1);
+    pyLay->addWidget(pyBrowse);
+    pyLay->addWidget(pyState);
+    fLoc->addRow(QString::fromUtf8("Python"), pyRow);
+
+    fLoc->addRow(QString::fromUtf8("端口"),
+                 spin("ImgSearch/port", 1024, 65535, 8747));
+    auto* portNote = new QLabel(QString::fromUtf8(
+        "与 imgseek 服务实际监听端口一致(默认 8747);服务已在运行时改动需重启服务。"));
+    portNote->setStyleSheet(
+        QString("background:transparent;color:%1;").arg(C_TEXT_FAINT));
+    fLoc->addRow(portNote);
+    root->addWidget(group(QString::fromUtf8("服务位置"), fLoc));
+
+    // 分组"服务生命周期"
+    auto* fLife = new QFormLayout;
+    fLife->setVerticalSpacing(6);
+    fLife->addRow(chk("ImgSearch/killOnExit",
+        QString::fromUtf8("退出 Gaze 时结束由 Gaze 拉起的图搜服务"), false));
+    auto* lifeNote = new QLabel(QString::fromUtf8(
+        "只回收由 Gaze 自动拉起的服务实例;手动启动的不受影响。"));
+    lifeNote->setStyleSheet(
+        QString("background:transparent;color:%1;").arg(C_TEXT_FAINT));
+    fLife->addRow(lifeNote);
+    root->addWidget(group(QString::fromUtf8("服务生命周期"), fLife));
+
+    // 分组"连接"
+    auto* fTest = new QFormLayout;
+    fTest->setVerticalSpacing(6);
+    auto* testBtn = new QPushButton(QString::fromUtf8("测试连接"));
+    auto* testState = new QLabel;
+    connect(testBtn, &QPushButton::clicked, testState, [testBtn, testState] {
+        testBtn->setEnabled(false);
+        testState->setText(QString::fromUtf8("正在连接…"));
+        testState->setStyleSheet(
+            QString("background:transparent;color:%1;").arg(C_TEXT_FAINT));
+        // ctx 挂在 testState:页销毁/重建后回调自动丢弃
+        ImgSearch::pingAsync(testState, [testBtn, testState](bool alive) {
+            testBtn->setEnabled(true);
+            testState->setText(alive ? QString::fromUtf8("✓ 服务在线")
+                                     : QString::fromUtf8("✗ 无法连接(服务未运行)"));
+            testState->setStyleSheet(QString("background:transparent;color:%1;")
+                                         .arg(alive ? "#7BC97B" : "#E07070"));
+        });
+    });
+    fTest->addRow(testBtn, testState);
+    root->addWidget(group(QString::fromUtf8("连接"), fTest));
+
+    return wrapTitled(QString::fromUtf8("以文搜图"), root);
+}
