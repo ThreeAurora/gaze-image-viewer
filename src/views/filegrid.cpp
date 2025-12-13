@@ -1,0 +1,261 @@
+#include "filegrid.h"
+#include "contextmenu.h"
+#include "thumbnailer.h"
+#include "livephoto.h"
+#include "labelstore.h"
+#include "settings.h"
+#include "constants.h"
+#include "shelldelete.h"
+#include "exifdate.h"
+#include "perflog.h"
+
+#include <set>
+#include <memory>
+
+#include <QDrag>
+#include <QMimeData>
+#include <QApplication>
+#include <QScrollBar>
+#include <QResizeEvent>
+#include <QKeyEvent>
+#include <QWheelEvent>
+#include <QMouseEvent>
+#include <QContextMenuEvent>
+#include <QToolTip>
+#include <QFileInfo>
+#include <QDir>
+#include <QDesktopServices>
+#include <QUrl>
+#include <QFile>
+#include <QCoreApplication>
+#include <QMessageBox>
+#include <QInputDialog>
+#include <QLineEdit>
+#include <QApplication>
+#include <QProcess>
+#include <QPainter>
+#include <QPainterPath>
+#include <QCollator>
+#include <algorithm>
+#include <cmath>
+#include "filegrid_internal.h"
+
+FileGrid::FileGrid(QWidget* parent) : QScrollArea(parent) {
+    setStyleSheet("QScrollArea{background:#000;border:none;}");
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    setWidgetResizable(false);
+
+    m_canvas = new QWidget;
+    m_canvas->setStyleSheet("background:#000;");
+    setWidget(m_canvas);
+
+    connect(verticalScrollBar(), &QScrollBar::valueChanged,
+            this, &FileGrid::layoutCards);
+
+    connect(&Thumbnailer::instance(), &Thumbnailer::thumbnailReady,
+            this, &FileGrid::onThumbReady);
+
+    // Ctrl+滚轮缩放
+    m_canvas->installEventFilter(this);
+    installEventFilter(this);
+
+    m_resizeTimer.setSingleShot(true);
+    m_resizeTimer.setInterval(30);
+    connect(&m_resizeTimer, &QTimer::timeout, this, [this]() {
+        if (!m_entries.empty()) updateLayout();
+    });
+
+    // 滚动中:同一轮事件循环内的多次 valueChanged 合并成一次可见区请求。
+    // 注意是 0ms(合并)而不是防抖等待——等就是拖尾。
+    m_scrollCoalesce.setSingleShot(true);
+    m_scrollCoalesce.setInterval(0);
+    connect(&m_scrollCoalesce, &QTimer::timeout, this, [this]() {
+        requestVisibleThumbs();
+    });
+
+    // 尺寸停止变化后,按最终尺寸重新生成可见卡片的高清缩略图
+    m_reEnqueueTimer.setSingleShot(true);
+    m_reEnqueueTimer.setInterval(100);
+    connect(&m_reEnqueueTimer, &QTimer::timeout, this, [this]() {
+        requestVisibleThumbs();
+    });
+
+    // 恢复持久化的列数/查看方式
+    m_fixedCols = qBound(0, AppSettings::instance().get("Browser/fixedCols", 0).toInt(), 16);
+    m_viewMode  = qBound(0, AppSettings::instance().get("Browser/viewMode", int(VM_THUMBS_NAME)).toInt(), int(VM_WATERFALL));
+}
+
+// 相邻文件路径(delta=+1 下一张/-1 上一张;预读用,越界返回空)
+QString FileGrid::neighborOf(const QString& path, int delta) const {
+    for (int i = 0; i < static_cast<int>(m_entries.size()); ++i) {
+        if (m_entries[i].path == path) {
+            const int j = i + delta;
+            if (j >= 0 && j < static_cast<int>(m_entries.size()))
+                return m_entries[j].path;
+            break;
+        }
+    }
+    return {};
+}
+
+// ═══════════════════════════════════════════
+// 目录加载
+// ═══════════════════════════════════════════
+void FileGrid::loadDirectory(const QString& dirPath) {
+    if (m_loading) return;
+    m_loading = true;
+
+    // 清掉上一目录的缩略图任务
+    Thumbnailer::instance().clearQueue();
+
+    m_allEntries = fastScanDir(dirPath);
+    m_selected.clear();
+    m_lastClicked = -1;
+
+    // 过滤
+    if (m_filterMarked) {
+        m_entries.clear();
+        for (auto& e : m_allEntries)
+            if (m_marked.contains(e.path))
+                m_entries.push_back(e);
+    } else {
+        m_entries = m_allEntries;
+    }
+
+    sort(m_sortCol, m_sortAsc);
+    updateLayout();
+
+    // 清除缩略图缓存
+    m_thumbCache.clear();
+    recycleCards();
+
+    m_loading = false;
+    layoutCards();
+
+    emit fileCountChanged();
+    if (!m_entries.empty()) {
+        // 自动选中第一个
+        m_selected.insert(0);
+        m_lastClicked = 0;
+        emit selectionChanged(m_entries[0].path);
+    } else {
+        emit selectionChanged({});
+    }
+}
+
+// 树右键"显示子文件夹中的文件"的落点:开关改变的是条目集合本身(整棵子树),
+// 所以按"换目录"对待 —— 沿用同目录重载会让 newAtEnd 把刚展开的文件整块甩到末尾。
+void FileGrid::setShowSubFolders(bool on) {
+    if (m_showSubFolders == on) return;
+    m_showSubFolders = on;
+    AppSettings::instance().set("FileList/showSubFolders", on);
+    const QString dir = m_currentDir;
+    m_currentDir.clear();
+    if (!dir.isEmpty()) loadDirectory(dir);
+}
+
+void FileGrid::toggleMark(int index) {
+    if (index < 0 || index >= static_cast<int>(m_entries.size())) return;
+    QString path = m_entries[index].path;
+    if (m_marked.contains(path))
+        m_marked.remove(path);
+    else
+        m_marked.insert(path);
+    for (auto it = m_active.begin(); it != m_active.end(); ++it)
+        if (it.key() == index)
+            it.value()->setMarked(m_marked.contains(path));
+}
+
+void FileGrid::clearAllMarks() {
+    m_marked.clear();
+    for (auto* card : m_active)
+        card->setMarked(false);
+    if (m_filterMarked) toggleFilter();
+}
+
+void FileGrid::toggleMark(int index) {
+    if (index < 0 || index >= static_cast<int>(m_entries.size())) return;
+    QString path = m_entries[index].path;
+    if (m_marked.contains(path))
+        m_marked.remove(path);
+    else
+        m_marked.insert(path);
+    for (auto it = m_active.begin(); it != m_active.end(); ++it)
+        if (it.key() == index)
+            it.value()->setMarked(m_marked.contains(path));
+}
+
+void FileGrid::clearAllMarks() {
+    m_marked.clear();
+    for (auto* card : m_active)
+        card->setMarked(false);
+    if (m_filterMarked) toggleFilter();
+}
+
+void FileGrid::deleteFile(int index) {
+    if (index < 0 || index >= static_cast<int>(m_entries.size())) return;
+    QString path = m_entries[index].path;
+    QMessageBox::StandardButton reply = QMessageBox::question(
+        this, "删除", "将文件移至回收站？\n" + path,
+        QMessageBox::Yes | QMessageBox::No);
+    if (reply != QMessageBox::Yes) return;
+
+    // 移到回收站（Windows）
+    QFileInfo fi(path);
+    QString dir = fi.isDir() ? fi.absoluteFilePath() : fi.absolutePath();
+    // 使用 QFile::moveToTrash (Qt 6)
+    QFile f(path);
+    if (f.moveToTrash()) {
+        m_selected.remove(index);
+        m_marked.remove(path);
+        loadDirectory(dir);
+    }
+}
+
+void FileGrid::newFolder() {
+    bool ok;
+    QString name = QInputDialog::getText(this, "新建文件夹", "名称:",
+                                         QLineEdit::Normal, "新建文件夹", &ok);
+    if (!ok || name.isEmpty()) return;
+    QString dir = m_entries.empty() ? QDir::homePath()
+                  : QFileInfo(m_entries[0].path).absolutePath();
+    QString full = QDir(dir).filePath(name);
+    if (QDir().mkdir(full))
+        loadDirectory(dir);
+}
+
+// ═══════════════════════════════════════════
+// 属性
+// ═══════════════════════════════════════════
+void FileGrid::setCardSize(int size) {
+    m_cardSize = std::max(80, std::min(300, size));
+    if (!m_entries.empty()) {
+        updateLayout();
+        recycleCards();
+        layoutCards();
+    }
+}
+
+int FileGrid::fileCount() const {
+    return static_cast<int>(m_entries.size());
+}
+
+int FileGrid::selectedCount() const {
+    return static_cast<int>(m_selected.size());
+}
+
+int64_t FileGrid::selectedSize() const {
+    int64_t total = 0;
+    for (int idx : m_selected)
+        if (idx >= 0 && idx < static_cast<int>(m_entries.size()))
+            total += m_entries[idx].size;
+    return total;
+}
+
+QStringList FileGrid::selectedPaths() const {
+    QStringList paths;
+    for (int idx : m_selected)
+        if (idx >= 0 && idx < static_cast<int>(m_entries.size()))
+            paths << m_entries[idx].path;
+    return paths;
+}
