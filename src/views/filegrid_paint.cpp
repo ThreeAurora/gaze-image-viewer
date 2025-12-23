@@ -1,0 +1,287 @@
+#include "filegrid.h"
+#include "contextmenu.h"
+#include "thumbnailer.h"
+#include "livephoto.h"
+#include "labelstore.h"
+#include "settings.h"
+#include "constants.h"
+#include "shelldelete.h"
+#include "clipboardops.h"
+#include "validname.h"
+#include "exifdate.h"
+#include "namesort.h"
+#include "perflog.h"
+#include "logger.h"
+
+#include <set>
+#include <algorithm>
+#include <numeric>
+#include <memory>
+#include <array>
+
+#include <QDrag>
+#include <QMimeData>
+#include <QApplication>
+#include <QScrollBar>
+#include <QResizeEvent>
+#include <QKeyEvent>
+#include <QWheelEvent>
+#include <QMouseEvent>
+#include <QContextMenuEvent>
+#include <QToolTip>
+#include <QFileInfo>
+#include <QDir>
+#include <QDesktopServices>
+#include <QUrl>
+#include <QFile>
+#include <QCoreApplication>
+#include <QThreadPool>
+#include <QMessageBox>
+#include <QInputDialog>
+#include <QLineEdit>
+#include <QApplication>
+#include <QProcess>
+#include <QPainter>
+#include <QPainterPath>
+#include <QCollator>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
+#include <QStyle>
+#include <algorithm>
+#include <cmath>
+#include "filegrid_internal.h"
+
+
+// ═══════════════════════════════════════════
+// 自绘:paintEvent 只画与曝光区相交的卡片
+// 滚动 = 移动画布 + 重绘,开销与"拖动距离"无关,只与帧率有关
+// ═══════════════════════════════════════════
+namespace {
+
+Qt::AlignmentFlag alignFlag(int v) {
+    return v == 0 ? Qt::AlignLeft : (v == 2 ? Qt::AlignRight : Qt::AlignHCenter);
+}
+
+// 图片在盒内的实际显示矩形(选中框贴它绘制,与原 m_thumbRect 同式)
+QRect fittedRect(const QSize& src, const QRect& box, bool cover, int imageAlign) {
+    if (src.isEmpty() || box.isEmpty()) return box;
+    const QSize s = src.scaled(box.size(),
+        cover ? Qt::KeepAspectRatioByExpanding : Qt::KeepAspectRatio);
+    const int offX = imageAlign == 0 ? 0
+                   : imageAlign == 2 ? box.width() - s.width()
+                                     : (box.width() - s.width()) / 2;
+    return QRect(box.x() + offX, box.y() + (box.height() - s.height()) / 2,
+                 s.width(), s.height());
+}
+
+} // namespace
+
+void FileGrid::paintCanvas(QPainter& p, const QRect& clipIn) {
+    PerfLog::Scope _perf("paintCanvas", 16);
+    ensureGeometry();
+    if (m_entries.empty() || !m_canvas || m_byY.empty()) return;
+    const QRect clip = clipIn.isNull() ? m_canvas->rect() : clipIn;
+    p.setRenderHint(QPainter::Antialiasing);
+    // 只遍历曝光窗口:起点 = 顶边 >= clip.top - 最高卡片 的第一个,终点 = 顶边越过 clip 底边
+    const int from = lowerBoundRow(clip.top() - m_maxCardH);
+    for (int k = from; k < static_cast<int>(m_byY.size()); ++k) {
+        const int i = m_byY[k];
+        const QRect& r = m_geom[i];
+        if (r.top() > clip.bottom()) break;
+        if (r.isNull() || !r.intersects(clip)) continue;
+        paintCard(p, i, r);
+    }
+}
+
+void FileGrid::paintCard(QPainter& p, int idx, const QRect& r) {
+    const FileEntry& e = m_entries[idx];
+    const fg_impl::CardBoxes bx = fg_impl::boxesFor(r, m_viewMode, m_labelGap);
+    const QFont  base  = p.font();
+    const bool   sel   = m_selected.contains(idx);
+    // #104:多选不再换颜色(黄框与单击蓝框不一致是用户明确否掉的)。
+    // 多选时"键盘当前落点"改画一条内侧焦点细线(只在网格真有焦点时),
+    // 颜色一律走单选那套蓝,否则整个选中态就没任何可见信号了
+    const bool   anchor = sel && idx == m_lastClicked && m_selected.size() > 1;
+
+    // ── 图像:成品缩略图优先,未解码则用缓存的占位图标(名称始终先显示) ──
+    // 目录同样吃这条管线:Thumbs/folder4 生成的内容 2x2 拼图就是它的卡片图
+    // (XnView 同款)。目录内没有可用图片时 Thumbnailer 返回空 → 落回文件夹图标。
+    QRect imgR = bx.img;
+    const QPixmap raw = m_thumbCache.value(e.path);
+    if (!raw.isNull()) {
+        const QPixmap fit = fitFor(e.path, bx.img);
+        if (fit.isNull()) {
+            // 尚未预建(刚进视口/盒子变了未重建):按 fittedRect 同一几何快速最近邻
+            // 缩放绘制。不能平滑缩放(拖尾感主因),也不能左上裁切——raw 与盒子
+            // 宽高比不同时,裁切画出的图和边框对不上(边框看着"偏小")
+            const QSize s = raw.size().scaled(bx.img.size(),
+                bx.cover ? Qt::KeepAspectRatioByExpanding : Qt::KeepAspectRatio);
+            const int offX = m_imageAlign == 0 ? 0
+                           : m_imageAlign == 2 ? bx.img.width() - s.width()
+                                               : (bx.img.width() - s.width()) / 2;
+            const QRect dst(bx.img.x() + offX,
+                            bx.img.y() + (bx.img.height() - s.height()) / 2,
+                            s.width(), s.height());
+            QPixmap draw = raw;
+            if (s != raw.size())
+                draw = raw.scaled(s, Qt::IgnoreAspectRatio, Qt::FastTransformation);
+            const QRect vis = dst.intersected(bx.img);   // cover 模式溢出部分裁掉
+            if (!vis.isEmpty())
+                p.drawPixmap(vis.topLeft(), draw,
+                             QRect(vis.topLeft() - dst.topLeft(), vis.size()));
+        } else {
+            p.drawPixmap(bx.img.topLeft(), fit);
+        }
+        imgR = fittedRect(raw.size(), bx.img, bx.cover, m_imageAlign)
+                   .intersected(bx.img);   // 瀑布流 cover 溢出被裁,框贴可见区
+    } else {
+        if (e.hidden) p.setOpacity(0.45);
+        p.drawPixmap(bx.img.topLeft(), iconPixmap(e, bx.img.width()));
+        if (e.hidden) p.setOpacity(1.0);
+    }
+
+    // ── 文件名:格式标签色底块 + 居中/左对齐文字(中间省略) ──
+    if (!bx.name.isNull()) {
+        QColor bg;
+        if (sel)        bg = QColor(C_SELECT_BLUE);
+        else if (LabelColors::enabled()) bg = LabelColors::colorForExt(e.ext.mid(1));
+        if (bg.alpha() > 0) p.fillRect(bx.name, bg);
+        // 选中=蓝底白字;未选中=主题文字色(浅色档下白字在白卡上会消失)
+        p.setPen(QColor(sel ? QStringLiteral("#FFFFFF")
+                            : QString::fromUtf8(e.hidden ? C_TEXT_HIDDEN : C_TEXT)));
+        const Qt::Alignment al =
+            (m_viewMode == VM_LIST || m_viewMode == VM_DETAILS)
+                ? (Qt::AlignLeft | Qt::AlignVCenter)
+                : (alignFlag(m_labelAlign) | Qt::AlignVCenter);
+        p.drawText(bx.name, al,
+                   QFontMetrics(base).elidedText(e.name, Qt::ElideMiddle,
+                                                 bx.name.width() - 6));
+    }
+
+    // ── 详细行:大小 [+ 类型] + 修改时间 ──
+    if (!bx.detail.isNull()) {
+        QFont f = base;
+        f.setPixelSize(m_viewMode == VM_DETAILS ? 11 : 10);
+        p.setFont(f);
+        p.setPen(e.hidden ? QColor(C_TEXT_HIDDEN) : QColor(C_TEXT));
+        const QString sz = m_sizeBytes ? QString::number(e.size) + " B"
+                                       : formatSize(e.size);
+        const QString date = QDateTime::fromSecsSinceEpoch(
+            static_cast<qint64>(e.mtime)).toString("yyyy/M/d HH:mm");
+        const QString txt = m_viewMode == VM_DETAILS
+            ? QString("%1    %2    %3").arg(sz, -12).arg(mimeType(e.ext), -14).arg(date)
+            : sz + "  " + date;
+        p.drawText(bx.detail,
+                   (m_viewMode == VM_DETAILS ? Qt::AlignLeft : alignFlag(m_labelAlign))
+                       | Qt::AlignVCenter, txt);
+        p.setFont(base);
+    }
+
+    // ── 选中框 / 悬停白描边:紧贴图片实际显示区 ──
+    // 2px 笔宽以路径为中心:整数矩形外扩 2 会让描边外浮 3px、且与图之间
+    // 留 1px 缝。QRectF 外扩 1 恰好内缘贴住图像、外缘突出 2px,四边对称
+    const QRectF hug(imgR.left() - 1.0, imgR.top() - 1.0,
+                     imgR.width() + 2.0, imgR.height() + 2.0);
+    if (sel) {
+        p.setPen(QPen(QColor(C_SELECT_BLUE), 2));
+        p.setBrush(Qt::NoBrush);
+        p.drawRect(hug);
+        // 键盘落点:多选时框颜色已与单选一致,只能靠这条内侧虚线指出"方向键在这儿"。
+        // 焦点不在网格上就不画 —— 画了反而是个假指示器
+        if (anchor && hasFocus()) {
+            p.setPen(QPen(QColor(255, 255, 255, 200), 1, Qt::DotLine));
+            p.drawRect(hug.adjusted(2.5, 2.5, -2.5, -2.5));
+        }
+    } else if (idx == m_hoverIdx && e.colorLabel == 0) {
+        p.setPen(QPen(QColor(255, 255, 255, 220), 2));
+        p.setBrush(Qt::NoBrush);
+        p.drawRect(hug);
+    }
+
+    // ── Appearance/borderSize 卡片边框 ──
+    if (m_border > 0) {
+        p.setPen(QPen(QColor("#3A3A42"), m_border));
+        p.setBrush(Qt::NoBrush);
+        p.drawRect(QRectF(r.x() + m_border / 2.0, r.y() + m_border / 2.0,
+                          r.width() - m_border, r.height() - m_border));
+    }
+
+    // ── 颜色标记圆圈(Browser/showRating 关时不画) ──
+    if (m_showRating && e.colorLabel > 0) {
+        QColor c = LabelStore::colorValue(e.colorLabel);
+        if (c.isValid()) {
+            p.setPen(QPen(QColor("#FFFFFF"), 1.5));
+            p.setBrush(c);
+            p.drawEllipse(imgR.topLeft() + QPointF(9, 9), 7, 7);
+        }
+    }
+}
+
+// ── 占位图标:同尺寸同类型只算一次(原实现每卡片重复平滑缩放 256px 系统图标) ──
+QPixmap FileGrid::iconPixmap(const FileEntry& e, int side) {
+    if (side <= 0) return QPixmap();
+    // 专属图标来自文件自身资源的类型必须按路径缓存,其余按扩展名共享
+    static const auto* ownIcon = new QSet<QString>{
+        ".exe", ".dll", ".ico", ".scr", ".msi", ".cpl", ".lnk", ".ocx" };
+    const bool perFile = !e.isDir && (e.ext.isEmpty() || ownIcon->contains(e.ext));
+    const QString key = QStringLiteral("%1@%2%3")
+        .arg(perFile ? e.path : (e.isDir ? QLatin1String("<dir>") : e.ext))
+        .arg(side).arg(e.hidden ? QLatin1Char('h') : QLatin1Char('n'));
+    auto it = m_iconCache.find(key);
+    if (it != m_iconCache.end()) return *it;
+
+    QIcon icon = e.isDir ? folderIcon(side) : typeIcon(e.ext, e.path);
+    QPixmap pm = icon.pixmap(side, side);
+    if (pm.width() != side || pm.height() != side)
+        pm = pm.scaled(side, side, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    if (e.hidden) {   // 隐藏条目图标弱化(与原实现同一 0.45 不透明度)
+        QPixmap dim(pm.size());
+        dim.fill(Qt::transparent);
+        QPainter dp(&dim);
+        dp.setOpacity(0.45);
+        dp.drawPixmap(0, 0, pm);
+        dp.end();
+        pm = dim;
+    }
+    if (m_iconCache.size() > 128) m_iconCache.clear();   // 尺寸连续变化时兜底
+    m_iconCache.insert(key, pm);
+    return pm;
+}
+
+// ── 成品图查询:只读缓存,绘制路径零计算 ──
+QPixmap FileGrid::fitFor(const QString& path, const QRect& box) const {
+    auto it = m_fitCache.find(path);
+    if (it != m_fitCache.end() && it->box == box) return it->pix;
+    return QPixmap();
+}
+
+// ── 成品图预建:按盒子平滑缩放 + 4px 圆角。只在缩略图到达/进入视口时调用 ──
+void FileGrid::buildFit(const QString& path, const QRect& box, bool cover) {
+    auto it = m_fitCache.find(path);
+    if (it != m_fitCache.end() && it->box == box) return;
+
+    const QSize sz = box.size();
+    QPixmap out(sz);
+    out.fill(Qt::transparent);
+    const QPixmap raw = m_thumbCache.value(path);
+    if (!raw.isNull() && !sz.isEmpty()) {
+        const QSize s = raw.size().scaled(sz,
+            cover ? Qt::KeepAspectRatioByExpanding : Qt::KeepAspectRatio);
+        // s 已按比例拟合;若再传 KeepAspectRatio,Qt 会把 s 当边界框对原图
+        // 二次拟合,部分宽高比下二次取整少 1px,画出的图比选中框窄 1px
+        const QPixmap scaled = raw.scaled(s, Qt::IgnoreAspectRatio,
+                                          Qt::SmoothTransformation);
+        const int offX = m_imageAlign == 0 ? 0
+                       : m_imageAlign == 2 ? sz.width() - s.width()
+                                           : (sz.width() - s.width()) / 2;
+        QPainter q(&out);
+        q.setRenderHint(QPainter::Antialiasing);
+        QPainterPath pp;
+        pp.addRoundedRect(0, 0, sz.width(), sz.height(), 4, 4);
+        q.setClipPath(pp);
+        q.drawPixmap(offX, (sz.height() - s.height()) / 2, scaled);
+    }
+    if (m_fitCache.size() > 1200) m_fitCache.clear();
+    m_fitCache.insert(path, FitThumb{ box, out });
+}
+
