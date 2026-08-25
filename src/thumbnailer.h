@@ -57,7 +57,7 @@ private:
     // 内存 LRU 缓存
     QMutex m_cacheMutex;
     struct CacheEntry {
-        QPixmap pixmap;
+        QImage  pixmap;   // 线程安全的 QImage；转 QPixmap 在消费线程进行
         double  mtime = 0.0;
         int64_t lastAccess = 0;
     };
