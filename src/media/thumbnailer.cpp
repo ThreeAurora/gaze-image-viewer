@@ -76,7 +76,7 @@ void Thumbnailer::enqueue(const QString& filePath, int size, bool isVideo) {
     double mtime = fi.lastModified().toSecsSinceEpoch();
 
     {
-        QPixmap cached;
+        QImage cached;
         if (cacheLookup(ck, mtime, cached)) {
             emit thumbnailReady(filePath, cached);
             return;
