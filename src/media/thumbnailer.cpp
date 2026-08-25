@@ -24,7 +24,7 @@
 #include <shlguid.h>
 
 // ── 前置声明 ──
-static QPixmap windowsShellThumb(const QString& filePath, int size);
+static QImage windowsShellThumb(const QString& filePath, int size);
 #include <wincodec.h>
 #include <QDateTime>
 #include <QVariant>
