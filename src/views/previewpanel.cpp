@@ -314,19 +314,31 @@ void PreviewPanel::loadFile(const QString& path) {
 
     m_filePath = path;
     m_livePhotoOriginalPath.clear();
+    m_isLivePhoto = false;
     QString ext = fi.suffix().toLower();
 
-    stopPlayer();
+    teardownPlayer();
 
     // ── Live Photo 检测（在扩展名路由之前）──
     if (IMAGE_EXTS.count("." + ext)) {
         auto liveInfo = LivePhoto::detect(path);
         if (liveInfo) {
-            QString videoPath = liveInfo->videoPath;
-            if (liveInfo->embedded)
-                videoPath = LivePhoto::extractEmbeddedVideo(path, *liveInfo);
+            QString videoPath;
+            if (liveInfo->embedded && liveInfo->videoOffset >= 0) {
+                // 内嵌型：优先复用本会话已提取的临时文件，避免反复 remux + %TEMP% 堆积
+                if (m_extractCache.contains(path)) {
+                    videoPath = m_extractCache.value(path);
+                } else {
+                    videoPath = LivePhoto::extractEmbeddedVideo(path, *liveInfo);
+                    if (!videoPath.isEmpty())
+                        m_extractCache.insert(path, videoPath);
+                }
+            } else if (!liveInfo->embedded) {
+                videoPath = liveInfo->videoPath; // companion 配对型
+            }
             if (!videoPath.isEmpty() && QFileInfo::exists(videoPath)) {
                 m_livePhotoOriginalPath = path;
+                m_isLivePhoto = true;
                 showVideo(videoPath);
                 return;
             }
