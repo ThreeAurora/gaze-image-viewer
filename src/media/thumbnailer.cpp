@@ -6,6 +6,7 @@
 
 #include <QFileInfo>
 #include <QImage>
+#include <QThread>
 #include <QPainter>
 #include <QSqlQuery>
 #include <QSqlError>
