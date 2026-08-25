@@ -124,12 +124,12 @@ std::optional<Info> detectEmbedded(const QString& imagePath) {
 
     // 2. XMP MicroVideoOffset 定位（旧版 MVIMG，O(1)）
     //    官方语义：视频起点 = 文件大小 - offset；属性式 MicroVideoOffset="N" / 元素式 >N<
+    f.seek(0);
+    QByteArray head = f.read(131072);
     {
-        QString headStr = QString::fromLatin1(head.mid(0, 131072));
+        QString headStr = QString::fromLatin1(head);
         int key = headStr.indexOf("MicroVideoOffset");
         if (key >= 0) {
-            static const QLatin1String kKey("MicroVideoOffset");
-            Q_UNUSED(kKey);
             int i = key + 16; // strlen("MicroVideoOffset")
             const int n = headStr.size();
             while (i < n && !headStr.at(i).isDigit()) ++i;
@@ -159,8 +159,6 @@ std::optional<Info> detectEmbedded(const QString& imagePath) {
     }
 
     // 3. 回退：XMP 元数据确认（全文件扫描，代价高，最后手段）
-    f.seek(0);
-    QByteArray head = f.read(131072);
     QString headStr = QString::fromUtf8(head);
     bool hasXmp = headStr.contains("MotionPhoto") ||
                   headStr.contains("MicroVideo") ||
