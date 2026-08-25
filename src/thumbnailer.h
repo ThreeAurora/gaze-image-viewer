@@ -1,6 +1,6 @@
 #pragma once
 #include <QObject>
-#include <QPixmap>
+#include <QImage>
 #include <QThreadPool>
 #include <QMutex>
 #include <QSqlDatabase>
