@@ -72,7 +72,7 @@ private:
     // 事件处理
     void onCardClicked(FileCard* card);
     void onCardDoubleClicked(FileCard* card);
-    void onThumbReady(const QString& filePath, const QPixmap& pix);
+    void onThumbReady(const QString& filePath, const QImage& img);
     void beginInlineRename();     // FileOps/renameDialog=关:就地改名
     void endInlineRename(bool commit);
     // FileOps/renameDialog=关 时的就地改名(画布上压一个编辑器)
