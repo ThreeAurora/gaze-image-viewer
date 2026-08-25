@@ -122,7 +122,43 @@ std::optional<Info> detectEmbedded(const QString& imagePath) {
         }
     }
 
-    // 2. 回退：XMP 元数据确认
+    // 2. XMP MicroVideoOffset 定位（旧版 MVIMG，O(1)）
+    //    官方语义：视频起点 = 文件大小 - offset；属性式 MicroVideoOffset="N" / 元素式 >N<
+    {
+        QString headStr = QString::fromLatin1(head.mid(0, 131072));
+        int key = headStr.indexOf("MicroVideoOffset");
+        if (key >= 0) {
+            static const QLatin1String kKey("MicroVideoOffset");
+            Q_UNUSED(kKey);
+            int i = key + 16; // strlen("MicroVideoOffset")
+            const int n = headStr.size();
+            while (i < n && !headStr.at(i).isDigit()) ++i;
+            int j = i;
+            while (j < n && headStr.at(j).isDigit()) ++j;
+            if (j > i) {
+                bool ok = false;
+                qint64 offset = headStr.mid(i, j - i).toLongLong(&ok);
+                if (ok && offset > 0 && offset < fileSize) {
+                    qint64 videoStart = fileSize - offset;
+                    f.seek(videoStart);
+                    QByteArray marker = f.read(12);
+                    if (marker.size() >= 12
+                        && marker.mid(4, 4) == MP4_FTYP
+                        && MP4_BRANDS.count(marker.mid(8, 4))) {
+                        Info info;
+                        info.type = "motion";
+                        info.videoPath = imagePath;
+                        info.videoOffset = videoStart;
+                        info.videoLength = offset;
+                        info.embedded = true;
+                        return info;
+                    }
+                }
+            }
+        }
+    }
+
+    // 3. 回退：XMP 元数据确认（全文件扫描，代价高，最后手段）
     f.seek(0);
     QByteArray head = f.read(131072);
     QString headStr = QString::fromUtf8(head);
