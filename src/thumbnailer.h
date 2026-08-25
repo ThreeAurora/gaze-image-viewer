@@ -46,7 +46,7 @@ private:
     void    evictIfNeeded();
 
     // ── Pixmap → PNG bytes ──
-    QByteArray pixmapToPng(const QPixmap& pix) const;
+    QByteArray pixmapToPng(const QImage& pix) const;
 
     QThreadPool* m_pool = nullptr;
 
