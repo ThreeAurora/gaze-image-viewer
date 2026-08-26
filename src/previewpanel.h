@@ -89,4 +89,6 @@ private:
     QLabel *m_liveBadge = nullptr;   // 叠放于 videoWidget 右上角的 LIVE 徽章
     QMap<QString, QString> m_extractCache; // 图片路径 → 已提取的临时视频路径
     bool m_fullscreenMode = false;
+    bool m_ctrlZoomed = false;   // Ctrl+滚轮缩放过(左键变为纯拖动)
+    bool m_tempZoom   = false;   // 左键临时 1:1 放大(松开还原)
 };
