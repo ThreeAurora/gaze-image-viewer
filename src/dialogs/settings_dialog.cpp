@@ -389,24 +389,42 @@ QWidget* SettingsDialog::pageCache() {
 
 QWidget* SettingsDialog::pageIntegration() {
     auto* form = new QFormLayout;
-    form->addRow(chk("Integration/explorerBrowse",
-        QString::fromUtf8("将\"用 xnnview 浏览\"添加到系统右键菜单(需管理员权限)"), true));
+
+    // "用 xnnview 浏览"右键菜单(勾选即写 HKCU 注册表,免管理员)
+    auto* browseChk = new QCheckBox(
+        QString::fromUtf8("将\"用 xnnview 浏览\"添加到系统右键菜单(HKCU,免管理员)"));
+    browseChk->setChecked(Integration::isBrowseMenuInstalled());
+    connect(browseChk, &QCheckBox::toggled, this, [](bool on) {
+        bool ok = on ? Integration::addBrowseContextMenu()
+                     : Integration::removeBrowseContextMenu();
+        QMessageBox::information(nullptr, QString::fromUtf8("系统集成"),
+            ok ? QString::fromUtf8(on ? "已添加右键菜单,资源管理器中即时生效。"
+                                      : "已移除右键菜单。")
+               : QString::fromUtf8("注册表写入失败。"));
+    });
+    form->addRow(browseChk);
+
     form->addRow(chk("Integration/shellMenu",
         QString::fromUtf8("添加 shell 至右键菜单"), true));
-    auto* regBtn = new QPushButton(QString::fromUtf8("注册应用"));
+
+    auto* regBtn = new QPushButton(QString::fromUtf8("注册应用(加入\"打开方式\"列表)"));
     connect(regBtn, &QPushButton::clicked, this, []() {
+        bool ok = Integration::registerOpenWith();
         QMessageBox::information(nullptr, QString::fromUtf8("注册应用"),
-            QString::fromUtf8("注册功能即将支持(批次 7)。\n将把 xnnview 注册到 Windows\"默认应用程序\"。"));
+            ok ? QString::fromUtf8("已注册。右键文件 → 打开方式 中可选 xnnview。")
+               : QString::fromUtf8("注册失败。"));
     });
     form->addRow(QString::fromUtf8("文件关联"), regBtn);
+
     auto* defAppBtn = new QPushButton(QString::fromUtf8("打开\"默认应用程序\"设置"));
     connect(defAppBtn, &QPushButton::clicked, this, []() {
         QProcess::startDetached("ms-settings:defaultapps");
     });
     form->addRow(QString::fromUtf8("默认应用"), defAppBtn);
+
     form->addRow(QString::fromUtf8("配置文件 ini 路径"),
         combo("Integration/iniLocation", {QString::fromUtf8("程序文件夹(便携)"),
-            QString::fromUtf8("系统文件夹(%APPDATA%)")}, 0));
+            QString::fromUtf8("系统文件夹(%APPDATA%)(重启后生效,即将支持)")}, 0));
     form->addRow(new QLabel(QString::fromUtf8("当前 ini:") + AppSettings::instance().iniPath()));
     return wrapPage(form);
 }
