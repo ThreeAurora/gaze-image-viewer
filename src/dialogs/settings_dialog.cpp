@@ -32,15 +32,17 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent) {
         "margin-top:10px;padding-top:6px;}"
         "QGroupBox::title{subcontrol-origin:margin;left:10px;}");
 
-    auto* root = new QHBoxLayout(this);
+    auto* root = new QVBoxLayout(this);          // 外层垂直:内容区 + 底部按钮行
+    auto* content = new QHBoxLayout;             // 分类 + 页面
 
     m_cats = new QListWidget;
     m_cats->setFixedWidth(170);
 
     m_stack = new QStackedWidget;
 
-    root->addWidget(m_cats);
-    root->addWidget(m_stack, 1);
+    content->addWidget(m_cats);
+    content->addWidget(m_stack, 1);
+    root->addLayout(content, 1);
 
     struct { const char* name; QWidget* (SettingsDialog::*fn)(); } pages[] = {
         { "常规",     &SettingsDialog::pageGeneral },
