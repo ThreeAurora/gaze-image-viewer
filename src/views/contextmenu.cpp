@@ -201,7 +201,8 @@ FileContextMenu::FileContextMenu(FileCard* card, QWidget* parent)
     });
 
     // ── 旋转/翻转(仅图片;先备份原件,保留修改时间) ──
-    if (IMAGE_EXTS.count(QFileInfo(m_filePath).suffix().toLower())) {
+    // 注意:IMAGE_EXTS 存带点扩展名(".jpg"),suffix() 不带点,必须手动加点匹配
+    if (IMAGE_EXTS.count("." + QFileInfo(m_filePath).suffix().toLower())) {
         auto* rotMenu = addMenu(IconLib::appIcon("cmd_rotate"), QString::fromUtf8("旋转/翻转"));
         auto doRot = [this, grid](int mode) {
             QImage img(m_filePath);
@@ -219,12 +220,22 @@ FileContextMenu::FileContextMenu(FileCard* card, QWidget* parent)
             QString backup = fi.absolutePath() + "/" + fi.completeBaseName()
                            + "_original." + fi.suffix();
             if (!QFileInfo::exists(backup))
-                QFile::copy(m_filePath, backup);          // 生成备份原件
+                QFile::copy(m_filePath, backup);          // 首次生成备份原件
             QDateTime mod = fi.lastModified();            // 记录原修改时间
-            QFile f(m_filePath);
+            // 先写临时文件再原子替换:直接 open(WriteOnly) 会截断原文件,
+            // 若 save 编码失败(如 tif/webp 无编码器)原图将损坏
+            QString tmp = m_filePath + ".gaze_rot_tmp";
+            QFile f(tmp);
             if (!f.open(QIODevice::WriteOnly)) return;
-            out.save(&f, nullptr, 95);
+            bool ok = out.save(&f, nullptr, 95);
             f.close();
+            if (!ok) { QFile::remove(tmp); return; }
+            if (!QFile::rename(tmp, m_filePath)) {        // Windows MoveFileEx 覆盖替换
+                QFile::remove(tmp);
+                QMessageBox::warning(nullptr, QString::fromUtf8("旋转/翻转"),
+                    QString::fromUtf8("写回文件失败:\n") + m_filePath);
+                return;
+            }
             QFile tf(m_filePath);                          // 保留原修改时间(元数据不变)
             if (tf.open(QIODevice::ReadOnly))
                 tf.setFileTime(mod, QFileDevice::FileModificationTime);
