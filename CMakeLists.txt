@@ -118,6 +118,7 @@ target_link_libraries(target_link_libraries(gaze PRIVATE
     shell32
     ole32
     comctl32    # SHGetImageList / IImageList::GetIcon
+    uuid        # IID_IImageList 等系统 GUID 符号
 )
 
 target_include_directories(Gaze PRIVATE ${CMAKE_SOURCE_DIR}/src)
