@@ -10,6 +10,9 @@
 #include <QMap>
 #include <QTimer>
 
+class QProcess;
+#include <QTimer>
+
 
 class PreviewPanel : public QWidget {
     Q_OBJECT
