@@ -32,6 +32,7 @@
 #include <QMimeData>
 #include <QMediaDevices>
 #include <QWidgetAction>
+#include <QToolTip>
 
 // 标准图标染成白色(深色主题下 QStyle 图标是深色的)
 static QIcon whiteIcon(const QIcon& base, int size = 32) {
