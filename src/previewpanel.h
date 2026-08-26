@@ -84,7 +84,7 @@ private:
     QWidget *m_controlBar;
     QPushButton *m_btnPlay;
     QToolButton *m_btnVolume = nullptr;   // 音量按钮(点击弹竖向滑条)
-    QToolButton *m_btnPrev = nullptr;     // 上一文件按钮(播放条最左,仿 XnView)
+    QPushButton *m_btnPrev = nullptr;     // 上一文件按钮(播放条最左,仿 XnView)
     QSlider *m_progress;
     QLabel *m_timeLabel;
     bool m_timeRemaining = false;          // 时间显示:已播/总时长(false) ↔ 剩余/总时长(true)
