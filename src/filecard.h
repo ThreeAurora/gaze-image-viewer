@@ -13,6 +13,7 @@ public:
     void setThumbnail(const QPixmap& pixmap);
     void setSelected(bool sel, bool multi = false);
     void setMarked(bool marked);
+    void setColorLabel(int color);   // 颜色标记:0无 1红 2橙 3黄 4绿 5蓝
     void deactivate();
 
     QString filePath()     const { return m_filePath; }
