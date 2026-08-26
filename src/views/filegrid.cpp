@@ -106,6 +106,7 @@ QString FileGrid::neighborOf(const QString& path, int delta) const {
 void FileGrid::loadDirectory(const QString& dirPath) {
     if (m_loading) return;
     m_loading = true;
+    m_currentDir = dirPath;
 
     // 清掉上一目录的缩略图任务
     Thumbnailer::instance().clearQueue();
