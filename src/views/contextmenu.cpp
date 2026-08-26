@@ -200,6 +200,46 @@ FileContextMenu::FileContextMenu(FileCard* card, QWidget* parent)
         QMessageBox::information(nullptr, "打印", "打印功能即将支持");
     });
 
+    // ── 旋转/翻转(仅图片;先备份原件,保留修改时间) ──
+    if (IMAGE_EXTS.count(QFileInfo(m_filePath).suffix().toLower())) {
+        auto* rotMenu = addMenu(IconLib::appIcon("cmd_rotate"), QString::fromUtf8("旋转/翻转"));
+        auto doRot = [this, grid](int mode) {
+            QImage img(m_filePath);
+            if (img.isNull()) return;
+            QImage out;
+            QTransform t;
+            switch (mode) {
+            case 0: t.rotate(-90); out = img.transformed(t, Qt::SmoothTransformation); break;
+            case 1: t.rotate(90);  out = img.transformed(t, Qt::SmoothTransformation); break;
+            case 2: out = img.mirrored(true, false); break;
+            case 3: out = img.mirrored(false, true); break;
+            }
+            if (out.isNull()) return;
+            QFileInfo fi(m_filePath);
+            QString backup = fi.absolutePath() + "/" + fi.completeBaseName()
+                           + "_original." + fi.suffix();
+            if (!QFileInfo::exists(backup))
+                QFile::copy(m_filePath, backup);          // 生成备份原件
+            QDateTime mod = fi.lastModified();            // 记录原修改时间
+            QFile f(m_filePath);
+            if (!f.open(QIODevice::WriteOnly)) return;
+            out.save(&f, nullptr, 95);
+            f.close();
+            QFile tf(m_filePath);                          // 保留原修改时间(元数据不变)
+            if (tf.open(QIODevice::ReadOnly))
+                tf.setFileTime(mod, QFileDevice::FileModificationTime);
+            if (grid) grid->refreshCurrentDir();
+        };
+        rotMenu->addAction(IconLib::appIcon("cmd_rotate90"),
+            QString::fromUtf8("左旋 90°"), this, [doRot]() { doRot(0); });
+        rotMenu->addAction(IconLib::appIcon("cmd_rotate270"),
+            QString::fromUtf8("右旋 90°"), this, [doRot]() { doRot(1); });
+        rotMenu->addAction(IconLib::appIcon("cmd_horizontalFlip"),
+            QString::fromUtf8("水平翻转"), this, [doRot]() { doRot(2); });
+        rotMenu->addAction(IconLib::appIcon("cmd_verticalFlip"),
+            QString::fromUtf8("垂直翻转"), this, [doRot]() { doRot(3); });
+    }
+
     // ── 颜色标记子菜单 ──
     auto* labelMenu = addMenu(IconLib::appIcon("label_item"), "添加标记");
     struct { int c; QString name; } colors[] = {
