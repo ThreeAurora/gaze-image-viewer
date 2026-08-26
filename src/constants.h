@@ -6,7 +6,7 @@
 #define C_WIN_BG        "#1B1B1F"   // 窗体底
 #define C_SIDEBAR       "#17171A"   // 文件夹树
 #define C_CONTENT       "#1F1F23"   // 内容区
-#define C_PREVIEW_BG    "#1B1B1F"   // 预览面板
+#define C_PREVIEW_BG    "#000000"   // 预览面板(纯黑)
 #define C_CARD_BG       "#26262B"   // 卡片常态
 #define C_CARD_HOVER    "#2C2C32"   // 卡片悬停
 #define C_THUMB_BG      "#141417"   // 卡片缩略图衬底
