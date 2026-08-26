@@ -6,6 +6,7 @@
 #include <QPushButton>
 #include <QSlider>
 #include <QTimer>
+#include <QStringList>
 
 class QVBoxLayout;
 class FolderTree;
