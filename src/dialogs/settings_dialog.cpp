@@ -11,6 +11,36 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QProcess>
+#include <QMessageBox>
+
+void SettingsDialog::populatePages() {
+    m_cats->clear();
+    while (m_stack->count() > 0) {
+        QWidget* w = m_stack->widget(0);
+        m_stack->removeWidget(w);
+        w->deleteLater();
+    }
+    struct { const char* name; QWidget* (SettingsDialog::*fn)(); } pages[] = {
+        { "常规",     &SettingsDialog::pageGeneral },
+        { "启动",     &SettingsDialog::pageStartup },
+        { "文件操作", &SettingsDialog::pageFileOps },
+        { "界面",     &SettingsDialog::pageInterface },
+        { "键盘和鼠标", &SettingsDialog::pageKeyboardMouse },
+        { "切换模式", &SettingsDialog::pageSwitchMode },
+        { "浏览器",   &SettingsDialog::pageBrowser },
+        { "文件列表", &SettingsDialog::pageFileList },
+        { "缩略图",   &SettingsDialog::pageThumbs },
+        { "外观",     &SettingsDialog::pageAppearance },
+        { "查看",     &SettingsDialog::pageViewer },
+        { "全屏",     &SettingsDialog::pageFullscreen },
+        { "缓存数据库", &SettingsDialog::pageCache },
+        { "系统集成", &SettingsDialog::pageIntegration },
+    };
+    for (auto& p : pages) {
+        m_cats->addItem(QString::fromUtf8(p.name));
+        m_stack->addWidget((this->*p.fn)());
+    }
+}
 
 SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent) {
     setWindowTitle(QString::fromUtf8("设置"));
