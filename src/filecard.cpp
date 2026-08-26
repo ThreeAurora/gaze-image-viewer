@@ -178,8 +178,8 @@ void FileCard::setup(const FileEntry& entry, int size, int viewMode, int height)
     QIcon icon = entry.isDir ? folderIcon(ts) : typeIcon(entry.ext, entry.path);
     int isz = m_thumbLabel->width();
     QPixmap pm = icon.pixmap(isz, isz);
-    if (!entry.isDir && (pm.width() < isz || pm.height() < isz))
-        pm = pm.scaled(isz, isz, Qt::KeepAspectRatio, Qt::SmoothTransformation);  // 小图标平滑放大顶满
+    if (pm.width() != isz || pm.height() != isz)
+        pm = pm.scaled(isz, isz, Qt::KeepAspectRatio, Qt::SmoothTransformation);  // 平滑缩放顶满
     m_thumbLabel->setPixmap(pm);
 
     m_liveBadge->adjustSize();
