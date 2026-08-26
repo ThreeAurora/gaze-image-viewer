@@ -315,12 +315,14 @@ void FileCard::mouseDoubleClickEvent(QMouseEvent* event) {
 }
 
 void FileCard::enterEvent(QEnterEvent* event) {
-    m_thumbLabel->setStyleSheet("background:#1A3050;border-radius:2px;");
+    m_hovered = true;
+    update();   // hover 态由 paintEvent 统一绘制
     QFrame::enterEvent(event);
 }
 
 void FileCard::leaveEvent(QEvent* event) {
-    m_thumbLabel->setStyleSheet("background:transparent;border-radius:2px;");
+    m_hovered = false;
+    update();
     QFrame::leaveEvent(event);
 }
 
