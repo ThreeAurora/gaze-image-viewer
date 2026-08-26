@@ -276,6 +276,46 @@ QWidget* SettingsDialog::pageKeyboardMouse() {
     return wrapPage(form);
 }
 
+QWidget* SettingsDialog::pageShortcuts() {
+    auto* v = new QVBoxLayout;
+    v->addWidget(new QLabel(QString::fromUtf8(
+        "点击快捷键框后按下新组合键即可修改(按 Esc/Backspace 清除恢复默认)。变更即时保存并生效。")));
+
+    auto* table = new QTableWidget(0, 2);
+    table->setHorizontalHeaderLabels({QString::fromUtf8("功能"),
+                                      QString::fromUtf8("快捷键")});
+    table->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+    table->verticalHeader()->setVisible(false);
+    table->setStyleSheet(
+        "QTableWidget{background:#17171A;color:#FFFFFF;border:1px solid #303036;}"
+        "QHeaderView::section{background:#232328;color:#FFFFFF;border:none;padding:4px;}");
+    v->addWidget(table, 1);
+
+    // 遍历主窗口菜单里所有带快捷键的功能
+    if (QWidget* mw = parentWidget()) {
+        QList<QAction*> acts = mw->findChildren<QAction*>();
+        for (QAction* a : acts) {
+            if (a->shortcut().isEmpty() || a->text().isEmpty()
+                || a->menu() != nullptr || a->isSeparator())
+                continue;
+            int r = table->rowCount();
+            table->insertRow(r);
+            QString name = a->text();
+            name.remove('&');
+            table->setItem(r, 0, new QTableWidgetItem(name));
+            auto* ed = new QKeySequenceEdit(a->shortcut());
+            QString key = QString("Shortcuts/") + a->text().remove('&');
+            connect(ed, &QKeySequenceEdit::keySequenceChanged, this,
+                    [a, key](const QKeySequence& ks) {
+                        AppSettings::instance().set(key, ks.toString());
+                        a->setShortcut(ks);
+                    });
+            table->setCellWidget(r, 1, ed);
+        }
+    }
+    return wrapPage(v);
+}
+
 QWidget* SettingsDialog::pageSwitchMode() {
     QStringList opts = QStringList{
         QString::fromUtf8("浏览器 ↔ 全屏 | 查看器 ↔ 全屏"),
