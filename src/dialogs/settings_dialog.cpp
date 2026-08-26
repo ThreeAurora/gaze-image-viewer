@@ -407,7 +407,6 @@ QWidget* SettingsDialog::pageIntegration() {
     form->addRow(QString::fromUtf8("配置文件 ini 路径"),
         combo("Integration/iniLocation", {QString::fromUtf8("程序文件夹(便携)"),
             QString::fromUtf8("系统文件夹(%APPDATA%)")}, 0));
-    form->addRow(new QLabel(QString::fromUtf8(
-        "当前 ini:" + AppSettings::instance().iniPath())));
+    form->addRow(new QLabel(QString::fromUtf8("当前 ini:") + AppSettings::instance().iniPath()));
     return wrapPage(form);
 }
