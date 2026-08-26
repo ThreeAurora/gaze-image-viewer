@@ -49,7 +49,7 @@ public:
     void setFilterMode(int mode);            // FilterMode
     int  filterMode() const { return m_filterMode; }
     void navigateSelection(int delta);
-    void selectIndex(int idx);   // 单选指定项并滚动到可见(滚动联动用)
+    void selectIndex(int idx, bool scrollToVisible = true);  // 滚动联动时传 false 防反馈回路
     bool selectByPath(const QString& path);  // 按路径选中(最近文件定位用)
 
     // 选择扩展(编辑菜单)
