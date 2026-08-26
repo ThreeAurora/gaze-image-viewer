@@ -127,7 +127,7 @@ void FolderTree::loadDrives() {
     desktopItem->setIcon(0, m_desktopIcon);
     desktopItem->setData(0, Qt::UserRole, desktopPath);
     desktopItem->addChild(new QTreeWidgetItem); // 占位（懒加载标记）
-    desktopItem->setExpanded(true);
+    desktopItem->setExpanded(false);   // 桌面默认折叠
 
     // 枚举 A-Z 盘符
     for (char drive = 'A'; drive <= 'Z'; ++drive) {
