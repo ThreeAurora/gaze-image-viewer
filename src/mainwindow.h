@@ -84,7 +84,6 @@ private:
     FileGrid *m_fileGrid = nullptr;
     PreviewPanel *m_preview = nullptr;
     QLineEdit *m_addrBar = nullptr;
-    QPushButton *m_filterBtn = nullptr;
     QLabel *m_statusLabel = nullptr;
     QLabel *m_pathLabel = nullptr;
     QPushButton *m_filterBtn = nullptr;
