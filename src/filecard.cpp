@@ -282,11 +282,11 @@ void FileCard::paintEvent(QPaintEvent* event) {
         p.drawRect(r);
     }
 
-    // hover:缩略图左上角小圆点标志(不遮挡,仅示意光标位置;有颜色标记时让位)
+    // hover:缩略图淡白细描边(轻盈提示,不笨重;有颜色标记时让位)
     if (m_hovered && !m_selected && m_colorLabel == 0) {
-        p.setPen(QPen(QColor("#FFFFFF"), 1));
-        p.setBrush(QColor(C_ACCENT));
-        p.drawEllipse(m_thumbRect.topLeft() + QPointF(3, 3), 4.5, 4.5);
+        p.setPen(QPen(QColor(255, 255, 255, 110), 1));
+        p.setBrush(Qt::NoBrush);
+        p.drawRect(m_thumbRect.adjusted(-1, -1, 0, 0));
     }
 
     // 颜色标记:缩略图左上角彩色圆圈(白描边)
