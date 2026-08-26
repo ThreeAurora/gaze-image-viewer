@@ -361,6 +361,7 @@ void PreviewPanel::loadFile(const QString& path) {
         showPdf(path);
     } else {
         m_mode = "none";
+        m_placeholder->show();
         m_imgLabel->hide();
         m_videoWidget->hide();
         m_audioLabel->hide();
