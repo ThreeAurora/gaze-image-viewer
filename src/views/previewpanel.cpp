@@ -333,6 +333,8 @@ void PreviewPanel::loadFile(const QString& path) {
     // 立即清屏:杜绝上一文件(尤其图片→视频切换)残影闪帧
     m_imgLabel->clear();
     m_imgLabel->hide();
+    cancelHoverExtract();       // 换文件:取消进行中的 hover 抽帧并清缓存
+    m_hoverCache.clear();
     QString ext = fi.suffix().toLower();
 
     teardownPlayer();
