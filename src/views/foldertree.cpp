@@ -1,6 +1,9 @@
 #include "foldertree.h"
 #include "constants.h"
 
+#include <windows.h>
+#include <shellapi.h>
+
 #include <QHeaderView>
 #include <QDir>
 #include <QFileInfo>
