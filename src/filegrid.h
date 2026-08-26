@@ -88,7 +88,6 @@ private:
     void layoutWaterfall();   // 瀑布流:按宽高比放最短列
     void applyFilter();     // 按 m_filterMode 从 m_allEntries 生成 m_entries
     int  colsForWidth(int w) const;
-    bool isIndexVisible(int idx, int vpTop, int vpH, int rowH) const;
     int  cardW() const;       // 卡片宽度(按查看方式)
     int  cardH(int idx) const;// 卡片高度(瀑布流按宽高比)
 
