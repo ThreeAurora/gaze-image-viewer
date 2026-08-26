@@ -76,6 +76,7 @@ private:
     // 布局
     void updateLayout();
     void layoutCards();
+    void applyFilter();     // 按 m_filterMode 从 m_allEntries 生成 m_entries
     int  colsForWidth(int w) const;
     bool isIndexVisible(int idx, int vpTop, int vpH, int rowH) const;
 
