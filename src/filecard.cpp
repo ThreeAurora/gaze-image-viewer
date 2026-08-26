@@ -4,6 +4,7 @@
 #include "constants.h"
 
 #include <QPainter>
+#include <QPainterPath>
 #include <QPen>
 #include <QMouseEvent>
 #include <QContextMenuEvent>
