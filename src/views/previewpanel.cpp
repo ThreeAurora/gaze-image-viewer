@@ -66,7 +66,7 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     layout->setSpacing(0);
 
     // 空态占位(未选中任何文件时)
-    m_placeholder = new QLabel("\xe5\x9b\xbe\xe7\x89\x87/\xe8\xa7\x86\xe9\xa2\x91/\xe9\x9f\xb3\xe9\xa2\x91 \xe2\x80\x94 \xe9\x80\x89\xe4\xb8\xad\xe6\x96\x87\xe4\xbb\xb6\xe9\xa2\x84\xe8\xa7\x88"); // 图片/视频/音频 — 选中文件预览
+    m_placeholder = new QLabel("\xe9\xa2\x84\xe8\xa7\x88\xe5\x8c\xba"); // 预览区
     m_placeholder->setAlignment(Qt::AlignCenter);
     m_placeholder->setStyleSheet(
         QString("color:%1;font-size:13px;background:transparent;")
