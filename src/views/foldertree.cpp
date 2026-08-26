@@ -140,13 +140,18 @@ void FolderTree::loadDrives() {
     desktopItem->addChild(new QTreeWidgetItem); // 占位（懒加载标记）
     desktopItem->setExpanded(false);   // 桌面默认折叠
 
-    // 枚举 A-Z 盘符
+    // 枚举 A-Z 盘符(显示 Windows 卷标:如 "Cell (C:)",无卷标则只显示盘符)
     for (char drive = 'A'; drive <= 'Z'; ++drive) {
         QString root = QString("%1:/").arg(drive);
         QFileInfo fi(root);
         if (fi.exists()) {
+            QStorageInfo si(root);
+            QString label = si.name();
+            QString text = label.isEmpty()
+                ? QString("%1: (%2:)").arg(drive).arg(drive)
+                : QString("%1 (%2:)").arg(label).arg(drive);
             auto* item = new QTreeWidgetItem(this);
-            item->setText(0, root);
+            item->setText(0, text);
             item->setIcon(0, m_driveIcon);
             item->setData(0, Qt::UserRole, root);
             item->addChild(new QTreeWidgetItem); // 占位
