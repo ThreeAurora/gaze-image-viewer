@@ -100,6 +100,10 @@ QString FileGrid::neighborOf(const QString& path, int delta) const {
     return {};
 }
 
+void FileGrid::refreshCurrentDir() {
+    if (!m_currentDir.isEmpty()) loadDirectory(m_currentDir);
+}
+
 // ═══════════════════════════════════════════
 // 目录加载
 // ═══════════════════════════════════════════
