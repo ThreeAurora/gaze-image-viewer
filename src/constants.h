@@ -21,7 +21,7 @@
 #define C_TREE_HOVER    "#26262B"
 #define C_TREE_SELECT   "#3B82F6"
 #define C_CANVAS_BG     0x141417    // 视频缩略图画布(数值型,thumbnailer 用)
-#define C_TEXT          "#E0E0E4"   // 主文字
+#define C_TEXT          "#FFFFFF"   // 主文字(最纯白)
 #define C_TEXT_SUB      "#9C9CA4"   // 次级文字
 #define C_TEXT_DIM      "#6E6E76"   // 弱文字
 
