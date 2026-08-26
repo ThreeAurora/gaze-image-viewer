@@ -77,6 +77,7 @@ private:
     QLabel *m_audioLabel;
     QLabel *m_placeholder = nullptr;   // 空态占位
     QWidget *m_videoWidget;
+    QVideoWidget *m_vw = nullptr;   // 复用的视频控件(切视频不重建,杜绝叠加透出窗口期)
     QMediaPlayer *m_player = nullptr;
     QAudioOutput *m_audioOutput = nullptr;
     QElapsedTimer m_navClock;  // 最近一次导航时刻:浏览扫动时暂缓自动播(停稳才切视频)
