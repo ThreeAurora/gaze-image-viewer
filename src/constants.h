@@ -22,8 +22,8 @@
 #define C_TREE_SELECT   "#3B82F6"
 #define C_CANVAS_BG     0x141417    // 视频缩略图画布(数值型,thumbnailer 用)
 #define C_TEXT          "#FFFFFF"   // 主文字(最纯白)
-#define C_TEXT_SUB      "#9C9CA4"   // 次级文字
-#define C_TEXT_DIM      "#6E6E76"   // 弱文字
+#define C_TEXT_SUB      "#FFFFFF"   // 次级文字(纯白)
+#define C_TEXT_DIM      "#FFFFFF"   // 弱文字(纯白)
 
 // 类型角标(降饱和橙黄系,右下角胶囊)
 #define C_VIDEO_BG "#B25E00"
