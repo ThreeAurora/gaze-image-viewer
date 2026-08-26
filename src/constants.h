@@ -28,7 +28,7 @@
 // 类型角标(降饱和橙黄系,右下角胶囊)
 #define C_VIDEO_BG "#B25E00"
 #define C_GIF_BG   "#8F7D00"
-#define C_OTHER_BG "#26262B"
+#define C_OTHER_BG "#191919"
 
 // ── 扩展名白名单 ──
 inline const std::unordered_set<QString> IMAGE_EXTS = {
