@@ -152,8 +152,9 @@ inline QSize imageSize(const QString& filePath) {
 #include <windows.h>
 #include <shellapi.h>
 #include <shlobj.h>
-#include <commctrl.h>   // ILD_TRANSPARENT
-#include <shobjidl.h>   // IImageList / IID_IImageList
+#include <commctrl.h>        // ILD_TRANSPARENT
+#include <shobjidl.h>
+#include <commoncontrols.h>  // IImageList 接口 + IID_IImageList(GUID 声明,uuid 库给定义)
 
 #ifndef NOMINMAX
 #define NOMINMAX
