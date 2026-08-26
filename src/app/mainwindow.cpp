@@ -22,6 +22,9 @@
 #include <QShortcut>
 #include <QKeyEvent>
 #include <QApplication>
+#include <QToolButton>
+#include <QFrame>
+#include <QStyle>
 #include <QMenu>
 #include <QActionGroup>
 #include <QInputDialog>
