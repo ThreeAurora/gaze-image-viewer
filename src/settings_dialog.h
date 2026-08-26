@@ -30,6 +30,8 @@ private:
     QWidget* pageCache();          // 分类(缓存数据库)
     QWidget* pageIntegration();    // 系统集成
 
+    void populatePages();          // 构建/重建全部分类与页面(恢复默认后调用)
+
     QListWidget*    m_cats;
     QStackedWidget* m_stack;
 
