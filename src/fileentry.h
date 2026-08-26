@@ -239,10 +239,9 @@ inline QIcon folderIcon(int size) {
     return cache[size];
 }
 
-// 文件类型图标:走 Windows 系统关联(SHGetFileInfo)
-//   .db→数据库图标、exe→自带图标、无关联→空白折纸,与资源管理器一致
+// 文件类型图标:走 Windows 系统关联(SHGetImageList 多档 16/32/48/256)
+//   多分辨率 QIcon → Qt 按显示尺寸自动选最近档,消除单源放大模糊
 //   filePath 非空且存在 → 按真实文件取图标(如 bootmgr 等无扩展名但有专属图标的文件)
-//   高清优先:真实文件 PrivateExtractIcons 256px → SHDefExtractIcon 请求 256 → 32px 回退
 inline QIcon typeIcon(const QString& ext, const QString& filePath = QString()) {
     static std::unordered_map<QString, QIcon> cache;
     QString cacheKey = filePath.isEmpty() ? ext : filePath;
@@ -256,38 +255,51 @@ inline QIcon typeIcon(const QString& ext, const QString& filePath = QString()) {
     std::wstring w = srcPath.toStdWString();
     DWORD attrs = useReal ? 0 : FILE_ATTRIBUTE_NORMAL;
 
-    auto takeBig = [&ic](HICON h) -> bool {
+    // 从 HICON 提取 QImage 并入 QIcon(多分辨率档位);内部负责 DestroyIcon
+    auto takeIcon = [&ic](HICON h) -> bool {
         if (!h) return false;
         QImage img = hiconToQImage(h);
         DestroyIcon(h);
-        if (!img.isNull()) { ic = QIcon(QPixmap::fromImage(img)); return true; }
-        return false;
+        if (img.isNull()) return false;
+        ic.addPixmap(QPixmap::fromImage(img));
+        return true;
     };
 
-    // 1) 真实文件自带图标资源(exe/dll/ico/scr 等):直接抽 256px
+    // 1) 真实文件自带图标资源(exe/dll/ico 等):直接抽 256px(最高清)
     if (useReal) {
         HICON h = nullptr;
         if (PrivateExtractIconsW(w.c_str(), 0, 256, 256, &h, nullptr, 1, 0) >= 1)
-            takeBig(h);
+            takeIcon(h);
     }
-    // 2) 按关联解析请求 256px(对不存在路径也按扩展名给图标)
+
+    // 2) 系统关联图标:SHGetImageList 一次取 256/48/32/16 四档(高清优先)
+    {
+        SHFILEINFOW sfi = {};
+        if (SHGetFileInfoW(w.c_str(), attrs, &sfi, sizeof(sfi),
+                           SHGFI_SYSICONINDEX | SHGFI_USEFILEATTRIBUTES)
+            && sfi.iIcon >= 0) {
+            const int ilModes[] = { SHIL_JUMBO, SHIL_EXTRALARGE, SHIL_LARGE, SHIL_SMALL };
+            for (int m : ilModes) {
+                IImageList* il = nullptr;
+                if (SUCCEEDED(SHGetImageList(m, IID_IImageList, (void**)&il)) && il) {
+                    HICON h = nullptr;
+                    if (SUCCEEDED(il->GetIcon(sfi.iIcon, ILD_TRANSPARENT, &h)) && h)
+                        takeIcon(h);
+                    il->Release();
+                }
+            }
+        }
+    }
+
+    // 3) 兜底:SHDefExtractIconW 请求 256px(对拿不到 SYSICONINDEX 的扩展名)
     if (ic.isNull()) {
         HICON h = nullptr;
         if (SUCCEEDED(SHDefExtractIconW(w.c_str(), 0, 0, &h, nullptr,
                                         MAKELONG(256, 256))) && h)
-            takeBig(h);
+            takeIcon(h);
     }
-    // 3) 回退:32px 大图标
-    if (ic.isNull()) {
-        SHFILEINFOW sfi = {};
-        if (SHGetFileInfoW(w.c_str(), attrs, &sfi,
-                           sizeof(sfi), SHGFI_ICON | SHGFI_LARGEICON | SHGFI_USEFILEATTRIBUTES)
-            && sfi.hIcon) {
-            QImage img = hiconToQImage(sfi.hIcon);
-            if (!img.isNull()) ic = QIcon(QPixmap::fromImage(img));
-            DestroyIcon(sfi.hIcon);
-        }
-    }
+
+    // 4) 最终回退:QStyle 标准图标(自带多尺寸)
     if (ic.isNull())
         ic = QApplication::style()->standardIcon(QStyle::SP_FileIcon);
 
