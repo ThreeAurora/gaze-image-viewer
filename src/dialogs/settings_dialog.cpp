@@ -91,7 +91,7 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent) {
     resetBtn->setStyleSheet(btnQss);
     connect(resetBtn, &QPushButton::clicked, this, [this]() {
         if (QMessageBox::question(this, QString::fromUtf8("恢复默认"),
-            QString::fromUtf8("将所有设置恢复为默认值?(gaze.ini 将被清空)"))
+            QString::fromUtf8("将所有设置恢复为默认值?"))
             == QMessageBox::Yes) {
             AppSettings::instance().clearAll();
             populatePages();
