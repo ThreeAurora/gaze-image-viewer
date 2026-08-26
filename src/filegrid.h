@@ -51,6 +51,7 @@ public:
     int  filterMode() const { return m_filterMode; }
     void navigateSelection(int delta);
     void selectIndex(int idx, bool scrollToVisible = true);  // 滚动联动时传 false 防反馈回路
+    void scrollToRow(int idx);  // 首排贴顶/末排贴底/其余可见不动的定位规则
     bool selectByPath(const QString& path);  // 按路径选中(最近文件定位用)
 
     // 选择扩展(编辑菜单)
