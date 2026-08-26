@@ -207,6 +207,7 @@ QWidget* SettingsDialog::pageGeneral() {
 
 QWidget* SettingsDialog::pageStartup() {
     auto* form = new QFormLayout;
+    form->setVerticalSpacing(12);
     form->addRow(QString::fromUtf8("带文件启动"),
         combo("Start/withFile", {QString::fromUtf8("查看器"), QString::fromUtf8("全屏 - 查看器"),
                                  QString::fromUtf8("浏览器"), QString::fromUtf8("浏览器 - 全屏")}, 0));
@@ -214,11 +215,12 @@ QWidget* SettingsDialog::pageStartup() {
         combo("Start/withoutFile", {QString::fromUtf8("无"), QString::fromUtf8("上次使用的目录"),
                                     QString::fromUtf8("指定目录")}, 1));
     form->addRow(chk("Start/rememberFilename", QString::fromUtf8("记录选择的文件名"), true));
-    return wrapPage(form);
+    return wrapTitled(QString::fromUtf8("启动"), form);
 }
 
 QWidget* SettingsDialog::pageFileOps() {
     auto* form = new QFormLayout;
+    form->setVerticalSpacing(12);
     form->addRow(chk("FileOps/confirmDelete", QString::fromUtf8("文件删除前确认"), false));
     form->addRow(chk("FileOps/useRecycleBin", QString::fromUtf8("使用回收站(删除永远进回收站)"), true));
     form->addRow(chk("FileOps/losslessBackup", QString::fromUtf8("为无损翻转/旋转生成备份"), true));
@@ -229,11 +231,12 @@ QWidget* SettingsDialog::pageFileOps() {
               {"<文件名>-(#)", "<文件名> - 副本 (#)", "<文件名>-副本 (#)", "<文件名>-#", "副本 (#) - <文件名>"}, 0));
     form->addRow(new QLabel(QString::fromUtf8(
         "说明:右键无损旋转/翻转会先复制原件再旋转,不修改任何元数据(含创建/修改时间)。")));
-    return wrapPage(form);
+    return wrapTitled(QString::fromUtf8("文件操作"), form);
 }
 
 QWidget* SettingsDialog::pageInterface() {
     auto* form = new QFormLayout;
+    form->setVerticalSpacing(12);
     form->addRow(chk("Interface/multiViewerTabs", QString::fromUtf8("同一文件多个查看器标签卡"), false));
     form->addRow(chk("Interface/syncBrowser", QString::fromUtf8("关闭视图时,同步调整浏览器"), false));
     form->addRow(chk("Interface/oneViewerTab", QString::fromUtf8("一个文件仅有一个查看器标签卡"), false));
@@ -247,11 +250,12 @@ QWidget* SettingsDialog::pageInterface() {
     form->addRow(new QLabel(QString::fromUtf8(
         "标题栏可用变量:{文件名} {文件名 含扩展名} {文件夹} {文件夹名} {大小}\n"
         "{创建日期} {修改日期} {评级} {颜色标签} 及时间变量 Y y m d H M S 等")));
-    return wrapPage(form);
+    return wrapTitled(QString::fromUtf8("界面"), form);
 }
 
 QWidget* SettingsDialog::pageKeyboardMouse() {
     auto* form = new QFormLayout;
+    form->setVerticalSpacing(12);
     form->addRow(QString::fromUtf8("左/右键方向键"),
         combo("Keyboard/leftRight", {QString::fromUtf8("上一个文件/下一个文件"),
             QString::fromUtf8("水平滚动"), QString::fromUtf8("自动"),
