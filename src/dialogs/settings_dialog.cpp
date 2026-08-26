@@ -8,6 +8,8 @@
 #include <QPushButton>
 #include <QLabel>
 #include <QFileDialog>
+#include <QMessageBox>
+#include <QProcess>
 
 SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent) {
     setWindowTitle(QString::fromUtf8("设置"));
