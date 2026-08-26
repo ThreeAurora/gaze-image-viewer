@@ -114,15 +114,12 @@ void FileGrid::loadDirectory(const QString& dirPath) {
     m_selected.clear();
     m_lastClicked = -1;
 
-    // 过滤
-    if (m_filterMarked) {
-        m_entries.clear();
-        for (auto& e : m_allEntries)
-            if (m_marked.contains(e.path))
-                m_entries.push_back(e);
-    } else {
-        m_entries = m_allEntries;
-    }
+    // 颜色标记批量加载(目录前缀查询,一次 SQL)
+    m_colorLabels = LabelStore::instance().colorsForDir(dirPath);
+    for (auto& e : m_allEntries)
+        e.colorLabel = m_colorLabels.value(e.path, 0);
+
+    applyFilter();
 
     sort(m_sortCol, m_sortAsc);
     updateLayout();
