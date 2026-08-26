@@ -73,7 +73,8 @@ private:
     QMenu* createSortMenu(QWidget* parent);       // 排序子菜单
     QMenu* createFilterMenu(QWidget* parent);     // 筛选子菜单
     void   createToolbar2(QVBoxLayout* intoCenter); // 工具栏第二行
-    void   addRecentFile(const QString& path);
+    void   addRecentFile(const QString& path);   // 内存操作 + 防抖合批写盘
+    void   flushRecentFiles();                   // 把内存列表写回 ini(closeEvent 也调用)
     void   rebuildRecentMenu(QMenu* menu);
     void   openWithSystem(const QString& path);
     void   cycleRedFilter();                      // 红标筛选三态循环
