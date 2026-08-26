@@ -42,6 +42,8 @@ public:
     void refreshCurrentDir();    // 重新加载当前目录(文件操作后)
     void setCardSize(int size);
     void setFixedCols(int n);    // n=0 自动;1-16 手动列数(缩放时缩略图贴边缩放但列数不变)
+    void setViewMode(int mode);  // ViewMode
+    int  viewMode() const { return m_viewMode; }
     void sort(int column, bool ascending);
     void toggleFilter();
     void setFilterMode(int mode);            // FilterMode
