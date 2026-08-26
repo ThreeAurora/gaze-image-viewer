@@ -436,7 +436,7 @@ QWidget* SettingsDialog::pageAppearance() {
         "  mp4/mov/mkv/3gp/amr/asf/avi/bik/dsm/f4v/flc/flv\n"
         "  ifo/m2t/m4v/mts/mpeg/ogv/rm/rmvb/swf/ts/webm/wmv = rgb(170,85,0)\n"
         "(颜色编辑器即将支持)")));
-    return wrapPage(form);
+    return wrapTitled(QString::fromUtf8("外观"), form);
 }
 
 QWidget* SettingsDialog::pageViewer() {
