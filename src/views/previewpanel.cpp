@@ -415,17 +415,20 @@ void PreviewPanel::setupPlayer() {
     m_audioOutput->setVolume(0.8);
 
     if (m_mode == "video") {
-        // 清理上一个视频的 QVideoWidget:不删则旧帧残留,
-        // 切换视频瞬间闪回上一文件一帧(新帧解码完成前旧 vw 透出)+ widget 堆积泄漏
+        // 立即销毁上一个视频的 QVideoWidget:旧 player 已在 teardownPlayer
+        // setVideoOutput(nullptr) 断开渲染引用,同步 delete 杜绝任何旧帧透出窗口
         for (auto* child : m_videoWidget->children()) {
             if (auto* w = qobject_cast<QWidget*>(child)) {
                 if (w == m_liveBadge) continue;   // 保留 LIVE 徽章
                 w->hide();
-                w->deleteLater();
+                delete w;
             }
         }
         auto* vw = new QVideoWidget(m_videoWidget);
         vw->setGeometry(m_videoWidget->rect());
+        // 无帧时强制纯黑底(不透明),新帧到达前绝不透出下层残留
+        vw->setAutoFillBackground(true);
+        vw->setPalette(QPalette(QColor("#000000")));
         vw->show();
         m_player->setVideoOutput(vw);
     }
