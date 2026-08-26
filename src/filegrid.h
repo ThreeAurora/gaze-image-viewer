@@ -94,6 +94,7 @@ private:
     // 卡片管理
     FileCard* acquireCard();
     void      recycleCards();
+    void      recycleInvisible(const QSet<int>& needed);
     QWidget*  m_canvas = nullptr;
 
     // 事件处理
