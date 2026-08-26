@@ -360,6 +360,11 @@ void MainWindow::selftestFastScroll() {
 
     createStatusbar();
 
+    // 最近文件合批写盘:连续切换只刷内存,静默 500ms 后一次落盘
+    m_recentFlushTimer.setSingleShot(true);
+    m_recentFlushTimer.setInterval(500);
+    connect(&m_recentFlushTimer, &QTimer::timeout, this, &MainWindow::flushRecentFiles);
+
     // 快速幻灯片(Keyboard/space=快速幻灯片):间隔可在设置→快捷键→空格调整
     m_slideTimer.setInterval(mw_impl::slideIntervalMs());
     connect(&m_slideTimer, &QTimer::timeout, this, [this]() {
