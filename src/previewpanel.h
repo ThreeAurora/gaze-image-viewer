@@ -42,6 +42,7 @@ protected:
 
 private:
     void setupPlayer();
+    void ensureVideoWidget();   // 视频控件唯一创建/复用入口
     void showImage(const QString &path);
     void showVideo(const QString &path);
     void showAudio(const QString &path);
