@@ -61,9 +61,6 @@ private:
     // 删除本会话从内嵌 Motion Photo 提取的临时视频
     void cleanupExtractCache();
     void toggleFullscreen();
-    // 图片两级加载:快速层(解码器级缩放,几十 ms 即显) + 完整层(后台线程全尺寸)
-    void decodeFullAsync(const QString& path, quint64 gen, bool cmykJpeg);
-    void onFullDecoded(std::shared_ptr<QImage> img, const QString& path, quint64 gen);
 
     QString m_filePath;
     QString m_mode; // "image", "video", "audio", "none"
