@@ -386,20 +386,31 @@ QWidget* SettingsDialog::pageFileList() {
 }
 
 QWidget* SettingsDialog::pageThumbs() {
-    auto* form = new QFormLayout;
-    form->addRow(chk("Thumbs/folder4", QString::fromUtf8("在文件夹缩略图中显示4张缩略图(而非1张)"), true));
-    form->addRow(chk("Thumbs/video4", QString::fromUtf8("在视频缩略图中显示4张缩略图(替代1张)"), false));
-    form->addRow(chk("Thumbs/highQuality", QString::fromUtf8("创建高品质的缩略图"), true));
-    form->addRow(chk("Thumbs/useEmbedded", QString::fromUtf8("使用嵌入缩略图"), true));
-    form->addRow(chk("Thumbs/embedFallback", QString::fromUtf8("当内嵌缩略图尺寸小于缩略图尺寸时从原图创建"), true));
-    form->addRow(chk("Thumbs/alpha", QString::fromUtf8("使用alpha通道"), true));
-    form->addRow(chk("Thumbs/transparencyGrid", QString::fromUtf8("使用透明网格"), true));
-    form->addRow(chk("Thumbs/sharpen", QString::fromUtf8("锐化缩略图"), true));
-    form->addRow(chk("Thumbs/wholeFolder", QString::fromUtf8("为整个文件夹创建缩略图"), false));
-    form->addRow(chk("Thumbs/gamma", QString::fromUtf8("使用 Gamma 纠正"), false));
-    form->addRow(QString::fromUtf8("视频文件提取帧位置(%)"),
+    auto* root = new QVBoxLayout;
+    root->setSpacing(12);
+
+    // 分组"创建"
+    auto* fCreate = new QFormLayout;
+    fCreate->setVerticalSpacing(10);
+    fCreate->addRow(chk("Thumbs/folder4", QString::fromUtf8("在文件夹缩略图中显示4张缩略图(而非1张)"), true));
+    fCreate->addRow(chk("Thumbs/video4", QString::fromUtf8("在视频缩略图中显示4张缩略图(替代1张)"), false));
+    fCreate->addRow(chk("Thumbs/highQuality", QString::fromUtf8("创建高品质的缩略图"), true));
+    fCreate->addRow(chk("Thumbs/useEmbedded", QString::fromUtf8("使用嵌入缩略图"), true));
+    fCreate->addRow(chk("Thumbs/embedFallback", QString::fromUtf8("当内嵌缩略图尺寸小于缩略图尺寸时从原图创建"), true));
+    fCreate->addRow(chk("Thumbs/wholeFolder", QString::fromUtf8("为整个文件夹创建缩略图"), false));
+    fCreate->addRow(QString::fromUtf8("视频文件提取帧位置(%)"),
         spin("Thumbs/videoFramePct", 0, 100, 20));
-    return wrapPage(form);
+    root->addWidget(group(QString::fromUtf8("创建"), fCreate));
+
+    // 分组"处理"
+    auto* fProc = new QFormLayout;
+    fProc->setVerticalSpacing(10);
+    fProc->addRow(chk("Thumbs/alpha", QString::fromUtf8("使用alpha通道"), true));
+    fProc->addRow(chk("Thumbs/transparencyGrid", QString::fromUtf8("使用透明网格"), true));
+    fProc->addRow(chk("Thumbs/sharpen", QString::fromUtf8("锐化缩略图"), true));
+    fProc->addRow(chk("Thumbs/gamma", QString::fromUtf8("使用 Gamma 纠正"), false));
+    root->addWidget(group(QString::fromUtf8("处理"), fProc));
+    return wrapTitled(QString::fromUtf8("缩略图"), root);
 }
 
 QWidget* SettingsDialog::pageAppearance() {
