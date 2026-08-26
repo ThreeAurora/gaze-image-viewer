@@ -113,7 +113,8 @@ void FolderTree::makeIcons() {
         SHFILEINFOW sfi = {};
         if (SHGetFileInfoW(L"C:\\", 0, &sfi, sizeof(sfi), SHGFI_ICON | SHGFI_LARGEICON)
             && sfi.hIcon) {
-            m_driveIcon = QIcon(QPixmap::fromHICON(sfi.hIcon));
+            QImage img = hiconToQImage(sfi.hIcon);
+            if (!img.isNull()) m_driveIcon = QIcon(QPixmap::fromImage(img));
             DestroyIcon(sfi.hIcon);
         } else {
             QImage img(18, 18, QImage::Format_ARGB32);
