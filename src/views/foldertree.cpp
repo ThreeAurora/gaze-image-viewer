@@ -104,18 +104,24 @@ void FolderTree::makeIcons() {
         m_desktopIcon = QIcon(QPixmap::fromImage(img));
     }
 
-    // 硬盘图标
+    // 硬盘图标:用 Windows 真实磁盘图标(SHGetFileInfo on C:\)
     {
-        QImage img(18, 18, QImage::Format_ARGB32);
-        img.fill(Qt::transparent);
-        QPainter p(&img);
-        p.setRenderHint(QPainter::Antialiasing);
-        p.setPen(QPen(QColor("#888"), 1));
-        p.setBrush(Qt::NoBrush);
-        p.drawRect(QRectF(2, 2, 12, 13));
-        p.drawRect(QRectF(11, 4, 3, 3));
-        p.end();
-        m_driveIcon = QIcon(QPixmap::fromImage(img));
+        SHFILEINFOW sfi = {};
+        if (SHGetFileInfoW(L"C:\\", 0, &sfi, sizeof(sfi), SHGFI_ICON | SHGFI_LARGEICON)
+            && sfi.hIcon) {
+            m_driveIcon = QIcon(QPixmap::fromHICON(sfi.hIcon));
+            DestroyIcon(sfi.hIcon);
+        } else {
+            QImage img(18, 18, QImage::Format_ARGB32);
+            img.fill(Qt::transparent);
+            QPainter p(&img);
+            p.setPen(QPen(QColor("#888"), 1));
+            p.setBrush(Qt::NoBrush);
+            p.drawRect(QRectF(2, 2, 12, 13));
+            p.drawRect(QRectF(11, 4, 3, 3));
+            p.end();
+            m_driveIcon = QIcon(QPixmap::fromImage(img));
+        }
     }
 }
 
