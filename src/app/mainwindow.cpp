@@ -35,6 +35,7 @@
 #include <QClipboard>
 #include "iconlib.h"
 #include "labelstore.h"
+#include "settings_dialog.h"
 #include <QMenu>
 #include <QActionGroup>
 #include <QInputDialog>
