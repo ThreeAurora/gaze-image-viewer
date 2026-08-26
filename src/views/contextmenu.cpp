@@ -69,6 +69,19 @@ static void openWithDialog(const QString& path) {
         {"shell32.dll,OpenAs_RunDLL", QFileInfo(path).absoluteFilePath()});
 }
 
+// ── jpegtran 无损变换工具查找(PATH + 常见安装位置) ──
+static QString findJpegtran() {
+    QString p = QStandardPaths::findExecutable("jpegtran");
+    if (!p.isEmpty()) return p;
+    const QStringList fallbacks = {
+        "C:/miniconda3",
+        "C:/Program Files/ImageMagick/jpegtran",
+    };
+    for (const auto& f : fallbacks)
+        if (QFileInfo::exists(f)) return f;
+    return {};
+}
+
 FileContextMenu::FileContextMenu(FileCard* card, QWidget* parent)
     : QMenu(parent), m_filePath(card->filePath()), m_isLive(card->isLivePhoto())
 {
