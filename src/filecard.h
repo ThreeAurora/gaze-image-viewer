@@ -53,6 +53,7 @@ private:
 
     QLabel* m_thumbLabel = nullptr;
     QLabel* m_nameLabel  = nullptr;
+    QLabel* m_detailLabel = nullptr;   // 第二行/详细列(大小 日期)
     QLabel* m_liveBadge  = nullptr;
     QLabel* m_starLabel  = nullptr;
     QLabel* m_starLabel  = nullptr;
