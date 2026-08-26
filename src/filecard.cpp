@@ -175,7 +175,7 @@ void FileCard::setup(const FileEntry& entry, int size, int viewMode, int height)
     m_nameLabel->setText(elided);
 
     // 图标占位(无缩略图时):文件夹与文件类型图标都顶满缩略图高度
-    QIcon icon = entry.isDir ? folderIcon(ts) : typeIcon(entry.ext);
+    QIcon icon = entry.isDir ? folderIcon(ts) : typeIcon(entry.ext, entry.path);
     int isz = m_thumbLabel->width();
     QPixmap pm = icon.pixmap(isz, isz);
     if (!entry.isDir && (pm.width() < isz || pm.height() < isz))
