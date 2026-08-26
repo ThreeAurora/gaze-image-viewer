@@ -32,6 +32,20 @@
 #include <QMimeData>
 #include <QMediaDevices>
 #include <QWidgetAction>
+
+// 标准图标染成白色(深色主题下 QStyle 图标是深色的)
+static QIcon whiteIcon(const QIcon& base, int size = 32) {
+    QPixmap pm = base.pixmap(size, size);
+    QPixmap white(pm.size());
+    white.fill(Qt::transparent);
+    QPainter p(&white);
+    p.drawPixmap(0, 0, pm);
+    p.setCompositionMode(QPainter::CompositionMode_SourceIn);
+    p.fillRect(white.rect(), QColor("#FFFFFF"));
+    p.end();
+    return QIcon(white);
+}
+#include <QWidgetAction>
 #include <QClipboard>
 #include <QBrush>
 #include <QStyle>
