@@ -44,6 +44,7 @@ private:
     bool    m_marked   = false;
     bool    m_isLive   = false;
     bool    m_isDir    = false;
+    QRect   m_thumbRect;              // 缩略图实际显示区域(选中框贴此绘制)
     QString m_selColor = "#3B82F6";
     QString m_nameBg   = "#26262B";
 
