@@ -93,18 +93,12 @@ FileContextMenu::FileContextMenu(FileCard* card, QWidget* parent)
         QDesktopServices::openUrl(QUrl::fromLocalFile(m_filePath));
     });
     addAction("全屏", this, [this]() {
-        // 通知主窗口:导航到该文件并进入全屏
-        QWidget* w = this;
-        while (w && !w->metaObject()->indexOfSlot("openFullscreen(QString)") < 0)
-            w = w->parentWidget();
-        // 直接用 QMetaObject 调用 MainWindow::openFullscreen
+        // 通知主窗口:导航到该文件所在目录并进入全屏
         QObject* mw = this;
-        while (mw) {
-            if (mw->metaObject()->indexOfSlot("openFullscreen(QString)") >= 0) break;
+        while (mw && mw->metaObject()->indexOfSlot("openFullscreen(QString)") < 0)
             mw = mw->parent();
-        }
-        if (mw) QMetaObject::invokeMethod(mw, "openFullscreen",
-                                          Q_ARG(QString, m_filePath));
+        if (mw)
+            QMetaObject::invokeMethod(mw, "openFullscreen", Q_ARG(QString, m_filePath));
     });
     addAction(IconLib::appIcon("cmd_openWith"), "打开方式", this, [this]() {
         openWithDialog(m_filePath);
