@@ -62,6 +62,8 @@ public:
     int     selectedCount() const;
     int64_t selectedSize()  const;
     QStringList selectedPaths() const;
+    int  currentSortCol() const { return m_sortCol; }
+    bool sortAscending()  const { return m_sortAsc; }
 
 signals:
     void fileCountChanged();
