@@ -26,6 +26,10 @@
 #include <QFrame>
 #include <QStyle>
 #include <QMenu>
+#include <QInputDialog>
+#include "iconlib.h"
+#include "labelstore.h"
+#include <QMenu>
 #include <QActionGroup>
 #include <QInputDialog>
 #include <QSettings>
