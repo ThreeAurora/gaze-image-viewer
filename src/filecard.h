@@ -3,13 +3,14 @@
 #include <QLabel>
 #include <QPixmap>
 #include "fileentry.h"
+#include "filegrid.h"
 
 class FileCard : public QFrame {
     Q_OBJECT
 public:
     explicit FileCard(QWidget* parent = nullptr);
 
-    void setup(const FileEntry& entry, int cardSize);
+    void setup(const FileEntry& entry, int size, int viewMode, int height = 0);
     void setThumbnail(const QPixmap& pixmap);
     void setSelected(bool sel, bool multi = false);
     void setMarked(bool marked);
