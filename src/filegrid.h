@@ -118,6 +118,7 @@ private:
     std::vector<FileEntry> m_entries;    // 筛选/排序后的显示列表
     QString m_currentDir;                // 当前加载的目录
     int    m_cardSize     = 160;
+    int    m_cardSizeAuto = 160;   // 自动模式的卡片尺寸(slider 值;固定列数时按宽度重算)
     int    m_cols         = 0;
     int    m_fixedCols    = 0;
     int    m_viewMode     = VIEW_THUMBS_NAME;
