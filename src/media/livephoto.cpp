@@ -3,6 +3,10 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QFile>
+#include <QDateTime>
+#include <QHash>
+#include <QMutex>
+#include <QMutexLocker>
 #include <QTemporaryFile>
 #include <QProcess>
 #include <set>
