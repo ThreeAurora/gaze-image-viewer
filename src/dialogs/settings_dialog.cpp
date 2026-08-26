@@ -12,6 +12,10 @@
 #include <QMessageBox>
 #include <QProcess>
 #include <QMessageBox>
+#include <QTableWidget>
+#include <QHeaderView>
+#include <QKeySequenceEdit>
+#include <QMenuBar>
 
 void SettingsDialog::populatePages() {
     m_cats->clear();
