@@ -38,6 +38,21 @@ SortHeader::SortHeader(QWidget* parent) : QWidget(parent) {
     }
 
     updateArrows();
+
+    // 右键"配置列":勾选列显隐
+    setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(this, &QWidget::customContextMenuRequested, this,
+            [this](const QPoint& pos) {
+        QMenu menu(this);
+        for (auto& c : m_columns) {
+            QAction* a = menu.addAction(c.btn->text(), this, [c]() {
+                c.btn->setVisible(!c.btn->isVisible());
+            });
+            a->setCheckable(true);
+            a->setChecked(c.btn->isVisible());
+        }
+        menu.exec(mapToGlobal(pos));
+    });
 }
 
 void SortHeader::onColumnClicked(int colId) {
