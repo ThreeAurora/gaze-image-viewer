@@ -86,7 +86,6 @@ private:
     QLineEdit *m_addrBar = nullptr;
     QLabel *m_statusLabel = nullptr;
     QLabel *m_pathLabel = nullptr;
-    QPushButton *m_filterBtn = nullptr;
     QLabel *m_tooltip = nullptr;
     bool m_fullscreenMode = false;
     QStringList m_history;   // 目录导航历史
