@@ -260,10 +260,27 @@ void FileCard::paintEvent(QPaintEvent* event) {
 
     QPainter p(this);
     p.setRenderHint(QPainter::Antialiasing);
-    QColor borderColor(m_selected ? m_selColor : C_CARD_BORDER);
-    p.setPen(QPen(borderColor, 1));
-    p.setBrush(Qt::NoBrush);
-    p.drawRoundedRect(0, 0, width() - 1, height() - 1, 4, 4);
+
+    // 底色:选中 > 悬停 > 常态
+    if (m_selected)
+        p.setBrush(QColor(C_CARD_HOVER));
+    else if (m_hovered)
+        p.setBrush(QColor(C_CARD_HOVER));
+    else
+        p.setBrush(QColor(C_CARD_BG));
+    p.setPen(Qt::NoPen);
+    p.drawRoundedRect(1, 1, width() - 2, height() - 2, 6, 6);
+
+    // 边框:选中 2px 强调蓝;悬停 1px 亮边;常态 1px 暗边
+    if (m_selected) {
+        p.setPen(QPen(QColor(m_selColor), 2));
+        p.setBrush(Qt::NoBrush);
+        p.drawRoundedRect(1, 1, width() - 3, height() - 3, 6, 6);
+    } else {
+        p.setPen(QPen(QColor(m_hovered ? "#4A4A54" : C_CARD_BORDER), 1));
+        p.setBrush(Qt::NoBrush);
+        p.drawRoundedRect(0, 0, width() - 1, height() - 1, 6, 6);
+    }
 }
 
 void FileCard::applyLabelBg() {
