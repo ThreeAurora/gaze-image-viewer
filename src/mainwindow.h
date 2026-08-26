@@ -21,6 +21,8 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     Q_INVOKABLE void navigateTo(const QString &path);
     Q_INVOKABLE void openFullscreen(const QString &path);  // 右键"全屏":导航到文件并全屏
+    Q_INVOKABLE void toggleViewer();   // 浏览器 ↔ 查看器(单图模式)
+    Q_INVOKABLE void viewerBack();     // ESC:查看器退回浏览器(幂等)
 
 
 
