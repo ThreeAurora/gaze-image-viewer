@@ -26,6 +26,7 @@ void SettingsDialog::populatePages() {
         { "文件操作", &SettingsDialog::pageFileOps },
         { "界面",     &SettingsDialog::pageInterface },
         { "键盘和鼠标", &SettingsDialog::pageKeyboardMouse },
+        { "快捷键",     &SettingsDialog::pageShortcuts },
         { "切换模式", &SettingsDialog::pageSwitchMode },
         { "浏览器",   &SettingsDialog::pageBrowser },
         { "文件列表", &SettingsDialog::pageFileList },
