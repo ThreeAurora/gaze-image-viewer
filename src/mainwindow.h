@@ -101,6 +101,10 @@ private:
     bool m_viewerMode = false; // 查看器(单图)模式
     QWidget* m_treePane = nullptr;    // 树面板(查看器模式隐藏)
     QWidget* m_centerPane = nullptr;  // 网格面板(查看器模式隐藏)
+    // 最近文件:内存列表为唯一真源,定时合批写盘(连续切换不再每次同步落盘)
+    QStringList m_recentList;         // 内存副本(首次用到时从 ini 懒加载)
+    bool        m_recentLoaded = false;
+    QTimer      m_recentFlushTimer;   // 单发 500ms,超时统一写盘
     QWidget* m_previewPane = nullptr; // 预览面板包装(标题条 + PreviewPanel)
     QWidget* m_infoPane  = nullptr;  // #80 信息面板容器(含标题条,挂在预览栏内)
     InfoPanel* m_info    = nullptr;  // #80 元数据表 + 直方图
