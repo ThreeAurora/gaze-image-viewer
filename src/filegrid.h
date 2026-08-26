@@ -42,8 +42,20 @@ public:
     void setCardSize(int size);
     void sort(int column, bool ascending);
     void toggleFilter();
+    void setFilterMode(int mode);            // FilterMode
+    int  filterMode() const { return m_filterMode; }
     void navigateSelection(int delta);
     void selectIndex(int idx);   // 单选指定项并滚动到可见(滚动联动用)
+
+    // 选择扩展(编辑菜单)
+    void selectAllEntries();
+    void selectInvert();
+    enum SelectKind { KindMarked, KindFiles, KindDirs, KindImages, KindVideos, KindAudio };
+    void selectByKind(int kind);
+
+    // 颜色标记:对当前选中(单选时该项;多选时全部)设置
+    void applyColorLabelToSelection(int color);
+    int  firstSelectedIndex() const;
 
     int     fileCount()     const;
     int     selectedCount() const;
