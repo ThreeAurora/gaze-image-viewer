@@ -67,6 +67,11 @@ QString AppSettings::iniPath() const {
     return m_settings.fileName();
 }
 
+void AppSettings::clearAll() {
+    m_settings.clear();   // 清空后 get() 返回代码内默认值(= 用户配置清单)
+    m_settings.sync();
+}
+
 bool AppSettings::livePhotoAutoPlay() const {
     return m_settings.value("livephoto/autoplay", true).toBool();
 }
