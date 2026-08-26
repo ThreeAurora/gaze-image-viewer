@@ -174,11 +174,13 @@ void FileCard::setup(const FileEntry& entry, int size, int viewMode, int height)
                                    qMax(40, m_nameLabel->width() - 6));
     m_nameLabel->setText(elided);
 
-    // 图标占位(无缩略图时):文件夹铺满,文件类型图标加大
+    // 图标占位(无缩略图时):文件夹与文件类型图标都顶满缩略图高度
     QIcon icon = entry.isDir ? folderIcon(ts) : typeIcon(entry.ext);
-    double iconScale = entry.isDir ? 1.0 : 0.55;
-    int isz = static_cast<int>(m_thumbLabel->width() * iconScale);
-    m_thumbLabel->setPixmap(icon.pixmap(isz, isz));
+    int isz = m_thumbLabel->width();
+    QPixmap pm = icon.pixmap(isz, isz);
+    if (!entry.isDir && (pm.width() < isz || pm.height() < isz))
+        pm = pm.scaled(isz, isz, Qt::KeepAspectRatio, Qt::SmoothTransformation);  // 小图标平滑放大顶满
+    m_thumbLabel->setPixmap(pm);
 
     m_liveBadge->adjustSize();
     m_liveBadge->move(8, 8);
