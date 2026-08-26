@@ -313,7 +313,15 @@ QWidget* SettingsDialog::pageShortcuts() {
             table->setCellWidget(r, 1, ed);
         }
     }
-    return wrapPage(v);
+
+    // 表格撑满页面高度(wrapPage 的 stretch 会压矮表格,这里自行布局)
+    auto* page = new QWidget;
+    auto* vl2 = new QVBoxLayout(page);
+    vl2->setContentsMargins(16, 16, 16, 16);
+    vl2->addWidget(new QLabel(QString::fromUtf8(
+        "点击快捷键框后按下新组合键即可修改(按 Esc/Backspace 清除恢复默认)。变更即时保存并生效。")));
+    vl2->addWidget(table, 1);
+    return page;
 }
 
 QWidget* SettingsDialog::pageSwitchMode() {
