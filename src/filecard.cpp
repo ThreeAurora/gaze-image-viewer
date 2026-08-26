@@ -11,14 +11,13 @@
 #include <QApplication>
 
 FileCard::FileCard(QWidget* parent) : QFrame(parent) {
-    setCursor(Qt::PointingHandCursor);
     setMouseTracking(true);
-    setStyleSheet("FileCard{background:#26262B;border:none;border-radius:6px;}");
+    // 光标保持默认箭头(不用小手);卡片本体透明,图片之外纯黑
+    setStyleSheet("FileCard{background:transparent;border:none;}");
 
     m_thumbLabel = new QLabel(this);
     m_thumbLabel->setAlignment(Qt::AlignCenter);
-    m_thumbLabel->setStyleSheet(
-        "background:#141417;border-radius:4px;");
+    m_thumbLabel->setStyleSheet("background:transparent;");
 
     m_nameLabel = new QLabel(this);
     m_nameLabel->setAlignment(Qt::AlignCenter);
