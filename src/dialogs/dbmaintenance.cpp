@@ -47,7 +47,7 @@ DbMaintenanceDialog::DbMaintenanceDialog(QWidget* parent) : QDialog(parent) {
     root->addWidget(m_table, 1);
 
     auto* btns = new QHBoxLayout;
-    auto addBtn = [&btns](const QString& txt, auto slot) {
+    auto addBtn = [this, &btns](const QString& txt, auto slot) {
         auto* b = new QPushButton(txt);
         connect(b, &QPushButton::clicked, this, slot);
         btns->addWidget(b);
