@@ -32,6 +32,7 @@
 #include <QUrl>
 #include <QTextEdit>
 #include <QAbstractSpinBox>
+#include <QClipboard>
 #include "iconlib.h"
 #include "labelstore.h"
 #include <QMenu>
