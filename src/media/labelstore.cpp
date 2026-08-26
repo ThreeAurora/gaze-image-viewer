@@ -17,7 +17,7 @@ QSqlDatabase LabelStore::db() {
     const QString conn = QStringLiteral("label_db");
     if (!QSqlDatabase::contains(conn)) {
         QSqlDatabase d = QSqlDatabase::addDatabase("QSQLITE", conn);
-        d.setDatabaseName(AppSettings::instance().dataDir() + "/thumbnails.db");
+        d.setDatabaseName(QCoreApplication::applicationDirPath() + "/thumbnails.db");
         d.open();
         QSqlQuery q(d);
         q.exec("CREATE TABLE IF NOT EXISTS labels "
