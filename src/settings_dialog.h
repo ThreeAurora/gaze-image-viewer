@@ -1,18 +1,14 @@
 #pragma once
 #include <QDialog>
-#include <QTreeWidget>
+#include <QListWidget>
 #include <QStackedWidget>
 #include <QCheckBox>
 #include <QComboBox>
 #include <QSpinBox>
 #include <QLineEdit>
-#include <QFormLayout>
 
-class QGroupBox;
-
-// 设置对话框:左侧一级/二级分类树(一级项自身也是页面,可点进)
-// + 右侧大标题/分隔线/分组框页面(对标 XnView MP 结构)
-// 变更即时保存到 gaze.ini
+// 设置对话框:左侧分类 + 右侧页(照 XnView MP 结构;默认值 = 用户 ini 配置)
+// 变更即时保存到 xnnview.ini
 class SettingsDialog : public QDialog {
     Q_OBJECT
 public:
@@ -20,24 +16,21 @@ public:
 
 private:
     QWidget* pageGeneral();        // 常规
-    QWidget* pageStartup();        // 常规 → 启动
-    QWidget* pageFileOps();        // 常规 → 文件操作
-    QWidget* pageInterface();      // 常规 → 界面(标题栏模板/最近文件)
-    QWidget* pageKeyboardMouse();  // 交互 → 键盘和鼠标
-    QWidget* pageShortcuts();      // 交互 → 快捷键配置
-    QWidget* pageSwitchMode();     // 常规 → 切换模式
+    QWidget* pageStartup();        // 启动
+    QWidget* pageFileOps();        // 文件操作
+    QWidget* pageInterface();      // 界面(标题栏模板/最近文件)
+    QWidget* pageKeyboardMouse();  // 键盘和鼠标
+    QWidget* pageSwitchMode();     // 切换模式
     QWidget* pageBrowser();        // 浏览器
-    QWidget* pageFileList();       // 浏览器 → 文件列表
+    QWidget* pageFileList();       // 文件列表
     QWidget* pageThumbs();         // 缩略图
-    QWidget* pageAppearance();     // 缩略图 → 外观
+    QWidget* pageAppearance();     // 外观(标签颜色)
     QWidget* pageViewer();         // 查看
-    QWidget* pageFullscreen();     // 查看 → 全屏
-    QWidget* pageCache();          // 高级 → 缓存数据库
-    QWidget* pageIntegration();    // 高级 → 系统集成
+    QWidget* pageFullscreen();     // 全屏
+    QWidget* pageCache();          // 分类(缓存数据库)
+    QWidget* pageIntegration();    // 系统集成
 
-    void populatePages();          // 构建/重建全部分类与页面(恢复默认后调用)
-
-    QTreeWidget*    m_cats;
+    QListWidget*    m_cats;
     QStackedWidget* m_stack;
 
     // 控件工厂:载入当前值,变更即时保存
@@ -46,9 +39,3 @@ private:
     QSpinBox*  spin(const QString& key, int min, int max, int def);
     QLineEdit* edit(const QString& key, const QString& def);
 };
-
-// ── 页面构建助手(pageXXX 与 settings_dialog.cpp 内部共用) ──
-// 带大标题+分隔线的页面包装
-QWidget* wrapTitled(const QString& title, QLayout* lay);
-// 分组框(对齐 XnView"预览/旋转"式圆角边框分组)
-QGroupBox* group(const QString& title, QLayout* lay);
