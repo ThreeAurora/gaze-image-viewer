@@ -147,6 +147,7 @@ private:
     QHash<QString, QPixmap> m_thumbCache;
 
     QTimer m_resizeTimer;
+    QTimer m_reEnqueueTimer;  // 尺寸停止变化后重新生成高清缩略图(防抖)
     bool   m_loading = false;
 
     static constexpr int SPACING = 6;
