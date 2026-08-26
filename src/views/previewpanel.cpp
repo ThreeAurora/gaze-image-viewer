@@ -529,6 +529,10 @@ void PreviewPanel::setupPlayer() {
 
 void PreviewPanel::teardownPlayer() {
     if (!m_player) return;
+    // 立即断开视频输出:阻止旧播放器继续往 QVideoWidget 渲染帧。
+    // 否则 stop() 后最后一帧残留 + deleteLater 窗口期内旧帧持续透出(切视频闪回)
+    if (m_mode == "video")
+        m_player->setVideoOutput(static_cast<QVideoWidget*>(nullptr));
     m_player->stop();
     // deleteLater：对象在事件循环末尾销毁，避免同步 delete 的 UAF 风险
     m_player->deleteLater();
