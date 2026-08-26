@@ -40,10 +40,12 @@ private:
     QString m_filePath;
     bool    m_active   = false;
     bool    m_selected = false;
+    bool    m_hovered  = false;
     bool    m_marked   = false;
     bool    m_isLive   = false;
-    QString m_selColor = "#0078D7";
-    QString m_nameBg   = "#1A1A1A";
+    bool    m_isDir    = false;
+    QString m_selColor = "#3B82F6";
+    QString m_nameBg   = "#26262B";
 
     QLabel* m_thumbLabel = nullptr;
     QLabel* m_nameLabel  = nullptr;
