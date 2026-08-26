@@ -43,6 +43,7 @@ public:
     void sort(int column, bool ascending);
     void toggleFilter();
     void navigateSelection(int delta);
+    void selectIndex(int idx);   // 单选指定项并滚动到可见(滚动联动用)
 
     int     fileCount()     const;
     int     selectedCount() const;
