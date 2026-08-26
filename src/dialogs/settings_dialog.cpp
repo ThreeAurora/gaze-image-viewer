@@ -68,16 +68,24 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent) {
             m_stack, &QStackedWidget::setCurrentIndex);
     m_cats->setCurrentRow(0);
 
-    // 底部按钮
+    // 底部按钮行:右下角 确定 / 取消
     auto* bottom = new QHBoxLayout;
     bottom->addStretch();
-    auto* closeBtn = new QPushButton(QString::fromUtf8("关闭"));
-    closeBtn->setStyleSheet(
+    const char* btnQss =
         "QPushButton{background:#2C2C32;color:#E0E0E4;border:1px solid #3A3A42;"
-        "padding:6px 24px;border-radius:4px;}"
-        "QPushButton:hover{border-color:#3B82F6;}");
-    connect(closeBtn, &QPushButton::clicked, this, &QDialog::accept);
-    bottom->addWidget(closeBtn);
+        "padding:6px 28px;border-radius:4px;}"
+        "QPushButton:hover{border-color:#3B82F6;}"
+        "QPushButton#okBtn{background:#3B82F6;border-color:#3B82F6;color:#FFF;}"
+        "QPushButton#okBtn:hover{background:#2F6FE0;}";
+    auto* okBtn = new QPushButton(QString::fromUtf8("确定"));
+    okBtn->setObjectName("okBtn");
+    okBtn->setStyleSheet(btnQss);
+    auto* cancelBtn = new QPushButton(QString::fromUtf8("取消"));
+    cancelBtn->setStyleSheet(btnQss);
+    connect(okBtn, &QPushButton::clicked, this, &QDialog::accept);
+    connect(cancelBtn, &QPushButton::clicked, this, &QDialog::reject);
+    bottom->addWidget(okBtn);
+    bottom->addWidget(cancelBtn);
     root->addLayout(bottom);
 }
 
