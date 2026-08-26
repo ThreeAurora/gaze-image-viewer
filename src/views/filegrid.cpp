@@ -49,8 +49,10 @@ FileGrid::FileGrid(QWidget* parent) : QScrollArea(parent) {
     m_canvas->setStyleSheet("background:#000;");
     setWidget(m_canvas);
 
-    connect(verticalScrollBar(), &QScrollBar::valueChanged,
-            this, &FileGrid::layoutCards);
+    connect(verticalScrollBar(), &QScrollBar::valueChanged, this, [this]() {
+        layoutCards();
+        m_scrollSelTimer.start();   // 滚动停止后联动选中
+    });
 
     connect(&Thumbnailer::instance(), &Thumbnailer::thumbnailReady,
             this, &FileGrid::onThumbReady);
