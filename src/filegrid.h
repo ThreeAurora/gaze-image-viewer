@@ -40,6 +40,7 @@ public:
 
     void loadDirectory(const QString& dirPath);
     void setCardSize(int size);
+    void setFixedCols(int n);    // n=0 自动;1-16 手动列数(缩放时缩略图贴边缩放但列数不变)
     void sort(int column, bool ascending);
     void toggleFilter();
     void setFilterMode(int mode);            // FilterMode
