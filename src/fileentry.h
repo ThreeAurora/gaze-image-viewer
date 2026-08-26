@@ -5,6 +5,7 @@
 #include <QPainter>
 #include <QColor>
 #include <QFileInfo>
+#include <QDateTime>
 #include <QImageReader>
 #include <QApplication>
 #include <QStyle>
