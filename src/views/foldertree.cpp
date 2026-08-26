@@ -92,20 +92,30 @@ void FolderTree::makeIcons() {
         m_folderIcon = QIcon(QPixmap::fromImage(img));
     }
 
-    // 桌面图标
+    // 桌面图标:Windows 系统桌面图标(SIID_DESKTOPPC)
     {
-        QImage img(18, 18, QImage::Format_ARGB32);
-        img.fill(Qt::transparent);
-        QPainter p(&img);
-        p.setRenderHint(QPainter::Antialiasing);
-        p.setPen(QPen(QColor("#0078D7"), 1.5));
-        p.setBrush(Qt::NoBrush);
-        p.drawRoundedRect(QRectF(2, 2, 14, 10), 2, 2);
-        p.drawLine(QPoint(6, 12), QPoint(12, 12));
-        p.drawLine(QPoint(9, 12), QPoint(9, 16));
-        p.drawLine(QPoint(5, 16), QPoint(13, 16));
-        p.end();
-        m_desktopIcon = QIcon(QPixmap::fromImage(img));
+        SHSTOCKICONINFO si = {};
+        si.cbSize = sizeof(si);
+        if (SUCCEEDED(SHGetStockIconInfo(SIID_DESKTOPPC,
+                SHGSI_ICON | SHGSI_LARGEICON, &si)) && si.hIcon) {
+            QImage img = hiconToQImage(si.hIcon);
+            if (!img.isNull()) m_desktopIcon = QIcon(QPixmap::fromImage(img));
+            DestroyIcon(si.hIcon);
+        }
+        if (m_desktopIcon.isNull()) {   // 回退:自绘显示器
+            QImage img(18, 18, QImage::Format_ARGB32);
+            img.fill(Qt::transparent);
+            QPainter p(&img);
+            p.setRenderHint(QPainter::Antialiasing);
+            p.setPen(QPen(QColor("#0078D7"), 1.5));
+            p.setBrush(Qt::NoBrush);
+            p.drawRoundedRect(QRectF(2, 2, 14, 10), 2, 2);
+            p.drawLine(QPoint(6, 12), QPoint(12, 12));
+            p.drawLine(QPoint(9, 12), QPoint(9, 16));
+            p.drawLine(QPoint(5, 16), QPoint(13, 16));
+            p.end();
+            m_desktopIcon = QIcon(QPixmap::fromImage(img));
+        }
     }
 
     // 硬盘图标:用 Windows 真实磁盘图标(SHGetFileInfo on C:\)
