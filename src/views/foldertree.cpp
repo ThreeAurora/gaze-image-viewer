@@ -29,7 +29,7 @@ void ArrowStyle::drawPrimitive(PrimitiveElement element, const QStyleOption* opt
 
             painter->save();
             painter->setPen(Qt::NoPen);
-            painter->setBrush(QColor("#888"));
+            painter->setBrush(QColor("#FFFFFF"));   // 白色箭头常显,可展开处一目了然
             QPolygon tri;
             if (expanded) {
                 tri << QPoint(cx - sz, cy - sz / 2)
