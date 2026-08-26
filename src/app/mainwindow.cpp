@@ -36,6 +36,7 @@
 #include "iconlib.h"
 #include "labelstore.h"
 #include "settings_dialog.h"
+#include "dbmaintenance.h"
 #include <QMenu>
 #include <QActionGroup>
 #include <QInputDialog>
