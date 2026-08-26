@@ -43,6 +43,7 @@ private:
     bool    m_selected = false;
     bool    m_hovered  = false;
     bool    m_marked   = false;
+    int     m_colorLabel = 0;
     bool    m_isLive   = false;
     bool    m_isDir    = false;
     QRect   m_thumbRect;              // 缩略图实际显示区域(选中框贴此绘制)
