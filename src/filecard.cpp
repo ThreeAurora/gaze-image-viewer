@@ -218,6 +218,12 @@ void FileCard::setThumbnail(const QPixmap& pixmap) {
     rp.drawPixmap(0, 0, square);
     rp.end();
     m_thumbLabel->setPixmap(rounded);
+
+    // 记录图片实际显示区域(居中后的矩形 + label 偏移),选中框贴此绘制
+    m_thumbRect = QRect(4 + (ts - scaled.width()) / 2,
+                        4 + (ts - scaled.height()) / 2,
+                        scaled.width(), scaled.height());
+    update();
 }
 
 void FileCard::setSelected(bool sel, bool multi) {
