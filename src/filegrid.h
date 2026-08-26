@@ -109,6 +109,7 @@ private:
     // 数据
     std::vector<FileEntry> m_allEntries;
     std::vector<FileEntry> m_entries;    // 筛选/排序后的显示列表
+    QString m_currentDir;                // 当前加载的目录
     int    m_cardSize     = 160;
     int    m_cols         = 0;
     int    m_fixedCols    = 0;
