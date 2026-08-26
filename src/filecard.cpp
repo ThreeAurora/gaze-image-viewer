@@ -1,6 +1,7 @@
 #include "filecard.h"
 #include "contextmenu.h"
 #include "livephoto.h"
+#include "labelstore.h"
 #include "constants.h"
 
 #include <QPainter>
