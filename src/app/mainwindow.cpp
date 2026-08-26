@@ -255,6 +255,7 @@ void MainWindow::selftestFastScroll() {
 
     auto *centerPanel = new QWidget;
     centerPanel->setMinimumWidth(200);
+    m_centerPane = centerPanel;
     auto *cl = new QVBoxLayout(centerPanel);
     cl->setContentsMargins(0, 0, 0, 0);
     cl->setSpacing(0);
