@@ -139,8 +139,12 @@ inline QSize imageSize(const QString& filePath) {
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
+#ifndef _WIN32_IE
+#define _WIN32_IE 0x0600
+#endif
 #include <windows.h>
 #include <shellapi.h>
+#include <shlobj.h>
 
 #ifndef NOMINMAX
 #define NOMINMAX
