@@ -148,7 +148,6 @@ private:
     QHash<QString, QPixmap> m_thumbCache;
 
     QTimer m_resizeTimer;
-    QTimer m_scrollSelTimer;   // 滚动停止后联动选中(防抖)
     bool   m_loading = false;
 
     static constexpr int SPACING = 6;
