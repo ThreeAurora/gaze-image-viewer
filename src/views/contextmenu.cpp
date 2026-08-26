@@ -218,40 +218,76 @@ FileContextMenu::FileContextMenu(FileCard* card, QWidget* parent)
     if (IMAGE_EXTS.count("." + QFileInfo(m_filePath).suffix().toLower())) {
         auto* rotMenu = addMenu(IconLib::appIcon("cmd_rotate"), QString::fromUtf8("旋转/翻转"));
         auto doRot = [this, grid](int mode) {
-            QImage img(m_filePath);
-            if (img.isNull()) return;
-            QImage out;
-            QTransform t;
-            switch (mode) {
-            case 0: t.rotate(-90); out = img.transformed(t, Qt::SmoothTransformation); break;
-            case 1: t.rotate(90);  out = img.transformed(t, Qt::SmoothTransformation); break;
-            case 2: out = img.mirrored(true, false); break;
-            case 3: out = img.mirrored(false, true); break;
-            }
-            if (out.isNull()) return;
             QFileInfo fi(m_filePath);
+            QString ext = fi.suffix().toLower();
+            QDateTime mod  = fi.lastModified();          // 原修改时间
+            QDateTime birth = fi.birthTime();            // 原创建时间
             QString backup = fi.absolutePath() + "/" + fi.completeBaseName()
                            + "_original." + fi.suffix();
             if (!QFileInfo::exists(backup))
-                QFile::copy(m_filePath, backup);          // 首次生成备份原件
-            QDateTime mod = fi.lastModified();            // 记录原修改时间
-            // 先写临时文件再原子替换:直接 open(WriteOnly) 会截断原文件,
-            // 若 save 编码失败(如 tif/webp 无编码器)原图将损坏
+                QFile::copy(m_filePath, backup);         // 首次生成备份原件
+
             QString tmp = m_filePath + ".gaze_rot_tmp";
-            QFile f(tmp);
-            if (!f.open(QIODevice::WriteOnly)) return;
-            bool ok = out.save(&f, nullptr, 95);
-            f.close();
-            if (!ok) { QFile::remove(tmp); return; }
-            if (!QFile::rename(tmp, m_filePath)) {        // Windows MoveFileEx 覆盖替换
+            bool ok = false;
+
+            // ── JPEG:jpegtran DCT 级无损变换,-copy all 保留全部元数据(EXIF/XMP/ICC) ──
+            if (ext == "jpg" || ext == "jpeg") {
+                QString jt = findJpegtran();
+                if (!jt.isEmpty()) {
+                    QStringList args{"-copy", "all"};
+                    switch (mode) {
+                    case 0: args << "-rotate" << "270"; break;   // 左旋90°(逆时针)
+                    case 1: args << "-rotate" << "90";  break;   // 右旋90°(顺时针)
+                    case 2: args << "-flip" << "horizontal"; break;
+                    case 3: args << "-flip" << "vertical"; break;
+                    }
+                    args << m_filePath;
+                    QProcess proc;
+                    proc.setStandardOutputFile(tmp);     // 变换结果重定向临时文件
+                    proc.start(jt, args);
+                    ok = proc.waitForFinished(20000) && proc.exitCode() == 0
+                         && QFileInfo(tmp).size() > 0;
+                    if (!ok) QFile::remove(tmp);
+                }
+            }
+
+            // ── 非 JPEG 或 jpegtran 不可用:QImage 重编码 ──
+            // (PNG/BMP 像素无损;JPEG 回退为 95 有损 + EXIF 无法保留,仅兜底)
+            if (!ok) {
+                QImage img(m_filePath);
+                QImage out;
+                QTransform t;
+                if (!img.isNull()) {
+                    switch (mode) {
+                    case 0: t.rotate(-90); out = img.transformed(t, Qt::SmoothTransformation); break;
+                    case 1: t.rotate(90);  out = img.transformed(t, Qt::SmoothTransformation); break;
+                    case 2: out = img.mirrored(true, false); break;
+                    case 3: out = img.mirrored(false, true); break;
+                    }
+                }
+                QFile f(tmp);
+                if (!out.isNull() && f.open(QIODevice::WriteOnly)) {
+                    ok = out.save(&f, nullptr, 95);
+                    f.close();
+                }
+                if (!ok) QFile::remove(tmp);
+            }
+
+            if (!ok) return;
+
+            // 原子替换 + 恢复创建/修改时间(元数据不因替换改变)
+            if (!QFile::rename(tmp, m_filePath)) {
                 QFile::remove(tmp);
                 QMessageBox::warning(nullptr, QString::fromUtf8("旋转/翻转"),
                     QString::fromUtf8("写回文件失败:\n") + m_filePath);
                 return;
             }
-            QFile tf(m_filePath);                          // 保留原修改时间(元数据不变)
-            if (tf.open(QIODevice::ReadOnly))
+            QFile tf(m_filePath);
+            if (tf.open(QIODevice::ReadOnly)) {
                 tf.setFileTime(mod, QFileDevice::FileModificationTime);
+                if (birth.isValid())
+                    tf.setFileTime(birth, QFileDevice::FileBirthTime);
+            }
             if (grid) grid->refreshCurrentDir();
         };
         rotMenu->addAction(IconLib::appIcon("cmd_rotate90"),
