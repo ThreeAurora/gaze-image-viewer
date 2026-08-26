@@ -277,7 +277,7 @@ QWidget* SettingsDialog::pageKeyboardMouse() {
         "滚轮:无修饰/Alt/Shift = 上一个/下一个文件;Ctrl = 缩放。\n"
         "右键/中键 = 什么都不做(右键保留上下文菜单)。\n"
         "以上为强制行为,此处仅作说明。")));
-    return wrapPage(form);
+    return wrapTitled(QString::fromUtf8("键盘和鼠标"), form);
 }
 
 QWidget* SettingsDialog::pageShortcuts() {
