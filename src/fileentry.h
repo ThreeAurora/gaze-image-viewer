@@ -30,6 +30,7 @@ struct FileEntry {
     int64_t  size  = 0;
     double   mtime = 0.0;
     double   ctime = 0.0;
+    int      colorLabel = 0;  // 颜色标记:0无 1红 2橙 3黄 4绿 5蓝
 };
 
 // ═══════════════════════════════════════════
