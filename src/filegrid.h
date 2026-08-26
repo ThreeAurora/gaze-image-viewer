@@ -65,6 +65,7 @@ private:
     void updateLayout();
     void layoutCards();
     int  colsForWidth(int w) const;
+    bool isIndexVisible(int idx, int vpTop, int vpH, int rowH) const;
 
     // 卡片管理
     FileCard* acquireCard();
