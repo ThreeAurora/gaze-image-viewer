@@ -36,6 +36,7 @@
 #include <QBrush>
 #include <QStyle>
 #include <QWidgetAction>
+#include <QMenu>
 #include <QVideoFrame>
 #include <QVideoSink>
 #include "previewpanel_internal.h"
