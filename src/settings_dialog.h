@@ -20,6 +20,7 @@ private:
     QWidget* pageFileOps();        // 文件操作
     QWidget* pageInterface();      // 界面(标题栏模板/最近文件)
     QWidget* pageKeyboardMouse();  // 键盘和鼠标
+    QWidget* pageShortcuts();      // 快捷键配置
     QWidget* pageSwitchMode();     // 切换模式
     QWidget* pageBrowser();        // 浏览器
     QWidget* pageFileList();       // 文件列表
