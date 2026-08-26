@@ -382,6 +382,7 @@ void PreviewPanel::loadFile(const QString& path) {
         showPdf(path);
     } else {
         m_mode = "none";
+        if (m_player) m_player->stop();   // 非媒体文件:停播放(实例保留复用)
         m_placeholder->show();
         m_imgLabel->hide();
         m_videoWidget->hide();
