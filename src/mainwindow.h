@@ -23,6 +23,8 @@ public:
     Q_INVOKABLE void openFullscreen(const QString &path);  // 右键"全屏":导航到文件并全屏
     Q_INVOKABLE void toggleViewer();   // 浏览器 ↔ 查看器(单图模式)
     Q_INVOKABLE void viewerBack();     // ESC:查看器退回浏览器(幂等)
+    void saveLayout(const QString& name);   // 布局保存/应用(查看→布局;退出自动存 _last)
+    void applyLayout(const QString& name);
 
 
 
