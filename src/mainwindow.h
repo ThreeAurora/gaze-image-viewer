@@ -77,6 +77,8 @@ private:
     void   openWithSystem(const QString& path);
     void   cycleRedFilter();                      // 红标筛选三态循环
     void   applyColorLabel(int color);            // 快捷键入口
+    void   applyShortcuts();                      // 应用自定义快捷键(ini)
+    void   collectMenuActions(QMenu* menu, QList<QAction*>& out);
 
     QSplitter *m_splitter = nullptr;
     FolderTree *m_folderTree = nullptr;
