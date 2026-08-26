@@ -15,6 +15,7 @@ public:
     // 通用存取(key 形如 "General/singleInstance")
     QVariant get(const QString& key, const QVariant& def = QVariant()) const;
     void     set(const QString& key, const QVariant& v);
+    void     clearAll();   // 恢复默认(清空 ini,回到代码内默认值)
 
     // ── 常用具名项(旧接口,保留) ──
     bool livePhotoAutoPlay() const;
