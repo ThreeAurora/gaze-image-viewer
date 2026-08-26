@@ -120,6 +120,7 @@ private:
     int    m_cols         = 0;
     int    m_fixedCols    = 0;
     int    m_viewMode     = VIEW_THUMBS_NAME;
+    int    m_waterfallColW = 220;   // 瀑布流列宽
     int    m_viewMode     = VM_THUMBS_NAME;
     int    m_waterfallColW = 220;   // 瀑布流列宽
     int    m_sortCol      = SORT_MDATE;
