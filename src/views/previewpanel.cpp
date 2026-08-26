@@ -73,12 +73,11 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
             .arg(C_TEXT_DIM));
     layout->addWidget(m_placeholder, 1);
 
-    // 图片标签
-    m_imgLabel = new QLabel;
+    // 图片标签:不进布局——缩放/拖动需要自由定位,
+    // 尺寸可超面板(超出部分裁剪,拖动=移动视口),否则放大后只剩"片段"
+    m_imgLabel = new QLabel(this);
     m_imgLabel->setAlignment(Qt::AlignCenter);
-    m_imgLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     m_imgLabel->hide();
-    layout->addWidget(m_imgLabel, 1);
 
     // 音频标签
     m_audioLabel = new QLabel;
