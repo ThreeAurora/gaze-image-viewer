@@ -110,6 +110,7 @@ private:
     std::vector<FileEntry> m_entries;    // 筛选/排序后的显示列表
     int    m_cardSize     = 160;
     int    m_cols         = 0;
+    int    m_fixedCols    = 0;
     int    m_viewMode     = VM_THUMBS_NAME;
     int    m_waterfallColW = 220;   // 瀑布流列宽
     int    m_sortCol      = SORT_MDATE;
