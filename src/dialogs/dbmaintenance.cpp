@@ -15,7 +15,7 @@ static QSqlDatabase maintenanceDb() {
     const QString conn = QStringLiteral("maint_db");
     if (!QSqlDatabase::contains(conn)) {
         QSqlDatabase d = QSqlDatabase::addDatabase("QSQLITE", conn);
-        d.setDatabaseName(AppSettings::instance().dataDir() + "/thumbnails.db");
+        d.setDatabaseName(QCoreApplication::applicationDirPath() + "/thumbnails.db");
         d.open();
     }
     return QSqlDatabase::database(conn);
@@ -25,11 +25,11 @@ DbMaintenanceDialog::DbMaintenanceDialog(QWidget* parent) : QDialog(parent) {
     setWindowTitle(QString::fromUtf8("缩略图数据库维护"));
     resize(760, 540);
     setStyleSheet(
-        "QDialog{background:#000000;}"
-        "QLabel{color:#FFFFFF;background:transparent;}"
-        "QTableWidget{background:#000000;color:#FFFFFF;border:1px solid #303036;}"
-        "QHeaderView::section{background:#000000;color:#FFFFFF;border:none;padding:4px;}"
-        "QPushButton{background:#2C2C32;color:#FFFFFF;border:1px solid #3A3A42;"
+        "QDialog{background:#1B1B1F;}"
+        "QLabel{color:#E0E0E4;background:transparent;}"
+        "QTableWidget{background:#17171A;color:#E0E0E4;border:1px solid #303036;}"
+        "QHeaderView::section{background:#232328;color:#9C9CA4;border:none;padding:4px;}"
+        "QPushButton{background:#2C2C32;color:#E0E0E4;border:1px solid #3A3A42;"
         "padding:5px 14px;border-radius:4px;}"
         "QPushButton:hover{border-color:#3B82F6;}");
 
