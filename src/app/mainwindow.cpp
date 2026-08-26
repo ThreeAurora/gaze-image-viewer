@@ -258,6 +258,8 @@ void MainWindow::selftestFastScroll() {
     cl->setContentsMargins(0, 0, 0, 0);
     cl->setSpacing(0);
 
+    createToolbar2(cl);
+
     m_sortHeader = new SortHeader;
     cl->addWidget(m_sortHeader);
 
