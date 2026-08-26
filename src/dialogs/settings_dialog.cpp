@@ -44,6 +44,50 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent) {
     content->addWidget(m_stack, 1);
     root->addLayout(content, 1);
 
+    populatePages();
+    connect(m_cats, &QListWidget::currentRowChanged,
+            m_stack, &QStackedWidget::setCurrentIndex);
+    m_cats->setCurrentRow(0);
+
+    // 底部按钮行:左"恢复默认",右下角 确定 / 取消
+    auto* bottom = new QHBoxLayout;
+    const char* btnQss =
+        "QPushButton{background:#2C2C32;color:#E0E0E4;border:1px solid #3A3A42;"
+        "padding:6px 28px;border-radius:4px;}"
+        "QPushButton:hover{border-color:#3B82F6;}"
+        "QPushButton#okBtn{background:#3B82F6;border-color:#3B82F6;color:#FFF;}"
+        "QPushButton#okBtn:hover{background:#2F6FE0;}";
+    auto* resetBtn = new QPushButton(QString::fromUtf8("恢复默认"));
+    resetBtn->setStyleSheet(btnQss);
+    connect(resetBtn, &QPushButton::clicked, this, [this]() {
+        if (QMessageBox::question(this, QString::fromUtf8("恢复默认"),
+            QString::fromUtf8("将所有设置恢复为默认值?(gaze.ini 将被清空)"))
+            == QMessageBox::Yes) {
+            AppSettings::instance().clearAll();
+            populatePages();
+        }
+    });
+    bottom->addWidget(resetBtn);
+    bottom->addStretch();
+    auto* okBtn = new QPushButton(QString::fromUtf8("确定"));
+    okBtn->setObjectName("okBtn");
+    okBtn->setStyleSheet(btnQss);
+    auto* cancelBtn = new QPushButton(QString::fromUtf8("取消"));
+    cancelBtn->setStyleSheet(btnQss);
+    connect(okBtn, &QPushButton::clicked, this, &QDialog::accept);
+    connect(cancelBtn, &QPushButton::clicked, this, &QDialog::reject);
+    bottom->addWidget(okBtn);
+    bottom->addWidget(cancelBtn);
+    root->addLayout(bottom);
+}
+
+void SettingsDialog::populatePages() {
+    m_cats->clear();
+    while (m_stack->count() > 0) {
+        QWidget* w = m_stack->widget(0);
+        m_stack->removeWidget(w);
+        w->deleteLater();
+    }
     struct { const char* name; QWidget* (SettingsDialog::*fn)(); } pages[] = {
         { "常规",     &SettingsDialog::pageGeneral },
         { "启动",     &SettingsDialog::pageStartup },
@@ -64,29 +108,6 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent) {
         m_cats->addItem(QString::fromUtf8(p.name));
         m_stack->addWidget((this->*p.fn)());
     }
-    connect(m_cats, &QListWidget::currentRowChanged,
-            m_stack, &QStackedWidget::setCurrentIndex);
-    m_cats->setCurrentRow(0);
-
-    // 底部按钮行:右下角 确定 / 取消
-    auto* bottom = new QHBoxLayout;
-    bottom->addStretch();
-    const char* btnQss =
-        "QPushButton{background:#2C2C32;color:#E0E0E4;border:1px solid #3A3A42;"
-        "padding:6px 28px;border-radius:4px;}"
-        "QPushButton:hover{border-color:#3B82F6;}"
-        "QPushButton#okBtn{background:#3B82F6;border-color:#3B82F6;color:#FFF;}"
-        "QPushButton#okBtn:hover{background:#2F6FE0;}";
-    auto* okBtn = new QPushButton(QString::fromUtf8("确定"));
-    okBtn->setObjectName("okBtn");
-    okBtn->setStyleSheet(btnQss);
-    auto* cancelBtn = new QPushButton(QString::fromUtf8("取消"));
-    cancelBtn->setStyleSheet(btnQss);
-    connect(okBtn, &QPushButton::clicked, this, &QDialog::accept);
-    connect(cancelBtn, &QPushButton::clicked, this, &QDialog::reject);
-    bottom->addWidget(okBtn);
-    bottom->addWidget(cancelBtn);
-    root->addLayout(bottom);
 }
 
 // ═══ 控件工厂:载入当前值,变更即时保存 ═══
