@@ -325,6 +325,8 @@ void PreviewPanel::setViewerMode(bool on) {
 }
 
 void PreviewPanel::loadFile(const QString& path) {
+    // 换文件(或清空):递增代号,作废任何在途的全图解码结果
+    ++m_imgReqGen;
     if (path.isEmpty()) { clear(); return; }
     QFileInfo fi(path);
     if (!fi.exists()) { clear(); return; }
