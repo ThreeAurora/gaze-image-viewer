@@ -27,6 +27,11 @@
 #include <QStyle>
 #include <QMenu>
 #include <QInputDialog>
+#include <QSettings>
+#include <QDesktopServices>
+#include <QUrl>
+#include <QTextEdit>
+#include <QAbstractSpinBox>
 #include "iconlib.h"
 #include "labelstore.h"
 #include <QMenu>
