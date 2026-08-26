@@ -282,6 +282,8 @@ QWidget* SettingsDialog::pageKeyboardMouse() {
 
 QWidget* SettingsDialog::pageShortcuts() {
     auto* v = new QVBoxLayout;
+    v->addWidget(new QLabel(QString::fromUtf8(
+        "点击快捷键框后按下新组合键即可修改(按 Esc/Backspace 清除恢复默认)。变更即时保存并生效。")));
 
     auto* table = new QTableWidget(0, 2);
     table->setHorizontalHeaderLabels({QString::fromUtf8("功能"),
