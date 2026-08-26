@@ -56,7 +56,7 @@ FolderTree::FolderTree(QWidget* parent) : QTreeWidget(parent) {
     setIndentation(16);
     setAnimated(true);
     setStyleSheet(QString(
-        "QTreeWidget{background:%1;color:%2;border:none;font-size:12px;}"
+        "QTreeWidget{background:%1;color:%2;border:none;font-size:11px;}"
         "QTreeWidget::item{padding:2px 0;}"
         "QTreeWidget::item:hover{background:%3;}"
         "QTreeWidget::item:selected{background:%4;color:#FFF;}"
