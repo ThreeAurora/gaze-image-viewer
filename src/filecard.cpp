@@ -11,26 +11,29 @@
 
 FileCard::FileCard(QWidget* parent) : QFrame(parent) {
     setCursor(Qt::PointingHandCursor);
-    setStyleSheet("FileCard{background:#000;border:none;border-radius:4px;}");
+    setMouseTracking(true);
+    setStyleSheet("FileCard{background:#26262B;border:none;border-radius:6px;}");
 
     m_thumbLabel = new QLabel(this);
     m_thumbLabel->setAlignment(Qt::AlignCenter);
+    m_thumbLabel->setStyleSheet(
+        "background:#141417;border-radius:4px;");
 
     m_nameLabel = new QLabel(this);
     m_nameLabel->setAlignment(Qt::AlignCenter);
     m_nameLabel->setAutoFillBackground(true);
 
-    // LIVE 徽章
+    // LIVE 徽章:半透明黑胶囊 + 红点
     m_liveBadge = new QLabel("LIVE", this);
     m_liveBadge->setStyleSheet(
-        "background:#0078D4;color:#FFF;font-size:9px;font-weight:bold;"
-        "padding:1px 4px;border-radius:2px;");
+        "background:rgba(0,0,0,150);color:#FFF;font-size:9px;font-weight:bold;"
+        "padding:2px 7px;border-radius:8px;border:1px solid rgba(255,255,255,60);");
     m_liveBadge->hide();
 
     // 标记星
     m_starLabel = new QLabel(QString::fromUtf8("\xe2\x98\x85"), this); // ★
     m_starLabel->setStyleSheet(
-        "color:#FF8800;font-size:14px;background:transparent;");
+        "color:#E8B339;font-size:14px;background:transparent;");
     m_starLabel->hide();
 }
 
