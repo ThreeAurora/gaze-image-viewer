@@ -210,7 +210,7 @@ QWidget* SettingsDialog::pageKeyboardMouse() {
 }
 
 QWidget* SettingsDialog::pageSwitchMode() {
-    auto* opts = QStringList{
+    QStringList opts = QStringList{
         QString::fromUtf8("浏览器 ↔ 全屏 | 查看器 ↔ 全屏"),
         QString::fromUtf8("浏览器 ↔ 查看器"),
         QString::fromUtf8("浏览器 → 全屏 → 查看器"),
