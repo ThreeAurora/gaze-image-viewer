@@ -81,6 +81,9 @@ std::optional<Info> detectCompanion(const QString& imagePath) {
         for (const auto& ve : COMPANION_VIDEO_EXT) {
             QString vp = dir.filePath(base + ve);
             if (QFileInfo::exists(vp)) {
+                // 同名视频存在 ≠ 动态照片:小红书/网页下载常有独立同名 jpg+mp4。
+                // 必须图片内确有动态照片 XMP 标记(Apple/Google/Samsung)才认 companion
+                if (!hasMotionPhotoXmp(imagePath)) continue;
                 Info info;
                 info.type = "companion";
                 info.videoPath = vp;
