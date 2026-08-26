@@ -9,8 +9,6 @@
 #include <QVideoWidget>
 #include <QMap>
 #include <QTimer>
-#include <QImage>
-#include <memory>
 
 class QProcess;
 #include <QTimer>
