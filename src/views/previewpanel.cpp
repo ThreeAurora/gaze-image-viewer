@@ -414,24 +414,11 @@ void PreviewPanel::setupPlayer() {
     m_player->setAudioOutput(m_audioOutput);
     m_audioOutput->setVolume(0.8);
 
-    if (m_mode == "video") {
-        // 立即销毁上一个视频的 QVideoWidget:旧 player 已在 teardownPlayer
-        // setVideoOutput(nullptr) 断开渲染引用,同步 delete 杜绝任何旧帧透出窗口
-        for (auto* child : m_videoWidget->children()) {
-            if (auto* w = qobject_cast<QWidget*>(child)) {
-                if (w == m_liveBadge) continue;   // 保留 LIVE 徽章
-                w->hide();
-                delete w;
-            }
-        }
-        auto* vw = new QVideoWidget(m_videoWidget);
-        vw->setGeometry(m_videoWidget->rect());
-        // 无帧时强制纯黑底(不透明),新帧到达前绝不透出下层残留
-        vw->setAutoFillBackground(true);
-        vw->setPalette(QPalette(QColor("#000000")));
-        vw->show();
-        m_player->setVideoOutput(vw);
-    }
+    // 注:视频控件(QVideoWidget)统一由 showVideo → ensureVideoWidget() 创建/复用,
+    // 绝不在每次切换视频时重建 —— 新建控件存在"无帧透明窗口期",
+    // 会透出下层残留画面(表现为切换视频瞬间闪回先前画面)
+    if (m_mode == "video" && m_vw)
+        m_player->setVideoOutput(m_vw);
 
     // 播放状态（视频/音频通用）
     connect(m_player, &QMediaPlayer::playbackStateChanged,
