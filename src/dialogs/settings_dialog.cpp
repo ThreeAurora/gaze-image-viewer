@@ -551,7 +551,7 @@ QWidget* SettingsDialog::pageCache() {
     form->addRow(chk("Cache/checkOnStartup", QString::fromUtf8("启动时检查缓存的完整性"), false));
     form->addRow(new QLabel(QString::fromUtf8(
         "维护工具(统计/重建/同步/删除)见\"工具 → 缩略图数据库维护\"。")));
-    return wrapPage(form);
+    return wrapTitled(QString::fromUtf8("缓存数据库"), form);
 }
 
 QWidget* SettingsDialog::pageIntegration() {
