@@ -68,6 +68,7 @@ public:
     QStringList selectedPaths() const;
     int  currentSortCol() const { return m_sortCol; }
     bool sortAscending()  const { return m_sortAsc; }
+    int  cardSizeValue()  const { return m_cardSizeAuto; }
 
 signals:
     void fileCountChanged();
