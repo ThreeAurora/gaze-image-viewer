@@ -49,21 +49,51 @@ static bool hasMotionPhotoXmp(const QString& imagePath) {
 }
 
 // ═══════════════════════════════════════════
-// 统一入口
+// 统一入口(带会话级记忆化缓存)
 // ═══════════════════════════════════════════
+
+namespace {
+// 键 = 路径+大小+mtime:文件一变即自然失效;nullopt(非动态照片)同样缓存。
+// companion 型的判定依赖"同名视频文件是否存在",该外部状态不在键内 ——
+// 但 loadFile 播放前有 QFileInfo::exists(videoPath) 兜底,视频被删时自动回退静态图,
+// 因此缓存不会造成错误播放。上限 4096 条防膨胀(会话级,超限整体清空)。
+struct DetectMemo {
+    QMutex mutex;
+    QHash<QString, std::optional<Info>> map;
+};
+DetectMemo& memo() { static DetectMemo m; return m; }
+constexpr int MEMO_MAX = 4096;
+}
+
 std::optional<Info> detect(const QString& imagePath) {
     QFileInfo fi(imagePath);
     if (!fi.isFile()) return std::nullopt;
     if (!MOTION_IMAGE_EXT.count("." + fi.suffix().toLower())) return std::nullopt;
 
+    const QString key = imagePath + '\n' + QString::number(fi.size())
+                      + '\n' + QString::number(fi.lastModified().toMSecsSinceEpoch());
+    {
+        QMutexLocker lk(&memo().mutex);
+        auto it = memo().map.constFind(key);
+        if (it != memo().map.constEnd()) return it.value();
+    }
+
+    std::optional<Info> result;
+
     auto r = detectCompanion(imagePath);
-    if (r) return r;
+    if (r) {
+        result = r;
+    } else {
+        auto e = detectEmbedded(imagePath);
+        if (e) result = e;   // 含 XMP-only(no offset)
+    }
 
-    auto e = detectEmbedded(imagePath);
-    if (e && e->videoOffset >= 0) return e;
-    if (e) return e; // XMP-only, no offset
-
-    return std::nullopt;
+    {
+        QMutexLocker lk(&memo().mutex);
+        if (memo().map.size() >= MEMO_MAX) memo().map.clear();
+        memo().map.insert(key, result);
+    }
+    return result;
 }
 
 // ═══════════════════════════════════════════
