@@ -337,24 +337,40 @@ QWidget* SettingsDialog::pageSwitchMode() {
         combo("SwitchMode/middleClick", opts, 4));
     form->addRow(QString::fromUtf8("回车键"),
         combo("SwitchMode/enterKey", opts, 1));
-    return wrapPage(form);
+    return wrapTitled(QString::fromUtf8("切换模式"), form);
 }
 
 QWidget* SettingsDialog::pageBrowser() {
-    auto* form = new QFormLayout;
-    form->addRow(QString::fromUtf8("预览背景色"),
+    auto* root = new QVBoxLayout;
+    root->setSpacing(12);
+
+    // 分组"预览"(对齐 XnView MP 浏览器页)
+    auto* fPrev = new QFormLayout;
+    fPrev->setVerticalSpacing(10);
+    fPrev->addRow(QString::fromUtf8("预览背景色"),
         combo("Browser/previewBackColor", {QString::fromUtf8("黑色"), QString::fromUtf8("白色"),
             QString::fromUtf8("灰色")}, 0));
-    form->addRow(chk("Browser/showRating", QString::fromUtf8("显示评级(颜色标签)"), true));
-    form->addRow(chk("Browser/rotateExifOnly", QString::fromUtf8("旋转:仅改变 EXIF 方向(如果可能)"), true));
-    form->addRow(chk("Browser/losslessRotate", QString::fromUtf8("旋转:使用无损旋转(如果可能)"), true));
-    form->addRow(chk("Browser/thumbScrollPreview", QString::fromUtf8("用缩略图查看滚动内容"), true));
-    form->addRow(chk("Browser/showDesktopInTree", QString::fromUtf8("在文件夹树中显示\"桌面\""), true));
-    return wrapPage(form);
+    fPrev->addRow(chk("Browser/showRating", QString::fromUtf8("显示评级(颜色标签)"), true));
+    root->addWidget(group(QString::fromUtf8("预览"), fPrev));
+
+    // 分组"旋转"
+    auto* fRot = new QFormLayout;
+    fRot->setVerticalSpacing(10);
+    fRot->addRow(chk("Browser/rotateExifOnly", QString::fromUtf8("仅改变 EXIF 方向(如果可能)"), true));
+    fRot->addRow(chk("Browser/losslessRotate", QString::fromUtf8("使用无损旋转(如果可能)"), true));
+    root->addWidget(group(QString::fromUtf8("旋转"), fRot));
+
+    auto* fMisc = new QFormLayout;
+    fMisc->setVerticalSpacing(10);
+    fMisc->addRow(chk("Browser/thumbScrollPreview", QString::fromUtf8("用缩略图查看滚动内容"), true));
+    fMisc->addRow(chk("Browser/showDesktopInTree", QString::fromUtf8("在文件夹树中显示\"桌面\""), true));
+    root->addLayout(fMisc);
+    return wrapTitled(QString::fromUtf8("浏览器"), root);
 }
 
 QWidget* SettingsDialog::pageFileList() {
     auto* form = new QFormLayout;
+    form->setVerticalSpacing(12);
     form->addRow(chk("FileList/showHidden", QString::fromUtf8("显示隐藏的文件和文件夹"), true));
     form->addRow(chk("FileList/recognizeByExt", QString::fromUtf8("只按扩展名进行识别文件格式"), true));
     form->addRow(QString::fromUtf8("扫描文件头"),
@@ -366,7 +382,7 @@ QWidget* SettingsDialog::pageFileList() {
     form->addRow(chk("FileList/newAtEnd", QString::fromUtf8("新文件添加至列表末尾"), false));
     form->addRow(chk("FileList/autoSelectNew", QString::fromUtf8("自动选择新文件"), false));
     form->addRow(chk("FileList/sizeInBytes", QString::fromUtf8("按字节显示文件大小"), false));
-    return wrapPage(form);
+    return wrapTitled(QString::fromUtf8("文件列表"), form);
 }
 
 QWidget* SettingsDialog::pageThumbs() {
