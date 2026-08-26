@@ -40,7 +40,6 @@ protected:
 
 private:
     void createMenubar();
-    void createToolbar(QVBoxLayout *layout);
     void createStatusbar();
     void updateStatus();
     void onSelectionChanged(const QString &path);
