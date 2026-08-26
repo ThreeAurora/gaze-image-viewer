@@ -25,6 +25,25 @@ static const std::set<QByteArray> MP4_BRANDS = {
 static const QByteArray JPEG_EOI("\xff\xd9", 2);
 static const QByteArray MP4_FTYP("ftyp", 4);
 
+// 动态照片元数据验证:同名 jpg+mp4 可能是独立文件(小红书/网页下载等),
+// 必须图片内确有动态照片 XMP 标记才认 companion。
+// 标记:Apple ContentType=3(EXIF/XMP) / Google MotionPhoto / Samsung MicroVideo
+static bool hasMotionPhotoXmp(const QString& imagePath) {
+    QFile f(imagePath);
+    if (!f.open(QIODevice::ReadOnly)) return false;
+    QByteArray head = f.read(256 * 1024);   // XMP 位于文件头部
+    if (head.isEmpty()) return false;
+    QByteArray low = head.toLower();
+    if (low.contains("motionphoto")            // Google Motion Photo
+        || low.contains("microvideo")          // Samsung
+        || low.contains("photos/1.0/camera"))  // Google 相机命名空间
+        return true;
+    int idx = head.indexOf("ContentType");     // Apple Live Photo
+    if (idx >= 0 && head.mid(idx, 64).contains('3'))
+        return true;
+    return false;
+}
+
 // ═══════════════════════════════════════════
 // 统一入口
 // ═══════════════════════════════════════════
