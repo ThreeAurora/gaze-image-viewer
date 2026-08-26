@@ -199,30 +199,31 @@ void FileCard::setColorLabel(int color) {
 
 void FileCard::setThumbnail(const QPixmap& pixmap) {
     if (!m_active || pixmap.isNull()) return;
-    int ts = m_cardSize - 14;
-    // 按比例缩放 → 居中到正方形画布 → 4px 圆角裁剪
-    QPixmap scaled = pixmap.scaled(ts, ts, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-    QPixmap square(ts, ts);
+    int tw = m_thumbLabel->width();
+    int th = m_thumbLabel->height();
+    if (tw <= 0 || th <= 0) return;
+    // 按比例缩放 → 居中到画布 → 4px 圆角裁剪
+    QPixmap scaled = pixmap.scaled(tw, th, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    QPixmap square(tw, th);
     square.fill(Qt::transparent);
     QPainter p(&square);
     p.setRenderHint(QPainter::Antialiasing);
-    p.drawPixmap((ts - scaled.width()) / 2, (ts - scaled.height()) / 2, scaled);
+    p.drawPixmap((tw - scaled.width()) / 2, (th - scaled.height()) / 2, scaled);
     p.end();
-    // 圆角遮罩
-    QPixmap rounded(ts, ts);
+    QPixmap rounded(tw, th);
     rounded.fill(Qt::transparent);
     QPainter rp(&rounded);
     rp.setRenderHint(QPainter::Antialiasing);
     QPainterPath path;
-    path.addRoundedRect(0, 0, ts, ts, 4, 4);
+    path.addRoundedRect(0, 0, tw, th, 4, 4);
     rp.setClipPath(path);
     rp.drawPixmap(0, 0, square);
     rp.end();
     m_thumbLabel->setPixmap(rounded);
 
-    // 记录图片实际显示区域(居中后的矩形 + label 偏移),选中框贴此绘制
-    m_thumbRect = QRect(4 + (ts - scaled.width()) / 2,
-                        4 + (ts - scaled.height()) / 2,
+    // 记录图片实际显示区域(选中框贴此绘制)
+    m_thumbRect = QRect(m_thumbLabel->x() + (tw - scaled.width()) / 2,
+                        m_thumbLabel->y() + (th - scaled.height()) / 2,
                         scaled.width(), scaled.height());
     update();
 }
