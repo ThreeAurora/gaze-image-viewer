@@ -1,5 +1,7 @@
 #include "sortheader.h"
 #include <QLabel>
+#include <QMenu>
+#include <QContextMenuEvent>
 
 SortHeader::SortHeader(QWidget* parent) : QWidget(parent) {
     setFixedHeight(26);
