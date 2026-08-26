@@ -202,8 +202,11 @@ void FileCard::setThumbnail(const QPixmap& pixmap) {
     int tw = m_thumbLabel->width();
     int th = m_thumbLabel->height();
     if (tw <= 0 || th <= 0) return;
-    // 按比例缩放 → 居中到画布 → 4px 圆角裁剪
-    QPixmap scaled = pixmap.scaled(tw, th, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    // 瀑布流(cover):按比例填满卡片(卡片比例≈原图比例,几乎不裁);
+    // 其余模式(fit):完整显示,居中留白
+    Qt::AspectRatioMode am = m_cover
+        ? Qt::KeepAspectRatioByExpanding : Qt::KeepAspectRatio;
+    QPixmap scaled = pixmap.scaled(tw, th, am, Qt::SmoothTransformation);
     QPixmap square(tw, th);
     square.fill(Qt::transparent);
     QPainter p(&square);
