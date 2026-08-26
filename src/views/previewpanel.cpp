@@ -415,6 +415,15 @@ void PreviewPanel::setupPlayer() {
     m_audioOutput->setVolume(0.8);
 
     if (m_mode == "video") {
+        // 清理上一个视频的 QVideoWidget:不删则旧帧残留,
+        // 切换视频瞬间闪回上一文件一帧(新帧解码完成前旧 vw 透出)+ widget 堆积泄漏
+        for (auto* child : m_videoWidget->children()) {
+            if (auto* w = qobject_cast<QWidget*>(child)) {
+                if (w == m_liveBadge) continue;   // 保留 LIVE 徽章
+                w->hide();
+                w->deleteLater();
+            }
+        }
         auto* vw = new QVideoWidget(m_videoWidget);
         vw->setGeometry(m_videoWidget->rect());
         vw->show();
