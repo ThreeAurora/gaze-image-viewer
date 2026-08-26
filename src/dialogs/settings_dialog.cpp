@@ -440,72 +440,98 @@ QWidget* SettingsDialog::pageAppearance() {
 }
 
 QWidget* SettingsDialog::pageViewer() {
-    auto* form = new QFormLayout;
-    form->addRow(QString::fromUtf8("自动缩放"),
+    auto* root = new QVBoxLayout;
+    root->setSpacing(12);
+
+    // 分组"缩放"
+    auto* fZoom = new QFormLayout;
+    fZoom->setVerticalSpacing(10);
+    fZoom->addRow(QString::fromUtf8("自动缩放"),
         combo("Viewer/autoFit", {QString::fromUtf8("上次使用过的"), QString::fromUtf8("不缩放"),
             QString::fromUtf8("适应窗口"), QString::fromUtf8("适应窗口大小 (仅小图片)"),
             QString::fromUtf8("适应窗口大小 (仅大图片)"), QString::fromUtf8("适应窗口宽度"),
             QString::fromUtf8("适应窗口高度"), QString::fromUtf8("适应窗口宽或高"),
             QString::fromUtf8("适应桌面"), QString::fromUtf8("窗口适应到图像")}, 2));
-    form->addRow(chk("Viewer/resetAutoOnNav", QString::fromUtf8("使用下一个/上一个文件重置'自动图像尺寸'设置"), false));
-    form->addRow(QString::fromUtf8("背景色"),
-        combo("Viewer/backColor", {QString::fromUtf8("黑色"), QString::fromUtf8("白色"),
-            QString::fromUtf8("灰色")}, 0));
-    form->addRow(chk("Viewer/checkerMode", QString::fromUtf8("背景以挡板模式显示"), false));
-    form->addRow(chk("Viewer/showBorder", QString::fromUtf8("显示边框"), false));
-    form->addRow(chk("Viewer/gamma", QString::fromUtf8("使用 Gamma 纠正"), false));
-    form->addRow(chk("Viewer/sharpen", QString::fromUtf8("使用锐化 50%"), false));
-    form->addRow(QString::fromUtf8("像素比"),
+    fZoom->addRow(chk("Viewer/resetAutoOnNav", QString::fromUtf8("使用下一个/上一个文件重置'自动图像尺寸'设置"), false));
+    fZoom->addRow(QString::fromUtf8("缩放率"),
+        combo("Viewer/zoomMode", {QString::fromUtf8("固定"), QString::fromUtf8("变动")}, 1));
+    fZoom->addRow(QString::fromUtf8("缩小抗锯齿"),
+        combo("Viewer/outZoomFilter", {"无", "Bilinear", "Bicubic", "Spline 16",
+            "Spline 36", "Lanczos 3", "Lanczos 4"}, 1));
+    fZoom->addRow(QString::fromUtf8("放大抗锯齿"),
+        combo("Viewer/inZoomFilter", {"无", "Bilinear", "Bicubic", "Spline 16",
+            "Spline 36", "Lanczos 3", "Lanczos 4"}, 1));
+    fZoom->addRow(chk("Viewer/hidpiPixel", QString::fromUtf8("在 HiDPI 屏幕上缩放:1 图像像素 = 1 屏幕像素"), false));
+    fZoom->addRow(QString::fromUtf8("像素比"),
         combo("Viewer/pixelRatio", {"1.00 正方形", "0.91 D1/DV NTSC", "0.95 D4/D16 Standard",
             "1.09 D1/DV PAL", "1.20 D1/DV NTSC Widescreen", "1.33 HDV 1080/DVCPRO HD 720",
             "1.46 D1/DV PAL Widescreen", "1.50 DVCPRO HD 1080", "1.90 D4/D16 非变形",
             "2.00 变形"}, 0));
-    form->addRow(QString::fromUtf8("缩放率"),
-        combo("Viewer/zoomMode", {QString::fromUtf8("固定"), QString::fromUtf8("变动")}, 1));
-    form->addRow(QString::fromUtf8("缩小抗锯齿"),
-        combo("Viewer/outZoomFilter", {"无", "Bilinear", "Bicubic", "Spline 16",
-            "Spline 36", "Lanczos 3", "Lanczos 4"}, 1));
-    form->addRow(QString::fromUtf8("放大抗锯齿"),
-        combo("Viewer/inZoomFilter", {"无", "Bilinear", "Bicubic", "Spline 16",
-            "Spline 36", "Lanczos 3", "Lanczos 4"}, 1));
-    form->addRow(chk("Viewer/hidpiPixel", QString::fromUtf8("在 HiDPI 屏幕上缩放:1 图像像素 = 1 屏幕像素"), false));
-    form->addRow(chk("Viewer/highlightSelection", QString::fromUtf8("显示高亮选择内容"), true));
-    form->addRow(chk("Viewer/panTool", QString::fromUtf8("显示平移工具"), true));
-    form->addRow(chk("Viewer/showRating", QString::fromUtf8("显示评级&标签颜色"), true));
-    form->addRow(chk("Viewer/showScrollbar", QString::fromUtf8("显示滚动条"), false));
-    form->addRow(new QLabel(QString::fromUtf8("──── 其他 ────")));
-    form->addRow(QString::fromUtf8("选中的"),
+    root->addWidget(group(QString::fromUtf8("缩放"), fZoom));
+
+    // 分组"背景与界面元素"
+    auto* fUI = new QFormLayout;
+    fUI->setVerticalSpacing(10);
+    fUI->addRow(QString::fromUtf8("背景色"),
+        combo("Viewer/backColor", {QString::fromUtf8("黑色"), QString::fromUtf8("白色"),
+            QString::fromUtf8("灰色")}, 0));
+    fUI->addRow(chk("Viewer/checkerMode", QString::fromUtf8("背景以挡板模式显示"), false));
+    fUI->addRow(chk("Viewer/showBorder", QString::fromUtf8("显示边框"), false));
+    fUI->addRow(chk("Viewer/highlightSelection", QString::fromUtf8("显示高亮选择内容"), true));
+    fUI->addRow(chk("Viewer/panTool", QString::fromUtf8("显示平移工具"), true));
+    fUI->addRow(chk("Viewer/showRating", QString::fromUtf8("显示评级&标签颜色"), true));
+    fUI->addRow(chk("Viewer/showScrollbar", QString::fromUtf8("显示滚动条"), false));
+    fUI->addRow(QString::fromUtf8("选中的"),
         combo("Viewer/selectedOverlay", {QString::fromUtf8("正常"),
             QString::fromUtf8("三分法"), QString::fromUtf8("黄金分割(Phi)")}, 0));
-    form->addRow(chk("Viewer/loopFileList", QString::fromUtf8("循环文件列表"), false));
-    form->addRow(chk("Viewer/autoPlayVideo", QString::fromUtf8("自动播放(视频)"), true));
-    form->addRow(chk("Viewer/loopVideo", QString::fromUtf8("循环视频播放"), false));
-    form->addRow(chk("Viewer/autoPlayAudioCompanion", QString::fromUtf8("自动播放音频伴侣文件"), false));
-    form->addRow(chk("Viewer/twoPassRender", QString::fromUtf8("加载时两段式渲染"), false));
-    form->addRow(chk("Viewer/readAhead", QString::fromUtf8("预先读取一幅图像"), true));
-    form->addRow(chk("Viewer/cacheBehind", QString::fromUtf8("保持当前图像"), true));
-    form->addRow(chk("Viewer/disableAnimation", QString::fromUtf8("禁用 GIF/JIF/APNG/ANI 动画"), false));
-    return wrapPage(form);
+    root->addWidget(group(QString::fromUtf8("背景与界面元素"), fUI));
+
+    // 分组"播放与性能"
+    auto* fPlay = new QFormLayout;
+    fPlay->setVerticalSpacing(10);
+    fPlay->addRow(chk("Viewer/autoPlayVideo", QString::fromUtf8("自动播放(视频)"), true));
+    fPlay->addRow(chk("Viewer/loopVideo", QString::fromUtf8("循环视频播放"), false));
+    fPlay->addRow(chk("Viewer/autoPlayAudioCompanion", QString::fromUtf8("自动播放音频伴侣文件"), false));
+    fPlay->addRow(chk("Viewer/loopFileList", QString::fromUtf8("循环文件列表"), false));
+    fPlay->addRow(chk("Viewer/twoPassRender", QString::fromUtf8("加载时两段式渲染"), false));
+    fPlay->addRow(chk("Viewer/readAhead", QString::fromUtf8("预先读取一幅图像"), true));
+    fPlay->addRow(chk("Viewer/cacheBehind", QString::fromUtf8("保持当前图像"), true));
+    fPlay->addRow(chk("Viewer/disableAnimation", QString::fromUtf8("禁用 GIF/JIF/APNG/ANI 动画"), false));
+    fPlay->addRow(chk("Viewer/gamma", QString::fromUtf8("使用 Gamma 纠正"), false));
+    fPlay->addRow(chk("Viewer/sharpen", QString::fromUtf8("使用锐化 50%"), false));
+    root->addWidget(group(QString::fromUtf8("播放与性能"), fPlay));
+    return wrapTitled(QString::fromUtf8("查看"), root);
 }
 
 QWidget* SettingsDialog::pageFullscreen() {
-    auto* form = new QFormLayout;
-    form->addRow(QString::fromUtf8("自动缩放"),
+    auto* root = new QVBoxLayout;
+    root->setSpacing(12);
+
+    // 分组"显示"
+    auto* fShow = new QFormLayout;
+    fShow->setVerticalSpacing(10);
+    fShow->addRow(QString::fromUtf8("自动缩放"),
         combo("Fullscreen/autoFit", {QString::fromUtf8("上次使用过的"), QString::fromUtf8("不缩放"),
             QString::fromUtf8("适应窗口"), QString::fromUtf8("适应窗口大小 (仅小图片)"),
             QString::fromUtf8("适应窗口大小 (仅大图片)"), QString::fromUtf8("适应窗口宽度"),
             QString::fromUtf8("适应窗口高度"), QString::fromUtf8("适应窗口宽或高")}, 2));
-    form->addRow(chk("Fullscreen/showPlaybar", QString::fromUtf8("显示播放条"), true));
-    form->addRow(chk("Fullscreen/showInfo", QString::fromUtf8("显示信息"), true));
-    form->addRow(chk("Fullscreen/showScrollbar", QString::fromUtf8("显示滚动条"), false));
-    form->addRow(chk("Fullscreen/showToolbar", QString::fromUtf8("显示工具栏"), false));
-    form->addRow(chk("Fullscreen/hideCursor", QString::fromUtf8("隐藏鼠标箭头"), true));
-    form->addRow(QString::fromUtf8("背景色"),
+    fShow->addRow(chk("Fullscreen/showPlaybar", QString::fromUtf8("显示播放条"), true));
+    fShow->addRow(chk("Fullscreen/showInfo", QString::fromUtf8("显示信息"), true));
+    fShow->addRow(chk("Fullscreen/showScrollbar", QString::fromUtf8("显示滚动条"), false));
+    fShow->addRow(chk("Fullscreen/showToolbar", QString::fromUtf8("显示工具栏"), false));
+    fShow->addRow(chk("Fullscreen/hideCursor", QString::fromUtf8("隐藏鼠标箭头"), true));
+    root->addWidget(group(QString::fromUtf8("显示"), fShow));
+
+    // 分组"其他"
+    auto* fMisc = new QFormLayout;
+    fMisc->setVerticalSpacing(10);
+    fMisc->addRow(QString::fromUtf8("背景色"),
         combo("Fullscreen/backColor", {QString::fromUtf8("黑色"), QString::fromUtf8("白色"),
             QString::fromUtf8("灰色")}, 0));
-    form->addRow(chk("Fullscreen/dualMonitor", QString::fromUtf8("双显示器:使用第二显示器"), false));
-    form->addRow(chk("Fullscreen/floatView", QString::fromUtf8("浮动视图(鼠标移动到屏幕顶侧或右侧时出现)"), true));
-    return wrapPage(form);
+    fMisc->addRow(chk("Fullscreen/dualMonitor", QString::fromUtf8("双显示器:使用第二显示器"), false));
+    fMisc->addRow(chk("Fullscreen/floatView", QString::fromUtf8("浮动视图(鼠标移动到屏幕顶侧或右侧时出现)"), true));
+    root->addWidget(group(QString::fromUtf8("其他"), fMisc));
+    return wrapTitled(QString::fromUtf8("全屏"), root);
 }
 
 QWidget* SettingsDialog::pageCache() {
