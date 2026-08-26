@@ -593,5 +593,5 @@ QWidget* SettingsDialog::pageIntegration() {
         combo("Integration/iniLocation", {QString::fromUtf8("程序文件夹(便携)"),
             QString::fromUtf8("系统文件夹(%APPDATA%)(重启后生效,即将支持)")}, 0));
     form->addRow(new QLabel(QString::fromUtf8("当前 ini:") + AppSettings::instance().iniPath()));
-    return wrapPage(form);
+    return wrapTitled(QString::fromUtf8("系统集成"), form);
 }
