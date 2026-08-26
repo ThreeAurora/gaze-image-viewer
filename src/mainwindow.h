@@ -62,7 +62,7 @@ private:
     QString renderTitle(const QString& templateText, const QString& filePath) const;
 
     // 布局方案:保存/应用窗口几何与分栏宽度;"跟随上次"=用关闭时的状态
-    void createLayoutMenu();                 // 菜单栏"布局"
+    void createLayoutMenu(QAction* before);  // 菜单栏"布局"(插在指定项前)
     void saveLayout(const QString& name);    // 保存当前为命名布局
     void applyLayout(const QString& name);   // 应用命名布局
     void applyLastLayout();                  // 应用上次关闭时的状态
