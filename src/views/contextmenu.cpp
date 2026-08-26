@@ -17,6 +17,7 @@
 #include <QClipboard>
 #include <QMimeData>
 #include <QCoreApplication>
+#include <QStandardPaths>
 
 #include <windows.h>
 #include <shellapi.h>
