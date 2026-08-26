@@ -1,5 +1,6 @@
 #include "settings_dialog.h"
 #include "settings.h"
+#include "integration.h"
 
 #include <QHBoxLayout>
 #include <QVBoxLayout>
