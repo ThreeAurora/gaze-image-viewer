@@ -275,6 +275,10 @@ inline QIcon typeIcon(const QString& ext, const QString& filePath = QString()) {
 
     // 2) 系统关联图标:SHGetImageList 一次取 256/48/32/16 四档(高清优先)
     {
+        // IID_IImageList 规范值:MinGW 头仅声明、uuid 库未导出符号,
+        // 手动定义等值 GUID(SHGetImageList 按值匹配),避免链接依赖
+        static const GUID iidImageList = { 0x46eb5926, 0x582e, 0x4017,
+            { 0x9f, 0xdf, 0xe8, 0x99, 0x8d, 0xaa, 0x09, 0x50 } };
         SHFILEINFOW sfi = {};
         if (SHGetFileInfoW(w.c_str(), attrs, &sfi, sizeof(sfi),
                            SHGFI_SYSICONINDEX | SHGFI_USEFILEATTRIBUTES)
@@ -282,7 +286,7 @@ inline QIcon typeIcon(const QString& ext, const QString& filePath = QString()) {
             const int ilModes[] = { SHIL_JUMBO, SHIL_EXTRALARGE, SHIL_LARGE, SHIL_SMALL };
             for (int m : ilModes) {
                 IImageList* il = nullptr;
-                if (SUCCEEDED(SHGetImageList(m, IID_IImageList, (void**)&il)) && il) {
+                if (SUCCEEDED(SHGetImageList(m, iidImageList, (void**)&il)) && il) {
                     HICON h = nullptr;
                     if (SUCCEEDED(il->GetIcon(sfi.iIcon, ILD_TRANSPARENT, &h)) && h)
                         takeIcon(h);
