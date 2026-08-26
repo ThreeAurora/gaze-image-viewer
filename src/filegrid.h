@@ -57,6 +57,7 @@ signals:
 protected:
     void resizeEvent(QResizeEvent* event) override;
     void keyPressEvent(QKeyEvent* event) override;
+    void wheelEvent(QWheelEvent* event) override;
     bool eventFilter(QObject* obj, QEvent* event) override;
 
 private:
