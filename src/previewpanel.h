@@ -3,6 +3,7 @@
 #include <QLabel>
 #include <QSlider>
 #include <QPushButton>
+#include <QToolButton>
 #include <QMediaPlayer>
 #include <QAudioOutput>
 #include <QVideoWidget>
