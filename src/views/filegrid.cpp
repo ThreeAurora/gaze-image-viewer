@@ -232,6 +232,7 @@ void FileGrid::newFolder() {
 // 属性
 // ═══════════════════════════════════════════
 void FileGrid::setCardSize(int size) {
+    m_cardSizeAuto = size;   // 记录 slider 设定值(自动模式用)
     m_cardSize = std::max(80, std::min(300, size));
     if (!m_entries.empty()) {
         updateLayout();
