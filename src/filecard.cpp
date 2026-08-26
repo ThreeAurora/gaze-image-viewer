@@ -267,25 +267,19 @@ void FileCard::paintEvent(QPaintEvent* event) {
     QPainter p(this);
     p.setRenderHint(QPainter::Antialiasing);
 
-    // 底色:选中 > 悬停 > 常态
-    if (m_selected)
-        p.setBrush(QColor(C_CARD_HOVER));
-    else if (m_hovered)
-        p.setBrush(QColor(C_CARD_HOVER));
-    else
-        p.setBrush(QColor(C_CARD_BG));
-    p.setPen(Qt::NoPen);
-    p.drawRoundedRect(1, 1, width() - 2, height() - 2, 6, 6);
-
-    // 边框:选中 2px 强调蓝;悬停 1px 亮边;常态 1px 暗边
+    // 选中:直角蓝框紧贴缩略图本身(随图片宽高变化)
     if (m_selected) {
+        QRect r = m_thumbRect.adjusted(-2, -2, 2, 2);
         p.setPen(QPen(QColor(m_selColor), 2));
         p.setBrush(Qt::NoBrush);
-        p.drawRoundedRect(1, 1, width() - 3, height() - 3, 6, 6);
-    } else {
-        p.setPen(QPen(QColor(m_hovered ? "#4A4A54" : C_CARD_BORDER), 1));
-        p.setBrush(Qt::NoBrush);
-        p.drawRoundedRect(0, 0, width() - 1, height() - 1, 6, 6);
+        p.drawRect(r);
+    }
+
+    // hover:缩略图左上角小圆点标志(不遮挡,仅示意光标位置)
+    if (m_hovered && !m_selected) {
+        p.setPen(QPen(QColor("#FFFFFF"), 1));
+        p.setBrush(QColor(C_ACCENT));
+        p.drawEllipse(m_thumbRect.topLeft() + QPointF(3, 3), 4.5, 4.5);
     }
 }
 
