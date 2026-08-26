@@ -190,7 +190,7 @@ inline QImage hiconToQImage(HICON hIcon) {
     return result;
 }
 
-// 文件夹图标:橙黄渐变铺满整个缩略图框(经典双板文件夹造型)
+// 文件夹图标:浅奶油黄、柔和扁平、铺满缩略图框(对照 XnView MP 样式)
 inline QIcon folderIcon(int size) {
     static std::unordered_map<int, QIcon> cache;
     auto it = cache.find(size);
@@ -200,33 +200,26 @@ inline QIcon folderIcon(int size) {
     pix.fill(Qt::transparent);
     QPainter p(&pix);
     p.setRenderHint(QPainter::Antialiasing);
+    p.setPen(Qt::NoPen);
 
-    qreal m = size * 0.04;                       // 四周 4% 边距 → 铺满
-    QRectF body(m, size * 0.22, size - 2 * m, size * 0.72);
-    QRectF tab(m, size * 0.12, (size - 2 * m) * 0.46, size * 0.16);
+    qreal m = size * 0.03;                       // 铺满:四周仅 3% 边距
+    QRectF body(m, size * 0.18, size - 2 * m, size * 0.78);
+    QRectF tab(m, size * 0.09, (size - 2 * m) * 0.42, size * 0.12);
 
-    // 后板(深一档)
-    p.setPen(QPen(QColor("#8A5E10"), size * 0.012));
-    p.setBrush(QColor("#C8871C"));
-    p.drawRoundedRect(body, size * 0.03, size * 0.03);
-
-    // 前板:橙黄线性渐变(顶亮底深)
-    QLinearGradient grad(0, body.top(), 0, body.bottom());
-    grad.setColorAt(0.0, QColor("#FFD75E"));
-    grad.setColorAt(0.55, QColor("#F5B93B"));
-    grad.setColorAt(1.0, QColor("#E09520"));
+    // 主体:浅奶油黄,极轻的上下渐变(柔和,无描边)
+    QLinearGradient grad(0, tab.top(), 0, body.bottom());
+    grad.setColorAt(0.0, QColor("#F6E3A2"));
+    grad.setColorAt(0.35, QColor("#F3D98C"));
+    grad.setColorAt(1.0, QColor("#EBC96E"));
     p.setBrush(grad);
-    p.drawRoundedRect(body.adjusted(0, size * 0.07, 0, 0), size * 0.03, size * 0.03);
+    p.drawRoundedRect(tab, size * 0.02, size * 0.02);
+    p.drawRoundedRect(body, size * 0.025, size * 0.025);
 
-    // 标签凸起
-    p.setBrush(QColor("#F5B93B"));
-    p.drawRoundedRect(tab, size * 0.025, size * 0.025);
-
-    // 顶部高光线
-    p.setPen(QPen(QColor(255, 255, 255, 70), size * 0.008));
-    p.setBrush(Qt::NoBrush);
-    p.drawLine(QPointF(body.left() + size * 0.03, body.top() + size * 0.09),
-               QPointF(body.right() - size * 0.03, body.top() + size * 0.09));
+    // 底部一条稍深的收边(极轻的立体感)
+    p.setBrush(QColor("#DFB95C"));
+    p.drawRoundedRect(QRectF(body.left(), body.bottom() - size * 0.045,
+                             body.width(), size * 0.045),
+                      size * 0.02, size * 0.02);
     p.end();
 
     cache[size] = QIcon(pix);
