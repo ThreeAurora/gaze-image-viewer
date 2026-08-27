@@ -221,6 +221,19 @@ void FolderTree::loadChildren(QTreeWidgetItem* item) {
     }
 }
 
+void FolderTree::mouseDoubleClickEvent(QMouseEvent* event) {
+    // Qt 默认在快速第二次点击分支箭头时会吞掉该次双击（视为双击事件但不切换展开），
+    // 导致连续快速点击“需要间隔约 300ms”。这里在双击时也直接切换展开/收起。
+    if (QTreeWidgetItem* item = itemAt(event->pos())) {
+        if (item->childCount() > 0) {
+            item->setExpanded(!item->isExpanded());
+            event->accept();
+            return;
+        }
+    }
+    QTreeWidget::mouseDoubleClickEvent(event);
+}
+
 void FolderTree::focusPath(const QString& dirPath) {
     QFileInfo fi(dirPath);
     if (!fi.exists()) return;
