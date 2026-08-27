@@ -58,7 +58,7 @@ DbMaintenanceDialog::DbMaintenanceDialog(QWidget* parent) : QDialog(parent) {
         QString dir = m_table->item(sel.first()->row(), 0)->text();
         QSqlDatabase d = maintenanceDb();
         QSqlQuery q(d);
-        q.prepare("DELETE FROM thumbs WHERE path LIKE ? || '%'");
+        q.prepare("DELETE FROM thumbs WHERE key LIKE ? || '%'");
         q.addBindValue(dir);
         q.exec();
         reload();
