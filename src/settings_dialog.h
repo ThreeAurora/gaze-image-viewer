@@ -35,6 +35,7 @@ private:
     QWidget* pageViewer();         // 查看
     QWidget* pageFullscreen();     // 查看 → 全屏
     QWidget* pageCache();          // 高级 → 缓存数据库
+    QWidget* pageMaintenance();    // 维护(缩略图库统计/筛选/删除/重建)
     QWidget* pageIntegration();    // 高级 → 系统集成
 
     void populatePages();          // 构建/重建全部分类与页面(恢复默认后调用)
