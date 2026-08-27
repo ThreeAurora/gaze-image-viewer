@@ -116,12 +116,6 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    // 本实例自带的路径:统一交给 MainWindow 处理(mainwindow 构造函数读取 argv)
     w.show();
-
-    // 首个实例经"打开方式/右键浏览"启动时,也要把自己登记为监听方并处理路径
-    if (server) {
-        // 转发路径已在 MainWindow 构造时消费;此处仅保持 server 存活
-    }
     return app.exec();
 }
