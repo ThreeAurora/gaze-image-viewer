@@ -37,4 +37,5 @@ private:
     QIcon m_driveIcon;
     QIcon m_desktopIcon;
     bool  m_showDesktop = true;   // Browser/showDesktopInTree 当前已应用值
+    bool  m_showDesktop = true;   // Browser/showDesktopInTree 当前已应用值
 };
