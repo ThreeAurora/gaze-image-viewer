@@ -159,6 +159,10 @@ private:
 
     int    m_filterMode   = FILTER_ALL;
     QHash<QString, int> m_colorLabels;  // path → 颜色标记(目录加载时批量读入)
+    // 文件列表规则(FileList/*;设置改动时刷新,逐条目路径不再读 ini)
+    bool m_showHidden  = true;
+    bool m_mixSort     = false;   // 混合文件/文件夹排序(关=目录恒在最前)
+    bool m_folderAlpha = true;    // 文件夹总是按字母序排列
 
     // 选择状态
     QSet<int>            m_selected;
