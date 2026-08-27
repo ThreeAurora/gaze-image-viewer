@@ -100,7 +100,13 @@ void FileCard::setup(const FileEntry& entry, int size, int viewMode, int height)
         m_nameLabel->show();
         if (!m_detailLabel) {
             m_detailLabel = new QLabel(this);
-            m_detailLabel->setStyleSheet("color:#FFFFFF;font-size:10px;background:transparent;");
+            m_detailLabel->setStyleSheet(
+                QString("color:%1;font-size:10px;background:transparent;")
+                    .arg(m_hidden ? C_TEXT_HIDDEN : "#FFFFFF"));
+        } else {
+            m_detailLabel->setStyleSheet(
+                QString("color:%1;font-size:10px;background:transparent;")
+                    .arg(m_hidden ? C_TEXT_HIDDEN : "#FFFFFF"));
         }
         m_detailLabel->setGeometry(2, size + 20, size - 4, 16);
         m_detailLabel->setAlignment(Qt::AlignCenter);
