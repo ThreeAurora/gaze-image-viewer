@@ -137,6 +137,8 @@ private:
     bool m_tempZoom   = false;   // 左键临时 1:1 放大(松开还原)
     QTimer m_cursorTimer;        // Fullscreen/hideCursor:指针静止一段时间后隐藏
     bool   m_cursorHidden = false;
+    QTimer m_cursorTimer;        // Fullscreen/hideCursor:指针静止一段时间后隐藏
+    bool   m_cursorHidden = false;
 
     // 图片后台解码状态
     quint64 m_imgReqGen = 0;    // 最新请求代号(loadFile/showImage 递增,切走即作废在途结果)
