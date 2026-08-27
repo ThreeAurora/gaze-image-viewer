@@ -10,6 +10,8 @@
 #include <QMap>
 #include <QTimer>
 #include <QImage>
+#include <QHash>
+#include <QKeySequence>
 #include <memory>
 
 class QProcess;
