@@ -52,6 +52,7 @@ private:
     QRect   m_thumbRect;              // 缩略图实际显示区域(选中框贴此绘制)
     QString m_selColor = "#3B82F6";
     QString m_nameBg   = "#26262B";
+    QString m_appliedBg;      // 已应用到 nameLabel 的底色(防重复 setStyleSheet)
 
     QLabel* m_thumbLabel = nullptr;
     QLabel* m_nameLabel  = nullptr;
