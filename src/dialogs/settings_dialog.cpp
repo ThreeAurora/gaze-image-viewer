@@ -378,15 +378,16 @@ QWidget* SettingsDialog::pageKeyboardMouse() {
     form->setVerticalSpacing(12);
     form->addRow(QString::fromUtf8("左/右键方向键"),
         combo("Keyboard/leftRight", {QString::fromUtf8("上一个文件/下一个文件"),
-            QString::fromUtf8("水平滚动"), QString::fromUtf8("自动"),
-            QString::fromUtf8("上一帧/下一帧")}, 0));
+            QString::fromUtf8("水平滚动")}, 0));
     form->addRow(QString::fromUtf8("上/下方向键"),
         combo("Keyboard/upDown", {QString::fromUtf8("上一个文件/下一个文件"),
-            QString::fromUtf8("向上/向下滚动"), QString::fromUtf8("自动"),
-            QString::fromUtf8("上一帧/下一帧")}, 0));
+            QString::fromUtf8("向上/向下翻页")}, 0));
     form->addRow(QString::fromUtf8("空格"),
-        combo("Keyboard/space", {QString::fromUtf8("什么都不做"),
+        combo("Keyboard/space", {QString::fromUtf8("播放/暂停(视频)"),
+            QString::fromUtf8("什么都不做"),
             QString::fromUtf8("下一个文件"), QString::fromUtf8("快速幻灯片")}, 0));
+    form->addRow(QString::fromUtf8("快速幻灯片间隔(毫秒)"),
+        spin("Interface/slideInterval", 100, 60000, 1000));
     form->addRow(chk("Keyboard/escCloseBrowser", QString::fromUtf8("按 ESC 关闭:浏览器模式"), false));
     form->addRow(chk("Keyboard/escCloseViewer", QString::fromUtf8("按 ESC 关闭:查看器"), true));
     return wrapTitled(QString::fromUtf8("键盘"), form);
