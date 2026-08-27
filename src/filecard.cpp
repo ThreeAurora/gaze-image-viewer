@@ -107,7 +107,7 @@ void FileCard::setup(const FileEntry& entry, int size, int viewMode, int height)
         ts = size - 8;
         setFixedSize(size, size + 22);
         m_thumbLabel->setGeometry(4, 4, ts, ts);
-        m_nameLabel->setGeometry(2, ts + 4 + s_labelGap, size - 4, 18);
+        m_nameLabel->setGeometry(2, 4 + ts + s_labelGap, size - 4, 18);
         m_nameLabel->setAlignment(alignFlag(s_labelAlign) | Qt::AlignVCenter);
         m_nameLabel->show();
         m_thumbRect = QRect(4, 4, ts, ts);
@@ -118,7 +118,7 @@ void FileCard::setup(const FileEntry& entry, int size, int viewMode, int height)
         ts = size - 8;
         setFixedSize(size, size + 42);
         m_thumbLabel->setGeometry(4, 4, ts, ts);
-        m_nameLabel->setGeometry(2, ts + 4 + s_labelGap, size - 4, 18);
+        m_nameLabel->setGeometry(2, 4 + ts + s_labelGap, size - 4, 18);
         m_nameLabel->setAlignment(alignFlag(s_labelAlign) | Qt::AlignVCenter);
         m_nameLabel->show();
         if (!m_detailLabel) {
