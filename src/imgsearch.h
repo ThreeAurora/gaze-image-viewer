@@ -23,6 +23,8 @@
 #include <QCoreApplication>
 #include <QFileInfo>
 #include <QDir>
+#include <QThread>
+#include <QDateTime>
 #include "settings.h"
 
 namespace ImgSearch {
