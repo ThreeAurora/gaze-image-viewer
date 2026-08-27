@@ -37,13 +37,14 @@ void LabelStore::setColor(const QString& path, int color) {
     QSqlDatabase d = db();
     if (!d.isOpen()) return;
     QSqlQuery q(d);
+    const QString key = QDir::fromNativeSeparators(path);
     if (color <= 0) {
         q.prepare("DELETE FROM labels WHERE path = ?");
-        q.addBindValue(path);
+        q.addBindValue(key);
         q.exec();
     } else {
         q.prepare("INSERT OR REPLACE INTO labels(path, color) VALUES(?, ?)");
-        q.addBindValue(path);
+        q.addBindValue(key);
         q.addBindValue(color);
         q.exec();
     }
@@ -54,7 +55,7 @@ int LabelStore::colorFor(const QString& path) {
     if (!d.isOpen()) return 0;
     QSqlQuery q(d);
     q.prepare("SELECT color FROM labels WHERE path = ?");
-    q.addBindValue(path);
+    q.addBindValue(QDir::fromNativeSeparators(path));
     if (q.exec() && q.next()) return q.value(0).toInt();
     return 0;
 }
@@ -63,7 +64,7 @@ QHash<QString,int> LabelStore::colorsForDir(const QString& dir) {
     QHash<QString,int> out;
     QSqlDatabase d = db();
     if (!d.isOpen()) return out;
-    QString prefix = dir;
+    QString prefix = QDir::fromNativeSeparators(dir);
     if (!prefix.endsWith('/') && !prefix.endsWith('\\')) prefix += '/';
     QSqlQuery q(d);
     q.prepare("SELECT path, color FROM labels WHERE path LIKE ? || '%' AND color > 0");
