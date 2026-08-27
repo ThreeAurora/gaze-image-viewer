@@ -103,6 +103,8 @@ private:
     bool   m_viewerMode = false; // 独立查看器(true)/浏览器预览窗格(false)
     double m_lastScale = 0.0;   // 上次实际应用的缩放(Viewer/autoFit=0"上次使用过的"用)
     bool   m_viewerMode = false; // 独立查看器(true)/浏览器预览窗格(false)
+    double m_lastScale = 0.0;   // 上次实际应用的缩放(Viewer/autoFit=0"上次使用过的"用)
+    bool   m_viewerMode = false; // 独立查看器(true)/浏览器预览窗格(false)
     bool m_dragging = false;
     QPointF m_dragStart, m_dragLabelPos;
 
