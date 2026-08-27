@@ -121,7 +121,8 @@ private:
     // 最近文件:内存列表为唯一真源,定时合批写盘(连续切换不再每次同步落盘)
     QStringList m_recentList;         // 内存副本(首次用到时从 ini 懒加载)
     bool        m_recentLoaded = false;
-    QTimer      m_recentFlushTimer;   // 单发 500ms,超时统一写盘
+    int         m_recentMax = 20;    // 上限(懒加载时读一次,选中切换不再逐次读 ini)
+    QTimer      m_recentFlushTimer;  // 单发 500ms,超时统一写盘
 public:
     Q_INVOKABLE void applyLayoutByName(const QString& name) { applyLayout(name); }
 };
