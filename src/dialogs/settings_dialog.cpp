@@ -253,7 +253,7 @@ static QWidget* titleTemplateRow(const QString& key, const QString& def) {
     h->setContentsMargins(0, 0, 0, 0);
     h->setSpacing(6);
     auto* e = new QLineEdit(AppSettings::instance().get(key, def).toString());
-    connect(e, &QLineEdit::textChanged, this, [key](const QString& v) {
+    QObject::connect(e, &QLineEdit::textChanged, [key](const QString& v) {
         AppSettings::instance().set(key, v);
     });
     h->addWidget(e, 1);
