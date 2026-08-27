@@ -110,6 +110,18 @@ void FolderTree::makeIcons() {
         m_folderIcon = QIcon(QPixmap::fromImage(img));
     }
 
+    // 隐藏文件夹图标：同样的文件夹图形，半透明弱化
+    {
+        QPixmap pm = m_folderIcon.pixmap(18, 18);
+        QPixmap dim(pm.size());
+        dim.fill(Qt::transparent);
+        QPainter p(&dim);
+        p.setOpacity(0.45);
+        p.drawPixmap(0, 0, pm);
+        p.end();
+        m_folderIconDim = QIcon(dim);
+    }
+
     // 桌面图标:Windows 系统桌面图标(SIID_DESKTOPPC)
     {
         SHSTOCKICONINFO si = {};
