@@ -536,7 +536,7 @@ QWidget* SettingsDialog::pageAppearance() {
         spin("Appearance/customThumbH", 32, 512, 96));
     form->addRow(chk("Appearance/shadow", QString::fromUtf8("使用阴影"), false));
     form->addRow(QString::fromUtf8("边框粗细"), spin("Appearance/borderSize", 0, 10, 0));
-    form->addRow(QString::fromUtf8("间距"), spin("Appearance/spacing", 0, 40, 4));
+    form->addRow(QString::fromUtf8("间距"), spin("Appearance/spacing", 0, 40, 6));
     form->addRow(chk("Appearance/labelSpacing", QString::fromUtf8("标签间的间距"), true));
     form->addRow(QString::fromUtf8("图像对齐"),
         combo("Appearance/imageAlign", {QString::fromUtf8("左"), QString::fromUtf8("居中"),
