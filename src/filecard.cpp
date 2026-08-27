@@ -190,7 +190,7 @@ void FileCard::setup(const FileEntry& entry, int size, int viewMode, int height)
         m_detailLabel->setGeometry(static_cast<int>(w * 0.40), 5, static_cast<int>(w * 0.58), 16);
         m_detailLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
         m_detailLabel->setText(QString("%1    %2    %3")
-            .arg(formatSize(entry.size), -12)
+            .arg(cardSizeText(entry.size), -12)
             .arg(mimeType(entry.ext), -14)
             .arg(QDateTime::fromSecsSinceEpoch(static_cast<qint64>(entry.mtime))
                      .toString("yyyy/M/d HH:mm")));
