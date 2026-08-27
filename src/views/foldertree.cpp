@@ -152,13 +152,14 @@ void FolderTree::makeIcons() {
 }
 
 void FolderTree::loadDrives() {
-    // 桌面
+    // 桌面（与磁盘一致：懒加载；只有存在可见子文件夹时才留展开箭头）
     auto* desktopItem = new QTreeWidgetItem(this);
     QString desktopPath = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
     desktopItem->setText(0, "\xe6\xa1\x8c\xe9\x9d\xa2"); // 桌面
     desktopItem->setIcon(0, m_desktopIcon);
     desktopItem->setData(0, Qt::UserRole, desktopPath);
-    desktopItem->addChild(new QTreeWidgetItem); // 占位（懒加载标记）
+    if (hasVisibleSubdirs(desktopPath))
+        desktopItem->addChild(new QTreeWidgetItem); // 占位（懒加载标记）
     desktopItem->setExpanded(false);   // 桌面默认折叠
 
     // 枚举 A-Z 盘符(显示 Windows 卷标:如 "Cell (C:)",无卷标则只显示盘符)
@@ -175,13 +176,9 @@ void FolderTree::loadDrives() {
             item->setText(0, text);
             item->setIcon(0, m_driveIcon);
             item->setData(0, Qt::UserRole, root);
-            item->addChild(new QTreeWidgetItem); // 占位
+            if (hasVisibleSubdirs(root))
+                item->addChild(new QTreeWidgetItem); // 占位（懒加载标记）
         }
-    }
-
-    if (desktopItem->childCount() == 1) {
-        delete desktopItem->takeChild(0);
-        loadChildren(desktopItem);
     }
 }
 
