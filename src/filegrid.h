@@ -41,6 +41,13 @@ enum NameOrder {
     NameNormal,        // 系统排序规则(区域设置 collator,不启用数字模式)
 };
 
+// 文件名排序方式(排序菜单:数字顺序/字母顺序/正常顺序)
+enum NameOrder {
+    NameNatural = 0,   // 数字感知:img2 < img10(资源管理器风格,默认)
+    NameAlpha,         // 纯字母序:img10 < img2
+    NameNormal,        // 系统排序规则(区域设置 collator,不启用数字模式)
+};
+
 class FileGrid : public QScrollArea {
     Q_OBJECT
 public:
