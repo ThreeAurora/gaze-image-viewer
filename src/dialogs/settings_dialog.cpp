@@ -311,10 +311,13 @@ static QWidget* titleTemplateRow(const QString& key, const QString& def) {
     auto addTime = [timeMenu, e](const QString& var) {
         timeMenu->addAction(var, e, [e, var]() { e->insert("{" + var + "}"); });
     };
+    auto addHeader = [timeMenu](const QString& text) {
+        timeMenu->addAction(text)->setEnabled(false);
+    };
     // 大写=修改时间,小写=创建时间;N/n=分钟(与 M/m=月 区分)
-    timeMenu->addAction(QString::fromUtf8("修改时间 年/月/日 时/分/秒"));
+    addHeader(QString::fromUtf8("修改时间 年/月/日 时/分/秒"));
     for (const char* v : { "Y", "M", "D", "H", "N", "S" }) addTime(v);
-    timeMenu->addAction(QString::fromUtf8("创建时间 年/月/日 时/分/秒"));
+    addHeader(QString::fromUtf8("创建时间 年/月/日 时/分/秒"));
     for (const char* v : { "y", "m", "d", "h", "n", "s" }) addTime(v);
     timeMenu->addSeparator();
     for (const char* v : { "Y-m-d_H-N-S", "Y_m_d_H_N_S",
