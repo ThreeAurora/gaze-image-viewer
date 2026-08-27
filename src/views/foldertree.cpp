@@ -193,14 +193,8 @@ void FolderTree::loadChildren(QTreeWidgetItem* item) {
         child->setText(0, fi.fileName());
         child->setIcon(0, m_folderIcon);
         child->setData(0, Qt::UserRole, fi.absoluteFilePath());
-        // 检测是否有子文件夹
-        QDir sub(fi.absoluteFilePath());
-        QStringList subDirs = sub.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
-        bool hasSub = false;
-        for (const auto& s : subDirs) {
-            if (!s.startsWith('.')) { hasSub = true; break; }
-        }
-        if (hasSub)
+        // 检测是否有可见子文件夹；没有就不留展开按钮
+        if (hasVisibleSubdirs(fi.absoluteFilePath()))
             child->addChild(new QTreeWidgetItem); // 占位
         item->addChild(child);
     }
