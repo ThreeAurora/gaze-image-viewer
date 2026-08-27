@@ -1,6 +1,7 @@
 #include <QApplication>
 #include <QIcon>
 #include <QFileInfo>
+#include <QDir>
 #include <QLocalServer>
 #include <QLocalSocket>
 #include <QMessageBox>
