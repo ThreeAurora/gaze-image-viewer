@@ -49,6 +49,7 @@ private:
     bool    m_cover    = false;   // true=缩略图 cover 填满(瀑布流)
     bool    m_isLive   = false;
     bool    m_isDir    = false;
+    bool    m_hidden   = false;   // 隐藏文件/文件夹：名称显示淡灰
     QRect   m_thumbRect;              // 缩略图实际显示区域(选中框贴此绘制)
     QString m_selColor = "#3B82F6";
     QString m_nameBg   = "#26262B";
