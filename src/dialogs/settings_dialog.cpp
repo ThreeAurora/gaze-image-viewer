@@ -363,7 +363,8 @@ QWidget* SettingsDialog::pageMouse() {
         QString::fromUtf8("浏览器 ↔ 查看器"),
         QString::fromUtf8("浏览器 → 全屏 → 查看器"),
         QString::fromUtf8("浏览器 → 查看器 → 全屏"),
-        QString::fromUtf8("什么都不做")}), 1, 1);
+        QString::fromUtf8("什么都不做"),
+        QString::fromUtf8("用系统程序打开")}), 1, 1);
 
     auto* holder = new QWidget;
     auto* v = new QVBoxLayout(holder);
