@@ -63,6 +63,7 @@ private:
     void render();
     // 设置活应用:背景色/挡板底纹/图片边框(设置→查看→背景与界面元素)
     void applyBackdrop();
+    QColor backdropColor() const;   // 查看器/浏览器预览各用一个背景色设置
     // Viewer/autoFit → 目标缩放系数(见 previewpanel.cpp 的取值语义表)
     double fitScaleFor(const QSize& viewSize) const;
     // 唯一安全销毁出口：deleteLater + 置空，绝不在信号槽内同步 delete sender
