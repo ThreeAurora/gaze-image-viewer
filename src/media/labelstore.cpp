@@ -6,6 +6,7 @@
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QCoreApplication>
+#include <QDir>
 #include <QVariant>
 #include <QFileInfo>
 #include <algorithm>
