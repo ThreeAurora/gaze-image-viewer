@@ -185,6 +185,8 @@ void FolderTree::makeIcons() {
 
 void FolderTree::loadDrives() {
     // 桌面（与磁盘一致：懒加载；只有存在可见子文件夹时才留展开箭头）
+    // Browser/showDesktopInTree 关掉则整行不出现,盘符成为首行
+    if (m_showDesktop) {
     auto* desktopItem = new QTreeWidgetItem(this);
     QString desktopPath = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
     desktopItem->setText(0, "\xe6\xa1\x8c\xe9\x9d\xa2"); // 桌面
