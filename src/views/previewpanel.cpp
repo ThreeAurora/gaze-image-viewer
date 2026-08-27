@@ -334,6 +334,7 @@ void PreviewPanel::loadFile(const QString& path) {
     m_filePath = path;
     m_livePhotoOriginalPath.clear();
     m_isLivePhoto = false;
+    stopMovie();   // 任何类型切换都先回收 GIF 动画(防泄漏/防隐藏继续解码)
 
     // 立即清屏:杜绝上一文件(尤其图片→视频切换)残影闪帧
     m_imgLabel->clear();
