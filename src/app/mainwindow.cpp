@@ -18,6 +18,7 @@
 #include <QMessageBox>
 #include <QFileInfo>
 #include <QDir>
+#include <QStandardPaths>
 #include <QDateTime>
 #include <QShortcut>
 #include <QKeyEvent>
