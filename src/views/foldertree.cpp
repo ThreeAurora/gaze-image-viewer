@@ -27,7 +27,7 @@ void ArrowStyle::drawPrimitive(PrimitiveElement element, const QStyleOption* opt
             QRect r = option->rect;
             int cx = r.center().x();
             int cy = r.center().y();
-            int sz = 5;
+            int sz = 4;
 
             painter->save();
             painter->setPen(Qt::NoPen);
