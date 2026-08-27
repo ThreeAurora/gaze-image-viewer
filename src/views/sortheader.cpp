@@ -25,7 +25,7 @@ SortHeader::SortHeader(QWidget* parent) : QWidget(parent) {
     QString btnStyle =
         "QPushButton{background:transparent;color:#FFFFFF;border:none;"
         "padding:2px 8px;font-size:11px;text-align:left;border-radius:4px;}"
-        "QPushButton:hover{color:#FFFFFF;background:#26262B;}";
+        "QPushButton:hover{color:" C_TEXT ";background:" C_PANE_HDR ";}";
 
     for (auto& c : cols) {
         auto* btn = new QPushButton(c.text);
