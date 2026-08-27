@@ -266,7 +266,6 @@ void FileCard::detectLivePhoto() {
 
 // ═══ 绘制 ═══
 void FileCard::paintEvent(QPaintEvent* event) {
-    PerfLog::Scope _perf("FileCard::paintEvent", 3);
     QFrame::paintEvent(event);
     if (!m_active) return;
 
