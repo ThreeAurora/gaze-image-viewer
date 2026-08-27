@@ -109,4 +109,10 @@ private:
     quint64 m_imgReqGen = 0;    // 最新请求代号(loadFile/showImage 递增,切走即作废在途结果)
     quint64 m_issuedGen = 0;    // 当前后台任务对应的代号
     bool    m_fullBusy  = false; // 解码进行中(同一时刻最多一个,控内存峰值)
+
+    // 查看器快捷键表(ini ViewerShortcut/*;设置页"交互→快捷键→查看器"可改)
+    QHash<QString, QKeySequence> m_viewerHotkeys;   // 动作名 → 键序
+    bool  m_hotkeysLoaded = false;
+    void  ensureHotkeys();
+    QString hotkeyAction(QKeyEvent* e) const;       // 键事件 → 动作名(未命中返回空)
 };
