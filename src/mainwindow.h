@@ -116,6 +116,9 @@ private:
     QString     m_currentFile;       // 当前预览文件(标题模板 {文件名…} 求值用)
     QTimer      m_slideTimer;        // 快速幻灯片(Keyboard/space=快速幻灯片)
     bool        m_slideshow = false;
+    QString     m_currentFile;       // 当前预览文件(标题模板 {文件名…} 求值用)
+    QTimer      m_slideTimer;        // 快速幻灯片(Keyboard/space=快速幻灯片)
+    bool        m_slideshow = false;
     QWidget* m_previewPane = nullptr; // 预览面板包装(标题条 + PreviewPanel)
     QWidget* m_infoPane  = nullptr;  // #80 信息面板容器(含标题条,挂在预览栏内)
     InfoPanel* m_info    = nullptr;  // #80 元数据表 + 直方图
