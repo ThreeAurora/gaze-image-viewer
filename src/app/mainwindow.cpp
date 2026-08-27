@@ -436,10 +436,7 @@ void MainWindow::selftestFastScroll() {
             if (!fi.isDir()) {
                 const int mode = st.get("Start/withFile", 0).toInt();
                 m_fileGrid->selectByPath(fi.absoluteFilePath());
-                if (mode == 0 || mode == 1) {
-                m_viewerMode = false;       // toggleViewer 前显式归零
-                toggleViewer();
-            }
+                if (mode == 0 || mode == 1) toggleViewer();
                 if (mode == 1 || mode == 3) enterFullscreen();
             }
         } else {
