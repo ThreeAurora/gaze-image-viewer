@@ -52,5 +52,5 @@ private:
 // ── 页面构建助手(pageXXX 与 settings_dialog.cpp 内部共用) ──
 // 带大标题+分隔线的页面包装
 QWidget* wrapTitled(const QString& title, QLayout* lay);
-// 分组框(对齐 XnView"预览/旋转"式圆角边框分组)
-QGroupBox* group(const QString& title, QLayout* lay);
+// 分组框(组名在框外上方 + 浅色细线圆角框,XnView 式)
+QWidget* group(const QString& title, QLayout* lay);
