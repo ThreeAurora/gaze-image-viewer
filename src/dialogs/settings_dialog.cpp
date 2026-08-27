@@ -442,10 +442,11 @@ QWidget* SettingsDialog::pageSwitchMode() {
         QString::fromUtf8("浏览器 ↔ 查看器"),
         QString::fromUtf8("浏览器 → 全屏 → 查看器"),
         QString::fromUtf8("浏览器 → 查看器 → 全屏"),
-        QString::fromUtf8("什么都不做")};
+        QString::fromUtf8("什么都不做"),
+        QString::fromUtf8("用系统程序打开")};
     auto* form = new QFormLayout;
     form->addRow(QString::fromUtf8("双击"),
-        combo("SwitchMode/doubleClick", opts, 1));
+        combo("SwitchMode/doubleClick", opts, 5));
     form->addRow(QString::fromUtf8("中键"),
         combo("SwitchMode/middleClick", opts, 4));
     form->addRow(QString::fromUtf8("回车键"),
