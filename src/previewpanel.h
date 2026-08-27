@@ -115,4 +115,6 @@ private:
     bool  m_hotkeysLoaded = false;
     void  ensureHotkeys();
     QString hotkeyAction(QKeyEvent* e) const;       // 键事件 → 动作名(未命中返回空)
+public:
+    void reloadViewerHotkeys();                     // 设置页修改后刷新缓存
 };
