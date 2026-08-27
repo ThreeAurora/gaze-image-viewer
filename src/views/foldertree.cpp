@@ -30,17 +30,18 @@ void ArrowStyle::drawPrimitive(PrimitiveElement element, const QStyleOption* opt
             int sz = 4;
 
             painter->save();
+            painter->setRenderHint(QPainter::Antialiasing, true);
             painter->setPen(Qt::NoPen);
             painter->setBrush(QColor("#FFFFFF"));   // 白色箭头常显,可展开处一目了然
-            QPolygon tri;
+            QPolygonF tri;
             if (expanded) {
-                tri << QPoint(cx - sz, cy - sz / 2)
-                    << QPoint(cx + sz, cy - sz / 2)
-                    << QPoint(cx, cy + sz);
+                tri << QPointF(cx - sz, cy - sz / 2.0)
+                    << QPointF(cx + sz, cy - sz / 2.0)
+                    << QPointF(cx, cy + sz);
             } else {
-                tri << QPoint(cx - sz / 2, cy - sz)
-                    << QPoint(cx - sz / 2, cy + sz)
-                    << QPoint(cx + sz, cy);
+                tri << QPointF(cx - sz / 2.0, cy - sz)
+                    << QPointF(cx - sz / 2.0, cy + sz)
+                    << QPointF(cx + sz, cy);
             }
             painter->drawPolygon(tri);
             painter->restore();
