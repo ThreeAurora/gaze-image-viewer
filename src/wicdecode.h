@@ -26,9 +26,11 @@ namespace WicDecode {
 // CLSID_WICImagingFactory {cacaf262-9370-4615-a13b-9f5539da4c0a}
 static const GUID kCLSID_WICImagingFactory =
     {0xcacaf262, 0x9370, 0x4615, {0xa1, 0x3b, 0x9f, 0x55, 0x39, 0xda, 0x4c, 0x0a}};
-// IID_IWICImagingFactory {ec5ec8a9-c395-4314-9c77-54d7a933ff4e}
+// IID_IWICImagingFactory {ec5ec8a9-c395-4314-9c77-54d7a935ff70}
+// ⚠️ 历史教训: 曾手写为 54d7a9-33ff4e(错),QueryInterface 永远 E_NOINTERFACE,
+//    WIC 全程静默回退 Qt 路径(偏亮)——修复"修了但没修好"的根因。
 static const GUID kIID_IWICImagingFactory =
-    {0xec5ec8a9, 0xc395, 0x4314, {0x9c, 0x77, 0x54, 0xd7, 0xa9, 0x33, 0xff, 0x4e}};
+    {0xec5ec8a9, 0xc395, 0x4314, {0x9c, 0x77, 0x54, 0xd7, 0xa9, 0x35, 0xff, 0x70}};
 
 // 线程 COM 初始化作用域:构造初始化,析构按需配对释放。
 // 已初始化为其它 apartment 模式(如主线程被 Qt 初始化为 STA)时不 uninit。
