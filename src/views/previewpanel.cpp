@@ -352,18 +352,18 @@ QColor PreviewPanel::backdropColor() const {
 }
 
 // 透明像素下的挡板底纹(Viewer/checkerMode):16px 两色方格
-static QPixmap checkerTile(const QColor& base) {
+static QImage checkerTile(const QColor& base) {
     const int cell = 8;
-    QPixmap pm(cell * 2, cell * 2);
-    pm.fill(base);
-    QPainter p(&pm);
+    QImage img(cell * 2, cell * 2, QImage::Format_ARGB32_Premultiplied);
+    img.fill(base);
+    QPainter p(&img);
     QColor ink = base.lightness() > 128 ? base.darker(140) : base.lighter(160);
     p.setPen(Qt::NoPen);
     p.setBrush(ink);
     p.drawRect(0, 0, cell, cell);
     p.drawRect(cell, cell, cell, cell);
     p.end();
-    return pm;
+    return img;
 }
 
 void PreviewPanel::paintEvent(QPaintEvent* event) {
