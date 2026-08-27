@@ -50,7 +50,13 @@ FileGrid::FileGrid(QWidget* parent) : QScrollArea(parent) {
     setWidget(m_canvas);
 
     connect(verticalScrollBar(), &QScrollBar::valueChanged,
-            this, &FileGrid::layoutCards);
+            this, [this]() {
+        // 滚动中(滚轮/拖动滚动条):推迟缩略图解码防洪流卡顿;
+        // 停止 120ms 后由 m_scrollTimer 批量补齐(拖动滚动条原未防抖,卡顿主因)
+        m_scrollSettled = false;
+        m_scrollTimer.start();
+        layoutCards();
+    });
 
     connect(&Thumbnailer::instance(), &Thumbnailer::thumbnailReady,
             this, &FileGrid::onThumbReady);
