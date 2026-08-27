@@ -187,14 +187,15 @@ void FolderTree::loadDrives() {
     // 桌面（与磁盘一致：懒加载；只有存在可见子文件夹时才留展开箭头）
     // Browser/showDesktopInTree 关掉则整行不出现,盘符成为首行
     if (m_showDesktop) {
-    auto* desktopItem = new QTreeWidgetItem(this);
-    QString desktopPath = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
-    desktopItem->setText(0, "\xe6\xa1\x8c\xe9\x9d\xa2"); // 桌面
-    desktopItem->setIcon(0, m_desktopIcon);
-    desktopItem->setData(0, Qt::UserRole, desktopPath);
-    if (hasVisibleSubdirs(desktopPath))
-        desktopItem->addChild(new QTreeWidgetItem); // 占位（懒加载标记）
-    desktopItem->setExpanded(false);   // 桌面默认折叠
+        auto* desktopItem = new QTreeWidgetItem(this);
+        QString desktopPath = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
+        desktopItem->setText(0, "\xe6\xa1\x8c\xe9\x9d\xa2"); // 桌面
+        desktopItem->setIcon(0, m_desktopIcon);
+        desktopItem->setData(0, Qt::UserRole, desktopPath);
+        if (hasVisibleSubdirs(desktopPath))
+            desktopItem->addChild(new QTreeWidgetItem); // 占位（懒加载标记）
+        desktopItem->setExpanded(false);   // 桌面默认折叠
+    }
 
     // 枚举 A-Z 盘符(显示 Windows 卷标:如 "Cell (C:)",无卷标则只显示盘符)
     for (char drive = 'A'; drive <= 'Z'; ++drive) {
