@@ -82,7 +82,7 @@ void DbMaintenanceDialog::reload() {
     int total = 0;
 
     QSqlQuery q(d);
-    if (q.exec("SELECT path, LENGTH(png) FROM thumbs")) {
+    if (q.exec("SELECT key, LENGTH(png) FROM thumbs")) {
         while (q.next()) {
             QString p = q.value(0).toString();
             qint64 bytes = q.value(1).toLongLong();
