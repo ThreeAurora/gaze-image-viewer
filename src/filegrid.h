@@ -151,6 +151,7 @@ private:
     int    m_sortCol      = SORT_MDATE;
     bool   m_sortAsc      = false;
     int    m_nameOrder    = NameNatural;
+    int    m_nameOrder    = NameNatural;
 
 
 
