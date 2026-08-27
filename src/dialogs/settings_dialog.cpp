@@ -226,8 +226,9 @@ QWidget* SettingsDialog::pageStartup() {
 QWidget* SettingsDialog::pageFileOps() {
     auto* form = new QFormLayout;
     form->setVerticalSpacing(12);
-    form->addRow(chk("FileOps/confirmDelete", QString::fromUtf8("文件删除前确认"), false));
-    form->addRow(chk("FileOps/useRecycleBin", QString::fromUtf8("使用回收站(删除永远进回收站)"), true));
+    form->addRow(chk("FileOps/confirmDelete", QString::fromUtf8("文件删除前确认"), true));
+    form->addRow(chk("FileOps/useRecycleBin",
+        QString::fromUtf8("使用回收站(关闭后永久删除,并强制确认)"), true));
     form->addRow(chk("FileOps/losslessBackup", QString::fromUtf8("为无损翻转/旋转生成备份"), true));
     form->addRow(chk("FileOps/losslessKeepMeta", QString::fromUtf8("为无损翻转/旋转保留原始元数据"), true));
     form->addRow(chk("FileOps/renameDialog", QString::fromUtf8("使用对话框重命名文件/文件夹"), true));
