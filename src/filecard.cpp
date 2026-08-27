@@ -408,6 +408,8 @@ void FileCard::refreshLabelBg() {
 void FileCard::mouseReleaseEvent(QMouseEvent* event) {
     if (event->button() == Qt::LeftButton)
         emit clicked(this);
+    else if (event->button() == Qt::MiddleButton)
+        emit middleClicked(this);
     QFrame::mouseReleaseEvent(event);
 }
 
