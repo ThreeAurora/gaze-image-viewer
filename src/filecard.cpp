@@ -95,7 +95,7 @@ void FileCard::setup(const FileEntry& entry, int size, int viewMode, int height)
             + "\xe4\xbf\xae\xe6\x94\xb9: " + (mod.isValid()
                 ? mod.toString("yyyy/MM/dd - HH:mm:ss")
                 : QString::fromUtf8("\xe2\x80\x94")) + "\n"
-            + formatSize(entry.size);
+            + cardSizeText(entry.size);
         setToolTip(tip);
     }
 
