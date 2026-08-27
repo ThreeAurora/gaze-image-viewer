@@ -61,10 +61,35 @@ Thumbnailer& Thumbnailer::instance() {
 Thumbnailer::Thumbnailer() {
     m_pool = new QThreadPool(this);
     m_pool->setMaxThreadCount(4);
+    // 本对象在 FileGrid 构造时(Main 线程)创建:快照只在此线程读 QSettings,
+    // worker 线程读副本 —— 逐条目 enqueue 路径不碰设置/磁盘
+    snapshotPrefs();
+    connect(&AppSettings::instance(), &AppSettings::changed, this, [this]() {
+        snapshotPrefs();
+    });
 }
 
 Thumbnailer::~Thumbnailer() {
     m_pool->waitForDone();
+}
+
+void Thumbnailer::snapshotPrefs() {
+    AppSettings& st = AppSettings::instance();
+    Prefs p;
+    p.inDb        = st.get("Cache/thumbInDB", true).toBool();
+    p.capOn       = st.get("Cache/maxCacheOn", true).toBool();
+    p.maxDbMB     = qBound(64, st.get("Cache/maxCacheMB", 500).toInt(), 10240);
+    p.dbCacheMB   = qBound(8, st.get("Cache/dbCacheMB", 64).toInt(), 8192);
+    p.blobCodec   = qBound(0, st.get("Cache/compression", 4).toInt(), 4);
+    p.highQuality = st.get("Thumbs/highQuality", true).toBool();
+    p.framePct    = qBound(0, st.get("Thumbs/videoFramePct", 0).toInt(), 100);
+    QMutexLocker lk(&m_prefMutex);
+    m_prefs = p;
+}
+
+Thumbnailer::Prefs Thumbnailer::prefs() {
+    QMutexLocker lk(&m_prefMutex);
+    return m_prefs;
 }
 
 // ═══════════════════════════════════════════
