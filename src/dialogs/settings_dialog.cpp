@@ -569,7 +569,7 @@ QWidget* SettingsDialog::pageLabelColors() {
     auto* defBtn = new QToolButton;
     defBtn->setFixedSize(30, 24);
     defBtn->setStyleSheet(QString("background:%1;border:1px solid #4A4A4A;")
-                              .arg(LabelColors::fallbackColor().name())));
+                              .arg(LabelColors::fallbackColor().name()));
     defRow->addWidget(defBtn);
     defRow->addStretch(1);
     root->addLayout(defRow);
