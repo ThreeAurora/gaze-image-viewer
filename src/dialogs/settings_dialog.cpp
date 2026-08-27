@@ -844,7 +844,7 @@ QWidget* SettingsDialog::pageMaintenance() {
         summary->setText(QString::fromUtf8(
             "数据库:%1 (%2 MB)  ·  缓存条目:%3  ·  缩略图合计:%4")
             .arg(fi.fileName())
-            .arg(dbSizeToString(db.size()))
+            .arg(fi.size() / 1024 / 1024)
             .arg(total)
             .arg(QString::asprintf("%.2f MB", totalBytes / 1024.0 / 1024.0)));
 
