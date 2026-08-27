@@ -42,8 +42,8 @@ private:
         int  framePct    = 0;      // Thumbs/videoFramePct:0=固定取第 1 秒
     };
     void  snapshotPrefs();
-    Prefs prefs();
-    QMutex             m_prefMutex;
+    Prefs prefs() const;
+    mutable QMutex     m_prefMutex;
     Prefs              m_prefs;
 
     // ── 图片缩略图（QImage直接缩放） ──
