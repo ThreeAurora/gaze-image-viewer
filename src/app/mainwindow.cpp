@@ -484,6 +484,14 @@ void MainWindow::selftestFastScroll() {
             applyLastLayout();
     }
 
+    // 设置→界面→启动时打开文件列表和预览框:
+    //   勾选 = 无视布局状态,强制显示树与预览(未保存过布局时的默认行为)
+    //   未勾选 = 沿用上面恢复出的面板状态(关闭前被关掉的面板下次启动仍然没有)
+    if (AppSettings::instance().get("Interface/showPanesOnStart", true).toBool()) {
+        setPaneVisible("tree", true);
+        setPaneVisible("preview", true);
+    }
+
     // 命令行启动路径已由上面的启动块统一处理(argv 优先于 Start/*)
 
     // 设置改动 → 标题模板/幻灯片间隔即时生效(此前 changed() 无人订阅,
