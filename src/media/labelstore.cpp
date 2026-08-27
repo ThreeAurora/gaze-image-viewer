@@ -1,12 +1,14 @@
 #include "labelstore.h"
 #include "settings.h"
+#include "constants.h"
 
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QCoreApplication>
 #include <QVariant>
-#include <QAlgorithm>
+#include <QFileInfo>
+#include <algorithm>
 
 LabelStore& LabelStore::instance() {
     static LabelStore inst;
