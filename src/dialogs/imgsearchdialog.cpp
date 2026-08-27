@@ -7,6 +7,9 @@
 #include <QFileInfo>
 #include <QPixmap>
 #include <QToolTip>
+#include <QThreadPool>
+#include <QMetaObject>
+#include <QCursor>
 
 ImageSearchDialog::ImageSearchDialog(QWidget* parent) : QDialog(parent) {
     setWindowTitle(QString::fromUtf8("以文搜图 - 万象图搜"));
