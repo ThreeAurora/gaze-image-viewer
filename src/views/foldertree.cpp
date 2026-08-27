@@ -72,6 +72,8 @@ FolderTree::FolderTree(QWidget* parent) : QTreeWidget(parent) {
     setFocusPolicy(Qt::NoFocus);
     // 去掉 item 上的虚线焦点框，避免“桌面”这类当前项出现与其他磁盘不一致的描边
     setFocusPolicy(Qt::NoFocus);
+    // 启用自定义展开箭头：有子文件夹才画三角，叶子目录彻底不画分支装饰
+    setStyle(new ArrowStyle);
     setStyleSheet(QString(
         "QTreeWidget{background:%1;color:%2;border:none;font-size:11px;outline:0;}"
         "QTreeWidget::item{padding:2px 0;outline:0;}"
