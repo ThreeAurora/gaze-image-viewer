@@ -114,6 +114,14 @@ private:
     bool m_viewerMode = false; // 查看器(单图)模式
     QWidget* m_treePane = nullptr;    // 树面板(查看器模式隐藏)
     QWidget* m_centerPane = nullptr;  // 网格面板(查看器模式隐藏)
+    QWidget* m_previewPane = nullptr; // 预览面板包装(标题条 + PreviewPanel)
+    QWidget* m_addrRow = nullptr;     // 地址栏行(视图菜单可隐藏)
+    QWidget* m_toolRow = nullptr;     // 工具栏第二行(视图菜单可隐藏)
+    // 面板开关 action(视图菜单),与 m_panesOn 同步 ✓
+    QAction* m_paneActs[5] = {};
+    // 用户意图:当前应显示的面板 id 列表(顺序同 paneIds)。
+    // 查看器模式的临时隐藏不改这里,避免污染持久化状态
+    QStringList m_panesOn;
     // 最近文件:内存列表为唯一真源,定时合批写盘(连续切换不再每次同步落盘)
     QStringList m_recentList;         // 内存副本(首次用到时从 ini 懒加载)
     bool        m_recentLoaded = false;
