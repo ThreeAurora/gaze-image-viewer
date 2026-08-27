@@ -25,6 +25,10 @@ public:
 
     void detectLivePhoto();
 
+    // 外观设置缓存:FileGrid 启动时 + 设置变更后刷新。setup()/paintEvent() 只读
+    // 内存缓存 —— 逐条目路径读 ini 违反项目铁律。
+    static void applyAppearance();
+
 signals:
     void clicked(FileCard* card);
     void doubleClicked(FileCard* card);
