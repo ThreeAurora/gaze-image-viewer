@@ -40,6 +40,7 @@
 #include "settings_dialog.h"
 #include "dbmaintenance.h"
 #include "settings.h"
+#include "settings.h"
 #include <QMenu>
 #include <QActionGroup>
 #include <QInputDialog>
