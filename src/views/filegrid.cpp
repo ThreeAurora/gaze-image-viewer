@@ -48,7 +48,7 @@ FileGrid::FileGrid(QWidget* parent) : QScrollArea(parent) {
     setWidgetResizable(false);
 
     m_canvas = new QWidget;
-    m_canvas->setStyleSheet("background:#000;");
+    m_canvas->setStyleSheet("background:" C_CONTENT ";");
     setWidget(m_canvas);
 
     connect(verticalScrollBar(), &QScrollBar::valueChanged,
