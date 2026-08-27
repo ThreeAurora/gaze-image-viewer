@@ -71,7 +71,7 @@ private:
     static int  s_border;        // Appearance/borderSize 卡片边框粗细(0=无)
     static int  s_imageAlign;    // Appearance/imageAlign 0左 1中 2右
     static int  s_labelAlign;    // Appearance/labelAlign  0左 1中 2右
-    static int  s_labelGap;      // Appearance/labelSpacing 真=2px 假=0
+    static int  s_labelGap;      // Appearance/labelSpacing 真=6px 假=0
     static bool s_showRating;    // Browser/showRating 颜色标记圈
     static bool s_sizeBytes;     // FileList/sizeInBytes 按字节显示大小
 
