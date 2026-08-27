@@ -4,6 +4,7 @@
 #include "livephoto.h"
 #include "labelstore.h"
 #include "iconlib.h"
+#include "shelldelete.h"
 
 #include <QFileInfo>
 #include <QDir>
@@ -30,27 +31,6 @@ static T* findAncestor(QObject* o) {
         o = o->parent();
     }
     return nullptr;
-}
-
-// ── 回收站删除(唯一允许的删除方式,绝不永久删除) ──
-static bool deleteToRecycleBin(const QStringList& paths) {
-    if (paths.isEmpty()) return true;
-    // 双 NUL 结尾的多字符串列表
-    QString list;
-    for (const auto& p : paths) list += p + QChar(L'\0');
-    list += QChar(L'\0');
-
-    auto* buf = new wchar_t[list.size()];
-    memcpy(buf, list.constData(), list.size() * sizeof(wchar_t));
-
-    SHFILEOPSTRUCTW op = {};
-    op.hwnd = NULL;
-    op.wFunc = FO_DELETE;
-    op.pFrom = buf;
-    op.fFlags = FOF_ALLOWUNDO | FOF_NOCONFIRMATION | FOF_SILENT;
-    int rc = SHFileOperationW(&op);
-    delete[] buf;
-    return rc == 0 && !op.fAnyOperationsAborted;
 }
 
 // ── 系统属性对话框 ──
