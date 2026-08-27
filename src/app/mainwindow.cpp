@@ -417,9 +417,8 @@ void MainWindow::selftestFastScroll() {
     // 三键只被设置页写入、无人读取(永远打开桌面)。argv 优先,其次按设置恢复。
     {
         AppSettings& st = AppSettings::instance();
-        auto* desktopItem = m_folderTree->topLevelItem(0);
-        const QString fallbackDir = desktopItem
-            ? desktopItem->data(0, Qt::UserRole).toString() : QDir::homePath();
+        const QString fallbackDir =
+            QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
 
         const QStringList args = QCoreApplication::arguments();
         QString cliPath;
