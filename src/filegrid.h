@@ -105,6 +105,7 @@ private:
     void onCardClicked(FileCard* card);
     void onCardDoubleClicked(FileCard* card);
     void onThumbReady(const QString& filePath, const QImage& img);
+    void enqueueVisibleThumbs();  // 滚动停止后批量补齐可见卡片缩略图(防抖配套)
     void beginInlineRename();     // FileOps/renameDialog=关:就地改名
     void endInlineRename(bool commit);
     // FileOps/renameDialog=关 时的就地改名(画布上压一个编辑器)
