@@ -125,6 +125,7 @@ private:
     void onCardClicked(FileCard* card);
     void onCardDoubleClicked(FileCard* card);
     void onCardMiddleClicked(FileCard* card);
+    void onCardMiddleClicked(FileCard* card);
     void onThumbReady(const QString& filePath, const QImage& img);
     void enqueueVisibleThumbs();  // 滚动停止后批量补齐可见卡片缩略图(防抖配套)
     void beginInlineRename();     // FileOps/renameDialog=关:就地改名
