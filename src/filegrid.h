@@ -63,6 +63,8 @@ public:
     void sort(int column, bool ascending);
     void setNameOrder(int order);   // NameOrder;持久化到 Browser/nameOrder 并重排
     int  nameOrder() const { return m_nameOrder; }
+    void setNameOrder(int order);   // NameOrder;持久化到 Browser/nameOrder 并重排
+    int  nameOrder() const { return m_nameOrder; }
     void toggleFilter();
     void setFilterMode(int mode);            // FilterMode
     int  filterMode() const { return m_filterMode; }
