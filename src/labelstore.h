@@ -2,6 +2,7 @@
 #include <QString>
 #include <QColor>
 #include <QHash>
+#include <QList>
 
 class QSqlDatabase;
 
@@ -21,4 +22,17 @@ public:
 private:
     LabelStore();
     QSqlDatabase db();
+};
+
+// 格式标签颜色(文件名底色):ini "LabelColors/*" 持久化,
+// 设置页"缩略图→标签颜色"可视化编辑(FileCard 渲染时查询)
+class LabelColors {
+public:
+    static QColor colorForExt(const QString& extNoDot);   // 未命中 → fallback
+    static QColor fallbackColor();                         // 未列格式的底色
+    static void   setFallbackColor(const QColor& c);
+    static QList<QPair<QString, QColor>> all();            // 覆盖列表(按 ext 排序)
+    static void   set(const QString& extNoDot, const QColor& c);
+    static void   remove(const QString& extNoDot);
+    static bool   enabled();                               // 总开关 Appearance/formatColor
 };
