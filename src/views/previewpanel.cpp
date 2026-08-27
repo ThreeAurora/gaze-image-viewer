@@ -330,10 +330,21 @@ static int s_int(const QString& k, int def) {
     return AppSettings::instance().get(k, def).toInt();
 }
 
+bool PreviewPanel::inFullscreen() const {
+    const QWidget* w = window();
+    return w && w->isFullScreen();
+}
+
+// 同一角色在两处各有一套设置:全屏时改用 Fullscreen/*,否则 Viewer/*
+QString PreviewPanel::modeKey(const char* suffix) const {
+    return QStringLiteral(inFullscreen() ? "Fullscreen/" : "Viewer/")
+         + QString::fromLatin1(suffix);
+}
+
 QColor PreviewPanel::backdropColor() const {
     // 查看器与浏览器预览窗格用各自的背景色设置(XnView 同)
-    const QString key = m_viewerMode ? QStringLiteral("Viewer/backColor")
-                                     : QStringLiteral("Browser/previewBackColor");
+    const QString key = m_viewerMode || inFullscreen() ? modeKey("backColor")
+                                                       : QStringLiteral("Browser/previewBackColor");
     QColor c(AppSettings::instance().get(key, QStringLiteral("#000000")).toString());
     return c.isValid() ? c : QColor("#000000");
 }
