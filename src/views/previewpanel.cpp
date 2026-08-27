@@ -62,7 +62,8 @@ static QIcon whiteIcon(const QIcon& base, int size = 32) {
 //  #121 HDR 三轮诊断 —— 结论都写进了 TODO_ALL。播放侧的常驻通道留 hb/mediaStatus。)
 
 PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
-    setStyleSheet(QString("background:%1;").arg(C_PREVIEW_BG));
+    // 背景走 palette(而非样式表):挡板底纹需要用 QBrush 贴图,样式表做不到
+    setAutoFillBackground(true);
 
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
