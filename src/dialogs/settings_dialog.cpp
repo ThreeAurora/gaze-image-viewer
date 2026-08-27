@@ -746,8 +746,11 @@ QWidget* SettingsDialog::pageViewer() {
         combo("Viewer/selectedOverlay", {QString::fromUtf8("正常"),
             QString::fromUtf8("三分法"), QString::fromUtf8("黄金分割(Phi)")}, 0));
     root->addWidget(group(QString::fromUtf8("背景与界面元素"), fUI));
+    return wrapTitled(QString::fromUtf8("查看"), root);
+}
 
-    // 分组"播放与性能"
+// ── 查看 → 其他:播放与性能(从查看页拆出,页面不再过长) ──
+QWidget* SettingsDialog::pageViewerOther() {
     auto* fPlay = new QFormLayout;
     fPlay->setVerticalSpacing(10);
     fPlay->addRow(chk("Viewer/autoPlayVideo", QString::fromUtf8("自动播放(视频)"), true));
@@ -760,8 +763,11 @@ QWidget* SettingsDialog::pageViewer() {
     fPlay->addRow(chk("Viewer/disableAnimation", QString::fromUtf8("禁用 GIF/JIF/APNG/ANI 动画"), false));
     fPlay->addRow(chk("Viewer/gamma", QString::fromUtf8("使用 Gamma 纠正"), false));
     fPlay->addRow(chk("Viewer/sharpen", QString::fromUtf8("使用锐化 50%"), false));
+
+    auto* root = new QVBoxLayout;
+    root->setSpacing(12);
     root->addWidget(group(QString::fromUtf8("播放与性能"), fPlay));
-    return wrapTitled(QString::fromUtf8("查看"), root);
+    return wrapTitled(QString::fromUtf8("其他"), root);
 }
 
 QWidget* SettingsDialog::pageFullscreen() {
