@@ -179,6 +179,9 @@ private:
     bool   m_scrollSettled = true;
     bool   m_loading = false;
 
-    static constexpr int SPACING = 6;
+    // 外观:间距由设置驱动(Appearance/spacing);MARGIN 画布留边固定
+    int    m_spacing = 6;
     static constexpr int MARGIN  = 8;
+
+    void relayoutNow();     // 设置改动后重算列宽并重排(间距/尺寸类)
 };
