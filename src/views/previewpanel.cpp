@@ -343,8 +343,9 @@ QString PreviewPanel::modeKey(const char* suffix) const {
 
 QColor PreviewPanel::backdropColor() const {
     // 查看器与浏览器预览窗格用各自的背景色设置(XnView 同)
-    const QString key = m_viewerMode || inFullscreen() ? modeKey("backColor")
-                                                       : QStringLiteral("Browser/previewBackColor");
+    const QString key = (m_viewerMode || inFullscreen())
+        ? modeKey("backColor")
+        : QStringLiteral("Browser/previewBackColor");
     QColor c(AppSettings::instance().get(key, QStringLiteral("#000000")).toString());
     return c.isValid() ? c : QColor("#000000");
 }
