@@ -262,11 +262,15 @@ void FileCard::setThumbnail(const QPixmap& pixmap) {
     Qt::AspectRatioMode am = m_cover
         ? Qt::KeepAspectRatioByExpanding : Qt::KeepAspectRatio;
     QPixmap scaled = pixmap.scaled(tw, th, am, Qt::SmoothTransformation);
+    // Appearance/imageAlign:0 左 1 居中 2 右(选中框与绘制共用同一偏移)
+    const int offX = s_imageAlign == 0 ? 0
+                   : s_imageAlign == 2 ? tw - scaled.width()
+                                       : (tw - scaled.width()) / 2;
     QPixmap square(tw, th);
     square.fill(Qt::transparent);
     QPainter p(&square);
     p.setRenderHint(QPainter::Antialiasing);
-    p.drawPixmap((tw - scaled.width()) / 2, (th - scaled.height()) / 2, scaled);
+    p.drawPixmap(offX, (th - scaled.height()) / 2, scaled);
     p.end();
     QPixmap rounded(tw, th);
     rounded.fill(Qt::transparent);
