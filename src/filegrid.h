@@ -141,6 +141,7 @@ private:
     int    m_waterfallColW = 220;   // 瀑布流列宽
     int    m_sortCol      = SORT_MDATE;
     bool   m_sortAsc      = false;
+    int    m_nameOrder    = NameNatural;
 
 
 
