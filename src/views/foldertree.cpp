@@ -193,14 +193,16 @@ void FolderTree::loadChildren(QTreeWidgetItem* item) {
     QString path = item->data(0, Qt::UserRole).toString();
     QDir dir(path);
     QFileInfoList list = dir.entryInfoList(
-        QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+        QDir::Dirs | QDir::Hidden | QDir::NoDotAndDotDot, QDir::Name);
     for (const QFileInfo& fi : list) {
-        if (fi.fileName().startsWith('.')) continue;
         auto* child = new QTreeWidgetItem;
         child->setText(0, fi.fileName());
         child->setIcon(0, m_folderIcon);
         child->setData(0, Qt::UserRole, fi.absoluteFilePath());
-        // 检测是否有可见子文件夹；没有就不留展开按钮
+        // 隐藏文件夹用淡灰色文字；普通文件夹白色
+        bool hidden = fi.isHidden() || fi.fileName().startsWith('.');
+        child->setForeground(0, QBrush(QColor(hidden ? C_TEXT_HIDDEN : C_TREE_TEXT)));
+        // 检测是否有子文件夹（含隐藏）；没有就不留展开按钮
         if (hasVisibleSubdirs(fi.absoluteFilePath()))
             child->addChild(new QTreeWidgetItem); // 占位
         item->addChild(child);
