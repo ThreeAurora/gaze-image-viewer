@@ -31,6 +31,7 @@ private:
     QWidget* pageFileList();       // 浏览器 → 文件列表
     QWidget* pageThumbs();         // 缩略图
     QWidget* pageAppearance();     // 缩略图 → 外观
+    QWidget* pageLabelColors();    // 缩略图 → 标签颜色(扩展名底色列表编辑)
     QWidget* pageViewer();         // 查看
     QWidget* pageFullscreen();     // 查看 → 全屏
     QWidget* pageCache();          // 高级 → 缓存数据库
