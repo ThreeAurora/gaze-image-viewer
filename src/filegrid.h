@@ -146,8 +146,9 @@ private:
     std::vector<FileCard*> m_pool;
     QHash<int, FileCard*>  m_active; // row-major index → card
 
-    // 缩略图
+    // 缩略图(FIFO 上限防内存无限膨胀:800 条 × ~300px pixmap ≈ 260MB 封顶)
     QHash<QString, QPixmap> m_thumbCache;
+    QQueue<QString>         m_thumbOrder;
 
     QTimer m_resizeTimer;
     QTimer m_reEnqueueTimer;  // 尺寸停止变化后重新生成高清缩略图(防抖)
