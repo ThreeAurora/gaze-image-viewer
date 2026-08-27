@@ -297,18 +297,28 @@ static QWidget* titleTemplateRow(const QString& key, const QString& def) {
     addVar(QString::fromUtf8("文件名 含扩展名"));
     addVar(QString::fromUtf8("文件夹"));
     addVar(QString::fromUtf8("文件夹名"));
+    addVar(QString::fromUtf8("路径"));
     addVar(QString::fromUtf8("大小"));
     addVar(QString::fromUtf8("创建日期"));
     addVar(QString::fromUtf8("修改日期"));
-    addVar(QString::fromUtf8("评级"));
+    addVar(QString::fromUtf8("宽"));
+    addVar(QString::fromUtf8("高"));
     addVar(QString::fromUtf8("颜色标签"));
+    auto* act = menu->addAction(QString::fromUtf8("评级"));
+    act->setEnabled(false);
+    act->setText(QString::fromUtf8("评级(程序无评级模型,恒为空)"));
     auto* timeMenu = menu->addMenu(QString::fromUtf8("时间格式变量"));
     auto addTime = [timeMenu, e](const QString& var) {
         timeMenu->addAction(var, e, [e, var]() { e->insert("{" + var + "}"); });
     };
-    addTime("Y"); addTime("y"); addTime("m"); addTime("d");
-    addTime("H"); addTime("M"); addTime("S");
-    addTime("Y-m-d_H-M-S"); addTime("Y_m_d_H_M_S");
+    // 大写=修改时间,小写=创建时间;N/n=分钟(与 M/m=月 区分)
+    timeMenu->addAction(QString::fromUtf8("修改时间 年/月/日 时/分/秒"));
+    for (const char* v : { "Y", "M", "D", "H", "N", "S" }) addTime(v);
+    timeMenu->addAction(QString::fromUtf8("创建时间 年/月/日 时/分/秒"));
+    for (const char* v : { "y", "m", "d", "h", "n", "s" }) addTime(v);
+    timeMenu->addSeparator();
+    for (const char* v : { "Y-m-d_H-N-S", "Y_m_d_H_N_S",
+                           "y-m-d_h-n-s", "y_m_d_h_n_s" }) addTime(v);
     QObject::connect(btn, &QToolButton::clicked, btn, [btn, menu]() {
         menu->exec(btn->mapToGlobal(QPoint(0, btn->height())));
     });
