@@ -68,8 +68,6 @@ private:
     void decodeFullAsync(const QString& path, quint64 gen);
     void onFullDecoded(std::shared_ptr<QImage> img, const QString& path, quint64 gen);
     void applyImage(const QImage& img);        // 应用全图到视图(fit+显示)
-    // 相邻预读:切换方向键时预解码下一张/上一张,命中则零等待显示
-    void preload(const QString& prev, const QString& next);
     void preloadNext();
     // Live Photo 内嵌视频后台提取(ffmpeg remux 秒级,不再阻塞:
     // 先显示静态图,提取完成自动切播放)
