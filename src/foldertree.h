@@ -25,6 +25,8 @@ signals:
     void folderSelected(const QString& path);
 
 protected:
+    void mouseDoubleClickEvent(QMouseEvent* event) override;
+
 private:
     void onItemClicked(QTreeWidgetItem* item, int column);
     void makeIcons();
