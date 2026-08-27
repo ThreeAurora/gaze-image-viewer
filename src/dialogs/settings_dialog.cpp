@@ -262,13 +262,13 @@ QWidget* SettingsDialog::pageTitlebar() {
     auto* fBr = new QFormLayout;
     fBr->setVerticalSpacing(10);
     fBr->addRow(titleTemplateRow("Interface/titleBrowser",
-                                 QString::fromUtf8("{路径}{文件名 含扩展名}")));
+                                 QString::fromUtf8("{文件夹} - Gaze")));
     root->addWidget(group(QString::fromUtf8("浏览器模式"), fBr));
 
     auto* fVw = new QFormLayout;
     fVw->setVerticalSpacing(10);
     fVw->addRow(titleTemplateRow("Interface/titleViewer",
-                                 QString::fromUtf8("{路径}{文件名 含扩展名}")));
+                                 QString::fromUtf8("{文件夹} - {文件名 含扩展名} - Gaze")));
     root->addWidget(group(QString::fromUtf8("查看器"), fVw));
     return wrapTitled(QString::fromUtf8("标题栏"), root);
 }
