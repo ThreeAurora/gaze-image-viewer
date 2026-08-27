@@ -330,6 +330,91 @@ static int s_int(const QString& k, int def) {
     return AppSettings::instance().get(k, def).toInt();
 }
 
+QColor PreviewPanel::backdropColor() const {
+    // 查看器与浏览器预览窗格用各自的背景色设置(XnView 同)
+    const QString key = m_viewerMode ? QStringLiteral("Viewer/backColor")
+                                     : QStringLiteral("Browser/previewBackColor");
+    QColor c(AppSettings::instance().get(key, QStringLiteral("#000000")).toString());
+    return c.isValid() ? c : QColor("#000000");
+}
+
+// 透明像素下的挡板底纹(Viewer/checkerMode):16px 两色方格
+static QPixmap checkerTile(const QColor& base) {
+    const int cell = 8;
+    QPixmap pm(cell * 2, cell * 2);
+    pm.fill(base);
+    QPainter p(&pm);
+    QColor ink = base.lightness() > 128 ? base.darker(140) : base.lighter(160);
+    p.setPen(Qt::NoPen);
+    p.setBrush(ink);
+    p.drawRect(0, 0, cell, cell);
+    p.drawRect(cell, cell, cell, cell);
+    p.end();
+    return pm;
+}
+
+void PreviewPanel::paintEvent(QPaintEvent* event) {
+    Q_UNUSED(event);
+    QPainter p(this);
+    p.fillRect(rect(), backdropColor());
+    if (s_bool("Viewer/checkerMode", false))
+        p.fillRect(rect(), QBrush(checkerTile(backdropColor()), Qt::Repeated));
+}
+
+// 背景色/挡板/图片边框变更时调用(构造 + AppSettings::changed)
+void PreviewPanel::applyBackdrop() {
+    update();
+    // Viewer/showBorder:图片外框(默认关)
+    const bool border = s_bool("Viewer/showBorder", false);
+    m_imgLabel->setStyleSheet(border
+        ? QStringLiteral("QLabel{border:1px solid #FFFFFF;background:transparent;}")
+        : QStringLiteral("QLabel{background:transparent;}"));
+}
+
+void PreviewPanel::setViewerMode(bool on) {
+    if (m_viewerMode == on) return;
+    m_viewerMode = on;
+    applyBackdrop();
+}
+
+// Viewer/autoFit 取值语义:
+//   0 上次使用过的   1 不缩放(1:1)      2 适应窗口(默认)
+//   3 仅放大小图     4 仅缩小大图        5 适应宽度
+//   6 适应高度       7 适应宽或高(取大)  8 适应桌面
+//   9 窗口适应图像   → 按"适应窗口"处理(需要改变窗口尺寸,查看器布局尚未支持)
+double PreviewPanel::fitScaleFor(const QSize& viewSize) const {
+    const double sw = double(viewSize.width())  / m_origPix->width();
+    const double sh = double(viewSize.height()) / m_origPix->height();
+    const double fit = std::min(sw, sh);
+    switch (s_int("Viewer/autoFit", 2)) {
+    case 0: return m_lastScale > 0 ? m_lastScale : fit;
+    case 1: return 1.0;
+    case 3: return std::max(1.0, fit);   // 小图放大到适应,大图保持 1:1
+    case 4: return std::min(1.0, fit);   // 大图缩小到适应,小图保持 1:1
+    case 5: return sw;
+    case 6: return sh;
+    case 7: return std::max(sw, sh);
+    case 8: {
+        const QRect av = QApplication::primaryScreen()->availableGeometry();
+        return std::min(double(av.width())  / m_origPix->width(),
+                        double(av.height()) / m_origPix->height());
+    }
+    default: return fit;
+    }
+}
+
+// ═══════════════════════════════════════════
+// 设置活接线:查看器/全屏页面的选项改动即时生效(无 need-restart)
+//   读取一律走 AppSettings,不缓存 —— 热路径(逐帧 render)不碰 ini,
+//   只在 fit/backdrop 这类低频时机取值
+// ═══════════════════════════════════════════
+static bool s_bool(const QString& k, bool def) {
+    return AppSettings::instance().get(k, def).toBool();
+}
+static int s_int(const QString& k, int def) {
+    return AppSettings::instance().get(k, def).toInt();
+}
+
 bool PreviewPanel::inFullscreen() const {
     const QWidget* w = window();
     return w && w->isFullScreen();
