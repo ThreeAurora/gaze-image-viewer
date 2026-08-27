@@ -4,6 +4,7 @@
 #include "settings.h"
 #include "settings.h"
 #include "settings.h"
+#include "settings.h"
 
 #include <windows.h>
 #include <shellapi.h>
