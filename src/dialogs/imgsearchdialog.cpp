@@ -136,7 +136,7 @@ void ImageSearchDialog::doSearch() {
 }
 
 void ImageSearchDialog::loadThumbFor(int row, int imageId) {
-    // 后台线程拉取,回 GUI 线程设置图标(行已删除则丢弃)
+    // 后台线程拉取,回 GUI 线程设置图标(行已不存在则丢弃)
     QThreadPool::globalInstance()->start([this, row, imageId]() {
         const QByteArray data = ImgSearch::thumbBytes(imageId);
         if (data.isEmpty()) return;
@@ -144,7 +144,7 @@ void ImageSearchDialog::loadThumbFor(int row, int imageId) {
         pm.loadFromData(data);
         if (pm.isNull()) return;
         QMetaObject::invokeMethod(this, [this, row, pm]() {
-            if (row < m_list->count()) return;         // 计数相同仍可能换列表,再验路径
+            if (row >= m_list->count()) return;
             QListWidgetItem* it = m_list->item(row);
             if (it && it->icon().isNull()) it->setIcon(QIcon(pm));
         }, Qt::QueuedConnection);
