@@ -10,6 +10,7 @@
 #include <QKeyEvent>
 #include <QTimer>
 #include "mainwindow.h"
+#include "constants.h"
 #include "settings.h"
 
 // Yes/No 对话框键盘语义:Space/Enter → Yes,Esc → No
