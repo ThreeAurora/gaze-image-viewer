@@ -371,7 +371,7 @@ void PreviewPanel::paintEvent(QPaintEvent* event) {
     QPainter p(this);
     p.fillRect(rect(), backdropColor());
     if (s_bool("Viewer/checkerMode", false))
-        p.fillRect(rect(), QBrush(checkerTile(backdropColor()), Qt::Repeated));
+        p.fillRect(rect(), QBrush(checkerTile(backdropColor()), Qt::TexturePattern));
 }
 
 // 背景色/挡板/图片边框变更时调用(构造 + AppSettings::changed)
