@@ -191,6 +191,16 @@ void FileCard::setup(const FileEntry& entry, int size, int viewMode, int height)
     QPixmap pm = icon.pixmap(isz, isz);
     if (pm.width() != isz || pm.height() != isz)
         pm = pm.scaled(isz, isz, Qt::KeepAspectRatio, Qt::SmoothTransformation);  // 平滑缩放顶满
+    // 隐藏文件/文件夹：图标也做半透明弱化，贴近 Windows 隐藏样式
+    if (entry.hidden) {
+        QPixmap dim(pm.size());
+        dim.fill(Qt::transparent);
+        QPainter dp(&dim);
+        dp.setOpacity(0.45);
+        dp.drawPixmap(0, 0, pm);
+        dp.end();
+        pm = dim;
+    }
     m_thumbLabel->setPixmap(pm);
 
     m_liveBadge->adjustSize();
