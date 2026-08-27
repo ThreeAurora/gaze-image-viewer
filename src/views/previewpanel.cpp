@@ -398,7 +398,7 @@ double PreviewPanel::fitScaleFor(const QSize& viewSize) const {
     const double sw = double(viewSize.width())  / m_origPix->width();
     const double sh = double(viewSize.height()) / m_origPix->height();
     const double fit = std::min(sw, sh);
-    switch (s_int("Viewer/autoFit", 2)) {
+    switch (s_int(modeKey("autoFit"), 2)) {
     case 0: return m_lastScale > 0 ? m_lastScale : fit;
     case 1: return 1.0;
     case 3: return std::max(1.0, fit);   // 小图放大到适应,大图保持 1:1
