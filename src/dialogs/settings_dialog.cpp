@@ -303,7 +303,7 @@ static QWidget* titleTemplateRow(const QString& key, const QString& def) {
     addTime("Y"); addTime("y"); addTime("m"); addTime("d");
     addTime("H"); addTime("M"); addTime("S");
     addTime("Y-m-d_H-M-S"); addTime("Y_m_d_H_M_S");
-    connect(btn, &QToolButton::clicked, btn, [btn, menu]() {
+    QObject::connect(btn, &QToolButton::clicked, btn, [btn, menu]() {
         menu->exec(btn->mapToGlobal(QPoint(0, btn->height())));
     });
     return row;
