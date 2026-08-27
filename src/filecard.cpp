@@ -339,6 +339,17 @@ void FileCard::applyLabelBg() {
     m_nameLabel->setStyleSheet(style);
 }
 
+void FileCard::refreshLabelBg() {
+    // 与 setup() 同一套规则;ext 从路径重取(卡片不存 ext)
+    const int dot = m_filePath.lastIndexOf(QLatin1Char('.'));
+    const QString ext = (dot > 0) ? m_filePath.mid(dot + 1).toLower() : QString();
+    m_nameBg = LabelColors::enabled()
+        ? LabelColors::colorForExt(ext).name(QColor::HexRgb)
+        : QStringLiteral("transparent");
+    applyLabelBg();
+    update();
+}
+
 // ═══ 鼠标事件 ═══
 void FileCard::mouseReleaseEvent(QMouseEvent* event) {
     if (event->button() == Qt::LeftButton)
