@@ -63,6 +63,10 @@ private:
     // 删除本会话从内嵌 Motion Photo 提取的临时视频
     void cleanupExtractCache();
     void toggleFullscreen();
+    // 图片后台解码:切换操作立即返回(UI 不卡),解码完成后一次性全清晰显示
+    // (用户定版:异步但无低清过渡态——否决"先糊后清",也否决同步卡顿)
+    void decodeFullAsync(const QString& path, quint64 gen);
+    void onFullDecoded(std::shared_ptr<QImage> img, const QString& path, quint64 gen);
 
     QString m_filePath;
     QString m_mode; // "image", "video", "audio", "none"
