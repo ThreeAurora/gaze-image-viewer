@@ -2,6 +2,7 @@
 #include "contextmenu.h"
 #include "livephoto.h"
 #include "labelstore.h"
+#include "settings.h"
 #include "constants.h"
 
 #include <QPainter>
@@ -10,6 +11,26 @@
 #include <QMouseEvent>
 #include <QContextMenuEvent>
 #include <QApplication>
+
+// 外观设置缓存(默认值 = 改动前的固定手感:居中、2px 标签间距、无额外边框)
+int  FileCard::s_border      = 0;
+int  FileCard::s_imageAlign  = 1;
+int  FileCard::s_labelAlign  = 1;
+int  FileCard::s_labelGap    = 2;
+bool FileCard::s_showRating  = true;
+
+void FileCard::applyAppearance() {
+    AppSettings& st = AppSettings::instance();
+    s_border     = qBound(0, st.get("Appearance/borderSize", 0).toInt(), 10);
+    s_imageAlign = qBound(0, st.get("Appearance/imageAlign", 1).toInt(), 2);
+    s_labelAlign = qBound(0, st.get("Appearance/labelAlign", 1).toInt(), 2);
+    s_labelGap   = st.get("Appearance/labelSpacing", true).toBool() ? 2 : 0;
+    s_showRating = st.get("Browser/showRating", true).toBool();
+}
+
+static Qt::AlignmentFlag alignFlag(int v) {
+    return v == 0 ? Qt::AlignLeft : (v == 2 ? Qt::AlignRight : Qt::AlignHCenter);
+}
 
 FileCard::FileCard(QWidget* parent) : QFrame(parent) {
     setMouseTracking(true);
