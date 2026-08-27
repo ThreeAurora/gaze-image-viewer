@@ -42,6 +42,7 @@ inline bool deleteToRecycleBin(const QStringList& paths) {
 // 统一删除入口:FileOps/useRecycleBin + FileOps/confirmDelete 在此生效。
 // 三处删除(网格键盘/右键菜单/查看器)都走这里,保证行为一致。
 // 不进回收站=不可恢复,这种情况强制确认,忽略 confirmDelete。
+// 返回 false = 用户取消或删除失败(失败已弹提示),调用方据此什么都不做。
 inline bool deleteWithSettings(const QStringList& paths, QWidget* parent) {
     if (paths.isEmpty()) return true;
     AppSettings& st = AppSettings::instance();
@@ -61,5 +62,8 @@ inline bool deleteWithSettings(const QStringList& paths, QWidget* parent) {
                 QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes)
             return false;
     }
-    return shellDelete(paths, toRecycle);
+    if (shellDelete(paths, toRecycle)) return true;
+    QMessageBox::warning(parent, QString::fromUtf8("删除"),
+        QString::fromUtf8("删除失败:\n") + paths.first());
+    return false;
 }
