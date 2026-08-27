@@ -24,6 +24,8 @@ public:
     Q_INVOKABLE void revealFile(const QString &path);      // 以文搜图结果:定位到目录并选中
     Q_INVOKABLE void toggleViewer();   // 浏览器 ↔ 查看器(单图模式)
     Q_INVOKABLE void viewerBack();     // ESC:查看器退回浏览器(幂等)
+    // 切换模式触发键(设置→交互→切换模式):"SwitchMode/doubleClick" 等
+    Q_INVOKABLE void requestSwitchMode(const QString& triggerKey);
     Q_INVOKABLE void refresh();        // 重载当前目录(查看器右键菜单也经元调用进来)
     // 切换模式触发键(设置→交互→切换模式):"SwitchMode/doubleClick" 等
     Q_INVOKABLE void requestSwitchMode(const QString& triggerKey);
