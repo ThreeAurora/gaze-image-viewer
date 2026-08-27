@@ -12,7 +12,7 @@
 #include <QContextMenuEvent>
 #include <QApplication>
 
-// 外观设置缓存(默认值 = 改动前的固定手感:居中、2px 标签间距、无额外边框)
+// 外观设置缓存(默认值 = 改动前的固定手感:居中、6px 标签间距、无额外边框)
 int  FileCard::s_border      = 0;
 int  FileCard::s_imageAlign  = 1;
 int  FileCard::s_labelAlign  = 1;
