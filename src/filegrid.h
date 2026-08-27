@@ -4,6 +4,7 @@
 #include <QTimer>
 #include <QHash>
 #include <QSet>
+#include <QQueue>
 #include <vector>
 #include "fileentry.h"
 #include "sortheader.h"
