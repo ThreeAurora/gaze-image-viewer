@@ -94,6 +94,17 @@ FolderTree::FolderTree(QWidget* parent) : QTreeWidget(parent) {
             loadChildren(item);
         }
     });
+
+    // Browser/showDesktopInTree:仅此一项会增减根行,变化时重建(其余设置与树无关)
+    m_showDesktop = AppSettings::instance().get("Browser/showDesktopInTree", true).toBool();
+    connect(&AppSettings::instance(), &AppSettings::changed, this, [this]() {
+        const bool now = AppSettings::instance()
+                             .get("Browser/showDesktopInTree", true).toBool();
+        if (now == m_showDesktop) return;
+        m_showDesktop = now;
+        clear();
+        loadDrives();
+    });
 }
 
 void FolderTree::makeIcons() {
