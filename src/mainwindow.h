@@ -96,6 +96,7 @@ private:
     QStringList m_history;   // 目录导航历史
     int m_histIdx = -1;
     bool m_histNav = false;  // 历史跳转中,不再入栈
+    QList<int> m_savedSplitter;  // 进查看器前的分栏宽度(退回时原样恢复)
     bool m_fullView = false;     // #154 全屏查看中(独立于查看器模式,不碰标签页)
     QList<int> m_fullViewSplitter;  // 进全屏预览前的分栏宽度(退出时原样恢复)
     int  m_redFilterMode = 0; // 红标筛选三态:0全部 1仅红标 2仅非红标
