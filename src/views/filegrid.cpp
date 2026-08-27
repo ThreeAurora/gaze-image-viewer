@@ -245,15 +245,10 @@ void FileGrid::clearAllMarks() {
 void FileGrid::deleteFile(int index) {
     if (index < 0 || index >= static_cast<int>(m_entries.size())) return;
     QString path = m_entries[index].path;
-    QMessageBox::StandardButton reply = QMessageBox::question(
-        this, "删除", "将文件移至回收站？\n" + path,
-        QMessageBox::Yes | QMessageBox::No);
-    if (reply != QMessageBox::Yes) return;
-
-    // 与右键菜单同一机制:SHFileOperationW(FOF_ALLOWUNDO),不再走 QFile::moveToTrash
+    // 确认框/回收站由 FileOps/confirmDelete + FileOps/useRecycleBin 决定(与右键菜单同一入口)
     QFileInfo fi(path);
     QString dir = fi.isDir() ? fi.absoluteFilePath() : fi.absolutePath();
-    if (deleteToRecycleBin({path})) {
+    if (deleteWithSettings({path}, this)) {
         m_selected.remove(index);
         m_marked.remove(path);
         loadDirectory(dir);
