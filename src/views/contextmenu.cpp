@@ -119,7 +119,7 @@ FileContextMenu::FileContextMenu(FileCard* card, QWidget* parent)
     });
     // 用系统默认文件管理器打开所在目录(尊重 Directory Opus 等接管:
     // ShellExecute "open" 目录会走注册的 open command,不用写死 explorer)
-    addAction("用资源管理器打开文件", this, [this]() {
+    addAction("在资源管理器中显示", this, [this]() {
         QDesktopServices::openUrl(QUrl::fromLocalFile(
             QFileInfo(m_filePath).absolutePath()));
     });
