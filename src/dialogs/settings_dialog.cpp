@@ -768,7 +768,17 @@ QWidget* SettingsDialog::pageCache() {
     return wrapTitled(QString::fromUtf8("缓存数据库"), form);
 }
 
-// ── 维护页:缩略图库统计 + 目录筛选表 + 操作按钮(完整内嵌,不再跳对话框) ──
+// 窄列中段省略(C:\Use...der\ 形式;列宽可拖动配合)
+class ElideMiddleDelegate : public QStyledItemDelegate {
+public:
+    using QStyledItemDelegate::QStyledItemDelegate;
+    void initStyleOption(QStyleOptionViewItem* o, const QModelIndex& i) const override {
+        QStyledItemDelegate::initStyleOption(o, i);
+        o->textElideMode = Qt::ElideMiddle;
+    }
+};
+
+// ── 维护页:缩略图库统计 + 四列目录表(可拖列宽/中段省略) + 操作按钮 ──
 QWidget* SettingsDialog::pageMaintenance() {
     auto* root = new QVBoxLayout;
     root->setSpacing(10);
@@ -783,33 +793,48 @@ QWidget* SettingsDialog::pageMaintenance() {
     filter->setPlaceholderText(QString::fromUtf8("筛选"));
     root->addWidget(filter);
 
-    // 目录表
-    auto* table = new QTableWidget(0, 3);
+    // 四列目录表:列宽可拖动,窄列中段省略
+    auto* table = new QTableWidget(0, 4);
     table->setHorizontalHeaderLabels({QString::fromUtf8("缓存目录"),
-        QString::fromUtf8("文件数"), QString::fromUtf8("缩略图体积")});
-    table->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+        QString::fromUtf8("文件"), QString::fromUtf8("元数据"),
+        QString::fromUtf8("缩略图")});
+    table->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
+    table->horizontalHeader()->setStretchLastSection(true);
     table->verticalHeader()->setVisible(false);
     table->setSelectionBehavior(QAbstractItemView::SelectRows);
     table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    table->setItemDelegate(new ElideMiddleDelegate(table));
     table->setStyleSheet(
         "QTableWidget{background:#151515;color:#FFFFFF;border:1px solid #3C3C3C;}"
         "QHeaderView::section{background:#1B1B1B;color:#FFFFFF;"
         "border:none;padding:4px;}");
+    table->setColumnWidth(0, 260);
+    table->setColumnWidth(1, 90);
+    table->setColumnWidth(2, 110);
     root->addWidget(table, 1);
 
-    // 按钮组
-    auto* btns = new QHBoxLayout;
-    btns->setSpacing(8);
-    auto* delSelBtn = new QPushButton(QString::fromUtf8("删除选中目录条目"));
-    auto* rebuildBtn = new QPushButton(QString::fromUtf8("重建缩略图"));
-    auto* delAllBtn = new QPushButton(QString::fromUtf8("删除全部"));
-    btns->addWidget(delSelBtn);
-    btns->addStretch();
-    btns->addWidget(rebuildBtn);
-    btns->addWidget(delAllBtn);
-    root->addLayout(btns);
+    // 按钮组(两行)
+    auto* row1 = new QHBoxLayout;
+    row1->setSpacing(8);
+    auto* delSelBtn = new QPushButton(QString::fromUtf8("删除"));
+    auto* maintBtn = new QPushButton(QString::fromUtf8("维护..."));
+    auto* syncBtn = new QPushButton(QString::fromUtf8("同步文件夹..."));
+    row1->addWidget(delSelBtn);
+    row1->addStretch();
+    row1->addWidget(maintBtn);
+    row1->addWidget(syncBtn);
+    root->addLayout(row1);
 
-    // ── 数据访问(独立连接名,与维护对话框不冲突) ──
+    auto* row2 = new QHBoxLayout;
+    row2->setSpacing(8);
+    auto* delAllBtn = new QPushButton(QString::fromUtf8("删除全部"));
+    auto* rebuildBtn = new QPushButton(QString::fromUtf8("重建缩略图"));
+    row2->addWidget(delAllBtn);
+    row2->addStretch();
+    row2->addWidget(rebuildBtn);
+    root->addLayout(row2);
+
+    // ── 数据访问(thumbs 表:key/png/mtime/atime;独立连接名) ──
     auto db = []() -> QSqlDatabase {
         const QString conn = QStringLiteral("settings_maint_db");
         if (!QSqlDatabase::contains(conn)) {
@@ -822,37 +847,41 @@ QWidget* SettingsDialog::pageMaintenance() {
 
     auto reload = [db, summary, table, filter]() {
         QSqlDatabase d = db();
-        QHash<QString, QPair<int, qint64>> byDir;
-        qint64 totalBytes = 0;
+        struct Rec { int count = 0; qint64 meta = 0; qint64 thumb = 0; };
+        QHash<QString, Rec> byDir;
+        qint64 totalThumb = 0, totalMeta = 0;
         int total = 0;
         QSqlQuery q(d);
-        if (q.exec("SELECT path, LENGTH(png) FROM thumbs")) {
+        // 元数据字节 = key 长度 + mtime/atime 两个 double(估算)
+        if (q.exec("SELECT key, LENGTH(png), LENGTH(key) FROM thumbs")) {
             while (q.next()) {
                 const QString p = q.value(0).toString();
-                const qint64 bytes = q.value(1).toLongLong();
-                totalBytes += bytes;
+                const qint64 thumbB = q.value(1).toLongLong();
+                const qint64 metaB = q.value(2).toLongLong() + 16;
+                totalThumb += thumbB;
+                totalMeta += metaB;
                 ++total;
                 int slash = p.lastIndexOf('/');
                 if (slash < 0) slash = p.lastIndexOf('\\');
                 QString dir = slash > 0 ? p.left(slash + 1) : p;
-                auto& rec = byDir[dir];
-                rec.first += 1;
-                rec.second += bytes;
+                Rec& r = byDir[dir];
+                r.count += 1;
+                r.meta += metaB;
+                r.thumb += thumbB;
             }
         }
         QFileInfo fi(d.databaseName());
         summary->setText(QString::fromUtf8(
-            "数据库:%1 (%2 MB)  ·  缓存条目:%3  ·  缩略图合计:%4")
-            .arg(fi.fileName())
-            .arg(fi.size() / 1024 / 1024)
-            .arg(total)
-            .arg(QString::asprintf("%.2f MB", totalBytes / 1024.0 / 1024.0)));
+            "数据库 [目录:%1  →  元数据:%2  →  缩略图:%3]")
+            .arg(QString::asprintf("%.2f MB", (fi.size() + totalMeta) / 1048576.0))
+            .arg(QString::asprintf("%.2f MB", totalMeta / 1048576.0))
+            .arg(QString::asprintf("%.2f MB", totalThumb / 1048576.0)));
 
-        QVector<QPair<QString, QPair<int, qint64>>> rows;
+        QVector<QPair<QString, Rec>> rows;
         for (auto it = byDir.constBegin(); it != byDir.constEnd(); ++it)
-            rows.append({it.key(), {it.value().first, it.value().second}});
+            rows.append({it.key(), it.value()});
         std::sort(rows.begin(), rows.end(),
-                  [](auto& a, auto& b) { return a.second.second > b.second.second; });
+                  [](auto& a, auto& b) { return a.second.thumb > b.second.thumb; });
 
         const QString f = filter->text().trimmed();
         table->setRowCount(0);
@@ -861,9 +890,11 @@ QWidget* SettingsDialog::pageMaintenance() {
             int r = table->rowCount();
             table->insertRow(r);
             table->setItem(r, 0, new QTableWidgetItem(row.first));
-            table->setItem(r, 1, new QTableWidgetItem(QString::number(row.second.first)));
+            table->setItem(r, 1, new QTableWidgetItem(QString::number(row.second.count)));
             table->setItem(r, 2, new QTableWidgetItem(
-                QString::asprintf("%.2f MB", row.second.second / 1024.0 / 1024.0)));
+                QString::asprintf("%.2f KB", row.second.meta / 1024.0)));
+            table->setItem(r, 3, new QTableWidgetItem(
+                QString::asprintf("%.2f KB", row.second.thumb / 1024.0)));
         }
     };
 
@@ -873,12 +904,20 @@ QWidget* SettingsDialog::pageMaintenance() {
         if (sel.isEmpty()) return;
         QString dir = table->item(sel.first()->row(), 0)->text();
         if (QMessageBox::question(this, QString::fromUtf8("删除"),
-            QString::fromUtf8("删除该目录的全部缩略图条目?\n%1").arg(dir))
+            QString::fromUtf8("删除该目录的全部缓存条目?\n%1").arg(dir))
             != QMessageBox::Yes) return;
         QSqlQuery q(db());
-        q.prepare("DELETE FROM thumbs WHERE path LIKE ? || '%'");
+        q.prepare("DELETE FROM thumbs WHERE key LIKE ? || '%'");
         q.addBindValue(dir);
         q.exec();
+        reload();
+    });
+    connect(delAllBtn, &QPushButton::clicked, this, [this, db, reload]() {
+        if (QMessageBox::question(this, QString::fromUtf8("删除全部"),
+            QString::fromUtf8("确认清空全部缩略图缓存?(浏览时会自动重建)"))
+            != QMessageBox::Yes) return;
+        QSqlQuery q(db());
+        q.exec("DELETE FROM thumbs");
         reload();
     });
     connect(rebuildBtn, &QPushButton::clicked, this, [this, db, reload]() {
@@ -889,13 +928,83 @@ QWidget* SettingsDialog::pageMaintenance() {
         q.exec("DELETE FROM thumbs");
         reload();
     });
-    connect(delAllBtn, &QPushButton::clicked, this, [this, db, reload]() {
-        if (QMessageBox::question(this, QString::fromUtf8("删除全部"),
-            QString::fromUtf8("确认清空全部缩略图缓存?(浏览时会自动重建)"))
+    // 同步文件夹:从库中删除"文件已不存在"的孤立条目
+    connect(syncBtn, &QPushButton::clicked, this, [this, db, reload]() {
+        if (QMessageBox::question(this, QString::fromUtf8("缓存数据库 - 同步目录"),
+            QString::fromUtf8("警告!\n此操作将从缓存数据库中删除全部的孤立条目。\n是否继续?"),
+            QMessageBox::Yes | QMessageBox::No)
             != QMessageBox::Yes) return;
-        QSqlQuery q(db());
-        q.exec("DELETE FROM thumbs");
+        QSqlDatabase d = db();
+        QStringList gone;
+        QSqlQuery q(d);
+        if (q.exec("SELECT key FROM thumbs")) {
+            while (q.next()) {
+                const QString p = q.value(0).toString();
+                if (!QFileInfo::exists(p)) gone << p;
+            }
+        }
+        d.transaction();
+        QSqlQuery del(d);
+        del.prepare("DELETE FROM thumbs WHERE key = ?");
+        for (const auto& p : gone) { del.addBindValue(p); del.exec(); }
+        d.commit();
+        QMessageBox::information(this, QString::fromUtf8("同步目录"),
+            QString::fromUtf8("已移除 %1 条孤立条目。").arg(gone.size()));
         reload();
+    });
+    // 维护...:优化数据库(VACUUM)/核对全目录/清除缩略图
+    connect(maintBtn, &QPushButton::clicked, this, [this, db, reload]() {
+        QDialog dlg(this);
+        dlg.setWindowTitle(QString::fromUtf8("缓存维护"));
+        dlg.setFixedWidth(320);
+        auto* v = new QVBoxLayout(&dlg);
+        auto* optChk = new QCheckBox(QString::fromUtf8("优化数据库(处理时间长)"));
+        auto* lblClean = new QLabel(QString::fromUtf8("清理"));
+        auto* scanChk = new QCheckBox(QString::fromUtf8("核对全目录(移除孤立条目)"));
+        scanChk->setChecked(true);
+        auto* lblPurge = new QLabel(QString::fromUtf8("清除"));
+        auto* thumbChk = new QCheckBox(QString::fromUtf8("清除缩略图"));
+        for (auto* w : std::vector<QWidget*>{ optChk, lblClean, scanChk, lblPurge, thumbChk }) {
+            if (auto* c = qobject_cast<QCheckBox*>(w)) c->setMinimumHeight(24);
+            v->addWidget(w);
+        }
+        auto* btns = new QHBoxLayout;
+        btns->addStretch();
+        auto* runBtn = new QPushButton(QString::fromUtf8("运行"));
+        auto* cancelBtn = new QPushButton(QString::fromUtf8("取消"));
+        btns->addWidget(runBtn);
+        btns->addWidget(cancelBtn);
+        v->addLayout(btns);
+        connect(cancelBtn, &QPushButton::clicked, &dlg, &QDialog::reject);
+        connect(runBtn, &QPushButton::clicked, &dlg, [&]() {
+            QSqlDatabase d = db();
+            if (optChk->isChecked()) {
+                QSqlQuery q(d);
+                q.exec("VACUUM");
+            }
+            if (scanChk->isChecked()) {
+                QStringList gone;
+                QSqlQuery q(d);
+                if (q.exec("SELECT key FROM thumbs")) {
+                    while (q.next()) {
+                        const QString p = q.value(0).toString();
+                        if (!QFileInfo::exists(p)) gone << p;
+                    }
+                }
+                d.transaction();
+                QSqlQuery del(d);
+                del.prepare("DELETE FROM thumbs WHERE key = ?");
+                for (const auto& p : gone) { del.addBindValue(p); del.exec(); }
+                d.commit();
+            }
+            if (thumbChk->isChecked()) {
+                QSqlQuery q(d);
+                q.exec("DELETE FROM thumbs");
+            }
+            dlg.accept();
+            reload();
+        });
+        dlg.exec();
     });
 
     reload();
