@@ -49,13 +49,13 @@ inline std::vector<FileEntry> fastScanDir(const QString& dirPath) {
 
         const auto& p = entry.path();
         auto fname = p.filename().wstring();
-        if (!fname.empty() && fname[0] == L'.')
-            continue; // 跳过隐藏文件/夹
 
         FileEntry fe;
         fe.name = QString::fromStdWString(fname);
         fe.path = QString::fromStdWString(p.wstring());
         fe.ext  = QString::fromStdWString(p.extension().wstring()).toLower();
+        // Windows 隐藏属性 / 点开头文件/夹都算隐藏，显示时用淡灰色
+        fe.hidden = QFileInfo(fe.path).isHidden();
 
         fe.isDir = entry.is_directory(ec);
         if (ec) { ec.clear(); continue; }
