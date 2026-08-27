@@ -47,12 +47,10 @@ void FileCard::setup(const FileEntry& entry, int size, int viewMode, int height)
     m_selColor   = C_SELECT_BLUE;
     m_liveBadge->hide();
 
-    if (entry.ext == ".gif")
-        m_nameBg = C_GIF_BG;
-    else if (VIDEO_EXTS.count(entry.ext))
-        m_nameBg = C_VIDEO_BG;
-    else
-        m_nameBg = C_OTHER_BG;
+    // 文件名底色:格式标签颜色(设置页"缩略图→标签颜色"可配;总开关关闭时透明)
+    m_nameBg = LabelColors::enabled()
+        ? LabelColors::colorForExt(entry.ext.mid(1)).name(QColor::HexRgb)
+        : QStringLiteral("transparent");
 
     // hover tooltip:完整文件名 + 创建时间 + 修改时间 + 大小
     {
