@@ -217,12 +217,10 @@ void FileGrid::deleteFile(int index) {
         QMessageBox::Yes | QMessageBox::No);
     if (reply != QMessageBox::Yes) return;
 
-    // 移到回收站（Windows）
+    // 与右键菜单同一机制:SHFileOperationW(FOF_ALLOWUNDO),不再走 QFile::moveToTrash
     QFileInfo fi(path);
     QString dir = fi.isDir() ? fi.absoluteFilePath() : fi.absolutePath();
-    // 使用 QFile::moveToTrash (Qt 6)
-    QFile f(path);
-    if (f.moveToTrash()) {
+    if (deleteToRecycleBin({path})) {
         m_selected.remove(index);
         m_marked.remove(path);
         loadDirectory(dir);
