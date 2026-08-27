@@ -247,6 +247,8 @@ QWidget* SettingsDialog::pageInterface() {
 }
 
 // ── 标题栏页:浏览器模式/查看器两组,每组模板输入框+▶ 变量菜单 ──
+static QWidget* titleTemplateRow(const QString& key, const QString& def);
+
 QWidget* SettingsDialog::pageTitlebar() {
     auto* root = new QVBoxLayout;
     root->setSpacing(12);
