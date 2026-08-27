@@ -735,8 +735,7 @@ QWidget* SettingsDialog::pageFullscreen() {
     auto* fMisc = new QFormLayout;
     fMisc->setVerticalSpacing(10);
     fMisc->addRow(QString::fromUtf8("背景色"),
-        combo("Fullscreen/backColor", {QString::fromUtf8("黑色"), QString::fromUtf8("白色"),
-            QString::fromUtf8("灰色")}, 0));
+                  colorPick("Fullscreen/backColor", "#000000"));
     fMisc->addRow(chk("Fullscreen/dualMonitor", QString::fromUtf8("双显示器:使用第二显示器"), false));
     fMisc->addRow(chk("Fullscreen/floatView", QString::fromUtf8("浮动视图(鼠标移动到屏幕顶侧或右侧时出现)"), true));
     root->addWidget(group(QString::fromUtf8("其他"), fMisc));
