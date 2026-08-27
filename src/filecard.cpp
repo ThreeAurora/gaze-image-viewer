@@ -3,6 +3,7 @@
 #include "livephoto.h"
 #include "labelstore.h"
 #include "constants.h"
+#include "perflog.h"
 
 #include <QPainter>
 #include <QPainterPath>
