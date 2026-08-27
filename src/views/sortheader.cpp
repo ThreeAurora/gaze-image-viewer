@@ -1,11 +1,12 @@
 #include "sortheader.h"
+#include "constants.h"
 #include <QLabel>
 #include <QMenu>
 #include <QContextMenuEvent>
 
 SortHeader::SortHeader(QWidget* parent) : QWidget(parent) {
     setFixedHeight(26);
-    setStyleSheet("background:#000000;border-bottom:1px solid #2A2A2E;");
+    setStyleSheet("background:" C_TOOLBAR ";border-bottom:1px solid " C_SEPARATOR ";");
 
     m_layout = new QHBoxLayout(this);
     m_layout->setContentsMargins(6, 0, 6, 0);
