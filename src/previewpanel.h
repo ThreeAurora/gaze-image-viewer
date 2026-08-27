@@ -102,4 +102,9 @@ private:
     bool m_fullscreenMode = false;
     bool m_ctrlZoomed = false;   // Ctrl+滚轮缩放过(左键变为纯拖动)
     bool m_tempZoom   = false;   // 左键临时 1:1 放大(松开还原)
+
+    // 图片后台解码状态
+    quint64 m_imgReqGen = 0;    // 最新请求代号(loadFile/showImage 递增,切走即作废在途结果)
+    quint64 m_issuedGen = 0;    // 当前后台任务对应的代号
+    bool    m_fullBusy  = false; // 解码进行中(同一时刻最多一个,控内存峰值)
 };
