@@ -20,6 +20,8 @@
 void ArrowStyle::drawPrimitive(PrimitiveElement element, const QStyleOption* option,
                                QPainter* painter, const QWidget* widget) const {
     if (element == PE_IndicatorBranch) {
+        // 有子文件夹才绘制展开箭头；叶子节点什么都不画，
+        // 避免默认 style 给无子文件夹的目录也留下“展开按钮/分支装饰”
         if (option->state & State_Children) {
             bool expanded = option->state & State_Open;
             QRect r = option->rect;
@@ -42,8 +44,8 @@ void ArrowStyle::drawPrimitive(PrimitiveElement element, const QStyleOption* opt
             }
             painter->drawPolygon(tri);
             painter->restore();
-            return;
         }
+        return;
     }
     QProxyStyle::drawPrimitive(element, option, painter, widget);
 }
