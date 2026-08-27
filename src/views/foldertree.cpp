@@ -51,13 +51,24 @@ void ArrowStyle::drawPrimitive(PrimitiveElement element, const QStyleOption* opt
 // ═══════════════════════════════════════════
 // FolderTree
 // ═══════════════════════════════════════════
+
+// 仅统计“可见子文件夹”（排除隐藏目录），用于判断是否应显示展开箭头
+static bool hasVisibleSubdirs(const QString& path) {
+    QDir dir(path);
+    const QStringList list = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+    for (const QString& s : list) {
+        if (!s.startsWith('.')) return true;
+    }
+    return false;
+}
+
 FolderTree::FolderTree(QWidget* parent) : QTreeWidget(parent) {
     setHeaderHidden(true);
     setIndentation(16);
     setAnimated(true);
     setStyleSheet(QString(
-        "QTreeWidget{background:%1;color:%2;border:none;font-size:11px;}"
-        "QTreeWidget::item{padding:2px 0;}"
+        "QTreeWidget{background:%1;color:%2;border:none;font-size:11px;outline:0;}"
+        "QTreeWidget::item{padding:2px 0;outline:0;}"
         "QTreeWidget::item:hover{background:%3;}"
         "QTreeWidget::item:selected{background:%4;color:#FFF;}"
     ).arg(C_SIDEBAR, C_TREE_TEXT, C_TREE_HOVER, C_TREE_SELECT));
