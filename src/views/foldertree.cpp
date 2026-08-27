@@ -1,6 +1,7 @@
 #include "foldertree.h"
 #include "constants.h"
 #include "fileentry.h"
+#include "settings.h"
 
 #include <windows.h>
 #include <shellapi.h>
