@@ -35,6 +35,7 @@
 #include <QAbstractSpinBox>
 #include <QClipboard>
 #include <QPair>
+#include <QPair>
 #include "iconlib.h"
 #include "labelstore.h"
 #include "settings_dialog.h"
