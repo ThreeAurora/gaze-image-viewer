@@ -354,9 +354,11 @@ void PreviewPanel::loadFile(const QString& path) {
                 if (m_extractCache.contains(path)) {
                     videoPath = m_extractCache.value(path);
                 } else {
-                    videoPath = LivePhoto::extractEmbeddedVideo(path, *liveInfo);
-                    if (!videoPath.isEmpty())
-                        m_extractCache.insert(path, videoPath);
+                    // 首次遇到:ffmpeg remux 秒级,改为后台提取——
+                    // 先显示静态图(jpg 本身完整可显),提取完成自动切播放
+                    showImage(path);
+                    startExtractAsync(path, *liveInfo);
+                    return;
                 }
             } else if (!liveInfo->embedded) {
                 videoPath = liveInfo->videoPath; // companion 配对型
