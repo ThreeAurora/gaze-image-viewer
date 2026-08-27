@@ -571,6 +571,7 @@ QWidget* SettingsDialog::pageFullscreen() {
 
 QWidget* SettingsDialog::pageCache() {
     auto* form = new QFormLayout;
+    form->setVerticalSpacing(12);
     form->addRow(chk("Cache/useCatalog", QString::fromUtf8("启用缓存目录"), true));
     form->addRow(chk("Cache/thumbInDB", QString::fromUtf8("允许缓存缩略图"), true));
     form->addRow(QString::fromUtf8("压缩"),
@@ -584,8 +585,13 @@ QWidget* SettingsDialog::pageCache() {
     form->addRow(QString::fromUtf8("数据库引擎的内存占用(MB)"),
         spin("Cache/dbCacheMB", 32, 8192, 1024));
     form->addRow(chk("Cache/checkOnStartup", QString::fromUtf8("启动时检查缓存的完整性"), false));
-    form->addRow(new QLabel(QString::fromUtf8(
-        "维护工具(统计/重建/同步/删除)见\"工具 → 缩略图数据库维护\"。")));
+
+    // 维护工具直接放按钮,不再用文字指引
+    auto* maintBtn = new QPushButton(QString::fromUtf8("打开缩略图数据库维护..."));
+    connect(maintBtn, &QPushButton::clicked, this, [this]() {
+        DbMaintenanceDialog(this).exec();
+    });
+    form->addRow(QString::fromUtf8("维护工具"), maintBtn);
     return wrapTitled(QString::fromUtf8("缓存数据库"), form);
 }
 
