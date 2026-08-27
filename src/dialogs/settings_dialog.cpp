@@ -531,7 +531,7 @@ QWidget* SettingsDialog::pageThumbs() {
 QWidget* SettingsDialog::pageAppearance() {
     auto* form = new QFormLayout;
     form->addRow(QString::fromUtf8("自定义缩略图尺寸 - 宽"),
-        spin("Appearance/customThumbW", 32, 512, 96));
+        spin("Appearance/customThumbW", 80, 300, 96));
     form->addRow(QString::fromUtf8("自定义缩略图尺寸 - 高"),
         spin("Appearance/customThumbH", 32, 512, 96));
     form->addRow(chk("Appearance/shadow", QString::fromUtf8("使用阴影"), false));
