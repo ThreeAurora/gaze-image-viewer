@@ -79,6 +79,12 @@ private:
     QMenu* createSortMenu(QWidget* parent);       // 排序子菜单
     QMenu* createFilterMenu(QWidget* parent);     // 筛选子菜单
     void   createToolbar2(QVBoxLayout* intoCenter); // 工具栏第二行
+    void   createViewMenu(QAction* before);       // 一级菜单"视图"(面板开关,插在布局之后)
+    QWidget* createPaneHeader(const QString& title, const char* paneId); // XnView 式面板标题条(带关闭 X)
+    void   setPaneVisible(const char* paneId, bool on, bool remember = true); // 面板显隐(含记忆用户意图)
+    bool   paneVisible(const char* paneId) const; // 用户意图(非查看器模式下的临时隐藏)
+    void   restorePanes(const QStringList& visibleIds); // 按可见面板 id 列表恢复
+    QStringList paneIds() const;                  // 全部面板 id(顺序稳定)
     void   addRecentFile(const QString& path);   // 内存操作 + 防抖合批写盘
     void   flushRecentFiles();                   // 把内存列表写回 ini(closeEvent 也调用)
     void   rebuildRecentMenu(QMenu* menu);
