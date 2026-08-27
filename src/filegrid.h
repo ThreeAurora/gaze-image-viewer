@@ -91,6 +91,7 @@ public:
     int  currentSortCol() const { return m_sortCol; }
     bool sortAscending()  const { return m_sortAsc; }
     int  cardSizeValue()  const { return m_cardSizeAuto; }
+    int  colorLabelOf(const QString& path) const;   // 标题模板 {颜色标签}
 
 signals:
     void fileCountChanged();
