@@ -246,6 +246,25 @@ QWidget* SettingsDialog::pageInterface() {
     return wrapTitled(QString::fromUtf8("界面"), form);
 }
 
+// ── 标题栏页:浏览器模式/查看器两组,每组模板输入框+▶ 变量菜单 ──
+QWidget* SettingsDialog::pageTitlebar() {
+    auto* root = new QVBoxLayout;
+    root->setSpacing(12);
+
+    auto* fBr = new QFormLayout;
+    fBr->setVerticalSpacing(10);
+    fBr->addRow(titleTemplateRow("Interface/titleBrowser",
+                                 QString::fromUtf8("{路径}{文件名 含扩展名}")));
+    root->addWidget(group(QString::fromUtf8("浏览器模式"), fBr));
+
+    auto* fVw = new QFormLayout;
+    fVw->setVerticalSpacing(10);
+    fVw->addRow(titleTemplateRow("Interface/titleViewer",
+                                 QString::fromUtf8("{路径}{文件名 含扩展名}")));
+    root->addWidget(group(QString::fromUtf8("查看器"), fVw));
+    return wrapTitled(QString::fromUtf8("标题栏"), root);
+}
+
 // 标题栏模板编辑行:输入框 + ▶ 变量插入菜单(点击变量插入光标处,对齐 XnView 交互)
 static QWidget* titleTemplateRow(const QString& key, const QString& def) {
     auto* row = new QWidget;
