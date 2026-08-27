@@ -55,7 +55,8 @@ inline std::vector<FileEntry> fastScanDir(const QString& dirPath) {
         fe.path = QString::fromStdWString(p.wstring());
         fe.ext  = QString::fromStdWString(p.extension().wstring()).toLower();
         // Windows 隐藏属性 / 点开头文件/夹都算隐藏，显示时用淡灰色
-        fe.hidden = QFileInfo(fe.path).isHidden();
+        fe.hidden = QFileInfo(fe.path).isHidden()
+            || (!fname.empty() && fname[0] == L'.');
 
         fe.isDir = entry.is_directory(ec);
         if (ec) { ec.clear(); continue; }
