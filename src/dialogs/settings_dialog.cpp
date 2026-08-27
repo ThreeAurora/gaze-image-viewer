@@ -868,7 +868,7 @@ QWidget* SettingsDialog::pageMaintenance() {
     };
 
     connect(filter, &QLineEdit::textChanged, this, reload);
-    connect(delSelBtn, &QPushButton::clicked, this, [this, table, reload]() {
+    connect(delSelBtn, &QPushButton::clicked, this, [this, table, db, reload]() {
         auto sel = table->selectedItems();
         if (sel.isEmpty()) return;
         QString dir = table->item(sel.first()->row(), 0)->text();
