@@ -513,8 +513,8 @@ QWidget* SettingsDialog::pageThumbs() {
     fCreate->addRow(chk("Thumbs/useEmbedded", QString::fromUtf8("使用嵌入缩略图"), true));
     fCreate->addRow(chk("Thumbs/embedFallback", QString::fromUtf8("当内嵌缩略图尺寸小于缩略图尺寸时从原图创建"), true));
     fCreate->addRow(chk("Thumbs/wholeFolder", QString::fromUtf8("为整个文件夹创建缩略图"), false));
-    fCreate->addRow(QString::fromUtf8("视频文件提取帧位置(%)"),
-        spin("Thumbs/videoFramePct", 0, 100, 20));
+    fCreate->addRow(QString::fromUtf8("视频提取帧位置(%,0=第 1 秒)"),
+        spin("Thumbs/videoFramePct", 0, 100, 0));
     root->addWidget(group(QString::fromUtf8("创建"), fCreate));
 
     // 分组"处理"
