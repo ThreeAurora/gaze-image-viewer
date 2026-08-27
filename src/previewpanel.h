@@ -29,12 +29,15 @@ public:
     void seekDelta(int seconds);
     // 相邻预读:切换方向键时预解码下一张/上一张,命中则零等待显示(mainwindow 调用)
     void preload(const QString& prev, const QString& next);
+    // 面板身份:浏览器预览窗格 ↔ 独立查看器(背景色各用一个设置项)
+    Q_INVOKABLE void setViewerMode(bool on);
 
 signals:
     void navFile(int delta);
 
 protected:
     void resizeEvent(QResizeEvent *event) override;
+    void contextMenuEvent(QContextMenuEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
