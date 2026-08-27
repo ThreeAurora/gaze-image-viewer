@@ -63,6 +63,7 @@ static QIcon whiteIcon(const QIcon& base, int size = 32) {
 
 PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     // 背景由 paintEvent 自绘(样式表背景画不出挡板底纹的平铺图案)
+    setMouseTracking(true);   // 悬停也要收移动事件:全屏隐藏指针后靠它恢复
 
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
