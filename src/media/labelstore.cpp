@@ -26,6 +26,9 @@ QSqlDatabase LabelStore::db() {
         QSqlQuery q(d);
         q.exec("CREATE TABLE IF NOT EXISTS labels "
                "(path TEXT PRIMARY KEY, color INTEGER NOT NULL)");
+        // 历史数据迁移:旧版扫描产出混合分隔符路径(E:/dir\file),统一为 '/';
+        // Windows 文件名不可能含 '\',幂等且安全
+        q.exec("UPDATE labels SET path = REPLACE(path, '\\', '/')");
     }
     return QSqlDatabase::database(conn);
 }
