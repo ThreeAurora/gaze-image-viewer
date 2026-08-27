@@ -80,6 +80,7 @@ private:
     static int  s_labelGap;      // Appearance/labelSpacing 真=6px 假=0
     static bool s_showRating;    // Browser/showRating 颜色标记圈
     static bool s_sizeBytes;     // FileList/sizeInBytes 按字节显示大小
+    static bool s_sizeBytes;     // FileList/sizeInBytes 按字节显示大小
 
     friend class FileGrid;
 };
