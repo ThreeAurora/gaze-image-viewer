@@ -367,6 +367,13 @@ void MainWindow::selftestFastScroll() {
     connect(&m_recentFlushTimer, &QTimer::timeout, this, &MainWindow::flushRecentFiles);
 
     // 快速幻灯片(Keyboard/space=快速幻灯片):间隔可在设置→快捷键→空格调整
+    m_slideTimer.setInterval(
+        qMax(100, AppSettings::instance().get("Interface/slideInterval", 1000).toInt()));
+    connect(&m_slideTimer, &QTimer::timeout, this, [this]() {
+        m_fileGrid->navigateSelection(1);
+    });
+
+    // 快速幻灯片(Keyboard/space=快速幻灯片):间隔可在设置→快捷键→空格调整
     m_slideTimer.setInterval(mw_impl::slideIntervalMs());
     connect(&m_slideTimer, &QTimer::timeout, this, [this]() {
         m_fileGrid->navigateSelection(1);
