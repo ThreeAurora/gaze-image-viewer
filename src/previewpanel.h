@@ -90,6 +90,8 @@ private:
     bool m_isLivePhoto = false; // 当前播放的是动态照片视频（区别于普通视频）
     QPixmap *m_origPix = nullptr;
     double m_scale = 1.0;
+    double m_lastScale = 0.0;   // 上次实际应用的缩放(Viewer/autoFit=0"上次使用过的"用)
+    bool   m_viewerMode = false; // 独立查看器(true)/浏览器预览窗格(false)
     double m_lastScale = 0.0;   // 上次实际应用的缩放(Viewer/autoFit=0"上次使用过的"用,配合 resetAutoOnNav)
     bool   m_viewerMode = false; // 独立查看器(true)/浏览器预览窗格(false)
     bool m_dragging = false;
