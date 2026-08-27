@@ -19,6 +19,7 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QStandardPaths>
+#include <QStandardPaths>
 #include <QDateTime>
 #include <QShortcut>
 #include <QKeyEvent>
