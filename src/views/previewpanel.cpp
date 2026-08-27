@@ -438,7 +438,7 @@ bool PreviewPanel::inFullscreen() const {
 
 // 同一角色在两处各有一套设置:全屏时改用 Fullscreen/*,否则 Viewer/*
 QString PreviewPanel::modeKey(const char* suffix) const {
-    return QStringLiteral(inFullscreen() ? "Fullscreen/" : "Viewer/")
+    return QString::fromLatin1(inFullscreen() ? "Fullscreen/" : "Viewer/")
          + QString::fromLatin1(suffix);
 }
 
