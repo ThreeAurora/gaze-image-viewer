@@ -37,6 +37,26 @@
 #include <shobjidl.h>
 #include <commoncontrols.h>  // IImageList 接口 + IID_IImageList(GUID 声明,uuid 库给定义)
 
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+// 系统图标/目录枚举需要 Vista+ API(SHGetImageList/SHIL_JUMBO)
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0600
+#endif
+#ifndef NTDDI_VERSION
+#define NTDDI_VERSION 0x06000000
+#endif
+#ifndef _WIN32_IE
+#define _WIN32_IE 0x0600
+#endif
+#include <windows.h>
+#include <shellapi.h>
+#include <shlobj.h>
+#include <commctrl.h>        // ILD_TRANSPARENT
+#include <shobjidl.h>
+#include <commoncontrols.h>  // IImageList 接口 + IID_IImageList(GUID 声明,uuid 库给定义)
+
 namespace fs = std::filesystem;
 
 // ═══════════════════════════════════════════
