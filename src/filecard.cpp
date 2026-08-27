@@ -16,7 +16,7 @@
 int  FileCard::s_border      = 0;
 int  FileCard::s_imageAlign  = 1;
 int  FileCard::s_labelAlign  = 1;
-int  FileCard::s_labelGap    = 2;
+int  FileCard::s_labelGap    = 6;
 bool FileCard::s_showRating  = true;
 
 void FileCard::applyAppearance() {
@@ -24,7 +24,8 @@ void FileCard::applyAppearance() {
     s_border     = qBound(0, st.get("Appearance/borderSize", 0).toInt(), 10);
     s_imageAlign = qBound(0, st.get("Appearance/imageAlign", 1).toInt(), 2);
     s_labelAlign = qBound(0, st.get("Appearance/labelAlign", 1).toInt(), 2);
-    s_labelGap   = st.get("Appearance/labelSpacing", true).toBool() ? 2 : 0;
+    // 勾选=保持原有 6px 缩略图/名称间距,取消=贴紧
+    s_labelGap   = st.get("Appearance/labelSpacing", true).toBool() ? 6 : 0;
     s_showRating = st.get("Browser/showRating", true).toBool();
 }
 
