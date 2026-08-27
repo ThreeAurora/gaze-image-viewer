@@ -9,6 +9,7 @@ set(CMAKE_AUTOUIC ON)
 
 find_package(Qt6 REQUIRED COMPONENTS
     Widgets
+    Network
     Multimedia
     MultimediaWidgets
     Sql
