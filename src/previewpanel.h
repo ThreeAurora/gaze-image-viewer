@@ -122,6 +122,11 @@ private:
     bool  m_hotkeysLoaded = false;
     void  ensureHotkeys();
     QString hotkeyAction(QKeyEvent* e) const;       // 键事件 → 动作名(未命中返回空)
+
+    // 相邻预读状态
+    QStringList m_preloadQueue;            // 待预载路径(下一张优先)
+    QMap<QString, QImage> m_preloadCache;  // 预载结果(上限 1 张,命中=零等待)
+    bool m_preloadBusy = false;
 public:
     void reloadViewerHotkeys();                     // 设置页修改后刷新缓存
 };
