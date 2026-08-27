@@ -132,9 +132,9 @@ void FileCard::setup(const FileEntry& entry, int size, int viewMode, int height)
                 QString("color:%1;font-size:10px;background:transparent;")
                     .arg(m_hidden ? C_TEXT_HIDDEN : "#FFFFFF"));
         }
-        m_detailLabel->setGeometry(2, size + 20, size - 4, 16);
-        m_detailLabel->setAlignment(Qt::AlignCenter);
-        m_detailLabel->setText(formatSize(entry.size) + "  "
+        m_detailLabel->setGeometry(2, 4 + ts + s_labelGap + 18, size - 4, 16);
+        m_detailLabel->setAlignment(alignFlag(s_labelAlign) | Qt::AlignVCenter);
+        m_detailLabel->setText(cardSizeText(entry.size) + "  "
             + QDateTime::fromSecsSinceEpoch(static_cast<qint64>(entry.mtime))
                   .toString("yyyy/M/d HH:mm"));
         m_detailLabel->show();
