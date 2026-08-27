@@ -137,13 +137,19 @@ QImage Thumbnailer::generate(const QString& filePath, int size, bool isVideo) {
                 if (!cached.isNull()) {
                     QMutexLocker lk(&m_queueMutex);
                     m_pending.erase(ck);
-                    // 回填内存缓存(不重写库)
+                    // 回填内存缓存(不重写库;超内存上限则跳过回填,下次淘汰自然腾位)
                     QMutexLocker lk2(&m_cacheMutex);
                     int64_t pixBytes = static_cast<int64_t>(cached.width())
                                      * cached.height() * 4;
-                    m_memCache[ck] = {cached, mtime,
-                        std::chrono::steady_clock::now().time_since_epoch().count()};
-                    m_memCacheBytes += pixBytes;
+                    if (m_memCacheBytes + pixBytes <= MAX_MEM_CACHE) {
+                        CacheEntry entry;
+                        entry.pixmap = cached;
+                        entry.mtime = mtime;
+                        entry.lastAccess =
+                            std::chrono::steady_clock::now().time_since_epoch().count();
+                        m_memCache[ck] = entry;
+                        m_memCacheBytes += pixBytes;
+                    }
                     return cached;
                 }
             }
