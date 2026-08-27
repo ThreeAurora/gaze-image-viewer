@@ -162,8 +162,9 @@ FileContextMenu::FileContextMenu(FileCard* card, QWidget* parent)
         }
         if (grid) grid->refreshCurrentDir();
     });
-    addAction(IconLib::appIcon("cmd_delete"), "删除", this, [sel, grid]() {
-        if (!deleteToRecycleBin(sel))
+    addAction(IconLib::appIcon("cmd_delete"), "删除", this, [sel, grid, this]() {
+        if (!deleteWithSettings(sel, this)) return;
+        if (!deleteToRecycleBin({}))
             QMessageBox::warning(nullptr, "删除", "删除到回收站失败");
         if (grid) grid->refreshCurrentDir();
     });
