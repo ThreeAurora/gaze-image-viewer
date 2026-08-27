@@ -4,6 +4,7 @@
 #include "labelstore.h"
 #include "constants.h"
 #include "viewerhotkeys.h"
+#include "viewerhotkeys.h"
 
 #include <QHBoxLayout>
 #include <QVBoxLayout>
