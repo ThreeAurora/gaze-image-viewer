@@ -335,7 +335,8 @@ void MainWindow::selftestFastScroll() {
     auto* pv = new QVBoxLayout(previewPane);
     pv->setContentsMargins(0, 0, 0, 0);
     pv->setSpacing(0);
-    pv->addWidget(createPaneHeader(QString::fromUtf8("预览"), "preview"));
+    m_previewHdr = createPaneHeader(QString::fromUtf8("预览"), "preview");
+    pv->addWidget(m_previewHdr);
     pv->addWidget(m_preview, 1);
     connect(m_preview, &PreviewPanel::navFile, m_fileGrid, &FileGrid::navigateSelection);
 
