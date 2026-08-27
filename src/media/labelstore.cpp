@@ -93,52 +93,67 @@ QColor LabelStore::colorValue(int color) {
 
 // ═══ 格式标签颜色(ini "LabelColors/*";FileCard 文件名底色) ═══
 // 存储:LabelColors/map = "gif:#8F7D00;mp4:#B25E00;..."(ext 不带点,小写)
-static QString labelColorsKey() { return QStringLiteral("LabelColors/map"); }
-
-static QHash<QString, QColor> loadLabelColors() {
-    QHash<QString, QColor> m;
-    const QString s = AppSettings::instance().get(labelColorsKey(), QString()).toString();
+// ⚠ 性能:colorForExt 在每张卡片 setup 时调用(快速滚动一屏 20+ 次),
+//   绝不允许每次读 ini——进程内缓存,仅修改时落盘(perf.log 实锤过 926ms 布局)
+namespace {
+struct LCCache {
+    QHash<QString, QColor> map;
+    QColor fallback = QColor("#191919");
+    bool enabled = true;
+    bool loaded = false;
+};
+LCCache& lc() { static LCCache c; return c; }
+void ensureLoaded() {
+    if (lc().loaded) return;
+    lc().loaded = true;
+    lc().fallback = QColor(AppSettings::instance().get(
+        "LabelColors/fallback", QStringLiteral("#191919")).toString());
+    lc().enabled = AppSettings::instance().get("Appearance/formatColor", true).toBool();
+    const QString s = AppSettings::instance().get(
+        QStringLiteral("LabelColors/map"), QString()).toString();
     if (s.isEmpty()) {
         // 首次使用:内置默认(gif 黄绿 / 视频组橙红),与旧版硬编码一致
-        m.insert("gif", QColor("#8F7D00"));
+        lc().map.insert("gif", QColor("#8F7D00"));
         for (const QString& e : VIDEO_EXTS)
-            m.insert(e.mid(1).toLower(), QColor("#B25E00"));
-        return m;
+            lc().map.insert(e.mid(1).toLower(), QColor("#B25E00"));
+        return;
     }
     for (const QString& pair : s.split(';', Qt::SkipEmptyParts)) {
         int c = pair.indexOf(':');
         if (c <= 0) continue;
         QColor col(pair.mid(c + 1));
-        if (col.isValid()) m.insert(pair.left(c).toLower(), col);
+        if (col.isValid()) lc().map.insert(pair.left(c).toLower(), col);
     }
-    return m;
 }
-
-static void saveLabelColors(const QHash<QString, QColor>& m) {
+static void saveLabelColors() {
     QStringList parts;
-    for (auto it = m.constBegin(); it != m.constEnd(); ++it)
+    for (auto it = lc().map.constBegin(); it != lc().map.constEnd(); ++it)
         parts << it.key() + ":" + it.value().name(QColor::HexRgb);
     parts.sort();
-    AppSettings::instance().set(labelColorsKey(), parts.join(';'));
+    AppSettings::instance().set(QStringLiteral("LabelColors/map"), parts.join(';'));
 }
+} // namespace
 
 QColor LabelColors::colorForExt(const QString& extNoDot) {
-    return loadLabelColors().value(extNoDot.toLower(), fallbackColor());
+    ensureLoaded();
+    return lc().map.value(extNoDot.toLower(), lc().fallback);
 }
 
 QColor LabelColors::fallbackColor() {
-    return QColor(AppSettings::instance().get(
-        "LabelColors/fallback", QStringLiteral("#191919")).toString());
+    ensureLoaded();
+    return lc().fallback;
 }
 
 void LabelColors::setFallbackColor(const QColor& c) {
+    ensureLoaded();
+    lc().fallback = c;
     AppSettings::instance().set("LabelColors/fallback", c.name(QColor::HexRgb));
 }
 
 QList<QPair<QString, QColor>> LabelColors::all() {
-    QHash<QString, QColor> m = loadLabelColors();
+    ensureLoaded();
     QList<QPair<QString, QColor>> out;
-    for (auto it = m.constBegin(); it != m.constEnd(); ++it)
+    for (auto it = lc().map.constBegin(); it != lc().map.constEnd(); ++it)
         out << qMakePair(it.key(), it.value());
     std::sort(out.begin(), out.end(),
               [](const QPair<QString, QColor>& a, const QPair<QString, QColor>& b) {
@@ -148,17 +163,18 @@ QList<QPair<QString, QColor>> LabelColors::all() {
 }
 
 void LabelColors::set(const QString& extNoDot, const QColor& c) {
-    QHash<QString, QColor> m = loadLabelColors();
-    m.insert(extNoDot.toLower(), c);
-    saveLabelColors(m);
+    ensureLoaded();
+    lc().map.insert(extNoDot.toLower(), c);
+    saveLabelColors();
 }
 
 void LabelColors::remove(const QString& extNoDot) {
-    QHash<QString, QColor> m = loadLabelColors();
-    m.remove(extNoDot.toLower());
-    saveLabelColors(m);
+    ensureLoaded();
+    lc().map.remove(extNoDot.toLower());
+    saveLabelColors();
 }
 
 bool LabelColors::enabled() {
-    return AppSettings::instance().get("Appearance/formatColor", true).toBool();
+    ensureLoaded();
+    return lc().enabled;
 }
