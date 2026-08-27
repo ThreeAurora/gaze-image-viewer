@@ -88,6 +88,40 @@ int main(int argc, char *argv[]) {
     app.setStyleSheet(Theme::appQss());
 
     MainWindow w;
+
+    QLocalServer* server = nullptr;
+    if (singleInstance) {
+        QLocalServer::removeServer(kSingleServer);
+        server = new QLocalServer(&app);
+        if (server->listen(kSingleServer)) {
+            QObject::connect(server, &QLocalServer::newConnection, &w, [&w, server]() {
+                QLocalSocket* s = server->nextPendingConnection();
+                if (!s) return;
+                QObject::connect(s, &QLocalSocket::readyRead, s, [&w, s]() {
+                    const QList<QByteArray> lines = s->readAll().split('\n');
+                    for (const QByteArray& ln : lines) {
+                        const QString p = QDir::fromNativeSeparators(
+                            QString::fromUtf8(ln).trimmed());
+                        if (p.isEmpty() || !QFileInfo::exists(p)) continue;
+                        if (QFileInfo(p).isDir())
+                            QMetaObject::invokeMethod(&w, "navigateTo", Q_ARG(QString, p));
+                        else
+                            QMetaObject::invokeMethod(&w, "revealFile", Q_ARG(QString, p));
+                    }
+                    w.raise();
+                    w.activateWindow();
+                });
+                QObject::connect(s, &QLocalSocket::disconnected, s, &QObject::deleteLater);
+            });
+        }
+    }
+
+    // 本实例自带的路径:统一交给 MainWindow 处理(mainwindow 构造函数读取 argv)
     w.show();
+
+    // 首个实例经"打开方式/右键浏览"启动时,也要把自己登记为监听方并处理路径
+    if (server) {
+        // 转发路径已在 MainWindow 构造时消费;此处仅保持 server 存活
+    }
     return app.exec();
 }
