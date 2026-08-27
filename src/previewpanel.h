@@ -61,6 +61,8 @@ private:
     void teardownPlayer();
     // GIF QMovie 安全回收(旧实现每次 new 从不 delete,看一次泄一个)
     void stopMovie();
+    // GIF QMovie 安全回收(旧实现每次 new 从不 delete,看一次泄一个)
+    void stopMovie();
     // Live Photo 播完：安全回收播放器后切回静态图
     void finishLivePhoto();
     // 删除本会话从内嵌 Motion Photo 提取的临时视频
