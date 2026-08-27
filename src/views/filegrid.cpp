@@ -88,9 +88,16 @@ FileGrid::FileGrid(QWidget* parent) : QScrollArea(parent) {
         requestVisibleThumbs();
     });
 
-    // 恢复持久化的列数/查看方式
+    // 恢复持久化的列数/查看方式/文件名排序方式
     m_fixedCols = qBound(0, AppSettings::instance().get("Browser/fixedCols", 0).toInt(), 16);
     m_viewMode  = qBound(0, AppSettings::instance().get("Browser/viewMode", int(VM_THUMBS_NAME)).toInt(), int(VM_WATERFALL));
+    m_nameOrder = qBound(0, AppSettings::instance().get("Browser/nameOrder", int(NameNatural)).toInt(), int(NameNormal));
+
+    // 设置活应用:标签颜色(开关/配色)在设置页改动后,当前网格立即重涂,无需重启
+    connect(&AppSettings::instance(), &AppSettings::changed, this, [this]() {
+        LabelColors::reload();
+        for (auto* card : m_active) card->refreshLabelBg();
+    });
 }
 
 // 相邻文件路径(delta=+1 下一张/-1 上一张;预读用,越界返回空)
