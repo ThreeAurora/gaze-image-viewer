@@ -71,7 +71,7 @@ private:
 
     // 布局方案:保存/应用窗口几何与分栏宽度;"跟随上次"=用关闭时的状态
     // (saveLayout/applyLayout 声明见 public 区,供菜单/外部调用)
-    void createLayoutMenu(QAction* before);  // 菜单栏"布局"(插在指定项前)
+    void createLayoutMenu();                   // 菜单栏"布局"(追加到当前末尾)
     void applyLastLayout();                  // 应用上次关闭时的状态
 
     // 批次 2:菜单/工具栏/标记/最近文件
