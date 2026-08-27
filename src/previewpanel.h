@@ -31,9 +31,6 @@ public:
     int scalePercent() const { return int(m_scale * 100); }
     bool hasPixmap() const { return m_origPix != nullptr; }
 
-signals:
-    void navFile(int delta);
-
 protected:
     void resizeEvent(QResizeEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
