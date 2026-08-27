@@ -324,7 +324,6 @@ void FileCard::paintEvent(QPaintEvent* event) {
 
 void FileCard::applyLabelBg() {
     // 用内联 styleSheet(优先级高于全局 QSS;palette 会被 QWidget 全局样式压制)
-    // 用内联 styleSheet(优先级高于全局 QSS;palette 会被 QWidget 全局样式压制)
     // 选中 = 蓝底纯白字;未选中 = 格式底色 + 正常白字 / 隐藏文件淡灰字
     QString bg = m_selected ? m_selColor : m_nameBg;
     QString color = m_selected ? QStringLiteral("#FFFFFF")
