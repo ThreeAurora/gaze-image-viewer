@@ -178,7 +178,7 @@ QSpinBox* SettingsDialog::spin(const QString& key, int min, int max, int def) {
 
 QLineEdit* SettingsDialog::edit(const QString& key, const QString& def) {
     auto* e = new QLineEdit(AppSettings::instance().get(key, def).toString());
-    connect(e, &QLineEdit::textChanged, this, [key](const QString& v) {
+    QObject::connect(e, &QLineEdit::textChanged, [key](const QString& v) {
         AppSettings::instance().set(key, v);
     });
     return e;
