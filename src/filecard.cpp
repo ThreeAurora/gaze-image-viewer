@@ -44,6 +44,7 @@ void FileCard::setup(const FileEntry& entry, int size, int viewMode, int height)
     m_active     = true;
     m_selected   = false;
     m_isLive     = false;
+    m_hidden     = entry.hidden;
     m_selColor   = C_SELECT_BLUE;
     m_liveBadge->hide();
 
