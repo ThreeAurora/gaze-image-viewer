@@ -81,7 +81,10 @@ void LabelStore::removePaths(const QStringList& paths) {
     if (!d.isOpen()) return;
     QSqlQuery q(d);
     q.prepare("DELETE FROM labels WHERE path = ?");
-    for (const auto& p : paths) { q.addBindValue(p); q.exec(); }
+    for (const auto& p : paths) {
+        q.addBindValue(QDir::fromNativeSeparators(p));
+        q.exec();
+    }
 }
 
 QColor LabelStore::colorValue(int color) {
