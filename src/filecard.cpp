@@ -346,8 +346,16 @@ void FileCard::paintEvent(QPaintEvent* event) {
         p.drawRect(m_thumbRect.adjusted(-2, -2, 1, 1));
     }
 
-    // 颜色标记:缩略图左上角彩色圆圈(白描边)
-    if (m_colorLabel > 0) {
+    // Appearance/borderSize:卡片边框(默认 0 = 无,保持当前无边框观感)
+    if (s_border > 0) {
+        p.setPen(QPen(QColor("#3A3A42"), s_border));
+        p.setBrush(Qt::NoBrush);
+        p.drawRect(QRectF(s_border / 2.0, s_border / 2.0,
+                          width() - s_border, height() - s_border));
+    }
+
+    // 颜色标记:缩略图左上角彩色圆圈(白描边);Browser/showRating 关时不画
+    if (s_showRating && m_colorLabel > 0) {
         QColor c = LabelStore::colorValue(m_colorLabel);
         if (c.isValid()) {
             QPointF center = m_thumbRect.topLeft() + QPointF(9, 9);
