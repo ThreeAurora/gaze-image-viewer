@@ -55,48 +55,54 @@ struct FileEntry {
 };
 
 // ═══════════════════════════════════════════
-// 快速目录扫描 (std::filesystem)
+// 快速目录扫描 (FindFirstFileW:一次内核调用同时取全
+//   创建时间/修改时间/大小/属性 —— std::filesystem 拿不到创建时间,
+//   二次逐文件取属性又违背大目录快速扫描的初衷)
 // ═══════════════════════════════════════════
+inline double fileTimeToEpoch(const FILETIME& ft) {
+    ULARGE_INTEGER u;
+    u.HighPart = ft.dwHighDateTime;
+    u.LowPart = ft.dwLowDateTime;
+    if (u.QuadPart == 0) return 0.0;
+    // 100ns since 1601-01-01 → 秒 since 1970-01-01
+    return double(u.QuadPart / 10000000ull) - 11644473600.0;
+}
+
 inline std::vector<FileEntry> fastScanDir(const QString& dirPath) {
     std::vector<FileEntry> entries;
     entries.reserve(500);
 
-    std::error_code ec;
-    auto dirPathW = dirPath.toStdWString();
-    for (const auto& entry : fs::directory_iterator(dirPathW,
-         fs::directory_options::skip_permission_denied, ec)) {
-        if (ec) break;
+    const QString pattern = dirPath + QStringLiteral("\\*");
+    WIN32_FIND_DATAW data;
+    HANDLE h = FindFirstFileExW((const wchar_t*)pattern.utf16(),
+                                FindExInfoBasic, &data,
+                                FindExSearchNameMatch, nullptr,
+                                FIND_FIRST_EX_LARGE_FETCH);
+    if (h == INVALID_HANDLE_VALUE) return entries;
 
-        const auto& p = entry.path();
-        auto fname = p.filename().wstring();
+    do {
+        const wchar_t* fname = data.cFileName;
+        // directory_iterator 语义:跳过 "." 与 ".."
+        if (fname[0] == L'.' && (fname[1] == 0 || (fname[1] == L'.' && fname[2] == 0)))
+            continue;
 
         FileEntry fe;
-        fe.name = QString::fromStdWString(fname);
-        fe.path = QString::fromStdWString(p.wstring());
-        fe.ext  = QString::fromStdWString(p.extension().wstring()).toLower();
-        // Windows 隐藏属性 / 点开头文件/夹都算隐藏，显示时用淡灰色
-        fe.hidden = QFileInfo(fe.path).isHidden()
-            || (!fname.empty() && fname[0] == L'.');
-
-        fe.isDir = entry.is_directory(ec);
-        if (ec) { ec.clear(); continue; }
-
+        fe.name = QString::fromWCharArray(fname);
+        fe.path = dirPath + QLatin1Char('/') + fe.name;
+        const int dot = fe.name.lastIndexOf(QLatin1Char('.'));
+        fe.ext = (dot > 0) ? fe.name.mid(dot).toLower() : QString();
+        // Windows 隐藏属性 / 点开头文件/夹都算隐藏,显示时用淡灰色
+        fe.hidden = (data.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN)
+                    || fe.name.startsWith(QLatin1Char('.'));
+        fe.isDir = (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+        fe.ctime = fileTimeToEpoch(data.ftCreationTime);
+        fe.mtime = fileTimeToEpoch(data.ftLastWriteTime);
         if (!fe.isDir) {
-            fe.size = entry.file_size(ec);
-            if (ec) { ec.clear(); fe.size = 0; }
+            fe.size = (int64_t(data.nFileSizeHigh) << 32) | data.nFileSizeLow;
         }
-
-        auto lwt = entry.last_write_time(ec);
-        if (!ec) {
-            auto sysTime = std::chrono::time_point_cast<std::chrono::system_clock::duration>(
-                lwt - fs::file_time_type::clock::now() + std::chrono::system_clock::now());
-            fe.mtime = std::chrono::duration<double>(sysTime.time_since_epoch()).count();
-        } else {
-            ec.clear();
-        }
-
         entries.push_back(std::move(fe));
-    }
+    } while (FindNextFileW(h, &data));
+    FindClose(h);
     return entries;
 }
 
