@@ -581,7 +581,10 @@ QWidget* SettingsDialog::pageLabelColors() {
         QString selExt = sel ? sel->text() : QString();
         list->blockSignals(true);
         list->clear();
-        for (const auto& [ext, col] : LabelColors::all()) {
+        const auto entries = LabelColors::all();
+        for (const auto& pair : entries) {
+            const QString& ext = pair.first;
+            const QColor& col = pair.second;
             auto* it = new QListWidgetItem(ext);
             it->setBackground(col);
             it->setForeground(col.lightness() > 140 ? QColor("#000000") : QColor("#FFFFFF"));
