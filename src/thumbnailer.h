@@ -46,7 +46,7 @@ private:
     void    evictIfNeeded();
 
     // ── Pixmap → PNG bytes ──
-    QByteArray pixmapToPng(const QImage& pix) const;
+    QByteArray pixmapToBlob(const QImage& pix) const;   // WebP q75(库内持久缩略图)
 
     QThreadPool* m_pool = nullptr;
 
