@@ -87,7 +87,7 @@ void Thumbnailer::snapshotPrefs() {
     m_prefs = p;
 }
 
-Thumbnailer::Prefs Thumbnailer::prefs() {
+Thumbnailer::Prefs Thumbnailer::prefs() const {
     QMutexLocker lk(&m_prefMutex);
     return m_prefs;
 }
