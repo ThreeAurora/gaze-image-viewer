@@ -18,6 +18,13 @@ int  FileCard::s_imageAlign  = 1;
 int  FileCard::s_labelAlign  = 1;
 int  FileCard::s_labelGap    = 6;
 bool FileCard::s_showRating  = true;
+bool FileCard::s_sizeBytes   = false;
+
+// FileList/sizeInBytes:卡片详细行/悬浮提示共用(逐条目路径只读缓存)
+static QString cardSizeText(int64_t num) {
+    return FileCard::sizeBytesMode()
+        ? QString::number(num) + " B" : formatSize(num);
+}
 
 void FileCard::applyAppearance() {
     AppSettings& st = AppSettings::instance();
@@ -27,6 +34,7 @@ void FileCard::applyAppearance() {
     // 勾选=保持原有 6px 缩略图/名称间距,取消=贴紧
     s_labelGap   = st.get("Appearance/labelSpacing", true).toBool() ? 6 : 0;
     s_showRating = st.get("Browser/showRating", true).toBool();
+    s_sizeBytes  = st.get("FileList/sizeInBytes", false).toBool();
 }
 
 static Qt::AlignmentFlag alignFlag(int v) {
