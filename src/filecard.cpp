@@ -284,7 +284,7 @@ void FileCard::setThumbnail(const QPixmap& pixmap) {
     m_thumbLabel->setPixmap(rounded);
 
     // 选中框贴图片实际显示区域(随图片宽高变化)——用户确认的正确行为
-    m_thumbRect = QRect(m_thumbLabel->x() + (tw - scaled.width()) / 2,
+    m_thumbRect = QRect(m_thumbLabel->x() + offX,
                         m_thumbLabel->y() + (th - scaled.height()) / 2,
                         scaled.width(), scaled.height());
     update();
