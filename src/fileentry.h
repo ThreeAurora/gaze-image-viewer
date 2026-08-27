@@ -27,6 +27,7 @@ struct FileEntry {
     QString  path;
     QString  ext;        // 小写后缀，含点号
     bool     isDir = false;
+    bool     hidden = false; // 隐藏文件/文件夹（Windows 隐藏属性或点开头）
     int64_t  size  = 0;
     double   mtime = 0.0;
     double   ctime = 0.0;
