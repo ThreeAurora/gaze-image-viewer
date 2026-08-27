@@ -243,14 +243,49 @@ QWidget* SettingsDialog::pageInterface() {
     form->addRow(QString::fromUtf8("最近的文件上限数量(0-100)"),
         spin("Interface/maxRecent", 0, 100, 20));
     form->addRow(chk("Interface/clearRecentOnExit", QString::fromUtf8("退出时清理\"最近的文件\"记录"), false));
-    form->addRow(QString::fromUtf8("标题栏 - 浏览器模式"),
-        edit("Interface/titleBrowser", QString::fromUtf8("{路径}{文件名 含扩展名}")));
-    form->addRow(QString::fromUtf8("标题栏 - 查看器"),
-        edit("Interface/titleViewer", QString::fromUtf8("{路径}{文件名 含扩展名}")));
-    form->addRow(new QLabel(QString::fromUtf8(
-        "标题栏可用变量:{文件名} {文件名 含扩展名} {文件夹} {文件夹名} {大小}\n"
-        "{创建日期} {修改日期} {评级} {颜色标签} 及时间变量 Y y m d H M S 等")));
     return wrapTitled(QString::fromUtf8("界面"), form);
+}
+
+// 标题栏模板编辑行:输入框 + ▶ 变量插入菜单(点击变量插入光标处,对齐 XnView 交互)
+static QWidget* titleTemplateRow(const QString& key, const QString& def) {
+    auto* row = new QWidget;
+    auto* h = new QHBoxLayout(row);
+    h->setContentsMargins(0, 0, 0, 0);
+    h->setSpacing(6);
+    auto* e = new QLineEdit(AppSettings::instance().get(key, def).toString());
+    connect(e, &QLineEdit::textChanged, this, [key](const QString& v) {
+        AppSettings::instance().set(key, v);
+    });
+    h->addWidget(e, 1);
+    auto* btn = new QToolButton;
+    btn->setText(QString::fromUtf8("▶"));
+    btn->setToolTip(QString::fromUtf8("插入变量"));
+    h->addWidget(btn);
+
+    auto* menu = new QMenu(btn);
+    auto addVar = [menu, e](const QString& var) {
+        menu->addAction(var, e, [e, var]() { e->insert("{" + var + "}"); });
+    };
+    addVar(QString::fromUtf8("文件名"));
+    addVar(QString::fromUtf8("文件名 含扩展名"));
+    addVar(QString::fromUtf8("文件夹"));
+    addVar(QString::fromUtf8("文件夹名"));
+    addVar(QString::fromUtf8("大小"));
+    addVar(QString::fromUtf8("创建日期"));
+    addVar(QString::fromUtf8("修改日期"));
+    addVar(QString::fromUtf8("评级"));
+    addVar(QString::fromUtf8("颜色标签"));
+    auto* timeMenu = menu->addMenu(QString::fromUtf8("时间格式变量"));
+    auto addTime = [timeMenu, e](const QString& var) {
+        timeMenu->addAction(var, e, [e, var]() { e->insert("{" + var + "}"); });
+    };
+    addTime("Y"); addTime("y"); addTime("m"); addTime("d");
+    addTime("H"); addTime("M"); addTime("S");
+    addTime("Y-m-d_H-M-S"); addTime("Y_m_d_H_M_S");
+    connect(btn, &QToolButton::clicked, btn, [btn, menu]() {
+        menu->exec(btn->mapToGlobal(QPoint(0, btn->height())));
+    });
+    return row;
 }
 
 QWidget* SettingsDialog::pageKeyboardMouse() {
