@@ -27,6 +27,8 @@ public:
     void clear();
     void togglePlayPause();
     void seekDelta(int seconds);
+    // 相邻预读:切换方向键时预解码下一张/上一张,命中则零等待显示(mainwindow 调用)
+    void preload(const QString& prev, const QString& next);
 
 signals:
     void navFile(int delta);
