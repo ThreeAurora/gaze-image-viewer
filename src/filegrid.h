@@ -150,6 +150,8 @@ private:
 
     QTimer m_resizeTimer;
     QTimer m_reEnqueueTimer;  // 尺寸停止变化后重新生成高清缩略图(防抖)
+    QTimer m_scrollTimer;     // 滚轮防抖:滚动中推迟缩略图提交,停止后批量补齐
+    bool   m_scrollSettled = true;
     bool   m_loading = false;
 
     static constexpr int SPACING = 6;
