@@ -83,7 +83,6 @@ private:
 
     // SQLite：连接按"每线程一个"管理（见 thumbnailer.cpp 的 threadDb()），
     // QSqlDatabase 连接禁止跨线程使用——这是 qsqlite.dll AV 崩溃的根因
-    static constexpr int64_t MAX_DB_MB = 500;
 };
 
 // ── 后台缩略图任务 ──
