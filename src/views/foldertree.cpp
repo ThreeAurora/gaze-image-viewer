@@ -55,14 +55,12 @@ void ArrowStyle::drawPrimitive(PrimitiveElement element, const QStyleOption* opt
 // FolderTree
 // ═══════════════════════════════════════════
 
-// 仅统计“可见子文件夹”（排除隐藏目录），用于判断是否应显示展开箭头
+// 统计子文件夹（含隐藏目录），用于判断是否应显示展开箭头
 static bool hasVisibleSubdirs(const QString& path) {
     QDir dir(path);
-    const QStringList list = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
-    for (const QString& s : list) {
-        if (!s.startsWith('.')) return true;
-    }
-    return false;
+    const QStringList list = dir.entryList(
+        QDir::Dirs | QDir::Hidden | QDir::NoDotAndDotDot);
+    return !list.isEmpty();
 }
 
 FolderTree::FolderTree(QWidget* parent) : QTreeWidget(parent) {
