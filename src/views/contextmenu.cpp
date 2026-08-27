@@ -197,7 +197,6 @@ FileContextMenu::FileContextMenu(FileCard* card, QWidget* parent)
         auto* rotMenu = addMenu(IconLib::appIcon("cmd_rotate"), QString::fromUtf8("旋转/翻转"));
         auto doRot = [this, grid](int mode) {
             QFileInfo fi(m_filePath);
-            QString ext = fi.suffix().toLower();
             QDateTime mod  = fi.lastModified();          // 原修改时间
             QDateTime birth = fi.birthTime();            // 原创建时间
             QString backup = fi.absolutePath() + "/" + fi.completeBaseName()
