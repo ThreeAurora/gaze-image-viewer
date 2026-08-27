@@ -818,9 +818,9 @@ QWidget* SettingsDialog::pageCache() {
     form->addRow(QString::fromUtf8("缩略图宽度"), spin("Cache/thumbWidth", 64, 1024, 465));
     form->addRow(QString::fromUtf8("缩略图高度"), spin("Cache/thumbHeight", 64, 1024, 365));
     form->addRow(chk("Cache/maxCacheOn", QString::fromUtf8("缓存缩略图最大容量(MB)"), true));
-    form->addRow(spin("Cache/maxCacheMB", 64, 10240, 1024));
+    form->addRow(spin("Cache/maxCacheMB", 64, 10240, 500));
     form->addRow(QString::fromUtf8("数据库引擎的内存占用(MB)"),
-        spin("Cache/dbCacheMB", 32, 8192, 1024));
+        spin("Cache/dbCacheMB", 8, 8192, 64));
     form->addRow(chk("Cache/checkOnStartup", QString::fromUtf8("启动时检查缓存的完整性"), false));
     return wrapTitled(QString::fromUtf8("缓存数据库"), form);
 }
