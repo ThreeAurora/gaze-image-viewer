@@ -30,6 +30,7 @@ private:
     void makeIcons();
 
     QIcon m_folderIcon;
+    QIcon m_folderIconDim;   // 隐藏文件夹：半透明弱化图标
     QIcon m_driveIcon;
     QIcon m_desktopIcon;
 };
