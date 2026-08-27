@@ -34,6 +34,7 @@ private:
     QWidget* pageAppearance();     // 缩略图 → 外观
     QWidget* pageLabelColors();    // 缩略图 → 标签颜色(扩展名底色列表编辑)
     QWidget* pageViewer();         // 查看
+    QWidget* pageViewerOther();    // 查看 → 其他(播放与性能)
     QWidget* pageFullscreen();     // 查看 → 全屏
     QWidget* pageCache();          // 高级 → 缓存数据库
     QWidget* pageMaintenance();    // 维护(缩略图库统计/筛选/删除/重建)
