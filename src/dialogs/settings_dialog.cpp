@@ -495,6 +495,156 @@ QWidget* SettingsDialog::pageAppearance() {
     return wrapTitled(QString::fromUtf8("外观"), form);
 }
 
+// ── 标签颜色页:扩展名列表整行底色填充,选中变蓝;右列输入/新建/移除/改色;底部默认色 ──
+QWidget* SettingsDialog::pageLabelColors() {
+    auto* root = new QVBoxLayout;
+    root->setSpacing(10);
+
+    root->addWidget(chk("Appearance/formatColor",
+                        QString::fromUtf8("文件根据格式显示以下颜色(文件名底色)"), true));
+
+    auto* body = new QHBoxLayout;
+    body->setSpacing(12);
+
+    // 左:扩展名列表(整行以对应颜色填充)
+    auto* list = new QListWidget;
+    list->setFixedWidth(320);
+    list->setStyleSheet(
+        "QListWidget{background:#151515;border:1px solid #3C3C3C;outline:none;}"
+        "QListWidget::item{height:24px;padding:0 8px;border:none;}"
+        "QListWidget::item:selected{background:#2F65C5;color:#FFFFFF;border:none;}");
+    body->addWidget(list, 1);
+
+    // 右:输入行 + 色块/按钮列
+    auto* right = new QVBoxLayout;
+    right->setSpacing(8);
+    auto* inRow = new QHBoxLayout;
+    inRow->addWidget(new QLabel(QString::fromUtf8("输入扩展名:")));
+    auto* extEdit = new QLineEdit;
+    extEdit->setPlaceholderText(QString::fromUtf8("gif"));
+    extEdit->setFixedWidth(120);
+    inRow->addWidget(extEdit);
+    inRow->addSpacing(8);
+    inRow->addWidget(new QLabel(QString::fromUtf8("或选一种格式:")));
+    auto* extCombo = new QComboBox;
+    {
+        QStringList exts;
+        for (const QString& e : IMAGE_EXTS)  exts << e.mid(1).toUpper();
+        for (const QString& e : VIDEO_EXTS)  exts << e.mid(1).toUpper();
+        for (const QString& e : AUDIO_EXTS)  exts << e.mid(1).toUpper();
+        exts.removeDuplicates();
+        std::sort(exts.begin(), exts.end());
+        extCombo->addItems(exts);
+    }
+    inRow->addWidget(extCombo, 1);
+    right->addLayout(inRow);
+
+    // 色块行:左块=当前选中项颜色(点击改色) 右块=白色快选
+    auto* swRow = new QHBoxLayout;
+    swRow->setAlignment(Qt::AlignRight);
+    auto* colorBtn = new QToolButton;
+    colorBtn->setFixedSize(30, 24);
+    auto* whiteBtn = new QToolButton;
+    whiteBtn->setFixedSize(30, 24);
+    whiteBtn->setStyleSheet("background:#FFFFFF;border:1px solid #4A4A4A;");
+    whiteBtn->setToolTip(QString::fromUtf8("设为白色"));
+    swRow->addWidget(colorBtn);
+    swRow->addWidget(whiteBtn);
+    right->addLayout(swRow);
+
+    auto* addBtn = new QPushButton(QString::fromUtf8("新建"));
+    auto* removeBtn = new QPushButton(QString::fromUtf8("移除"));
+    right->addWidget(addBtn);
+    right->addWidget(removeBtn);
+    right->addStretch(1);
+
+    body->addLayout(right);
+    body->addStretch(1);
+    root->addLayout(body, 1);
+
+    // 底部:默认颜色(未列出格式的底色)
+    auto* defRow = new QHBoxLayout;
+    defRow->addWidget(new QLabel(QString::fromUtf8("默认颜色")));
+    auto* defBtn = new QToolButton;
+    defBtn->setFixedSize(30, 24);
+    defBtn->setStyleSheet(QString("background:%1;border:1px solid #4A4A4A;")
+                              .arg(LabelColors::fallbackColor().name())));
+    defRow->addWidget(defBtn);
+    defRow->addStretch(1);
+    root->addLayout(defRow);
+
+    // ── 数据流 ──
+    auto refill = [list, colorBtn]() {
+        QListWidgetItem* sel = list->currentItem();
+        QString selExt = sel ? sel->text() : QString();
+        list->blockSignals(true);
+        list->clear();
+        for (const auto& [ext, col] : LabelColors::all()) {
+            auto* it = new QListWidgetItem(ext);
+            it->setBackground(col);
+            it->setForeground(col.lightness() > 140 ? QColor("#000000") : QColor("#FFFFFF"));
+            list->addItem(it);
+            if (ext == selExt) list->setCurrentItem(it);
+        }
+        list->blockSignals(false);
+        QColor cur = selExt.isEmpty() ? QColor("#191919")
+                   : LabelColors::colorForExt(selExt);
+        colorBtn->setStyleSheet(QString("background:%1;border:1px solid #4A4A4A;")
+                                    .arg(cur.name()));
+    };
+    auto syncColorBtn = [list, colorBtn]() {
+        QListWidgetItem* it = list->currentItem();
+        QColor cur = it ? LabelColors::colorForExt(it->text()) : QColor("#191919");
+        colorBtn->setStyleSheet(QString("background:%1;border:1px solid #4A4A4A;")
+                                    .arg(cur.name()));
+    };
+    refill();
+
+    connect(list, &QListWidget::itemSelectionChanged, this, syncColorBtn);
+    connect(colorBtn, &QToolButton::clicked, this, [this, list, refill]() {
+        QListWidgetItem* it = list->currentItem();
+        if (!it) return;
+        QColor c = QColorDialog::getColor(LabelColors::colorForExt(it->text()),
+                                          this, QString::fromUtf8("选择颜色"));
+        if (!c.isValid()) return;
+        LabelColors::set(it->text(), c);
+        refill();
+    });
+    connect(whiteBtn, &QToolButton::clicked, this, [list, refill]() {
+        QListWidgetItem* it = list->currentItem();
+        if (!it) return;
+        LabelColors::set(it->text(), QColor("#FFFFFF"));
+        refill();
+    });
+    connect(addBtn, &QPushButton::clicked, this, [extEdit, extCombo, list, refill]() {
+        QString ext = extEdit->text().trimmed().toLower();
+        if (ext.isEmpty()) ext = extCombo->currentText().trimmed().toLower();
+        if (ext.isEmpty()) return;
+        ext.remove(QRegularExpression("^[.*]+"));
+        LabelColors::set(ext, LabelColors::fallbackColor());
+        refill();
+        for (int i = 0; i < list->count(); ++i)
+            if (list->item(i)->text() == ext) { list->setCurrentRow(i); break; }
+    });
+    connect(removeBtn, &QPushButton::clicked, this, [list, refill]() {
+        QListWidgetItem* it = list->currentItem();
+        if (!it) return;
+        LabelColors::remove(it->text());
+        refill();
+    });
+    connect(defBtn, &QToolButton::clicked, this, [defBtn, refill]() {
+        QColor c = QColorDialog::getColor(LabelColors::fallbackColor(),
+                                          nullptr, QString::fromUtf8("默认颜色"));
+        if (!c.isValid()) return;
+        LabelColors::setFallbackColor(c);
+        defBtn->setStyleSheet(QString("background:%1;border:1px solid #4A4A4A;")
+                                  .arg(c.name()));
+        refill();
+    });
+
+    return wrapTitled(QString::fromUtf8("标签颜色"), root);
+}
+
 QWidget* SettingsDialog::pageViewer() {
     auto* root = new QVBoxLayout;
     root->setSpacing(12);
