@@ -1,5 +1,6 @@
 #include "thumbnailer.h"
 #include "constants.h"
+#include "settings.h"
 #include "wicdecode.h"
 #include "settings.h"
 #include "imgproc.h"
