@@ -88,16 +88,49 @@ FileGrid::FileGrid(QWidget* parent) : QScrollArea(parent) {
         requestVisibleThumbs();
     });
 
-    // 恢复持久化的列数/查看方式/文件名排序方式
+    // 恢复持久化的列数/查看方式/文件名排序方式/卡片间距
     m_fixedCols = qBound(0, AppSettings::instance().get("Browser/fixedCols", 0).toInt(), 16);
     m_viewMode  = qBound(0, AppSettings::instance().get("Browser/viewMode", int(VM_THUMBS_NAME)).toInt(), int(VM_WATERFALL));
     m_nameOrder = qBound(0, AppSettings::instance().get("Browser/nameOrder", int(NameNatural)).toInt(), int(NameNormal));
+    m_spacing   = qBound(0, AppSettings::instance().get("Appearance/spacing", 6).toInt(), 40);
 
-    // 设置活应用:标签颜色(开关/配色)在设置页改动后,当前网格立即重涂,无需重启
+    // 设置活应用:标签颜色(开关/配色)+ 外观间距 + 文件列表过滤/排序规则
+    // (此前 changed() 无订阅者,所有设置都要重启才生效)
     connect(&AppSettings::instance(), &AppSettings::changed, this, [this]() {
         LabelColors::reload();
-        for (auto* card : m_active) card->refreshLabelBg();
+        const int sp = qBound(0,
+            AppSettings::instance().get("Appearance/spacing", 6).toInt(), 40);
+        const bool spacingChanged = (sp != m_spacing);
+        m_spacing = sp;
+        const bool listChanged =
+               m_showHidden != AppSettings::instance().get("FileList/showHidden", true).toBool()
+            || m_mixSort    != AppSettings::instance().get("FileList/mixSort", false).toBool()
+            || m_folderAlpha != AppSettings::instance().get("FileList/folderAlphabetical", true).toBool();
+        m_showHidden  = AppSettings::instance().get("FileList/showHidden", true).toBool();
+        m_mixSort     = AppSettings::instance().get("FileList/mixSort", false).toBool();
+        m_folderAlpha = AppSettings::instance().get("FileList/folderAlphabetical", true).toBool();
+        if (listChanged) {
+            applyFilter();
+            sort(m_sortCol, m_sortAsc);
+            updateLayout();
+        } else if (spacingChanged) {
+            updateLayout();
+        }
+        recycleCards();          // 卡片外观(边框/对齐/评级圈)重建
+        layoutCards();
     });
+}
+
+// 设置改动后的重排:重算列宽 + 重排可见卡片
+void FileGrid::relayoutNow() {
+    m_cols = 0;
+    updateLayout();
+    layoutCards();
+}
+
+// 标题模板 {颜色标签}:目录加载时已批量读入 m_colorLabels,这里只查内存
+int FileGrid::colorLabelOf(const QString& path) const {
+    return m_colorLabels.value(path, 0);
 }
 
 // 相邻文件路径(delta=+1 下一张/-1 上一张;预读用,越界返回空)
