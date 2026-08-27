@@ -683,8 +683,7 @@ QWidget* SettingsDialog::pageViewer() {
     auto* fUI = new QFormLayout;
     fUI->setVerticalSpacing(10);
     fUI->addRow(QString::fromUtf8("背景色"),
-        combo("Viewer/backColor", {QString::fromUtf8("黑色"), QString::fromUtf8("白色"),
-            QString::fromUtf8("灰色")}, 0));
+                colorPick("Viewer/backColor", "#000000"));
     fUI->addRow(chk("Viewer/checkerMode", QString::fromUtf8("背景以挡板模式显示"), false));
     fUI->addRow(chk("Viewer/showBorder", QString::fromUtf8("显示边框"), false));
     fUI->addRow(chk("Viewer/highlightSelection", QString::fromUtf8("显示高亮选择内容"), true));
