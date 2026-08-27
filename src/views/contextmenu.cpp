@@ -117,13 +117,11 @@ FileContextMenu::FileContextMenu(FileCard* card, QWidget* parent)
     addAction(IconLib::appIcon("cmd_openWith"), "打开方式", this, [this]() {
         openWithDialog(m_filePath);
     });
-    addAction("打开当前文件夹", this, [this]() {
+    // 用系统默认文件管理器打开所在目录(尊重 Directory Opus 等接管:
+    // ShellExecute "open" 目录会走注册的 open command,不用写死 explorer)
+    addAction("用资源管理器打开文件", this, [this]() {
         QDesktopServices::openUrl(QUrl::fromLocalFile(
             QFileInfo(m_filePath).absolutePath()));
-    });
-    addAction("用资源管理器打开文件", this, [this]() {
-        QProcess::startDetached("explorer", {"/select,",
-            QDir::toNativeSeparators(m_filePath)});
     });
     addAction("打开全部选中文件", this, [sel]() {
         for (const auto& p : sel)
