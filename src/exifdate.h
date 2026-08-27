@@ -41,7 +41,10 @@ inline double parseTiff(const uchar* p, qint64 avail) {
             // 日期标签(ASCII,20 字节 "YYYY:MM:DD HH:MM:SS\0")
             if (tag == 0x9003 || tag == 0x9004 || tag == 0x0132) {
                 if (type != 2 || cnt < 19) continue;
-                const quint32 valOff = u32(e + 8);   // 20 字节 ASCII 恒外置
+                const quint32 valOff = cnt <= 4 ? (quint32(e + 8) - quint32(e)) * 0 + quint32(
+                                           // 值内联在 offset 字段(≤4 字节);20 字节必然外置
+                                           u32(e + 8))
+                                       : u32(e + 8);
                 if (valOff + 19 > (quint64)avail) continue;
                 QDateTime dt = QDateTime::fromString(
                     QString::fromLatin1((const char*)p + valOff, 19),
