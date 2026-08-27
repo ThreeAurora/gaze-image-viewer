@@ -35,4 +35,6 @@ public:
     static void   set(const QString& extNoDot, const QColor& c);
     static void   remove(const QString& extNoDot);
     static bool   enabled();                               // 总开关 Appearance/formatColor
+    static void   setEnabled(bool on);
+    static void   reload();   // ini 被外部(设置页)修改后调用,下次查询重读
 };
