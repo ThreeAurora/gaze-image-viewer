@@ -758,13 +758,6 @@ QWidget* SettingsDialog::pageCache() {
     form->addRow(QString::fromUtf8("数据库引擎的内存占用(MB)"),
         spin("Cache/dbCacheMB", 32, 8192, 1024));
     form->addRow(chk("Cache/checkOnStartup", QString::fromUtf8("启动时检查缓存的完整性"), false));
-
-    // 维护工具直接放按钮,不再用文字指引
-    auto* maintBtn = new QPushButton(QString::fromUtf8("打开缩略图数据库维护..."));
-    connect(maintBtn, &QPushButton::clicked, this, [this]() {
-        DbMaintenanceDialog(this).exec();
-    });
-    form->addRow(QString::fromUtf8("维护工具"), maintBtn);
     return wrapTitled(QString::fromUtf8("缓存数据库"), form);
 }
 
