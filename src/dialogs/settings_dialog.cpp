@@ -386,15 +386,7 @@ QWidget* SettingsDialog::pageKeyboardMouse() {
             QString::fromUtf8("下一个文件"), QString::fromUtf8("快速幻灯片")}, 0));
     form->addRow(chk("Keyboard/escCloseBrowser", QString::fromUtf8("按 ESC 关闭:浏览器模式"), false));
     form->addRow(chk("Keyboard/escCloseViewer", QString::fromUtf8("按 ESC 关闭:查看器"), true));
-    form->addRow(new QLabel(QString::fromUtf8("──── 鼠标 ────")));
-    form->addRow(new QLabel(QString::fromUtf8(
-        "左键(无/Ctrl/Alt/Shift 修饰)= 放缩与移动:\n"
-        "  单击图片 → 缩放为原图大小并聚焦光标处,按住拖动看细节,松开还原。\n"
-        "  Ctrl+滚轮缩放过 → 左键变为纯拖动;缩放幅度 1.25 倍步进。\n"
-        "滚轮:无修饰/Alt/Shift = 上一个/下一个文件;Ctrl = 缩放。\n"
-        "右键/中键 = 什么都不做(右键保留上下文菜单)。\n"
-        "以上为强制行为,此处仅作说明。")));
-    return wrapTitled(QString::fromUtf8("键盘和鼠标"), form);
+    return wrapTitled(QString::fromUtf8("键盘"), form);
 }
 
 QWidget* SettingsDialog::pageShortcuts() {
