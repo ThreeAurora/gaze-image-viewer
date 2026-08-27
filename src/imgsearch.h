@@ -53,7 +53,7 @@ inline QByteArray httpGet(const QUrl& url, int timeoutMs, int* status = nullptr)
     QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
     loop.exec();
     if (status) *status = reply->attribute(
-        QNetworkRequest::HttpStatusCodeAttribute).toInt(-1);
+        QNetworkRequest::HttpStatusCodeAttribute).toInt();
     QByteArray data = reply->readAll();
     reply->deleteLater();
     return data;
