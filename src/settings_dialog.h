@@ -22,7 +22,8 @@ private:
     QWidget* pageGeneral();        // 常规
     QWidget* pageStartup();        // 常规 → 启动
     QWidget* pageFileOps();        // 常规 → 文件操作
-    QWidget* pageInterface();      // 常规 → 界面(标题栏模板/最近文件)
+    QWidget* pageInterface();      // 常规 → 界面(标签卡/最近文件)
+    QWidget* pageTitlebar();       // 常规 → 标题栏(模板+变量插入菜单)
     QWidget* pageKeyboardMouse();  // 交互 → 键盘和鼠标
     QWidget* pageShortcuts();      // 交互 → 快捷键配置
     QWidget* pageSwitchMode();     // 常规 → 切换模式
