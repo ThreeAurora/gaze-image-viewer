@@ -39,6 +39,7 @@ signals:
     void clicked(FileCard* card);
     void doubleClicked(FileCard* card);
     void middleClicked(FileCard* card);
+    void middleClicked(FileCard* card);
 
 protected:
     void paintEvent(QPaintEvent* event) override;
