@@ -272,6 +272,12 @@ QWidget* SettingsDialog::pageInterface() {
         "勾选:启动时强制显示文件夹树与预览面板。\n"
         "不勾选:沿用上次退出时的面板开关(需保存布局或启用\"应用关闭时的布局\")。"));
     form->addRow(panesOnStart);
+    auto* panesOnStart = chk("Interface/showPanesOnStart",
+        QString::fromUtf8("启动时打开文件列表和预览框"), true);
+    panesOnStart->setToolTip(QString::fromUtf8(
+        "勾选:启动时强制显示文件夹树与预览面板。\n"
+        "不勾选:沿用上次退出时的面板开关(需保存布局或启用\"应用关闭时的布局\")。"));
+    form->addRow(panesOnStart);
     form->addRow(QString::fromUtf8("最近的文件上限数量(0-100)"),
         spin("Interface/maxRecent", 0, 100, 20));
     form->addRow(chk("Interface/clearRecentOnExit", QString::fromUtf8("退出时清理\"最近的文件\"记录"), false));
