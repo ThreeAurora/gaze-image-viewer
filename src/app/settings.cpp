@@ -98,11 +98,6 @@ QVariant AppSettings::get(const QString& key, const QVariant& def) const {
     return m_settings.value(key, def);
 }
 
-void AppSettings::set(const QString& key, const QVariant& v) {
-    m_settings.setValue(key, v);
-    emit changed();
-}
-
 QString AppSettings::iniPath() const {
     return m_settings.fileName();
 }
