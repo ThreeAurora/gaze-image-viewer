@@ -10,6 +10,7 @@
 #include <QKeyEvent>
 #include <QTimer>
 #include <QPointer>
+#include <QPointer>
 #include "mainwindow.h"
 #include "constants.h"
 #include "settings.h"
