@@ -20,17 +20,23 @@ public:
     using QObject::QObject;
 protected:
     bool eventFilter(QObject* obj, QEvent* ev) override {
+        // 必须先筛事件类型再碰 button():QMessageBox 构造期间 Qt 就会向这个
+        // 半成品对象派发事件(子控件 setParent→sendEvent),此时内部
+        // QDialogButtonBox 还没建,box->button() 直接空指针。
+        const QEvent::Type type = ev->type();
+        if (type != QEvent::Show && type != QEvent::KeyPress) return false;
+
         auto* box = qobject_cast<QMessageBox*>(obj);
         if (!box) return false;
         QAbstractButton* yes = box->button(QMessageBox::Yes);
         QAbstractButton* no  = box->button(QMessageBox::No);
         if (!yes || !no) return false;
-        if (ev->type() == QEvent::Show) {
+        if (type == QEvent::Show) {
             box->setDefaultButton(QMessageBox::Yes);
             box->setEscapeButton(QMessageBox::No);
             return false;
         }
-        if (ev->type() == QEvent::KeyPress) {
+        if (type == QEvent::KeyPress) {
             auto* ke = static_cast<QKeyEvent*>(ev);
             if (ke->key() == Qt::Key_Space) {
                 QWidget* focused = box->focusWidget();
@@ -38,7 +44,8 @@ protected:
                 if (!focused
                     || qobject_cast<QAbstractButton*>(focused)
                     || focused == box) {
-                    yes->click();
+                    // 排队执行:click() 会关闭对话框,同步调用等于在事件派发中销毁接收者
+                    QTimer::singleShot(0, yes, [yes]() { yes->click(); });
                     return true;
                 }
             }
