@@ -31,6 +31,7 @@
 #include <QSplitter>
 #include <QUrl>
 #include <QTimer>
+#include <QElapsedTimer>
 #include <QDesktopServices>
 #include <QMimeData>
 #include <QMediaDevices>
