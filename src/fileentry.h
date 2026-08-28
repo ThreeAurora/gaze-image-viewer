@@ -230,6 +230,9 @@ inline QSize imageSize(const QString& filePath) {
     if (it != cache.end()) return it->second;
     QImageReader reader(filePath);
     QSize sz = reader.size();
+    // 封顶:进程内跨目录累积不清理会一路涨。上限远大于任一正常单目录,
+    // 单次 sort 不中途清空(避免比较器反复读盘),仅长期逛很多目录后回收
+    if (cache.size() > 50000) cache.clear();
     cache[filePath] = sz;
     return sz;
 }
