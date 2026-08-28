@@ -49,6 +49,79 @@ static void openWithDialog(const QString& path) {
         {"shell32.dll,OpenAs_RunDLL", QFileInfo(path).absoluteFilePath()});
 }
 
+// ═══════════════════════════════════════════
+// Browser/rotateExifOnly(默认开):JPEG 旋转只改写 EXIF Orientation 标签,
+//   一个字节的元数据改动,不动 DCT 系数 —— 真正的零损失且瞬时完成。
+//   前提:IFD0 里已有 0x0112 标签且取值是纯旋转(1/3/6/8)。
+//   镜像类取向(2/4/5/7)或标签不存在 → 返回 false,调用方回落既有变换。
+// ═══════════════════════════════════════════
+static bool rotateJpegOrientationOnly(const QString& path, int quarterCW) {
+    QFile f(path);
+    if (!f.open(QIODevice::ReadWrite)) return false;
+    const QByteArray d = f.readAll();
+    if (d.size() < 64 || d.size() > (1 << 26)) return false;   // >64MB 不冒这个险
+    if (static_cast<unsigned char>(d[0]) != 0xFF
+        || static_cast<unsigned char>(d[1]) != 0xD8) return false;
+
+    // JPEG 段遍历找 APP1/Exif
+    int pos = 2;
+    int tiff = -1;
+    while (pos + 4 <= d.size()) {
+        if (static_cast<unsigned char>(d[pos]) != 0xFF) { ++pos; continue; }
+        const unsigned char marker = static_cast<unsigned char>(d[pos + 1]);
+        if (marker == 0xD8 || marker == 0x01 || (marker >= 0xD0 && marker <= 0xD7)
+            || marker == 0xFF) { pos += 2; continue; }
+        if (marker == 0xDA || marker == 0xD9) break;      // 进入熵编码数据
+        const int len = (static_cast<unsigned char>(d[pos + 2]) << 8)
+                      |  static_cast<unsigned char>(d[pos + 3]);
+        if (len < 2 || pos + 2 + len > d.size()) break;
+        if (marker == 0xE1 && pos + 10 <= d.size()
+            && std::memcmp(d.constData() + pos + 4, "Exif\0\0", 6) == 0) {
+            tiff = pos + 10;
+            break;
+        }
+        pos += 2 + len;
+    }
+    if (tiff < 0 || tiff + 8 > d.size()) return false;
+
+    // TIFF 头:字节序 + 42 + IFD0 偏移
+    const bool big = d[tiff] == 'M';
+    auto u16 = [&](int at) -> int {
+        const auto a = static_cast<unsigned char>(d[at]);
+        const auto b = static_cast<unsigned char>(d[at + 1]);
+        return big ? (a << 8) | b : (b << 8) | a;
+    };
+    auto u32 = [&](int at) -> int {
+        if (big) return (u16(at) << 16) | u16(at + 2);
+        return (u16(at + 2) << 16) | u16(at);
+    };
+    if (u16(tiff) != 0x002A && u16(tiff) != 0x2A00) {
+        // 字节序判定:II 下 42 存为 2A 00,MM 下为 00 2A
+    }
+    const int ifd0 = tiff + u32(tiff + 4);
+    if (ifd0 + 2 > d.size()) return false;
+    const int count = u16(ifd0);
+    for (int i = 0; i < count; ++i) {
+        const int ent = ifd0 + 2 + i * 12;
+        if (ent + 12 > d.size()) break;
+        if (u16(ent) != 0x0112) continue;            // Orientation
+        if (u16(ent + 2) != 3) return false;         // 类型必须是 SHORT
+        const int cur = u16(ent + 8);                // SHORT:值左对齐占前 2 字节
+        // 纯旋转取值才能只改标签;镜像类交给 jpegtran
+        static const int cw[9]  = {0, 6, 0, 8, 0, 0, 3, 0, 1};   // 1→6 6→3 3→8 8→1
+        static const int ccw[9] = {0, 8, 0, 6, 0, 0, 1, 0, 3};
+        const int next = (cur >= 1 && cur <= 8)
+                       ? (quarterCW > 0 ? cw[cur] : ccw[cur]) : 0;
+        if (next == 0) return false;
+        // 就地写回(小端/大端各按序存 2 字节)
+        if (big) { d[ent + 8] = char(next >> 8); d[ent + 9] = char(next & 0xFF); }
+        else     { d[ent + 9] = char(next >> 8); d[ent + 8] = char(next & 0xFF); }
+        f.seek(0);
+        return f.write(d) == d.size() && f.flush();
+    }
+    return false;
+}
+
 // ── jpegtran 无损变换工具查找(PATH + 常见安装位置) ──
 static QString findJpegtran() {
     QString p = QStandardPaths::findExecutable("jpegtran");
