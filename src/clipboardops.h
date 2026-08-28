@@ -4,7 +4,6 @@
 #include <QApplication>
 #include <QClipboard>
 #include <QDir>
-#include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
 #include <QList>
@@ -12,7 +11,6 @@
 #include <QUrl>
 #include <QString>
 #include <QStringList>
-#include "shelldelete.h"
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
