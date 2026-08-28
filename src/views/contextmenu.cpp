@@ -228,7 +228,7 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
             QMessageBox::warning(grid, "部分项目未能移动", errs.join(QLatin1Char('\n')));
         if (grid) grid->refreshCurrentDir();
     });
-    addAction(IconLib::appIcon("cmd_delete"), "删除", this, [sel, grid, this]() {
+    addAction(IconLib::appIcon("cmd_delete"), "删除", [sel, grid]() {
         if (!deleteWithSettings(sel, grid)) return;
         if (grid) grid->reloadAfterDelete(sel);
     });
