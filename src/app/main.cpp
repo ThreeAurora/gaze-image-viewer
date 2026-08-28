@@ -179,8 +179,12 @@ int main(int argc, char *argv[]) {
                 QWidget* fw = box->focusWidget();
                 QWidget* target = toBox ? static_cast<QWidget*>(box)
                                         : (fw ? fw : static_cast<QWidget*>(box));
-                qWarning("[selftest] confirm box shown, focus=%s -> post Space to %s",
+                qWarning("[selftest] confirm box shown, focus=%s isYes=%d isNo=%d "
+                         "default=%d -> post Space to %s",
                          fw ? fw->metaObject()->className() : "null(box)",
+                         fw == box->button(QMessageBox::Yes),
+                         fw == box->button(QMessageBox::No),
+                         box->defaultButton() == box->button(QMessageBox::Yes),
                          target->metaObject()->className());
                 QCoreApplication::postEvent(target,
                     new QKeyEvent(QEvent::KeyPress, Qt::Key_Space, Qt::NoModifier));
