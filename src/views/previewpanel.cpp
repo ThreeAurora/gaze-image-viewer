@@ -2,6 +2,7 @@
 #include "livephoto.h"
 #include "thumbnailer.h"
 #include "logger.h"
+#include "logger.h"
 #include "wicdecode.h"
 #include "settings.h"
 #include "labelstore.h"
