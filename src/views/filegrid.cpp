@@ -52,12 +52,15 @@ FileGrid::FileGrid(QWidget* parent) : QScrollArea(parent) {
     setWidget(m_canvas);
 
     connect(verticalScrollBar(), &QScrollBar::valueChanged,
-            this, [this]() {
+            this, [this](int val) {
         // 自绘模式下滚动不产生任何控件级工作:画布移动 + Qt 自动曝光重绘。
-        // 这里只做一件事——把缩略图解码推迟到滚动停下后批量提交,
-        // 避免快速拖动时按帧发起上千个解码任务把线程池打满。
-        m_scrollSettled = false;
-        m_scrollTimer.start();
+        // 缩略图请求必须"跟着视口走"——推迟到停止后才补,视觉上就是拖尾。
+        // 这里合并为每轮事件循环一次;跨屏跳转则丢掉离屏的排队任务,立刻服务新位置。
+        if (m_lastScrollVal >= 0
+            && qAbs(val - m_lastScrollVal) > viewport()->height())
+            Thumbnailer::instance().clearQueue();
+        m_lastScrollVal = val;
+        m_scrollCoalesce.start();
     });
 
     connect(&Thumbnailer::instance(), &Thumbnailer::thumbnailReady,
