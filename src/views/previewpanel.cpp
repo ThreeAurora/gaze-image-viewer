@@ -35,6 +35,8 @@
 #include <QThreadPool>
 #include <QTextEdit>
 #include <QFile>
+#include <QTextEdit>
+#include <QFile>
 #include <QMetaObject>
 #include <QToolTip>
 
