@@ -106,25 +106,47 @@ inline std::vector<FileEntry> fastScanDir(const QString& dirPath) {
         // directory_iterator 语义:跳过 "." 与 ".."
         if (fname[0] == L'.' && (fname[1] == 0 || (fname[1] == L'.' && fname[2] == 0)))
             continue;
-
-        FileEntry fe;
-        fe.name = QString::fromWCharArray(fname);
-        fe.path = dirPath + QLatin1Char('/') + fe.name;
-        const int dot = fe.name.lastIndexOf(QLatin1Char('.'));
-        fe.ext = (dot > 0) ? fe.name.mid(dot).toLower() : QString();
-        // Windows 隐藏属性 / 点开头文件/夹都算隐藏,显示时用淡灰色
-        fe.hidden = (data.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN)
-                    || fe.name.startsWith(QLatin1Char('.'));
-        fe.isDir = (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
-        fe.ctime = fileTimeToEpoch(data.ftCreationTime);
-        fe.mtime = fileTimeToEpoch(data.ftLastWriteTime);
-        if (!fe.isDir) {
-            fe.size = (int64_t(data.nFileSizeHigh) << 32) | data.nFileSizeLow;
-        }
-        entries.push_back(std::move(fe));
+        entries.push_back(entryFromFindData(data, dirPath));
     } while (FindNextFileW(h, &data));
     FindClose(h);
     return entries;
+}
+
+// ═══════════════════════════════════════════
+// 递归收集"子文件夹里的文件"(文件夹树右键:显示子文件夹中的文件)
+//   目录行仍按单层给出,只有文件向下递归展开 —— 与 XnView 同形。
+//   代价上限:深度 64 层 / 累计 20 万条,超出即止(宁可少显示,不可卡死界面)。
+//   重解析点(junction、符号链接目录)一律不进:跟着走会成环,是这类递归的经典事故。
+// ═══════════════════════════════════════════
+inline void fastScanSubFiles(const QString& dirPath, std::vector<FileEntry>& out,
+                             int depth = 0, size_t limit = 200000) {
+    if (depth > 64 || out.size() >= limit) return;
+
+    const QString pattern = dirPath + QStringLiteral("\\*");
+    WIN32_FIND_DATAW data;
+    HANDLE h = FindFirstFileExW((const wchar_t*)pattern.utf16(),
+                                FindExInfoBasic, &data,
+                                FindExSearchNameMatch, nullptr,
+                                FIND_FIRST_EX_LARGE_FETCH);
+    if (h == INVALID_HANDLE_VALUE) return;
+
+    QStringList subs;
+    do {
+        const wchar_t* fname = data.cFileName;
+        if (fname[0] == L'.' && (fname[1] == 0 || (fname[1] == L'.' && fname[2] == 0)))
+            continue;
+        const bool isDir = (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+        if (!isDir) {
+            out.push_back(entryFromFindData(data, dirPath));
+            if (out.size() >= limit) break;
+        } else if (!(data.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)) {
+            subs << dirPath + QLatin1Char('/') + QString::fromWCharArray(fname);
+        }
+    } while (FindNextFileW(h, &data));
+    FindClose(h);
+
+    for (const QString& d : subs)
+        fastScanSubFiles(d, out, depth + 1, limit);
 }
 
 // ═══════════════════════════════════════════
