@@ -40,6 +40,21 @@ private:
         int  blobCodec   = 4;      // Cache/compression:0/1=png 2/3=jpg 4=webp
         bool highQuality = true;   // Thumbs/highQuality:关闭=快速缩放
         int  framePct    = 0;      // Thumbs/videoFramePct:0=固定取第 1 秒
+        // ── 设置→缩略图(创建/处理) ──
+        bool useEmbedded   = true;  // Thumbs/useEmbedded:优先取现成缩略图
+        bool embedFallback = true;  // Thumbs/embedFallback:现成图偏小则从原图重做
+        bool alpha         = true;  // Thumbs/alpha:保留 alpha 通道
+        bool transGrid     = true;  // Thumbs/transparencyGrid:透明处画网格
+        bool sharpen       = true;  // Thumbs/sharpen:轻度锐化
+        bool gamma         = false; // Thumbs/gamma:线性光降采样(防明暗失真)
+        bool folder4       = true;  // Thumbs/folder4:文件夹 2x2 拼图
+        bool video4        = false; // Thumbs/video4:视频四帧拼图
+        bool wholeFolder   = false; // Thumbs/wholeFolder:整目录预生成
+        // ── 设置→缓存数据库 ──
+        bool useCatalog    = true;  // Cache/useCatalog:总开关(关=完全不落库)
+        int  thumbW        = 465;   // Cache/thumbWidth:缓存缩略图包围盒宽
+        int  thumbH        = 365;   // Cache/thumbHeight:缓存缩略图包围盒高
+        bool checkStartup  = false; // Cache/checkOnStartup:启动后校验缓存完整性
     };
     void  snapshotPrefs();
     Prefs prefs() const;
