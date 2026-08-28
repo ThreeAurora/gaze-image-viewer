@@ -26,8 +26,8 @@ protected:
         QAbstractButton* no  = box->button(QMessageBox::No);
         if (!yes || !no) return false;
         if (ev->type() == QEvent::Show) {
-            box->setDefaultButton(yes);
-            box->setEscapeButton(no);
+            box->setDefaultButton(QMessageBox::Yes);
+            box->setEscapeButton(QMessageBox::No);
             return false;
         }
         if (ev->type() == QEvent::KeyPress) {
