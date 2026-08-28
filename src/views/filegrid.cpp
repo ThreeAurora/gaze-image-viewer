@@ -184,11 +184,18 @@ void FileGrid::loadDirectory(const QString& dirPath) {
 
     emit fileCountChanged();
     if (!m_entries.empty()) {
-        // 自动选中第一个
-        m_selected.insert(0);
-        m_lastClicked = 0;
-        emit selectionChanged(m_entries[0].path);
+        // 默认选中第一个;reloadAfterDelete 可用 m_preferPath 指定落点
+        int idx = 0;
+        if (!m_preferPath.isEmpty()) {
+            for (int i = 0; i < static_cast<int>(m_entries.size()); ++i)
+                if (m_entries[i].path == m_preferPath) { idx = i; break; }
+        }
+        m_preferPath.clear();
+        m_selected.insert(idx);
+        m_lastClicked = idx;
+        emit selectionChanged(m_entries[idx].path);
     } else {
+        m_preferPath.clear();
         emit selectionChanged({});
     }
 }
