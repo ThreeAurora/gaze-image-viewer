@@ -88,6 +88,7 @@ private:
     void applyLastLayout();                  // 应用上次关闭时的状态
     QString splitterCsv() const;             // 可落盘的分栏宽度(查看器模式下取进入前的值)
     QString splitterCsv() const;             // 可落盘的分栏宽度(查看器模式下取进入前的值)
+    QString splitterCsv() const;             // 可落盘的分栏宽度(查看器模式下取进入前的值)
 
     // 批次 2:菜单/工具栏/标记/最近文件
     QMenu* createViewModeMenu(QWidget* parent);   // 查看方式 7 种
