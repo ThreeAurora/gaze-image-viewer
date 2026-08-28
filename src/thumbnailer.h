@@ -84,6 +84,16 @@ private:
     QImage videoThumbFFmpeg(const QString& filePath, int size);
     // 回退方案：QProcess fork ffmpeg
     QImage videoThumbFallback(const QString& filePath, int size);
+    // 文件夹缩略图(Thumbs/folder4):开=2x2 拼前 4 张图,关=单张封面
+    QImage folderThumb(const QString& dirPath, int size);
+    // 视频四帧拼图(Thumbs/video4):按 framePct 起均匀取 4 帧
+    QImage videoContactSheet(const QString& filePath, int size);
+
+    // 后处理(设置→缩略图→处理):alpha/透明网格/锐化/gamma 统一出口
+    QImage postProcess(QImage img, int size) const;
+
+    // 缓存完整性校验(Cache/checkOnStartup):丢掉读不出来的坏条目
+    void verifyCache();
 
     // ── 缓存 ──
     QString cacheKey(const QString& filePath, int size) const;
