@@ -298,7 +298,7 @@ QWidget* SettingsDialog::pageTitlebar() {
     auto* fBr = new QFormLayout;
     fBr->setVerticalSpacing(10);
     fBr->addRow(titleTemplateRow("Interface/titleBrowser",
-                                 QString::fromUtf8("{文件夹} - Gaze")));
+                                 QString::fromUtf8("{文件夹} - {文件名 含扩展名} - Gaze")));
     root->addWidget(group(QString::fromUtf8("浏览器模式"), fBr));
 
     auto* fVw = new QFormLayout;
