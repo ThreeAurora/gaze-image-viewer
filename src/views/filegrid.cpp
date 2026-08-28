@@ -6,6 +6,7 @@
 #include "settings.h"
 #include "constants.h"
 #include "shelldelete.h"
+#include "clipboardops.h"
 #include "exifdate.h"
 #include "perflog.h"
 #include "logger.h"
