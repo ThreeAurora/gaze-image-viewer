@@ -138,13 +138,10 @@ inline bool deleteWithSettings(const QStringList& paths, QWidget* parent) {
             return false;
     }
     if (shellDelete(paths, toRecycle, parent)) {
-        // 简短反馈:一项报文件名,多项报数量
-        const QString what = paths.size() == 1
-            ? QFileInfo(paths.first()).fileName()
-            : QString::number(paths.size()) + QStringLiteral(" 个项目");
+        // 短文案:不带文件名/数量,一个词说完落点(回收站/永久保留区分)
         showDeleteToast(parent,
-            (toRecycle ? QString::fromUtf8("已移至回收站：")
-                       : QString::fromUtf8("已永久删除：")) + what);
+            toRecycle ? QString::fromUtf8("已移至回收站")
+                      : QString::fromUtf8("已永久删除"));
         return true;
     }
     QMessageBox::warning(parent, QString::fromUtf8("删除"),
