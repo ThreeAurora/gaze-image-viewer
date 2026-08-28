@@ -138,16 +138,18 @@ void ImageSearchDialog::doSearch() {
 }
 
 void ImageSearchDialog::loadThumbFor(int row, int imageId) {
-    // 后台线程拉取,回 GUI 线程设置图标(行已不存在则丢弃)
-    QThreadPool::globalInstance()->start([this, row, imageId]() {
+    // 后台线程拉取,回 GUI 线程设置图标(对话框已关或行已不存在则丢弃)
+    QPointer<ImageSearchDialog> self(this);
+    QThreadPool::globalInstance()->start([self, row, imageId]() {
         const QByteArray data = ImgSearch::thumbBytes(imageId);
         if (data.isEmpty()) return;
         QPixmap pm;
         pm.loadFromData(data);
         if (pm.isNull()) return;
-        QMetaObject::invokeMethod(this, [this, row, pm]() {
-            if (row >= m_list->count()) return;
-            QListWidgetItem* it = m_list->item(row);
+        QMetaObject::invokeMethod(self, [self, row, pm]() {
+            if (!self || !self->m_list) return;
+            if (row >= self->m_list->count()) return;
+            QListWidgetItem* it = self->m_list->item(row);
             if (it && it->icon().isNull()) it->setIcon(QIcon(pm));
         }, Qt::QueuedConnection);
     });
