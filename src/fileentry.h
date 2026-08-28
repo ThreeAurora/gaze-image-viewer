@@ -127,6 +127,59 @@ inline std::vector<FileEntry> fastScanDir(const QString& dirPath) {
 }
 
 // ═══════════════════════════════════════════
+// 文件头嗅探(FileList/recognizeByExt = 关 时启用)
+//   只读前 64 字节比对魔数,判不出来返回空(调用方保留原扩展名)
+//   默认"只按扩展名识别"开着时这个函数一次都不会被调用
+// ═══════════════════════════════════════════
+inline QString sniffExtByHeader(const QString& path) {
+    QFile f(path);
+    if (!f.open(QIODevice::ReadOnly)) return {};
+    const QByteArray h = f.read(64);
+    f.close();
+    if (h.size() < 12) return {};
+
+    auto has = [&](int off, const char* sig, int n) {
+        return h.size() >= off + n && std::memcmp(h.constData() + off, sig, n) == 0;
+    };
+
+    if (has(0, "\xFF\xD8\xFF", 3))                       return ".jpg";
+    if (has(0, "\x89PNG\r\n\x1A\n", 8))                  return ".png";
+    if (has(0, "GIF8", 4))                               return ".gif";
+    if (has(0, "BM", 2))                                 return ".bmp";
+    if (has(0, "\x49\x49\x2A\x00", 4)
+        || has(0, "\x4D\x4D\x00\x2A", 4))                return ".tif";
+    if (has(0, "\x00\x00\x01\x00", 4))                   return ".ico";
+    if (has(0, "8BPS", 4))                               return ".psd";
+    if (has(0, "%PDF", 4))                               return ".pdf";
+    if (has(0, "Rar!", 4))                               return ".rar";
+    if (has(0, "7z\xBC\xAF\x27\x1C", 6))                 return ".7z";
+    if (has(0, "\x1F\x8B", 2))                           return ".gz";
+    if (has(0, "PK\x03\x04", 4))                         return ".zip";
+    if (has(0, "fLaC", 4))                               return ".flac";
+    if (has(0, "OggS", 4))                               return ".ogg";
+    if (has(0, "ID3", 3))                                return ".mp3";
+    if (has(0, "\xFF\xFB", 2) || has(0, "\xFF\xF3", 2)
+        || has(0, "\xFF\xF2", 2))                        return ".mp3";
+    if (has(0, "MZ", 2))                                 return ".exe";
+    // RIFF 家族:偏移 8 起的四字符决定具体类型
+    if (has(0, "RIFF", 4)) {
+        if (has(8, "WEBP", 4)) return ".webp";
+        if (has(8, "WAVE", 4)) return ".wav";
+        if (has(8, "AVI ", 4)) return ".avi";
+        return {};
+    }
+    // ISO-BMFF 家族(mp4/mov/heic):偏移 4 是 "ftyp"
+    if (has(4, "ftyp", 4)) {
+        if (has(8, "heic", 4) || has(8, "heix", 4)
+            || has(8, "mif1", 4) || has(8, "msf1", 4))   return ".heic";
+        if (has(8, "qt  ", 4))                           return ".mov";
+        if (has(8, "M4V ", 4))                           return ".m4v";
+        return ".mp4";
+    }
+    return {};
+}
+
+// ═══════════════════════════════════════════
 // 格式化工具
 // ═══════════════════════════════════════════
 inline QString formatSize(int64_t num) {
