@@ -133,7 +133,7 @@ inline bool deleteWithSettings(const QStringList& paths, QWidget* parent) {
                 QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes)
             return false;
     }
-    if (shellDelete(paths, toRecycle)) {
+    if (shellDelete(paths, toRecycle, parent)) {
         // 简短反馈:一项报文件名,多项报数量
         const QString what = paths.size() == 1
             ? QFileInfo(paths.first()).fileName()
