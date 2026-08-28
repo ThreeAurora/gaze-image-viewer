@@ -14,6 +14,7 @@
 #include <QPropertyAnimation>
 #include "settings.h"
 #include "constants.h"
+#include "constants.h"
 
 #ifndef NOMINMAX
 #define NOMINMAX
