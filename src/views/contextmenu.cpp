@@ -237,6 +237,11 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
         if (grid) grid->reloadAfterDelete(sel);
     });
     addAction(IconLib::appIcon("cmd_rename"), "重命名...", this, [this, grid]() {
+        // FileOps/renameDialog:开=弹对话框(默认,既有行为);关=在卡片上就地改
+        if (!AppSettings::instance().get("FileOps/renameDialog", true).toBool()) {
+            if (grid) QMetaObject::invokeMethod(grid, "beginInlineRename");
+            return;
+        }
         QFileInfo fi(m_filePath);
         QString name = QInputDialog::getText(nullptr, "重命名",
             "新名称:", QLineEdit::Normal, fi.fileName());
