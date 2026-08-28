@@ -7,6 +7,7 @@
 #include "clipboardops.h"
 #include "clipboardops.h"
 #include "clipboardops.h"
+#include "clipboardops.h"
 
 #include <QFileInfo>
 #include <QDir>
