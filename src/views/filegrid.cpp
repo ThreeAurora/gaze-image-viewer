@@ -121,11 +121,10 @@ FileGrid::FileGrid(QWidget* parent) : QScrollArea(parent) {
     });
 }
 
-// 设置改动后的重排:重算列宽 + 重排可见卡片
+// 设置改动后的重排:重算列宽 + 重算几何 + 重绘
 void FileGrid::relayoutNow() {
     m_cols = 0;
     updateLayout();
-    layoutCards();
 }
 
 // 标题模板 {颜色标签}:目录加载时已批量读入 m_colorLabels,这里只查内存
