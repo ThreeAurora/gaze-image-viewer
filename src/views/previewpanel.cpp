@@ -192,6 +192,10 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     m_progress->setToolTip(QString::fromUtf8(
         "\xe7\x82\xb9\xe5\x87\xbb\xe6\x97\xb6\xe9\x97\xb4\xe8\xbd\xb4\xe4\xbb\xbb\xe6\x84\x8f\xe4\xbd\x8d\xe7\xbd\xae\xe8\xb7\xb3\xe8\xbd\xac")); // 点击时间轴任意位置跳转
     m_progress->installEventFilter(this);   // 播放条点击直接跳转
+    // 同 m_btnPlay,拖动进度条的槽也移出 setupPlayer 以免重复注册。
+    connect(m_progress, &QSlider::sliderMoved, this, [this](int pos) {
+        if (m_player) m_player->setPosition(pos);
+    });
     cl->addWidget(m_progress, 1);
 
     m_timeLabel = new QLabel("0:00 / 0:00");
