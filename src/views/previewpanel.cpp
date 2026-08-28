@@ -569,8 +569,10 @@ double PreviewPanel::fitScaleFor(const QSize& viewSize) const {
     const double sh = double(viewSize.height()) / m_origPix->height();
     const double fit = std::min(sw, sh);
     switch (s_int(modeKey("autoFit"), 2)) {
-    case 0: return m_lastScale > 0 ? m_lastScale : fit;
-    case 1: return 1.0;
+    // Viewer/resetAutoOnNav:切文件时丢掉"上次使用过的"缩放,重新按自动模式算
+    case 0: return (!m_navigating && m_lastScale > 0) ? m_lastScale : fit;
+    // Viewer/hidpiPixel:开=1 图像像素映射到 1 物理像素(HiDPI 下画面变小但最锐利)
+    case 1: return oneToOneScale();
     case 3: return std::max(1.0, fit);   // 小图放大到适应,大图保持 1:1
     case 4: return std::min(1.0, fit);   // 大图缩小到适应,小图保持 1:1
     case 5: return sw;
