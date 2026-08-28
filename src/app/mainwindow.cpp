@@ -417,6 +417,7 @@ void MainWindow::selftestFastScroll() {
     applyPaneVisibility();
     applyPaneVisibility();
     applyPaneVisibility();
+    applyPaneVisibility();
 
     // 最近文件合批写盘:连续切换只刷内存,静默 500ms 后一次落盘
     m_recentFlushTimer.setSingleShot(true);
