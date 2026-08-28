@@ -1,5 +1,6 @@
 #include "dbmaintenance.h"
 #include "constants.h"
+#include "settings.h"
 #include "constants.h"
 #include "constants.h"
 #include "constants.h"
