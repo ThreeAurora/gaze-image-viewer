@@ -9,6 +9,7 @@
 #include <QStringList>
 
 class QVBoxLayout;
+class QComboBox;
 class FolderTree;
 class FileGrid;
 class PreviewPanel;
