@@ -357,6 +357,16 @@ void MainWindow::selftestFastScroll() {
         m_formatFilterCombo->setCurrentIndex(idx);
         m_formatFilterCombo->blockSignals(false);
     });
+    // 反向同步:任何入口(筛选菜单/红标循环/下拉框/键盘)改了 filterMode,下拉框跟着走
+    connect(m_fileGrid, &FileGrid::filterModeChanged, this, [this](int mode) {
+        if (!m_formatFilterCombo) return;
+        m_formatFilterCombo->blockSignals(true);
+        int idx = 0;
+        for (int i = 0; i < m_formatFilterCombo->count(); ++i)
+            if (m_formatFilterCombo->itemData(i).toInt() == mode) { idx = i; break; }
+        m_formatFilterCombo->setCurrentIndex(idx);
+        m_formatFilterCombo->blockSignals(false);
+    });
     // 反向同步:任何入口(筛选菜单/红标循环/键盘)改了 filterMode,下拉框跟着走
     connect(m_fileGrid, &FileGrid::filterModeChanged, this, [this](int mode) {
         if (!m_formatFilterCombo) return;
