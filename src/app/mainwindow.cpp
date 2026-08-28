@@ -211,6 +211,8 @@ void MainWindow::selftestPressKey(int qtKey) {
 
 void MainWindow::selftestFastScroll() {
     if (!m_fileGrid) { qWarning("[selftest] no grid"); return; }
+    // 恢复出来的分隔条尺寸只留给网格 185px,一两列根本测不出东西
+    if (m_splitter) m_splitter->setSizes({220, 1300, 300});
     m_fileGrid->selftestFastScroll();
 }
 
