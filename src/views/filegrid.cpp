@@ -279,6 +279,24 @@ void FileGrid::loadDirectory(const QString& dirPath) {
 
     sort(m_sortCol, m_sortAsc);
 
+    // ── FileList/newAtEnd / autoSelectNew(仅同一目录重载时生效)──
+    // newAtEnd:新出现的条目不参与排序,整块挂到列表末尾(内部仍按当前排序规则)
+    // autoSelectNew:重载后直接选中第一个新文件(监控下载/导出目录时常用)
+    QStringList freshPaths;
+    if (sameDir && !prevPaths.isEmpty()) {
+        std::vector<FileEntry> rest, fresh;
+        rest.reserve(m_entries.size());
+        for (const auto& e : m_entries) {
+            if (prevPaths.contains(e.path)) rest.push_back(e);
+            else { fresh.push_back(e); freshPaths << e.path; }
+        }
+        if (!fresh.empty()
+            && AppSettings::instance().get("FileList/newAtEnd", false).toBool()) {
+            rest.insert(rest.end(), fresh.begin(), fresh.end());
+            m_entries = std::move(rest);
+        }
+    }
+
     // 清除缩略图缓存
     m_thumbCache.clear();
     m_thumbOrder.clear();
