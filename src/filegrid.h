@@ -129,6 +129,9 @@ public:
     int  colorLabelOf(const QString& path) const;   // 标题模板 {颜色标签}
     // 一次性落点:下次 loadDirectory 完成后选中该路径(创建副本后选中新文件用)
     void setPreferPath(const QString& p) { m_preferPath = p; }
+    // FileOps/renameDialog=关:在卡片上就地改名(F2 / 右键"重命名"入口)
+    void beginInlineRename();
+    void endInlineRename(bool commit);
     int  colorLabelOf(const QString& path) const;   // 标题模板 {颜色标签}
 
 signals:
