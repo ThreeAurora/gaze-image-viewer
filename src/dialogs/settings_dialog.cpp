@@ -205,8 +205,9 @@ QWidget* SettingsDialog::pageGeneral() {
     form->addRow(chk("General/exifRotate", QString::fromUtf8("根据 EXIF 方向标签旋转图像"), true));
     form->addRow(chk("General/exifDpi", QString::fromUtf8("使用 EXIF DPI(如果存在)"), true));
     form->addRow(chk("General/dpiAdjust", QString::fromUtf8("若 X/Y DPI 不相等,调整缩放"), true));
+    // 默认"始终":与接线前的既有行为一致(退出即记住目录与选中文件)
     form->addRow(QString::fromUtf8("退出程序时保存会话"),
-        combo("General/saveSession", {QString::fromUtf8("从不"), QString::fromUtf8("询问"), QString::fromUtf8("始终")}, 0));
+        combo("General/saveSession", {QString::fromUtf8("从不"), QString::fromUtf8("询问"), QString::fromUtf8("始终")}, 2));
     return wrapPage(form);
 }
 
