@@ -333,6 +333,20 @@ void FileCard::paintEvent(QPaintEvent* event) {
     QPainter p(this);
     p.setRenderHint(QPainter::Antialiasing);
 
+    // Appearance/shadow:缩略图下方一圈柔和投影(默认关,保持既有观感)。
+    // 用四边渐变边模拟,不用 QGraphicsDropShadowEffect —— 后者给每个卡片挂
+    // 一个 effect 会在滚动时重绘放大数倍
+    if (s_shadow && !m_thumbRect.isEmpty()) {
+        const int d = 4;
+        QRect r = m_thumbRect.adjusted(-1, -1, 1, 1);
+        for (int i = d; i >= 1; --i) {
+            const int a = 90 * (d - i + 1) / d / d;
+            p.setPen(QPen(QColor(0, 0, 0, a), 1));
+            p.setBrush(Qt::NoBrush);
+            p.drawRect(r.adjusted(-i, -i, i, i));
+        }
+    }
+
     // 选中:直角蓝框紧贴缩略图本身(随图片宽高变化)
     if (m_selected) {
         QRect r = m_thumbRect.adjusted(-2, -2, 2, 2);
