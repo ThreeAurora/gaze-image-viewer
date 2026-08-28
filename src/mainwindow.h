@@ -11,6 +11,7 @@
 #include <QFileInfo>
 
 class QVBoxLayout;
+class QComboBox;
 class FolderTree;
 class FileGrid;
 class PreviewPanel;
