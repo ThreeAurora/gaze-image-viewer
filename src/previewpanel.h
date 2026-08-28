@@ -164,6 +164,7 @@ private:
     QMovie *m_movie = nullptr;         // GIF 动画(切换时 stop+deleteLater,防泄漏)
     QWidget *m_videoWidget;
     QVideoWidget *m_vw = nullptr;   // 复用的视频控件(切视频不重建,杜绝叠加透出窗口期)
+    QWidget *m_videoCover = nullptr;   // 纯黑遮罩:attach→新视频首帧之间盖住控件里的残帧
     QMediaPlayer *m_player = nullptr;
     QAudioOutput *m_audioOutput = nullptr;
     // 延迟 attach:setSource 后不立刻接输出/播,等 mediaStatus 就绪再接
