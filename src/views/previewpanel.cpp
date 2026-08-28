@@ -293,7 +293,7 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
         add(QStyle::SP_DialogResetButton, QString::fromUtf8("适应窗口"),
             [this]() { fitAuto(); });
         add(QStyle::SP_FileDialogDetailedView, QString::fromUtf8("1:1"),
-            [this]() { if (m_origPix) { m_scale = 1.0; m_ctrlZoomed = true; render(); } });
+            [this]() { if (m_origPix) { m_scale = oneToOneScale(); m_ctrlZoomed = true; render(); } });
         add(QStyle::SP_DialogCloseButton, QString::fromUtf8("退出全屏"),
             [this]() { if (inFullscreen()) window()->showNormal(); });
     }
