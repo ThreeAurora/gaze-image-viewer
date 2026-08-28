@@ -40,17 +40,6 @@ static T* findAncestor(QObject* o) {
     return nullptr;
 }
 
-// ── 系统属性对话框 ──
-static void showShellProperties(const QString& path) {
-    SHELLEXECUTEINFOW sei = {};
-    sei.cbSize = sizeof(sei);
-    sei.fMask = SEE_MASK_INVOKEIDLIST;
-    sei.lpVerb = L"properties";
-    sei.lpFile = (const wchar_t*)path.utf16();
-    sei.nShow = SW_SHOWNORMAL;
-    ShellExecuteExW(&sei);
-}
-
 // ── "打开方式"系统对话框 ──
 static void openWithDialog(const QString& path) {
     QProcess::startDetached("rundll32",
