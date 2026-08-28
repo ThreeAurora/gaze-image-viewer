@@ -179,6 +179,9 @@ private:
     std::vector<FileEntry> m_entries;    // 筛选/排序后的显示列表
     QString m_currentDir;                // 当前加载的目录
     int    m_thumbH       = 0;     // Appearance/customThumbH:0=与宽同高(旧行为)
+    bool   m_scrollPreview = true; // Browser/thumbScrollPreview:滚动中就出缩略图
+    bool   m_lastByExt    = true;  // FileList/recognizeByExt 上次已应用值
+    int    m_lastScanHeader = 0;   // FileList/scanHeader 上次已应用值
     int    m_cardSize     = 160;
     int    m_cardSizeAuto = 160;   // 自动模式的卡片尺寸(slider 值;固定列数时按宽度重算)
     int    m_lastCustomW  = 96;    // 上次看到的 Appearance/customThumbW(仅值变化才改尺寸)
