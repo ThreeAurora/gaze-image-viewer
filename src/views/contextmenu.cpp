@@ -4,6 +4,7 @@
 #include "labelstore.h"
 #include "iconlib.h"
 #include "shelldelete.h"
+#include "clipboardops.h"
 
 #include <QFileInfo>
 #include <QDir>
