@@ -300,7 +300,7 @@ QImage Thumbnailer::videoContactSheet(const QString& filePath, int size) {
     int drawn = 0;
     for (int i = 0; i < 4; ++i) {
         const int pct = start + (100 - start) * i / 4;
-        QImage f = videoThumbFFmpegAt(filePath, cell, pct);
+        QImage f = videoThumbFFmpeg(filePath, cell, pct);
         if (f.isNull()) continue;
         f = f.scaled(cell, cell, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
         const int ox = (i % 2) * (cell + gap);
