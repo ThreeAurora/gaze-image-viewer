@@ -181,6 +181,9 @@ private:
     QString m_currentDir;                // 当前加载的目录
     int    m_thumbH       = 0;     // Appearance/customThumbH:0=与宽同高(旧行为)
     bool   m_scrollPreview = true; // Browser/thumbScrollPreview:滚动中就出缩略图
+    QLineEdit* m_renameEdit = nullptr; // 就地改名编辑器(存在时表示正在改名)
+    int        m_renameIdx  = -1;
+    QString    m_renamePath;
     bool   m_lastByExt    = true;  // FileList/recognizeByExt 上次已应用值
     int    m_lastScanHeader = 0;   // FileList/scanHeader 上次已应用值
     int    m_cardSize     = 160;
