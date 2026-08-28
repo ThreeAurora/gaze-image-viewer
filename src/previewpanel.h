@@ -113,6 +113,7 @@ private:
     void updateFloatBar(const QPoint* cursor = nullptr); // Fullscreen/showToolbar + floatView
     void updatePanTool();                  // Viewer/panTool 平移导航小窗
     void updateSelectionHighlight();       // Viewer/highlightSelection
+    double oneToOneScale() const;          // Viewer/hidpiPixel:1:1 的实际缩放
     double pixelAspect() const;            // Viewer/pixelRatio 像素比
     void playAudioCompanion(const QString& imagePath);  // Viewer/autoPlayAudioCompanion
     // Viewer/gamma + Viewer/sharpen 的显示后处理(结果按目标尺寸缓存)
