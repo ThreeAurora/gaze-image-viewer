@@ -140,6 +140,9 @@ private:
     std::optional<LivePhoto::Info> m_liveInfo;  // 当前文件若为动态照片,单击=重播
     bool m_extractBusy = false; // 内嵌视频提取中(同一时刻最多一次,连点不叠任务)
     bool m_navDragging = false; // 导航小窗蓝框拖动中
+    std::optional<LivePhoto::Info> m_liveInfo;  // 当前文件若为动态照片,单击=重播
+    bool m_extractBusy = false; // 内嵌视频提取中(同一时刻最多一次,连点不叠任务)
+    bool m_navDragging = false; // 导航小窗蓝框拖动中
     QPixmap *m_origPix = nullptr;
     double m_scale = 1.0;
     double m_lastScale = 0.0;   // 上次实际应用的缩放(Viewer/autoFit=0"上次使用过的"用)
