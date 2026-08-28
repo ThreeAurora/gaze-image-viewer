@@ -1036,8 +1036,10 @@ void PreviewPanel::setupPlayer() {
     // 注:视频控件(QVideoWidget)统一由 showVideo → ensureVideoWidget() 创建/复用,
     // 绝不在每次切换视频时重建 —— 新建控件存在"无帧透明窗口期",
     // 会透出下层残留画面(表现为切换视频瞬间闪回先前画面)
-    if (m_mode == "video" && m_vw)
+    if (m_mode == "video" && m_vw) {
         m_player->setVideoOutput(m_vw);
+        m_videoOutAttached = true;
+    }
 
     // 播放状态（视频/音频通用）
     connect(m_player, &QMediaPlayer::playbackStateChanged,
