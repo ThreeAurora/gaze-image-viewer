@@ -17,6 +17,8 @@
 #include <QToolBar>
 #include <QComboBox>
 #include <QMessageBox>
+#include <QDialog>
+#include <QAbstractButton>
 #include <QFileInfo>
 #include <QDir>
 #include <QStandardPaths>
