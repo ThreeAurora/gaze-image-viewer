@@ -33,6 +33,8 @@
 #include <QMediaDevices>
 #include <QWidgetAction>
 #include <QThreadPool>
+#include <QTextEdit>
+#include <QFile>
 #include <QMetaObject>
 #include <QToolTip>
 
