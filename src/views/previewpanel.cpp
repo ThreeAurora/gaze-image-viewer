@@ -406,6 +406,29 @@ void PreviewPanel::paintEvent(QPaintEvent* event) {
         tile.setStyle(Qt::TexturePattern);
         p.fillRect(rect(), tile);
     }
+
+    // Viewer/selectedOverlay:画面构图辅助线(0 正常=不画 1 三分法 2 黄金分割)
+    // 画在图片标签的几何范围内 —— 图片是自由定位的,坐标取它的当前位置
+    const int guide = s_int("Viewer/selectedOverlay", 0);
+    if (guide > 0 && m_mode == "image" && m_imgLabel->isVisible()) {
+        const QRect r = m_imgLabel->geometry();
+        if (r.width() > 40 && r.height() > 40) {
+            p.setPen(QPen(QColor(255, 255, 255, 110), 1, Qt::DotLine));
+            const double f1 = (guide == 1) ? 1.0 / 3.0 : 1.0 - 0.618;
+            const double f2 = 1.0 - f1;
+            for (double f : {f1, f2}) {
+                const int x = r.x() + int(r.width()  * f);
+                const int y = r.y() + int(r.height() * f);
+                p.drawLine(x, r.y(), x, r.bottom());
+                p.drawLine(r.x(), y, r.right(), y);
+            }
+            if (guide == 2) {   // 黄金分割再补两条对角线方向的螺旋基准线
+                p.setPen(QPen(QColor(255, 255, 255, 70), 1, Qt::DotLine));
+                p.drawLine(r.topLeft(), r.bottomRight());
+                p.drawLine(r.topRight(), r.bottomLeft());
+            }
+        }
+    }
 }
 
 // 背景色/挡板/图片边框变更时调用(构造 + AppSettings::changed)
