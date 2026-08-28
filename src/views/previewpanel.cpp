@@ -559,6 +559,13 @@ void PreviewPanel::playAudioCompanion(const QString& imagePath) {
     }
 }
 
+// Viewer/hidpiPixel:1:1 语义(默认关 = 1 图像像素 : 1 逻辑像素,与改造前一致)
+double PreviewPanel::oneToOneScale() const {
+    if (!s_bool("Viewer/hidpiPixel", false)) return 1.0;
+    const double dpr = devicePixelRatioF();
+    return dpr > 0.01 ? 1.0 / dpr : 1.0;
+}
+
 // Viewer/autoFit 取值语义:
 //   0 上次使用过的   1 不缩放(1:1)      2 适应窗口(默认)
 //   3 仅放大小图     4 仅缩小大图        5 适应宽度
