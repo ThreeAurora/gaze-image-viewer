@@ -36,6 +36,7 @@ void FileCard::applyAppearance() {
     s_labelGap   = st.get("Appearance/labelSpacing", true).toBool() ? 6 : 0;
     s_showRating = st.get("Browser/showRating", true).toBool();
     s_sizeBytes  = st.get("FileList/sizeInBytes", false).toBool();
+    s_shadow     = st.get("Appearance/shadow", false).toBool();
 }
 
 static Qt::AlignmentFlag alignFlag(int v) {
