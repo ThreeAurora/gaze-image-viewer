@@ -113,7 +113,6 @@ private:
     FolderTree *m_folderTree = nullptr;
     SortHeader *m_sortHeader = nullptr;
     FileGrid *m_fileGrid = nullptr;
-    QComboBox *m_formatFilterCombo = nullptr;
     PreviewPanel *m_preview = nullptr;
     QLineEdit *m_addrBar = nullptr;
     QLabel *m_statusLabel = nullptr;
