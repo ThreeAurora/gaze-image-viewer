@@ -83,6 +83,7 @@ public:
     void navigateSelection(int delta);
     void selectIndex(int idx, bool scrollToVisible = true);  // 滚动联动时传 false 防反馈回路
     void selftestFastScroll();   // 临时诊断:进程内模拟快速拖动,查完删
+    void selftestFastScroll();   // 临时诊断:进程内模拟快速拖动,查完删
     void scrollToRow(int idx);  // 首排贴顶/末排贴底/其余可见不动的定位规则
     bool selectByPath(const QString& path);  // 按路径选中(最近文件定位用)
     QString neighborOf(const QString& path, int delta) const;  // 相邻文件路径(预读用)
