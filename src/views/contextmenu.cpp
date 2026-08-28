@@ -95,14 +95,22 @@ static bool rotateJpegOrientationOnly(const QString& path, int quarterCW) {
         const auto b = static_cast<unsigned char>(d[at + 1]);
         return big ? (a << 8) | b : (b << 8) | a;
     };
-    auto u32 = [&](int at) -> int {
-        if (big) return (u16(at) << 16) | u16(at + 2);
-        return (u16(at + 2) << 16) | u16(at);
+    auto u32 = [&](int at) -> quint32 {
+        // 必须用 quint32 组装:u16<<16 最高到 0xFFFF0000,塞进 int 会翻成负数,
+        // 而负偏移能通过"只查上界"的校验 → 后面 d[ent+8] 是负下标堆越界写
+        const quint32 a = static_cast<quint32>(u16(at));
+        const quint32 b = static_cast<quint32>(u16(at + 2));
+        return big ? ((a << 16) | b) : ((b << 16) | a);
     };
     if (u16(tiff) != 42) return false;   // TIFF 魔数(两种字节序下都读成 42)
-    const int ifd0 = tiff + u32(tiff + 4);
-    if (ifd0 + 2 > d.size()) return false;
+    const quint32 ifdOff = u32(tiff + 4);
+    if (ifdOff > static_cast<quint32>(d.size())) return false;
+    const int ifd0 = tiff + static_cast<int>(ifdOff);
+    // 下界同样要查:IFD0 必落在 8 字节 TIFF 头之后,且计数字段本身要在文件内
+    if (ifd0 < tiff + 8 || ifd0 + 2 > d.size()) return false;
     const int count = u16(ifd0);
+    // 每个目录项 12 字节:总数不得超出文件剩余长度(挡住伪造的巨大 count)
+    if (count > (d.size() - ifd0 - 2) / 12) return false;
     for (int i = 0; i < count; ++i) {
         const int ent = ifd0 + 2 + i * 12;
         if (ent + 12 > d.size()) break;
