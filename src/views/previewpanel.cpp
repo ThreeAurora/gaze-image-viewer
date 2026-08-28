@@ -448,6 +448,25 @@ double PreviewPanel::fitScaleFor(const QSize& viewSize) const {
     }
 }
 
+// 拖拽平移约束(临时 1:1 放大与 Ctrl 缩放态通用):
+//   图片某轴 ≤ 预览框 → 该轴锁死居中(两侧黑边等宽,不能挪动)
+//   图片某轴 > 预览框 → 允许平移,但图片边缘不进入框内(平到顶即停,不露白边)
+QPoint PreviewPanel::clampedLabelPos(QPoint p) const {
+    const int imgW = m_imgLabel->width();
+    const int imgH = m_imgLabel->height();
+    const int boxW = width();
+    const int boxH = height();
+    if (imgW <= boxW)
+        p.setX((boxW - imgW) / 2);
+    else
+        p.setX(qBound(boxW - imgW, p.x(), 0));
+    if (imgH <= boxH)
+        p.setY((boxH - imgH) / 2);
+    else
+        p.setY(qBound(boxH - imgH, p.y(), 0));
+    return p;
+}
+
 // ═══════════════════════════════════════════
 // 设置活接线:查看器/全屏页面的选项改动即时生效(无 need-restart)
 //   读取一律走 AppSettings,不缓存 —— 热路径(逐帧 render)不碰 ini,
