@@ -137,6 +137,7 @@ inline std::vector<FileEntry> fastScanDir(const QString& dirPath) {
 //   重解析点(junction、符号链接目录)一律不进:跟着走会成环,是这类递归的经典事故。
 // ═══════════════════════════════════════════
 inline void fastScanSubFiles(const QString& dirPath, std::vector<FileEntry>& out,
+                             bool skipHiddenDirs = false,
                              int depth = 0, size_t limit = 200000) {
     if (depth > 64 || out.size() >= limit) return;
 
@@ -158,13 +159,18 @@ inline void fastScanSubFiles(const QString& dirPath, std::vector<FileEntry>& out
             out.push_back(entryFromFindData(data, dirPath));
             if (out.size() >= limit) break;
         } else if (!(data.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)) {
-            subs << dirPath + QLatin1Char('/') + QString::fromWCharArray(fname);
+            // 不跟随重解析点(junction/符号链接目录):跟着走会成环,是这类递归的经典事故
+            const QString name = QString::fromWCharArray(fname);
+            const bool hiddenDir = (data.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN)
+                                   || name.startsWith(QLatin1Char('.'));
+            if (!(skipHiddenDirs && hiddenDir))
+                subs << dirPath + QLatin1Char('/') + name;
         }
     } while (FindNextFileW(h, &data));
     FindClose(h);
 
     for (const QString& d : subs)
-        fastScanSubFiles(d, out, depth + 1, limit);
+        fastScanSubFiles(d, out, skipHiddenDirs, depth + 1, limit);
 }
 
 // ═══════════════════════════════════════════
