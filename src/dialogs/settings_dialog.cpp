@@ -864,8 +864,6 @@ QWidget* SettingsDialog::pageCache() {
         combo("Cache/compression", {QString::fromUtf8("无"),
             QString::fromUtf8("无损 - ZIP 压缩"), QString::fromUtf8("有损高品质(JPEG)"),
             QString::fromUtf8("低品质(JPEG)"), QString::fromUtf8("低质量 - 高质量 (WebP)")}, 4));
-    form->addRow(QString::fromUtf8("缩略图宽度"), spin("Cache/thumbWidth", 64, 1024, 465));
-    form->addRow(QString::fromUtf8("缩略图高度"), spin("Cache/thumbHeight", 64, 1024, 365));
     form->addRow(chk("Cache/maxCacheOn", QString::fromUtf8("缓存缩略图最大容量(MB)"), true));
     form->addRow(spin("Cache/maxCacheMB", 64, 10240, 500));
     form->addRow(QString::fromUtf8("数据库引擎的内存占用(MB)"),
