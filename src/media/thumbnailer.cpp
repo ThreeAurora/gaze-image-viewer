@@ -281,8 +281,8 @@ QImage Thumbnailer::folderThumb(const QString& dirPath, int size) {
     sheet.fill(0xFF1E1E22);
     QPainter pt(&sheet);
     for (int i = 0; i < picked.size() && i < 4; ++i) {
-        QImage t = imageThumb(picked[i], cell);
-        if (t.isNull()) t = windowsShellThumb(picked[i], cell);
+        QImage t = windowsShellThumb(picked[i], cell);
+        if (t.isNull()) t = imageThumb(picked[i], cell);
         if (t.isNull()) continue;
         t = t.scaled(cell, cell, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
         const int ox = (i % 2) * (cell + gap);
