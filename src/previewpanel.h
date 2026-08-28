@@ -194,6 +194,7 @@ private:
     QLabel*     m_ratingDot = nullptr;     // Viewer/showRating 颜色标记点
     QWidget*    m_panView   = nullptr;     // 导航小窗里的视口指示框
     bool  m_navigating   = false;          // Viewer/resetAutoOnNav:本次是切文件
+    int   m_labelStyleState = -1;          // 图片标签样式缓存(避免 resize 时反复 setStyleSheet)
     bool  m_secondPass   = false;          // Viewer/twoPassRender 第二遍标记
     QString  m_panKey;                     // 导航小窗缩略图对应的文件
     QPixmap m_procPix;                     // gamma/sharpen 后处理结果
