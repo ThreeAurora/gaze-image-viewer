@@ -508,7 +508,6 @@ void PreviewPanel::updatePanTool() {
     if (!on) { m_panTool->hide(); return; }
 
     const int boxW = m_panThumb->width() - 4, boxH = m_panThumb->height() - 4;
-    if (m_panThumb->pixmap() && m_panKey != m_filePath) m_panThumb->setPixmap(QPixmap());
     if (m_panKey != m_filePath) {
         m_panThumb->setPixmap(m_origPix->scaled(boxW, boxH, Qt::KeepAspectRatio,
                                                 Qt::SmoothTransformation));
