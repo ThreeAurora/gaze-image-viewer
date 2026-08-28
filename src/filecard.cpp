@@ -84,10 +84,12 @@ void FileCard::setup(const FileEntry& entry, int size, int viewMode, int height)
         : QStringLiteral("transparent");
 
     // hover tooltip:完整文件名 + 创建时间 + 修改时间 + 大小
+    // 时间用 FileEntry 已扫描好的 ctime/mtime,绝不在建卡时读盘(快速滚动每帧数十张,读盘必卡)
     {
-        QFileInfo fi(entry.path);
-        QDateTime birth = fi.birthTime();
-        QDateTime mod   = fi.lastModified();
+        QDateTime birth = entry.ctime > 0
+            ? QDateTime::fromSecsSinceEpoch(static_cast<qint64>(entry.ctime)) : QDateTime();
+        QDateTime mod = entry.mtime > 0
+            ? QDateTime::fromSecsSinceEpoch(static_cast<qint64>(entry.mtime)) : QDateTime();
         QString tip = entry.name + "\n"
             + "\xe5\x88\x9b\xe5\xbb\xba: " + (birth.isValid()
                 ? birth.toString("yyyy/MM/dd - HH:mm:ss")
