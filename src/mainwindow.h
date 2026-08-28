@@ -24,6 +24,9 @@ public:
     Q_INVOKABLE void openFullscreen(const QString &path);  // 右键"全屏":导航到文件并全屏
     void enterFullscreen();          // Fullscreen/dualMonitor:可选落到第二显示器
     void renameCurrent();            // F2:按 FileOps/renameDialog 决定对话框/就地改
+    // 查看器标签卡(Interface/multiViewerTabs / oneViewerTab)
+    void openViewerTab(const QString& path);
+    void syncViewerTab(const QString& path);
     Q_INVOKABLE void revealFile(const QString &path);      // 以文搜图结果:定位到目录并选中
     void enterFullscreen();          // Fullscreen/dualMonitor:可选落到第二显示器
     Q_INVOKABLE void toggleViewer();   // 浏览器 ↔ 查看器(单图模式)
