@@ -1088,7 +1088,10 @@ void PreviewPanel::setupPlayer() {
                 }
             }
         }
-        if (status == QMediaPlayer::InvalidMedia) m_pendingPlay.clear();
+        if (status == QMediaPlayer::InvalidMedia) {
+            m_pendingPlay.clear();
+            if (m_videoCover) m_videoCover->hide();   // 源失效:收遮罩,露出空态而非永久黑屏
+        }
         if (status != QMediaPlayer::EndOfMedia) return;
         // setSource 已发→旧源还未完全退场:忽略过渡期 EndOfMedia,
         // 否则 stale 事件会错误触发 finishLivePhoto / loopVideo 重播
