@@ -45,7 +45,7 @@ inline bool shellDelete(const QStringList& paths, bool toRecycleBin,
         // 文件进不了回收站时(超出回收站容量/该盘禁用了回收站/网络盘),
         // 默认会"静默永久删除" —— 这正是绝不能发生的。WANTNUKEWARNING 强制
         // 弹出"太大无法进回收站,是否永久删除"的确认,把不可逆操作交给用户。
-        op.fFlags |= FOFX_WANTNUKEWARNING;
+        op.fFlags |= FOF_WANTNUKEWARNING;
     }
     int rc = SHFileOperationW(&op);
     delete[] buf;
