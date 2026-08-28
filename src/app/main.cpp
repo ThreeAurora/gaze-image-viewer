@@ -127,11 +127,15 @@ int main(int argc, char *argv[]) {
     // ── 临时诊断:GAZE_SELFTEST=s 时复现"选中第一项 → 按 S → 确认框按 Space"。
     //    走的是与真实按键同一条事件派发链,但不依赖 OS 输入合成。查完删除。
     if (qEnvironmentVariableIsSet("GAZE_SELFTEST")) {
+        // s  = Space 投给焦点按钮(走 Qt 原生按钮激活)
+        // sb = Space 投给对话框本身(走 YesNoKeyFilter 的排队 click() 分支)
+        const bool toBox =
+            qgetenv("GAZE_SELFTEST") == "sb";
         QTimer::singleShot(1500, &w, [&w]() {
             qWarning("[selftest] press S");
             w.selftestPressKey(Qt::Key_S);
         });
-        QTimer::singleShot(2600, &w, [&w]() {
+        QTimer::singleShot(2600, &w, [&w, toBox]() {
             int boxes = 0;
             const auto tops = QApplication::topLevelWidgets();
             for (QWidget* t : tops) {
@@ -139,9 +143,11 @@ int main(int argc, char *argv[]) {
                 if (!box || !box->isVisible()) continue;
                 ++boxes;
                 QWidget* fw = box->focusWidget();
-                qWarning("[selftest] confirm box shown, focus=%s -> post Space",
-                         fw ? fw->metaObject()->className() : "null(box)");
-                QWidget* target = fw ? fw : static_cast<QWidget*>(box);
+                QWidget* target = toBox ? static_cast<QWidget*>(box)
+                                        : (fw ? fw : static_cast<QWidget*>(box));
+                qWarning("[selftest] confirm box shown, focus=%s -> post Space to %s",
+                         fw ? fw->metaObject()->className() : "null(box)",
+                         target->metaObject()->className());
                 QCoreApplication::postEvent(target,
                     new QKeyEvent(QEvent::KeyPress, Qt::Key_Space, Qt::NoModifier));
                 QCoreApplication::postEvent(target,
