@@ -164,32 +164,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     connect(m_viewerTabs, &QTabBar::currentChanged, this, [this](int i) {
         // #105:「浏览器」标签 = 回标准模式的出口(用户点它就是想退出查看器)
         if (i >= 0 && isBrowserTab(i)) { toggleViewer(); return; }
-
-// ═════════════════════════════════════════════════════════
-// 临时诊断:S 键闪退定位(崩溃 RVA 落在 Qt6Widgets 的 QPushButton 代码区)。
-// 用应用内事件投递复现"选中一项 → 按 S"的完整派发链,不依赖 OS 输入合成。
-// 查完删除。
-// ═════════════════════════════════════════════════════════
-void MainWindow::selftestPressKey(int qtKey) {
-    if (!m_fileGrid) { qWarning("[selftest] no grid"); return; }
-    m_fileGrid->selectIndex(0, true);
-    m_fileGrid->setFocus(Qt::OtherFocusReason);
-    QWidget* f = QApplication::focusWidget();
-    qWarning("[selftest] entries=%d appFocus=%s",
-             m_fileGrid->fileCount(), f ? f->metaObject()->className() : "null");
-    QCoreApplication::postEvent(m_fileGrid,
-        new QKeyEvent(QEvent::KeyPress, qtKey, Qt::NoModifier));
-    QCoreApplication::postEvent(m_fileGrid,
-        new QKeyEvent(QEvent::KeyRelease, qtKey, Qt::NoModifier));
-}
-
-void MainWindow::selftestFastScroll() {
-    if (!m_fileGrid) { qWarning("[selftest] no grid"); return; }
-    // 恢复出来的分隔条尺寸只留给网格 185px,一两列根本测不出东西
-    if (m_splitter) m_splitter->setSizes({220, 1300, 300});
-    // 等分隔条变化引发的重建落地,否则前半程测的是"边改布局边滚"
-    QTimer::singleShot(400, m_fileGrid, [this]() { m_fileGrid->selftestFastScroll(); });
-}
         const QString p = tabPath(i);
         if (p.isEmpty()) return;
         // PROBE97 临时诊断,查完删
