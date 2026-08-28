@@ -12,7 +12,6 @@
 #include <QImage>
 #include <QHash>
 #include <QKeySequence>
-#include <QElapsedTimer>
 #include <memory>
 
 class QProcess;
