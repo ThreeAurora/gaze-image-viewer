@@ -793,6 +793,8 @@ void PreviewPanel::loadFile(const QString& path) {
 
     if (IMAGE_EXTS.count("." + ext)) {
         showImage(path);
+        // Viewer/autoPlayAudioCompanion:同名音频伴侣文件自动播放(默认关)
+        playAudioCompanion(path);
     } else if (VIDEO_EXTS.count("." + ext)) {
         showVideo(path);
     } else if (AUDIO_EXTS.count("." + ext)) {
