@@ -260,13 +260,19 @@ QImage Thumbnailer::folderThumb(const QString& dirPath, int size) {
     QStringList picked;
     const int want = p.folder4 ? 4 : 1;
     for (const QFileInfo& fi : list) {
-        const QString ext = "." + fi.suffix().toLower();
-        if (IMAGE_EXTS.count(ext) || VIDEO_EXTS.count(ext)) picked << fi.absoluteFilePath();
+        // 只挑图片:视频格要跑 ffmpeg 抽帧,一个目录几十个子目录时会拖慢浏览
+        if (IMAGE_EXTS.count("." + fi.suffix().toLower()))
+            picked << fi.absoluteFilePath();
         if (picked.size() >= want) break;
     }
     if (picked.isEmpty()) return {};
 
-    if (!p.folder4) return postProcess(imageThumb(picked.first(), size), size);
+    // 单封面(folder4 关)
+    if (!p.folder4) {
+        QImage one = windowsShellThumb(picked.first(), size);
+        if (one.isNull()) one = imageThumb(picked.first(), size);
+        return postProcess(one, size);
+    }
 
     // 2x2 拼图:每格留 2px 间隙,格内等比裁切居中(与系统文件夹缩略图观感一致)
     const int gap = 2;
