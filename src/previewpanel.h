@@ -119,6 +119,7 @@ private:
     QLabel *m_audioLabel;
     QLabel *m_placeholder = nullptr;   // 空态占位
     QTextEdit *m_textEdit = nullptr;   // txt 文本预览
+    QTextEdit *m_textEdit = nullptr;   // txt 文本预览
     QMovie *m_movie = nullptr;         // GIF 动画(切换时 stop+deleteLater,防泄漏)
     QWidget *m_videoWidget;
     QVideoWidget *m_vw = nullptr;   // 复用的视频控件(切视频不重建,杜绝叠加透出窗口期)
