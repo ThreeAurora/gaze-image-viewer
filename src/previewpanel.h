@@ -127,6 +127,8 @@ private:
     QPixmap *m_origPix = nullptr;
     double m_scale = 1.0;
     double m_lastScale = 0.0;   // 上次实际应用的缩放(Viewer/autoFit=0"上次使用过的"用)
+    double m_dpiX = 0.0;        // General/exifDpi:图像自带 X 分辨率(0=未标注)
+    double m_dpiY = 0.0;
     bool   m_viewerMode = false; // 独立查看器(true)/浏览器预览窗格(false)
     double m_lastScale = 0.0;   // 上次实际应用的缩放(Viewer/autoFit=0"上次使用过的"用)
     bool   m_viewerMode = false; // 独立查看器(true)/浏览器预览窗格(false)
