@@ -307,6 +307,34 @@ void MainWindow::selftestFastScroll() {
     });
     ml->addWidget(m_viewerTabs);
 
+    // 查看器标签条(Interface/multiViewerTabs / oneViewerTab):
+    // 只在查看器模式显示,浏览器模式隐藏;默认单标签,行为与改造前一致
+    m_viewerTabs = new QTabBar;
+    m_viewerTabs->setDocumentMode(true);
+    m_viewerTabs->setExpanding(false);
+    m_viewerTabs->setTabsClosable(true);
+    m_viewerTabs->setMovable(true);
+    m_viewerTabs->hide();
+    connect(m_viewerTabs, &QTabBar::currentChanged, this, [this](int i) {
+        if (i < 0 || i >= m_tabPaths.size()) return;
+        const QString p = m_tabPaths[i];
+        m_preview->loadFile(p);
+        // Interface/syncBrowser:切标签/关视图时把浏览器选中项同步过去
+        if (AppSettings::instance().get("Interface/syncBrowser", false).toBool())
+            m_fileGrid->selectByPath(p);
+        m_currentFile = p;
+        applyTitle();
+    });
+    connect(m_viewerTabs, &QTabBar::tabCloseRequested, this, [this](int i) {
+        if (i < 0 || i >= m_tabPaths.size()) return;
+        m_tabPaths.removeAt(i);
+        m_viewerTabs->removeTab(i);
+        if (m_tabPaths.isEmpty()) { toggleViewer(); return; }   // 关掉最后一个退回浏览器
+        const int at = qMin(i, m_tabPaths.size() - 1);
+        m_viewerTabs->setCurrentIndex(at);
+    });
+    ml->addWidget(m_viewerTabs);
+
     m_splitter = new QSplitter(Qt::Horizontal);
     m_splitter->setStyleSheet("QSplitter::handle{background:" C_SEPARATOR ";width:1px;}");
     ml->addWidget(m_splitter, 1);
