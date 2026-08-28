@@ -166,9 +166,10 @@ private:
     QVideoWidget *m_vw = nullptr;   // 复用的视频控件(切视频不重建,杜绝叠加透出窗口期)
     QMediaPlayer *m_player = nullptr;
     QAudioOutput *m_audioOutput = nullptr;
-    // WMF 崩溃防线:setSource 后不立刻接输出/播,等 mediaStatus 就绪再接
-    // (装载中抢接输出会打进 D3D 纹理转换器的竞态,"textureConverter null"即其症状)
+    // 延迟 attach:setSource 后不立刻接输出/播,等 mediaStatus 就绪再接
     QString m_pendingPlay;     // 已 setSource、待就绪 attach+play 的源
+    bool m_videoOutAttached = false;   // 视频输出当前是否已接到 m_vw
+                                       // (same-src 重播若输出已断必须接回,否则只出声不出画)
     // WMF 崩溃防线:setSource 后不立刻接输出/播,等 mediaStatus 就绪再接
     // (装载中抢接输出会打进 D3D 纹理转换器的竞态,"textureConverter null"即其症状)
     QString m_pendingPlay;     // 已 setSource、待就绪 attach+play 的源
