@@ -143,6 +143,7 @@ int main(int argc, char *argv[]) {
             slog.flush();
         });
         qWarning("[selftest] mode=%s", qPrintable(QString::fromLocal8Bit(qgetenv("GAZE_SELFTEST"))));
+        w.resize(1600, 900);   // 用接近真实使用的窗口尺寸,否则列数太少测不出东西
     }
     if (qgetenv("GAZE_SELFTEST") == "scroll") {
         // 进程内模拟快速拖动滚动条 + 画布几何自检
