@@ -57,9 +57,10 @@ FileGrid::FileGrid(QWidget* parent) : QScrollArea(parent) {
         // 停止 120ms 后由 m_scrollTimer 批量补齐(拖动滚动条原未防抖,卡顿主因)
         m_scrollSettled = false;
         m_scrollTimer.start();
-        // 8ms 合并:拖动时 valueChanged 可达 125Hz+,只跑一次 layoutCards
+        // 8ms 合并:拖动时 valueChanged 可达 125Hz+,只在窗口边界跑一次 layoutCards
         // 卡片是 canvas 子控件,canvas 已随滚动条平移,合并不会让画面"卡"
-        m_scrollLayoutTimer.start();
+        if (!m_scrollLayoutTimer.isActive())
+            m_scrollLayoutTimer.start();
     });
 
     m_scrollLayoutTimer.setSingleShot(true);
