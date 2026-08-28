@@ -19,29 +19,40 @@
 #include <windows.h>
 #include <shellapi.h>
 
-inline bool shellDelete(const QStringList& paths, bool toRecycleBin) {
+inline bool shellDelete(const QStringList& paths, bool toRecycleBin,
+                        QWidget* parent = nullptr) {
     if (paths.isEmpty()) return true;
-    // 双 NUL 结尾的多字符串列表
+    // 双 NUL 结尾的多字符串列表。SHFileOperationW 对"相对路径 + FOF_ALLOWUNDO"
+    // 会静默变成永久删除 —— 一律转绝对路径,堵死这条通道。
     QString list;
-    for (const auto& p : paths) list += p + QChar(L'\0');
+    for (const auto& p : paths) {
+        const QString abs = QFileInfo(p).absoluteFilePath();
+        list += (QFileInfo(p).isRelative() ? abs : QDir::cleanPath(p)) + QChar(L'\0');
+    }
     list += QChar(L'\0');
 
     auto* buf = new wchar_t[list.size()];
     memcpy(buf, list.constData(), list.size() * sizeof(wchar_t));
 
     SHFILEOPSTRUCTW op = {};
-    op.hwnd = NULL;
+    op.hwnd = parent ? reinterpret_cast<HWND>(parent->winId()) : NULL;
     op.wFunc = FO_DELETE;
     op.pFrom = buf;
     op.fFlags = FOF_NOCONFIRMATION | FOF_SILENT;
-    if (toRecycleBin) op.fFlags |= FOF_ALLOWUNDO;
+    if (toRecycleBin) {
+        op.fFlags |= FOF_ALLOWUNDO;
+        // 文件进不了回收站时(超出回收站容量/该盘禁用了回收站/网络盘),
+        // 默认会"静默永久删除" —— 这正是绝不能发生的。WANTNUKEWARNING 强制
+        // 弹出"太大无法进回收站,是否永久删除"的确认,把不可逆操作交给用户。
+        op.fFlags |= FOFX_WANTNUKEWARNING;
+    }
     int rc = SHFileOperationW(&op);
     delete[] buf;
     return rc == 0 && !op.fAnyOperationsAborted;
 }
 
-inline bool deleteToRecycleBin(const QStringList& paths) {
-    return shellDelete(paths, true);
+inline bool deleteToRecycleBin(const QStringList& paths, QWidget* parent = nullptr) {
+    return shellDelete(paths, true, parent);
 }
 
 // 删除后的左下角浮动提示:自绘在窗口上,浮在状态栏之上,鼠标穿透不挡卡片。
