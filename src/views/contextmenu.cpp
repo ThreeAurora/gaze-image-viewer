@@ -62,11 +62,11 @@ static QString findJpegtran() {
     return {};
 }
 
-FileContextMenu::FileContextMenu(FileCard* card, QWidget* parent)
-    : QMenu(parent), m_filePath(card->filePath()), m_isLive(card->isLivePhoto())
+FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
+    : QMenu(parent), m_filePath(grid ? grid->pathOf(index) : QString()),
+      m_isLive(false)   // 与原实现一致:卡片侧从未做过 Live Photo 检测
 {
     // 样式走 main.cpp 全局 QSS
-    FileGrid* grid = findAncestor<FileGrid>(card);
     QStringList sel = grid ? grid->selectedPaths() : QStringList{ m_filePath };
     if (!sel.contains(m_filePath)) sel = QStringList{ m_filePath };
 
