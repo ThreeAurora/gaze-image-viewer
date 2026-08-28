@@ -560,6 +560,21 @@ void PreviewPanel::playAudioCompanion(const QString& imagePath) {
     }
 }
 
+// Viewer/zoomMode = 0(固定):缩放在预设档位之间跳,不再连续无级变化
+double PreviewPanel::stepZoom(double cur, bool up) const {
+    static const double steps[] = {0.05, 0.10, 0.16, 0.25, 0.33, 0.50, 0.66, 0.75,
+                                   1.00, 1.50, 2.00, 3.00, 4.00, 6.00, 8.00, 10.00};
+    constexpr int n = int(sizeof(steps) / sizeof(steps[0]));
+    if (up) {
+        for (int i = 0; i < n; ++i)
+            if (steps[i] > cur + 1e-6) return steps[i];
+        return steps[n - 1];
+    }
+    for (int i = n - 1; i >= 0; --i)
+        if (steps[i] < cur - 1e-6) return steps[i];
+    return steps[0];
+}
+
 // Viewer/hidpiPixel:1:1 语义(默认关 = 1 图像像素 : 1 逻辑像素,与改造前一致)
 double PreviewPanel::oneToOneScale() const {
     if (!s_bool("Viewer/hidpiPixel", false)) return 1.0;
