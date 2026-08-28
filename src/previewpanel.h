@@ -171,6 +171,10 @@ private:
     // (装载中抢接输出会打进 D3D 纹理转换器的竞态,"textureConverter null"即其症状)
     QString m_pendingPlay;     // 已 setSource、待就绪 attach+play 的源
     QElapsedTimer m_navClock;  // 最近一次导航时刻:浏览扫动时暂缓自动播(停稳才切视频)
+    // WMF 崩溃防线:setSource 后不立刻接输出/播,等 mediaStatus 就绪再接
+    // (装载中抢接输出会打进 D3D 纹理转换器的竞态,"textureConverter null"即其症状)
+    QString m_pendingPlay;     // 已 setSource、待就绪 attach+play 的源
+    QElapsedTimer m_navClock;  // 最近一次导航时刻:浏览扫动时暂缓自动播(停稳才切视频)
     QElapsedTimer m_navClock;  // 最近一次导航时刻:浏览扫动时暂缓自动播(停稳才切视频)
     QElapsedTimer m_navClock;  // 最近一次导航时刻:浏览扫动时暂缓自动播(停稳才切视频)
     QElapsedTimer m_navClock;  // 最近一次导航时刻:浏览扫动时暂缓自动播(停稳才切视频)
