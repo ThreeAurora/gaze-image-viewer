@@ -74,7 +74,7 @@ inline QImage linearResample(const QImage& src, const QSize& dstSize) {
 }
 
 // 3x3 锐化卷积。amount=锐化强度:0.5 ≈ XnView"使用锐化 50%",
-// 1.0 ≈ 缩略图管线的标准强度(核和恒为 1,亮度不漂移)
+// 也是缩略图/查看器管线实际采用的档位(1.0 过强:光晕失真+量化伪影被放大)
 inline QImage sharpen(const QImage& src, double amount) {
     if (src.isNull()) return {};
     QImage s = src.convertToFormat(QImage::Format_ARGB32);
