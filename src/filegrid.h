@@ -182,6 +182,7 @@ private:
     int                  m_lastClicked = -1;
     QSet<QString>        m_marked;
     QString              m_preferPath;  // 一次性:本次 loadDirectory 完成后要选中的路径
+    QString              m_preferPath;  // 一次性:本次 loadDirectory 完成后要选中的路径
 
     // 对象池
     std::vector<FileCard*> m_pool;
