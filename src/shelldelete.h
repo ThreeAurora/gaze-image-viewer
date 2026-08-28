@@ -44,30 +44,91 @@ inline bool deleteToRecycleBin(const QStringList& paths) {
     return shellDelete(paths, true);
 }
 
-// 统一删除入口:FileOps/useRecycleBin + FileOps/confirmDelete 在此生效。
-// 三处删除(网格键盘/右键菜单/查看器)都走这里,保证行为一致。
+// 删除后的左下角浮动提示:自绘在窗口上,浮在状态栏之上,鼠标穿透不挡卡片。
+// toastMs 默认 1500 —— 用户提的 300ms 不足以读完一句中文,故按可读时长兜底,可在设置调。
+inline void showDeleteToast(QWidget* parent, const QString& text) {
+    AppSettings& st = AppSettings::instance();
+    if (!st.get("FileOps/deleteToast", true).toBool()) return;
+    QWidget* win = parent ? parent->window() : nullptr;
+    if (!win) return;
+    const int ms = qMax(400, st.get("FileOps/toastMs", 1500).toInt());
+
+    auto* toast = new QLabel(text, win);
+    toast->setAttribute(Qt::WA_DeleteOnClose);
+    toast->setAttribute(Qt::WA_TransparentForMouseEvents);
+    toast->setTextFormat(Qt::PlainText);
+    toast->setStyleSheet(
+        "QLabel{background:rgba(46,46,54,235);color:#FFFFFF;font-size:12px;"
+        "padding:8px 14px;border-radius:6px;border:1px solid rgba(255,255,255,45);}");
+    toast->adjustSize();
+
+    int bottomInset = 0;
+    if (auto* sb = win->findChild<QStatusBar*>()) bottomInset = sb->height();
+    toast->move(12, win->height() - bottomInset - toast->height() - 10);
+
+    auto* eff = new QGraphicsOpacityEffect(toast);
+    eff->setOpacity(1.0);
+    toast->setGraphicsEffect(eff);
+    auto* fade = new QPropertyAnimation(eff, "opacity", toast);
+    fade->setDuration(220);
+    fade->setStartValue(1.0);
+    fade->setEndValue(0.0);
+    QObject::connect(fade, &QPropertyAnimation::finished, toast, &QWidget::close);
+    QTimer::singleShot(ms, toast, [fade]() { fade->start(); });
+    toast->show();
+    toast->raise();
+}
+
+// 统一删除入口:FileOps/useRecycleBin + FileOps/confirmDelete + FileOps/confirmDeleteDirs
+// 在此生效。三处删除(网格键盘/右键菜单/查看器)都走这里,保证行为一致。
 // 不进回收站=不可恢复,这种情况强制确认,忽略 confirmDelete。
+// 含文件夹时 confirmDeleteDirs(默认开)同样强制确认:一次带走整棵子树。
 // 返回 false = 用户取消或删除失败(失败已弹提示),调用方据此什么都不做。
 inline bool deleteWithSettings(const QStringList& paths, QWidget* parent) {
     if (paths.isEmpty()) return true;
     AppSettings& st = AppSettings::instance();
     const bool toRecycle = st.get("FileOps/useRecycleBin", true).toBool();
-    const bool confirm = toRecycle ? st.get("FileOps/confirmDelete", true).toBool() : true;
+    bool confirm = toRecycle ? st.get("FileOps/confirmDelete", true).toBool() : true;
+
+    int dirCount = 0;
+    for (const auto& p : paths) if (QFileInfo(p).isDir()) ++dirCount;
+    if (dirCount > 0 && st.get("FileOps/confirmDeleteDirs", true).toBool())
+        confirm = true;
 
     if (confirm) {
         const QString what = paths.size() == 1
             ? QFileInfo(paths.first()).fileName()
             : QString::number(paths.size()) + QStringLiteral(" 个项目");
-        const QString text = toRecycle
-            ? QString::fromUtf8("确定将 %1 移至回收站？\n").arg(what)
-            : QString::fromUtf8("确定永久删除 %1？此操作不可恢复！\n").arg(what);
-        if (QMessageBox::question(parent,
-                toRecycle ? QString::fromUtf8("删除") : QString::fromUtf8("永久删除"),
-                text + paths.first(),
+        QString text;
+        if (paths.size() == 1 && dirCount == 1)
+            text = QString::fromUtf8("你确认要删除文件夹吗？\n");
+        else if (dirCount > 0)
+            text = QString::fromUtf8("确定删除 %1（含 %2 个文件夹）？\n").arg(what).arg(dirCount);
+        else
+            text = toRecycle
+                ? QString::fromUtf8("确定将 %1 移至回收站？\n").arg(what)
+                : QString::fromUtf8("确定永久删除 %1？此操作不可恢复！\n").arg(what);
+        text += toRecycle
+            ? QString::fromUtf8("可从回收站恢复。")
+            : QString::fromUtf8("此操作不可恢复！");
+        const QString title = (paths.size() == 1 && dirCount == 1)
+            ? QString::fromUtf8("删除文件夹")
+            : (toRecycle ? QString::fromUtf8("删除") : QString::fromUtf8("永久删除"));
+        if (QMessageBox::question(parent, title,
+                text + "\n" + paths.first(),
                 QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes)
             return false;
     }
-    if (shellDelete(paths, toRecycle)) return true;
+    if (shellDelete(paths, toRecycle)) {
+        // 简短反馈:一项报文件名,多项报数量
+        const QString what = paths.size() == 1
+            ? QFileInfo(paths.first()).fileName()
+            : QString::number(paths.size()) + QStringLiteral(" 个项目");
+        showDeleteToast(parent,
+            (toRecycle ? QString::fromUtf8("已移至回收站：")
+                       : QString::fromUtf8("已永久删除：")) + what);
+        return true;
+    }
     QMessageBox::warning(parent, QString::fromUtf8("删除"),
         QString::fromUtf8("删除失败:\n") + paths.first());
     return false;
