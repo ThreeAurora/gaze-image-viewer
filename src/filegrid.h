@@ -193,25 +193,25 @@ private:
     QString              m_preferPath;  // 一次性:本次 loadDirectory 完成后要选中的路径
     QString              m_preferPath;  // 一次性:本次 loadDirectory 完成后要选中的路径
 
-    // 对象池
-    std::vector<FileCard*> m_pool;
-    QHash<int, FileCard*>  m_active; // row-major index → card
+    // 画布(唯一子控件)+ 几何缓存:结构变化时一次算完,滚动/绘制只查表
+    FileCanvas* m_canvas = nullptr;
+    std::vector<QRect> m_geom;
+    QHash<QString, int> m_pathRow;   // path → m_entries 序号(缩略图回调 O(1) 定位)
 
     // 缩略图(FIFO 上限防内存无限膨胀:800 条 × ~300px pixmap ≈ 260MB 封顶)
-    QHash<QString, QPixmap> m_thumbCache;
+    QHash<QString, QPixmap> m_thumbCache;   // 解码原图(按请求宽)
     QQueue<QString>         m_thumbOrder;
+    // 成品图:已按当前卡片盒缩放+圆角,绘制稳态 = 一次 blit
+    QHash<QString, QPixmap> m_fitCache;
+    // 占位图标(文件夹/类型图标)按尺寸缓存,避免每卡片重复平滑缩放
+    QHash<QString, QPixmap> m_iconCache;
 
     QTimer m_resizeTimer;
     QTimer m_reEnqueueTimer;  // 尺寸停止变化后重新生成高清缩略图(防抖)
     QTimer m_scrollTimer;     // 滚轮防抖:滚动中推迟缩略图提交,停止后批量补齐
     bool   m_scrollSettled = true;
     bool   m_loading = false;
-    // 网格 layout 行区间缓存:滚动若未跨行,直接跳过 recycle/setup
-    int    m_lastStartRow = -1;
-    int    m_lastEndRow   = -1;
-    int    m_lastCacheCols = -1;
-    int    m_lastCacheEntriesSize = -1;
-    int    m_lastCacheCardH = -1;
+    int    m_hoverIdx = -1;   // 悬停条目(自绘高亮)
 
     // 外观:间距由设置驱动(Appearance/spacing);MARGIN 画布留边固定
     int    m_spacing = 6;
