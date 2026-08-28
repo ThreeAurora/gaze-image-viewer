@@ -73,7 +73,9 @@ inline void showDeleteToast(QWidget* parent, const QString& text) {
     fade->setDuration(220);
     fade->setStartValue(1.0);
     fade->setEndValue(0.0);
-    QObject::connect(fade, &QPropertyAnimation::finished, toast, &QWidget::close);
+    // 注意:不要在这里 close()(WA_DeleteOnClose 会在 fade 自己的信号里删掉父对象)
+    QObject::connect(fade, &QPropertyAnimation::finished,
+                     toast, [toast]() { toast->deleteLater(); });
     QTimer::singleShot(ms, toast, [fade]() { fade->start(); });
     toast->show();
     toast->raise();
