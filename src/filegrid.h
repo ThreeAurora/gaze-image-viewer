@@ -106,6 +106,7 @@ public:
 signals:
     void fileCountChanged();
     void selectionChanged(const QString& currentPath);
+    void filterModeChanged(int mode);
 
 protected:
     void resizeEvent(QResizeEvent* event) override;
