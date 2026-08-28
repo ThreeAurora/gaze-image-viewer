@@ -266,6 +266,10 @@ void FileGrid::loadDirectory(const QString& dirPath) {
     m_loading = false;
     updateLayout();          // 重算列数/几何/滚动范围 + 重绘
     requestVisibleThumbs();
+    // Thumbs/wholeFolder:开=进目录即为全部条目排缩略图(滚动到哪都有图,代价是
+    // 进大目录时后台一下排满);关=只排视口内(默认,与改造前一致)
+    if (AppSettings::instance().get("Thumbs/wholeFolder", false).toBool())
+        requestAllThumbs();
 
     emit fileCountChanged();
     if (!m_entries.empty()) {
