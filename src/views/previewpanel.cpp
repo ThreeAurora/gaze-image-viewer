@@ -524,6 +524,25 @@ void PreviewPanel::updateFloatBar(const QPoint* cursor) {
     m_floatBar->show();
 }
 
+// Viewer/showRating:查看器右上角显示当前文件的颜色标记(程序无独立评级数据模型,
+// 这里如实呈现 Gaze 实际拥有的"颜色标记",不假装显示星级)
+void PreviewPanel::updateRatingBadge() {
+    const bool on = s_bool("Viewer/showRating", true) && !m_filePath.isEmpty();
+    if (!on) { if (m_ratingDot) m_ratingDot->hide(); return; }
+    const int color = LabelStore::instance().colorFor(m_filePath);
+    if (color <= 0) { if (m_ratingDot) m_ratingDot->hide(); return; }
+    if (!m_ratingDot) {
+        m_ratingDot = new QLabel(this);
+        m_ratingDot->setFixedSize(14, 14);
+    }
+    m_ratingDot->setStyleSheet(
+        QString("QLabel{background:%1;border:1px solid #FFFFFF;border-radius:7px;}")
+            .arg(LabelStore::colorValue(color).name()));
+    m_ratingDot->move(width() - 24, 12);
+    m_ratingDot->raise();
+    m_ratingDot->show();
+}
+
 // Viewer/panTool:右下角导航小窗(缩略图 + 当前视口框)。仅图溢出视口时出现
 void PreviewPanel::updatePanTool() {
     const bool on = s_bool("Viewer/panTool", true) && m_mode == "image" && m_origPix
