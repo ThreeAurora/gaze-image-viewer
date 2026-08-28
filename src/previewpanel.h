@@ -190,6 +190,7 @@ private:
     QWidget*    m_floatBar  = nullptr;     // Fullscreen/showToolbar + floatView
     QWidget*    m_panTool   = nullptr;     // Viewer/panTool
     QLabel*     m_panThumb  = nullptr;
+    QLabel*     m_ratingDot = nullptr;     // Viewer/showRating 颜色标记点
     QWidget*    m_panView   = nullptr;     // 导航小窗里的视口指示框
     bool  m_navigating   = false;          // Viewer/resetAutoOnNav:本次是切文件
     bool  m_secondPass   = false;          // Viewer/twoPassRender 第二遍标记
