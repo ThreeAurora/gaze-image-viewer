@@ -874,9 +874,10 @@ void PreviewPanel::loadFile(const QString& path) {
     // 换文件(或清空):递增代号,作废任何在途的后台解码结果
     ++m_imgReqGen;
     m_liveInfo.reset();
+    Logger::event(QStringLiteral("loadFile '%1'").arg(path));
     if (path.isEmpty()) { clear(); return; }
     QFileInfo fi(path);
-    if (!fi.exists()) { clear(); return; }
+    if (!fi.exists()) { Logger::event("loadFile: not exist"); clear(); return; }
 
     // 换文件(区别于窗口 resize 触发的 fitAuto):Viewer/resetAutoOnNav 靠它判断
     m_navigating = true;
