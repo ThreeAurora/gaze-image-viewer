@@ -217,6 +217,14 @@ private:
     // 外观:间距由设置驱动(Appearance/spacing);MARGIN 画布留边固定
     int    m_spacing = 6;
     static constexpr int MARGIN  = 8;
+    // 卡片外观缓存(逐条目绘制路径只读内存,禁读 ini —— 项目铁律)
+    int  m_border     = 0;    // Appearance/borderSize
+    int  m_imageAlign = 1;    // Appearance/imageAlign 0左 1中 2右
+    int  m_labelAlign = 1;    // Appearance/labelAlign
+    int  m_labelGap   = 6;    // Appearance/labelSpacing 真=6px 假=0
+    bool m_showRating = true; // Browser/showRating 颜色标记圈
+    bool m_sizeBytes  = false;// FileList/sizeInBytes
+    void applyAppearance();   // 启动时 + 设置变更后各刷一次
 
     void relayoutNow();     // 设置改动后重算列宽并重排(间距/尺寸类)
 };
