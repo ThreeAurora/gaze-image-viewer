@@ -45,10 +45,10 @@ inline QFile& file() {
 inline QMutex& mutex() { static QMutex m; return m; }
 
 inline void event(const QString& msg) {
-    const QByteArray out = QDateTime::currentDateTime()
-        .toString("HH:mm:ss.zzz ").toUtf8()
-        + "[" + QString::number(reinterpret_cast<quintptr>(QThread::currentThreadId())) + "] "
-        + msg.toUtf8() + "\n";
+    const QString line = QDateTime::currentDateTime().toString("HH:mm:ss.zzz ")
+        + QStringLiteral("[") + QString::number(reinterpret_cast<quintptr>(QThread::currentThreadId()))
+        + QStringLiteral("] ") + msg + QStringLiteral("\n");
+    const QByteArray out = line.toUtf8();
     QMutexLocker lk(&mutex());
     QFile& f = file();
     if (!f.isOpen()) return;
