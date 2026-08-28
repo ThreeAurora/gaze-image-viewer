@@ -251,6 +251,36 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
             QMessageBox::warning(nullptr, "重命名失败", m_filePath);
         if (grid) grid->refreshCurrentDir();
     });
+    // ── FileOps/duplicateTemplate:创建副本的命名模板 ──
+    // 模板里的 # 是自增序号(从 1 起找第一个不冲突的名字)
+    addAction(IconLib::appIcon("cmd_copy"), QString::fromUtf8("创建副本"), this, [this, grid]() {
+        QFileInfo fi(m_filePath);
+        if (!fi.isFile()) return;
+        const QString base = fi.completeBaseName();
+        const QString ext  = fi.suffix().isEmpty() ? QString()
+                                                   : QStringLiteral(".") + fi.suffix();
+        const int tpl = qBound(0, AppSettings::instance()
+                            .get("FileOps/duplicateTemplate", 0).toInt(), 4);
+        QString target;
+        for (int n = 1; n < 10000; ++n) {
+            QString name;
+            switch (tpl) {
+            case 0:  name = base + "-(" + QString::number(n) + ")"; break;
+            case 1:  name = base + QString::fromUtf8(" - 副本 (") + QString::number(n) + ")"; break;
+            case 2:  name = base + QString::fromUtf8("-副本 (") + QString::number(n) + ")"; break;
+            case 3:  name = base + "-" + QString::number(n); break;
+            default: name = QString::fromUtf8("副本 (") + QString::number(n) + ") - " + base; break;
+            }
+            const QString cand = fi.absolutePath() + "/" + name + ext;
+            if (!QFileInfo::exists(cand)) { target = cand; break; }
+        }
+        if (target.isEmpty()) return;
+        if (!QFile::copy(m_filePath, target)) {
+            QMessageBox::warning(nullptr, QString::fromUtf8("创建副本失败"), target);
+            return;
+        }
+        if (grid) { grid->setPreferPath(target); grid->refreshCurrentDir(); }
+    });
     addAction(IconLib::appIcon("cmd_newFolder"), "新建文件夹", this, [this, grid]() {
         QString base = QFileInfo(m_filePath).isDir()
             ? m_filePath : QFileInfo(m_filePath).absolutePath();
