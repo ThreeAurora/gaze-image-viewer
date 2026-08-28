@@ -868,6 +868,7 @@ void PreviewPanel::loadFile(const QString& path) {
     if (IMAGE_EXTS.count("." + ext)) {
         auto liveInfo = LivePhoto::detect(path);
         if (liveInfo) {
+            m_liveInfo = liveInfo;   // 播完回静态图后,单击靠它重播
             QString videoPath;
             if (liveInfo->embedded && liveInfo->videoOffset >= 0) {
                 // 内嵌型：优先复用本会话已提取的临时文件，避免反复 remux + %TEMP% 堆积
