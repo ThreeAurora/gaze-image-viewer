@@ -383,6 +383,12 @@ QImage Thumbnailer::generate(const QString& filePath, int size, bool isVideo) {
     QFileInfo fi(filePath);
     if (!fi.exists()) return {};
 
+    // Cache/thumbWidth × Cache/thumbHeight:缓存缩略图的包围盒上限。
+    // 只裁不扩,默认 465x365 > 任何卡片缩略图,故默认情况下与改造前一致
+    const Prefs p0 = prefs();
+    const int cap = qMin(p0.thumbW, p0.thumbH);
+    if (cap > 0 && size > cap) size = cap;
+
     QString ck = cacheKey(filePath, size);
     double mtime = fi.lastModified().toSecsSinceEpoch();
     Prefs p = prefs();
@@ -398,8 +404,8 @@ QImage Thumbnailer::generate(const QString& filePath, int size, bool isVideo) {
     }
 
     // 查 SQLite 持久缓存(重启后免重新生成;格式自动识别,兼容旧 PNG/新 WebP 条目)
-    // Cache/thumbInDB=关 → 只用内存缓存,不落库(本次与后续写入都跳过)
-    if (p.inDb) {
+    // Cache/useCatalog=关 → 总开关关闭,完全不碰库;再按 Cache/thumbInDB 决定是否落库
+    if (p.useCatalog && p.inDb) {
         QSqlDatabase db = th_impl::threadDb(p.dbCacheMB);
         if (db.isOpen()) {
             QSqlQuery q(db);
