@@ -203,9 +203,12 @@ private:
     QHash<QString, QPixmap> m_thumbCache;   // 解码原图(按请求宽)
     QQueue<QString>         m_thumbOrder;
     // 成品图:已按当前卡片盒缩放+圆角,绘制稳态 = 一次 blit
-    QHash<QString, QPixmap> m_fitCache;
+    struct FitThumb { QRect box; QPixmap pix; };
+    QHash<QString, FitThumb> m_fitCache;
     // 占位图标(文件夹/类型图标)按尺寸缓存,避免每卡片重复平滑缩放
     QHash<QString, QPixmap> m_iconCache;
+    QPixmap iconPixmap(const FileEntry& e, int side);
+    QPixmap thumbPixmap(const QString& path, const QRect& box, bool cover);
 
     QTimer m_resizeTimer;
     QTimer m_reEnqueueTimer;  // 尺寸停止变化后重新生成高清缩略图(防抖)
