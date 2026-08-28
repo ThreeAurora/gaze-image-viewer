@@ -22,6 +22,7 @@
 #include <QMimeData>
 #include <QCoreApplication>
 #include <QStandardPaths>
+#include <QImageWriter>
 
 #include <windows.h>
 #include <shellapi.h>
