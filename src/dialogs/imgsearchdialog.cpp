@@ -1,5 +1,6 @@
 #include "imgsearchdialog.h"
 #include "imgsearch.h"
+#include "constants.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
