@@ -965,14 +965,7 @@ void PreviewPanel::loadFile(const QString& path) {
     } else if (ext == "pdf" && pp_impl::s_bool("Preview/showPdf", false)) {
         showPdf(path);
     } else {
-        m_mode = "none";
-        if (m_player) m_player->stop();   // 非媒体文件:停播放(实例保留复用)
-        m_placeholder->show();
-        m_imgLabel->hide();
-        m_videoWidget->hide();
-        m_audioLabel->hide();
-        m_textEdit->hide();
-        m_controlBar->hide();
+        showNoPreview();
     }
 }
 
