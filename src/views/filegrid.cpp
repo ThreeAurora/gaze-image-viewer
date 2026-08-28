@@ -54,18 +54,11 @@ FileGrid::FileGrid(QWidget* parent) : QScrollArea(parent) {
     connect(verticalScrollBar(), &QScrollBar::valueChanged,
             this, [this]() {
         // 滚动中(滚轮/拖动滚动条):推迟缩略图解码防洪流卡顿;
-        // 停止 120ms 后由 m_scrollTimer 批量补齐(拖动滚动条原未防抖,卡顿主因)
+        // 停止 120ms 后由 m_scrollTimer 批量补齐。
+        // layoutCards 同步跑(文件必须始终可见,不能延迟创建导致空白);
+        // 真正的卡顿源是建卡时的逐条目读盘,已改用 FileEntry 缓存字段消除。
         m_scrollSettled = false;
         m_scrollTimer.start();
-        // 8ms 合并:拖动时 valueChanged 可达 125Hz+,只在窗口边界跑一次 layoutCards
-        // 卡片是 canvas 子控件,canvas 已随滚动条平移,合并不会让画面"卡"
-        if (!m_scrollLayoutTimer.isActive())
-            m_scrollLayoutTimer.start();
-    });
-
-    m_scrollLayoutTimer.setSingleShot(true);
-    m_scrollLayoutTimer.setInterval(8);
-    connect(&m_scrollLayoutTimer, &QTimer::timeout, this, [this]() {
         layoutCards();
     });
 
