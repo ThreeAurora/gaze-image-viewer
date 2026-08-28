@@ -277,9 +277,8 @@ void FileGrid::deleteFile(int index) {
     QFileInfo fi(path);
     QString dir = fi.isDir() ? fi.absoluteFilePath() : fi.absolutePath();
     if (deleteWithSettings({path}, this)) {
-        m_selected.remove(index);
         m_marked.remove(path);
-        loadDirectory(dir);
+        reloadAfterDelete({path});
     }
 }
 
