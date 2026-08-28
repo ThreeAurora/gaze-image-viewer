@@ -624,6 +624,7 @@ void PreviewPanel::loadFile(const QString& path) {
         m_imgLabel->hide();
         m_videoWidget->hide();
         m_audioLabel->hide();
+        m_textEdit->hide();
         m_controlBar->hide();
     }
 }
