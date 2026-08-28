@@ -746,6 +746,8 @@ void PreviewPanel::loadFile(const QString& path) {
     QFileInfo fi(path);
     if (!fi.exists()) { clear(); return; }
 
+    // 换文件(区别于窗口 resize 触发的 fitAuto):Viewer/resetAutoOnNav 靠它判断
+    m_navigating = true;
     m_filePath = path;
     m_livePhotoOriginalPath.clear();
     m_isLivePhoto = false;
