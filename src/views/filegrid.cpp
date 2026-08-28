@@ -12,6 +12,8 @@
 #include <set>
 #include <algorithm>
 #include <numeric>
+#include <algorithm>
+#include <numeric>
 #include <memory>
 
 #include <QDrag>
