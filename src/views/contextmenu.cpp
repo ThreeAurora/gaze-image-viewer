@@ -1,5 +1,4 @@
 #include "contextmenu.h"
-#include "filecard.h"
 #include "filegrid.h"
 #include "livephoto.h"
 #include "labelstore.h"
