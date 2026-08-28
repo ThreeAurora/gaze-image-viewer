@@ -178,6 +178,20 @@ private:
     void  ensureHotkeys();
     QString hotkeyAction(QKeyEvent* e) const;       // 键事件 → 动作名(未命中返回空)
 
+    // ── 查看器/全屏界面元素(全部由对应设置项控制显隐) ──
+    QScrollBar* m_hScroll   = nullptr;     // Viewer|Fullscreen/showScrollbar
+    QScrollBar* m_vScroll   = nullptr;
+    QLabel*     m_infoLabel = nullptr;     // Fullscreen/showInfo
+    QWidget*    m_floatBar  = nullptr;     // Fullscreen/showToolbar + floatView
+    QWidget*    m_panTool   = nullptr;     // Viewer/panTool
+    QLabel*     m_panThumb  = nullptr;
+    QWidget*    m_panView   = nullptr;     // 导航小窗里的视口指示框
+    bool  m_navigating   = false;          // Viewer/resetAutoOnNav:本次是切文件
+    bool  m_secondPass   = false;          // Viewer/twoPassRender 第二遍标记
+    QPixmap m_procPix;                     // gamma/sharpen 后处理结果
+    QString  m_procKey;                    // 缓存键 "<w>x<h>"
+    double m_procScale   = 0.0;            // 生成 m_procPix 时的缩放比
+
     // 相邻预读状态(上限 2 张:上一张+下一张;方向键切换零等待)
     QStringList m_preloadQueue;            // 待预载路径(下一张优先)
     QMap<QString, QImage> m_preloadCache;  // 预载结果
