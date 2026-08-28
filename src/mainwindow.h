@@ -142,6 +142,7 @@ private:
     QTimer      m_recentFlushTimer;  // 单发 500ms,超时统一写盘
     QString     m_currentFile;       // 当前预览文件(标题模板 {文件名…} 求值用)
     QString     m_currentDir;        // 当前目录规范形('/' 无尾斜杠);地址栏只负责显示
+    QString     m_currentDir;        // 当前目录规范形('/' 无尾斜杠);地址栏只负责显示
     QTimer      m_slideTimer;        // 快速幻灯片(Keyboard/space=快速幻灯片)
     bool        m_slideshow = false;
     QString     m_currentFile;       // 当前预览文件(标题模板 {文件名…} 求值用)
