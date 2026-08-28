@@ -2,6 +2,7 @@
 #include "livephoto.h"
 #include "wicdecode.h"
 #include "settings.h"
+#include "labelstore.h"
 #include "markdown.h"
 #include "pdfrender.h"
 #include "imgproc.h"
