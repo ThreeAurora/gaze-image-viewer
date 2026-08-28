@@ -9,7 +9,7 @@
 #include "fileentry.h"
 #include "sortheader.h"
 
-class FileCard;
+class FileCanvas;
 class SortHeader;
 
 // 筛选模式(查看菜单/工具栏)
