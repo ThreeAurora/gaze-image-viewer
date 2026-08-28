@@ -93,7 +93,7 @@ void Thumbnailer::snapshotPrefs() {
     // ── 设置→缩略图(处理) ──
     p.alpha     = st.get("Thumbs/alpha", true).toBool();
     p.transGrid = st.get("Thumbs/transparencyGrid", true).toBool();
-    p.sharpen   = st.get("Thumbs/sharpen", true).toBool();
+    p.sharpen   = st.get("Thumbs/sharpen", false).toBool();
     p.gamma     = st.get("Thumbs/gamma", false).toBool();
     // ── 设置→缓存数据库 ──
     p.useCatalog   = st.get("Cache/useCatalog", true).toBool();
