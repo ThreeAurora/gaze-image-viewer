@@ -187,6 +187,8 @@ private:
     QScrollBar* m_hScroll   = nullptr;     // Viewer|Fullscreen/showScrollbar
     QScrollBar* m_vScroll   = nullptr;
     QLabel*     m_infoLabel = nullptr;     // Fullscreen/showInfo
+    QString     m_infoFileKey;             // 信息条文件部分缓存键
+    QString     m_infoBase;                // 信息条"文件名 WxH 体积"缓存
     QWidget*    m_floatBar  = nullptr;     // Fullscreen/showToolbar + floatView
     QWidget*    m_panTool   = nullptr;     // Viewer/panTool
     QLabel*     m_panThumb  = nullptr;
