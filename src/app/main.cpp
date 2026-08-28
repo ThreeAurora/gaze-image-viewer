@@ -71,8 +71,8 @@ int main(int argc, char *argv[]) {
     app.setApplicationName("Gaze");
     app.setApplicationDisplayName("Gaze");
     app.setWindowIcon(QIcon(":/gaze.png"));
-    static YesNoKeyFilter s_yesNoFilter;
-    app.installEventFilter(&s_yesNoFilter);
+    static DialogKeyFilter s_dialogKeyFilter;
+    app.installEventFilter(&s_dialogKeyFilter);
 
     // 卡死/崩溃诊断:事件日志+看门狗+minidump(logger.h);3s 心跳证明 GUI 活着
     Logger::init();
