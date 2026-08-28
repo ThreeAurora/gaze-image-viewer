@@ -113,6 +113,7 @@ private:
     void updateFloatBar(const QPoint* cursor = nullptr); // Fullscreen/showToolbar + floatView
     void updatePanTool();                  // Viewer/panTool 平移导航小窗
     void updateSelectionHighlight();       // Viewer/highlightSelection
+    void updateRatingBadge();              // Viewer/showRating 颜色标记点
     double oneToOneScale() const;          // Viewer/hidpiPixel:1:1 的实际缩放
     double stepZoom(double cur, bool up) const;  // Viewer/zoomMode=0 的固定档位
     double pixelAspect() const;            // Viewer/pixelRatio 像素比
