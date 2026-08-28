@@ -274,8 +274,6 @@ void FileGrid::deleteFile(int index) {
     if (index < 0 || index >= static_cast<int>(m_entries.size())) return;
     QString path = m_entries[index].path;
     // 确认框/回收站由 FileOps/confirmDelete + FileOps/useRecycleBin 决定(与右键菜单同一入口)
-    QFileInfo fi(path);
-    QString dir = fi.isDir() ? fi.absoluteFilePath() : fi.absolutePath();
     if (deleteWithSettings({path}, this)) {
         m_marked.remove(path);
         reloadAfterDelete({path});
