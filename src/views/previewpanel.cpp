@@ -151,10 +151,19 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
           QString::fromUtf8("\xe4\xb8\x8a\xe4\xb8\x80\xe4\xb8\xaa\xe6\x96\x87\xe4\xbb\xb6")); // 上一个文件
     connect(m_btnPrev, &QPushButton::clicked, this, [this]() { emit navFile(-1); });
 
-    // 播放/暂停:点击槽在 setupPlayer(播放器只建一次,连接也只建一次)
+    // 播放/暂停:m_player 会被 teardownPlayer 销毁并重建,
+    // 若把 connect 放在 setupPlayer 里,每轮循环都会加一份,
+    // 一次点击 = N 次状态切换。故连接固定在构造函数建立,槽内以 m_player 判空。
     m_btnPlay = new QPushButton;
     mkBtn(m_btnPlay, QStyle::SP_MediaPlay, 32,
           QString::fromUtf8("\xe6\x92\xad\xe6\x94\xbe/\xe6\x9a\x82\xe5\x81\x9c")); // 播放/暂停
+    connect(m_btnPlay, &QPushButton::clicked, this, [this]() {
+        if (!m_player) return;
+        if (m_player->playbackState() == QMediaPlayer::PlayingState)
+            m_player->pause();
+        else
+            m_player->play();
+    });
 
     m_btnStop = new QPushButton;
     mkBtn(m_btnStop, QStyle::SP_MediaStop, 30,
