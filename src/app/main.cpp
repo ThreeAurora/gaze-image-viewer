@@ -135,7 +135,7 @@ int main(int argc, char *argv[]) {
         // 这里把诊断输出直接落到 selftest.log。临时诊断,查完删除。
         static QFile slog(QCoreApplication::applicationDirPath() + "/selftest.log");
         slog.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text);
-        qInstallMessageHandler([](QtMessageHandler::Severity, const QMessageLogContext&,
+        qInstallMessageHandler([](QtMsgType, const QMessageLogContext&,
                                   const QString& msg) {
             slog.write(QDateTime::currentDateTime().toString("HH:mm:ss.zzz ").toUtf8());
             slog.write(msg.toUtf8());
