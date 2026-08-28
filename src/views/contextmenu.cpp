@@ -95,9 +95,7 @@ static bool rotateJpegOrientationOnly(const QString& path, int quarterCW) {
         if (big) return (u16(at) << 16) | u16(at + 2);
         return (u16(at + 2) << 16) | u16(at);
     };
-    if (u16(tiff) != 0x002A && u16(tiff) != 0x2A00) {
-        // 字节序判定:II 下 42 存为 2A 00,MM 下为 00 2A
-    }
+    if (u16(tiff) != 42) return false;   // TIFF 魔数(两种字节序下都读成 42)
     const int ifd0 = tiff + u32(tiff + 4);
     if (ifd0 + 2 > d.size()) return false;
     const int count = u16(ifd0);
