@@ -14,6 +14,7 @@
 #define C_TOOLBAR_BG    "#1B1B1F"
 #define C_STATUSBAR_BG  "#17171A"
 #define C_ACCENT        "#3B82F6"   // 强调蓝:选中/焦点/进度
+#define C_ACCENT_DOWN   "#2F6FE0"   // 主按钮悬停/按下(比 C_ACCENT 暗一档)
 #define C_SELECT_BLUE   "#3B82F6"
 #define C_SELECT_YELLOW "#E8B339"
 #define C_SEPARATOR     "#2A2A2E"
