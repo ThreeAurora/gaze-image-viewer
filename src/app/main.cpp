@@ -1,6 +1,9 @@
 #include <QApplication>
 #include <QIcon>
 #include <QFileInfo>
+#include <QFile>
+#include <QDateTime>
+#include <QDebug>
 #include <QDir>
 #include <QLocalServer>
 #include <QLocalSocket>
