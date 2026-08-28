@@ -9,6 +9,7 @@
 #include "exifdate.h"
 #include "perflog.h"
 #include "logger.h"
+#include "logger.h"
 
 #include <set>
 #include <algorithm>
