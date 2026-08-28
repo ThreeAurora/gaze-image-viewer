@@ -12,6 +12,7 @@
 #include <QMetaObject>
 #include <QCursor>
 #include <QPointer>
+#include <QPointer>
 
 ImageSearchDialog::ImageSearchDialog(QWidget* parent) : QDialog(parent) {
     setWindowTitle(QString::fromUtf8("以文搜图 - 万象图搜"));
