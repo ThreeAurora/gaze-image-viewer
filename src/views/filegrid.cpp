@@ -260,10 +260,13 @@ void FileGrid::loadDirectory(const QString& dirPath) {
 
     // 清除缩略图缓存
     m_thumbCache.clear();
-    recycleCards();
+    m_thumbOrder.clear();
+    m_fitCache.clear();
+    m_hoverIdx = -1;
 
     m_loading = false;
-    layoutCards();
+    updateLayout();
+    requestVisibleThumbs();
 
     emit fileCountChanged();
     if (!m_entries.empty()) {
