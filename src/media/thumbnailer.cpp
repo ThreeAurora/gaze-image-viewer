@@ -109,6 +109,236 @@ Thumbnailer::Prefs Thumbnailer::prefs() const {
 }
 
 // ═══════════════════════════════════════════
+// 缩略图后处理(设置→缩略图→处理)
+//   Thumbs/alpha         关 → 压平为不透明(背景=透明网格或纯色)
+//   Thumbs/transparencyGrid 开 → 透明处画 8px 棋盘格(结果同样不透明)
+//   Thumbs/sharpen       开 → 3x3 轻度锐化(仅对缩略图尺寸,开销可忽略)
+// ═══════════════════════════════════════════
+static QImage checkerBg(int w, int h) {
+    QImage bg(w, h, QImage::Format_RGB32);
+    const int cell = 8;
+    for (int y = 0; y < h; ++y) {
+        for (int x = 0; x < w; ++x) {
+            const bool odd = ((x / cell) + (y / cell)) & 1;
+            bg.setPixel(x, y, odd ? 0xFF3A3A40 : 0xFF26262B);
+        }
+    }
+    return bg;
+}
+
+static QImage sharpenImage(const QImage& src) {
+    // 核 [0 -0.5 0; -0.5 3 -0.5; 0 -0.5 0](和为 1,亮度守恒)
+    QImage s = src.convertToFormat(QImage::Format_ARGB32);
+    QImage dst(s.size(), QImage::Format_ARGB32);
+    const int w = s.width(), h = s.height();
+    const double k[3][3] = {{0, -0.5, 0}, {-0.5, 3.0, -0.5}, {0, -0.5, 0}};
+    for (int y = 0; y < h; ++y) {
+        for (int x = 0; x < w; ++x) {
+            double r = 0, g = 0, b = 0, a = 0;
+            for (int dy = -1; dy <= 1; ++dy) {
+                const int yy = qBound(0, y + dy, h - 1);
+                for (int dx = -1; dx <= 1; ++dx) {
+                    const int xx = qBound(0, x + dx, w - 1);
+                    const QRgb px = s.pixel(xx, yy);
+                    const double kv = k[dy + 1][dx + 1];
+                    r += qRed(px)   * kv;
+                    g += qGreen(px) * kv;
+                    b += qBlue(px)  * kv;
+                    a += qAlpha(px) * kv;
+                }
+            }
+            const auto cl = [](double v) { return static_cast<int>(qBound(0.0, v, 255.0)); };
+            dst.setPixel(x, y, qRgba(cl(r), cl(g), cl(b), cl(a)));
+        }
+    }
+    return dst;
+}
+
+// 线性光降采样(Thumbs/gamma):先 sRGB→linear 再盒式平均,最后 linear→sRGB。
+// 直接在 gamma 空间做平均会让亮部偏暗/暗部偏亮(经典降采样失真)
+static QImage linearDownscale(const QImage& src, const QSize& dst) {
+    static double s2l[256], l2s[1024];
+    static bool built = false;
+    if (!built) {
+        for (int i = 0; i < 256; ++i) {
+            const double c = i / 255.0;
+            s2l[i] = c <= 0.04045 ? c / 12.92 : std::pow((c + 0.055) / 1.055, 2.4);
+        }
+        for (int i = 0; i < 1024; ++i) {
+            const double c = i / 1023.0;
+            l2s[i] = c <= 0.0031308 ? c * 12.92 : 1.055 * std::pow(c, 1.0 / 2.4) - 0.055;
+        }
+        built = true;
+    }
+    const QImage s = src.convertToFormat(QImage::Format_ARGB32);
+    QImage out(dst, QImage::Format_ARGB32);
+    if (out.isNull()) return src.scaled(dst, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    const double rx = double(s.width())  / dst.width();
+    const double ry = double(s.height()) / dst.height();
+    for (int y = 0; y < dst.height(); ++y) {
+        for (int x = 0; x < dst.width(); ++x) {
+            const int x0 = int(x * rx), x1 = qMin(s.width(),  int((x + 1) * rx));
+            const int y0 = int(y * ry), y1 = qMin(s.height(), int((y + 1) * ry));
+            double lr = 0, lg = 0, lb = 0, la = 0;
+            int n = 0;
+            for (int yy = y0; yy < y1; ++yy) {
+                for (int xx = x0; xx < x1; ++xx) {
+                    const QRgb px = s.pixel(xx, yy);
+                    const double av = qAlpha(px) / 255.0;
+                    lr += s2l[qRed(px)]   * av;
+                    lg += s2l[qGreen(px)] * av;
+                    lb += s2l[qBlue(px)]  * av;
+                    la += av;
+                    ++n;
+                }
+            }
+            if (n == 0 || la <= 0) { out.setPixel(x, y, 0); continue; }
+            const auto enc = [](double lin) {
+                const int idx = qBound(0, int(lin * 1023.0 + 0.5), 1023);
+                return qBound(0, int(l2s[idx] * 255.0 + 0.5), 255);
+            };
+            out.setPixel(x, y, qRgba(enc(lr / la), enc(lg / la), enc(lb / la),
+                                     qBound(0, int(la / n * 255.0 + 0.5), 255)));
+        }
+    }
+    return out;
+}
+
+QImage Thumbnailer::postProcess(QImage img, int size) const {
+    if (img.isNull()) return img;
+    const Prefs p = prefs();
+
+    // 尺寸包围盒(Cache/thumbWidth × Cache/thumbHeight):只裁不扩,
+    // 默认 465x365 大于任何卡片缩略图,故默认情况下行为与设置前完全一致
+    const int cap = qMin(p.thumbW, p.thumbH);
+    if (cap > 0 && (img.width() > cap || img.height() > cap))
+        img = img.scaled(cap, cap, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    Q_UNUSED(size);
+
+    // Thumbs/gamma:线性光降采样(已在 imageThumb 内按此开关处理,这里只兜底裁剪)
+    // ── 透明处理 ──
+    const bool hasAlpha = img.hasAlphaChannel();
+    if (hasAlpha && !p.alpha) {
+        QImage flat(img.size(), QImage::Format_RGB32);
+        flat.fill(p.transGrid ? 0xFF000000 : 0xFF2A2A2E);
+        if (p.transGrid) {
+            QImage bg = checkerBg(img.width(), img.height());
+            QPainter pt(&flat);
+            pt.drawImage(0, 0, bg);
+            pt.drawImage(0, 0, img);
+            pt.end();
+        } else {
+            QPainter pt(&flat);
+            pt.drawImage(0, 0, img);
+            pt.end();
+        }
+        img = flat;
+    } else if (hasAlpha && p.transGrid) {
+        QImage flat = checkerBg(img.width(), img.height());
+        QPainter pt(&flat);
+        pt.drawImage(0, 0, img);
+        pt.end();
+        img = flat;
+    }
+
+    // Thumbs/sharpen
+    if (p.sharpen) img = sharpenImage(img);
+    return img;
+}
+
+// ═══════════════════════════════════════════
+// 文件夹缩略图(Thumbs/folder4)
+//   开 → 2x2 拼前 4 张图;关 → 只取第一张做封面
+//   目录内无可用图片则返回空(交由调用方显示系统文件夹图标)
+// ═══════════════════════════════════════════
+QImage Thumbnailer::folderThumb(const QString& dirPath, int size) {
+    const Prefs p = prefs();
+    QDir d(dirPath);
+    if (!d.exists()) return {};
+    const auto list = d.entryInfoList(QDir::Files | QDir::NoDotAndDotDot, QDir::Name);
+    QStringList picked;
+    const int want = p.folder4 ? 4 : 1;
+    for (const QFileInfo& fi : list) {
+        const QString ext = "." + fi.suffix().toLower();
+        if (IMAGE_EXTS.count(ext) || VIDEO_EXTS.count(ext)) picked << fi.absoluteFilePath();
+        if (picked.size() >= want) break;
+    }
+    if (picked.isEmpty()) return {};
+
+    if (!p.folder4) return postProcess(imageThumb(picked.first(), size), size);
+
+    // 2x2 拼图:每格留 2px 间隙,格内等比裁切居中(与系统文件夹缩略图观感一致)
+    const int gap = 2;
+    const int cell = (size - gap) / 2;
+    QImage sheet(size, size, QImage::Format_RGB32);
+    sheet.fill(0xFF1E1E22);
+    QPainter pt(&sheet);
+    for (int i = 0; i < picked.size() && i < 4; ++i) {
+        QImage t = imageThumb(picked[i], cell);
+        if (t.isNull()) t = windowsShellThumb(picked[i], cell);
+        if (t.isNull()) continue;
+        t = t.scaled(cell, cell, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
+        const int ox = (i % 2) * (cell + gap);
+        const int oy = (i / 2) * (cell + gap);
+        pt.drawImage(ox, oy, t.copy(0, 0, qMin(cell, t.width()), qMin(cell, t.height())));
+    }
+    pt.end();
+    return postProcess(sheet, size);
+}
+
+// ═══════════════════════════════════════════
+// 视频四帧拼图(Thumbs/video4)
+//   从 Thumbs/videoFramePct 指定的位置起,在剩余时长内均匀取 4 帧
+// ═══════════════════════════════════════════
+QImage Thumbnailer::videoContactSheet(const QString& filePath, int size) {
+    const int start = prefs().framePct;
+    const int gap = 2;
+    const int cell = (size - gap) / 2;
+    QImage sheet(size, size, QImage::Format_RGB32);
+    sheet.fill(0xFF000000);
+    QPainter pt(&sheet);
+    int drawn = 0;
+    for (int i = 0; i < 4; ++i) {
+        const int pct = start + (100 - start) * i / 4;
+        QImage f = videoThumbFFmpegAt(filePath, cell, pct);
+        if (f.isNull()) continue;
+        f = f.scaled(cell, cell, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
+        const int ox = (i % 2) * (cell + gap);
+        const int oy = (i / 2) * (cell + gap);
+        pt.drawImage(ox, oy, f.copy(0, 0, qMin(cell, f.width()), qMin(cell, f.height())));
+        ++drawn;
+    }
+    pt.end();
+    return drawn ? postProcess(sheet, size) : QImage();
+}
+
+// 缓存完整性校验(Cache/checkOnStartup):逐条尝试解码,读不出来的条目删除。
+// 大库可能上千条,故只在后台线程跑一次,不阻塞启动
+void Thumbnailer::verifyCache() {
+    const Prefs p = prefs();
+    if (!p.useCatalog || !p.inDb) return;
+    QThreadPool::globalInstance()->start([p]() {
+        QSqlDatabase db = threadDb(p.dbCacheMB);
+        if (!db.isOpen()) return;
+        QStringList bad;
+        QSqlQuery q(db);
+        if (q.exec("SELECT key, png FROM thumbs")) {
+            while (q.next()) {
+                const QByteArray blob = q.value(1).toByteArray();
+                if (blob.isEmpty() || QImage::fromData(blob).isNull())
+                    bad << q.value(0).toString();
+            }
+        }
+        if (bad.isEmpty()) return;
+        db.transaction();
+        QSqlQuery del(db);
+        del.prepare("DELETE FROM thumbs WHERE key = ?");
+        for (const QString& k : bad) { del.addBindValue(k); del.exec(); }
+        db.commit();
+    });
+}
+
+// ═══════════════════════════════════════════
 // 公开接口
 // ═══════════════════════════════════════════
 void Thumbnailer::enqueue(const QString& filePath, int size, bool isVideo) {
