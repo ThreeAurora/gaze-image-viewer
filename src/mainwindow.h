@@ -49,7 +49,6 @@ public:
     void selftestFastScroll();              // 临时诊断:快速拖动滚动条 + 几何自检,查完删
 
 
-
 protected:
     bool eventFilter(QObject *obj, QEvent *event) override;
     void closeEvent(QCloseEvent *event) override;
