@@ -251,7 +251,7 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     };
     m_hScroll = mkScroll(Qt::Horizontal);
     m_vScroll = mkScroll(Qt::Vertical);
-    auto scrollTo = [this](int, int) {
+    auto scrollTo = [this](int) {
         if (m_mode != "image") return;
         m_imgLabel->move(clampedLabelPos(
             QPoint(m_hScroll->isVisible() ? -m_hScroll->value() : m_imgLabel->x(),
