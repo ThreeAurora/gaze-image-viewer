@@ -126,6 +126,8 @@ public:
     // 各模式缩略图框以外的固定高度(文件名/详细行/内边距),boxesFor 与 cardH 共用
     static int chromeFor(int mode, int labelGap);
     int  colorLabelOf(const QString& path) const;   // 标题模板 {颜色标签}
+    // 一次性落点:下次 loadDirectory 完成后选中该路径(创建副本后选中新文件用)
+    void setPreferPath(const QString& p) { m_preferPath = p; }
     int  colorLabelOf(const QString& path) const;   // 标题模板 {颜色标签}
 
 signals:
