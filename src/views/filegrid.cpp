@@ -74,9 +74,10 @@ FileGrid::FileGrid(QWidget* parent) : QScrollArea(parent) {
     });
 
     // 滚动中:同一轮事件循环内的多次 valueChanged 合并成一次可见区请求。
-    // 注意是 0ms(合并)而不是防抖等待——等就是拖尾。
+    // Browser/thumbScrollPreview(默认开)= 0ms 合并,滚动过程中缩略图就陆续出现;
+    // 关掉则等滚动停止 120ms 再补(滚动中只画占位图标,快速掠过大目录更跟手)。
     m_scrollCoalesce.setSingleShot(true);
-    m_scrollCoalesce.setInterval(0);
+    m_scrollCoalesce.setInterval(m_scrollPreview ? 0 : 120);
     connect(&m_scrollCoalesce, &QTimer::timeout, this, [this]() {
         requestVisibleThumbs();
     });
