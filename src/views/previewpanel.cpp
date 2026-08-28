@@ -568,17 +568,45 @@ void PreviewPanel::updatePanTool() {
                                                 Qt::SmoothTransformation));
         m_panKey = m_filePath;
     }
-    const double k = double(m_origPix->width()) / m_imgLabel->width();
-    const int vw = int(width() * k), vh = int(height() * k);
-    m_panView->setGeometry(1 + qMax(0, -m_imgLabel->x()) * boxW / m_imgLabel->width(),
-                           1 + qMax(0, -m_imgLabel->y()) * boxH / m_imgLabel->height(),
-                           qMin(boxW, vw * boxW / m_imgLabel->width()),
-                           qMin(boxH, vh * boxH / m_imgLabel->height()));
+    // 蓝框=视口在整图中的位置。几何必须与拖动映射(panNavTo)完全一致:
+    // 都基于缩略图 pixmap 的实际摆放(KeepAspectRatio 居中,可能留边),
+    // 否则拖动时蓝框不落在指尖下。旧实现按整个 box 映射,留边时框会偏
+    const QPixmap tp = m_panThumb->pixmap();
+    if (!tp.isNull()) {
+        const int ox = (m_panThumb->width() - tp.width()) / 2;
+        const int oy = (m_panThumb->height() - tp.height()) / 2;
+        const double sx = double(m_imgLabel->width()) / m_origPix->width();
+        const double sy = double(m_imgLabel->height()) / m_origPix->height();
+        const double vx0 = qMax(0.0, -double(m_imgLabel->x())) / sx;   // 视口左缘的图像 x
+        const double vy0 = qMax(0.0, -double(m_imgLabel->y())) / sy;
+        const double rw = qMin<double>(1.0, width()  / sx / m_origPix->width())  * tp.width();
+        const double rh = qMin<double>(1.0, height() / sy / m_origPix->height()) * tp.height();
+        m_panView->setGeometry(ox + int(vx0 / m_origPix->width() * tp.width()),
+                               oy + int(vy0 / m_origPix->height() * tp.height()),
+                               qMax(4, int(rw)), qMax(4, int(rh)));
+    }
     m_panView->show();
     m_panView->raise();
     m_panTool->move(width() - m_panTool->width() - 12, height() - m_panTool->height() - 12);
     m_panTool->raise();
     m_panTool->show();
+}
+
+// 导航小窗拖动:指尖下的缩略图点 → 映射回整图坐标 → 让视口中心对准它。
+// 按住蓝框(或缩略图任意处)拖动,蓝框始终跟指尖走,可快速甩到图片任意角落
+void PreviewPanel::panNavTo(const QPoint& thumbPos) {
+    const QPixmap tp = m_panThumb->pixmap();
+    if (!m_origPix || tp.isNull()) return;
+    const int ox = (m_panThumb->width() - tp.width()) / 2;
+    const int oy = (m_panThumb->height() - tp.height()) / 2;
+    const double nx = qBound(0.0, double(thumbPos.x() - ox) / tp.width(), 1.0);
+    const double ny = qBound(0.0, double(thumbPos.y() - oy) / tp.height(), 1.0);
+    // label.x + nx*labelW = 视口中线  →  label.x = 中线 - nx*labelW
+    const QPoint pos(width() / 2 - int(nx * m_imgLabel->width()),
+                     height() / 2 - int(ny * m_imgLabel->height()));
+    m_imgLabel->move(clampedLabelPos(pos));
+    updateOverlayScrollbars();
+    updatePanTool();
 }
 
 // Viewer/highlightSelection:查看器里给当前图片加一层强调框(选中高亮)
