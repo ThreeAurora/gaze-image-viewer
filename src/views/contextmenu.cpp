@@ -24,6 +24,7 @@
 #include <QStandardPaths>
 #include <QImageWriter>
 #include <QImageWriter>
+#include <QImageWriter>
 
 #include <windows.h>
 #include <shellapi.h>
