@@ -571,13 +571,27 @@ void PreviewPanel::updatePanTool() {
 }
 
 // Viewer/highlightSelection:查看器里给当前图片加一层强调框(选中高亮)
+// setStyleSheet 会触发样式重算,而本函数在 resize/切文件时都会被调,
+// 所以按最终形态缓存,值没变就一个字节都不碰控件
 void PreviewPanel::updateSelectionHighlight() {
-    const bool on = s_bool("Viewer/highlightSelection", true) && m_mode == "image";
-    m_imgLabel->setStyleSheet(on && !s_bool("Viewer/showBorder", false)
-        ? QStringLiteral("QLabel{background:transparent;border:1px solid #4C9AF5;}")
-        : (s_bool("Viewer/showBorder", false)
-            ? QStringLiteral("QLabel{border:1px solid #FFFFFF;background:transparent;}")
-            : QStringLiteral("QLabel{background:transparent;}")));
+    const bool hl     = s_bool("Viewer/highlightSelection", true) && m_mode == "image";
+    const bool border = s_bool("Viewer/showBorder", false);
+    const int  want   = border ? 2 : (hl ? 1 : 0);
+    if (want == m_labelStyleState) return;
+    m_labelStyleState = want;
+    switch (want) {
+    case 1:
+        m_imgLabel->setStyleSheet(
+            QStringLiteral("QLabel{background:transparent;border:1px solid #4C9AF5;}"));
+        break;
+    case 2:
+        m_imgLabel->setStyleSheet(
+            QStringLiteral("QLabel{border:1px solid #FFFFFF;background:transparent;}"));
+        break;
+    default:
+        m_imgLabel->setStyleSheet(QStringLiteral("QLabel{background:transparent;}"));
+        break;
+    }
 }
 
 // Viewer/pixelRatio:非正方形像素的显示宽高比
