@@ -150,6 +150,27 @@ void FileGrid::refreshCurrentDir() {
     if (!m_currentDir.isEmpty()) loadDirectory(m_currentDir);
 }
 
+// 删除后重载:落点 = 被删块的后一项,已在末尾则前一项(对齐 XnView)
+// 落点必须在重载前的 m_entries 上算 — 重载后索引含义已变
+void FileGrid::reloadAfterDelete(const QStringList& deleted) {
+    int first = -1, last = -1;
+    for (int i = 0; i < static_cast<int>(m_entries.size()); ++i) {
+        if (!deleted.contains(m_entries[i].path)) continue;
+        if (first < 0) first = i;
+        last = i;
+    }
+    if (last >= 0) {
+        if (last + 1 < static_cast<int>(m_entries.size()))
+            m_preferPath = m_entries[last + 1].path;
+        else if (first > 0)
+            m_preferPath = m_entries[first - 1].path;
+    }
+    const QString dir = m_currentDir;
+    if (dir.isEmpty()) { m_preferPath.clear(); return; }
+    loadDirectory(dir);
+    m_preferPath.clear();   // 重载被中止时不让落点串到下次导航
+}
+
 // ═══════════════════════════════════════════
 // 目录加载
 // ═══════════════════════════════════════════
