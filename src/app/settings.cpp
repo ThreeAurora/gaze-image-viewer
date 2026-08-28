@@ -38,6 +38,20 @@ AppSettings::AppSettings()
     : m_settings(resolveIniPath(), QSettings::IniFormat)
 {}
 
+// Integration/* 是"配置文件在哪"的引导键:它们必须同时存在于 exe 目录的
+// 便携 ini 里,否则下次启动 resolveIniPath() 读不到,搬家会静默失效。
+// 主配置被搬到别处时,这三个键的每次写入都同步镜像回引导文件
+void AppSettings::set(const QString& key, const QVariant& v) {
+    m_settings.setValue(key, v);
+    const QString boot = QCoreApplication::applicationDirPath() + "/gaze.ini";
+    if (key.startsWith(QStringLiteral("Integration/"))
+        && m_settings.fileName() != boot) {
+        QSettings b(boot, QSettings::IniFormat);
+        b.setValue(key, v);
+    }
+    emit changed();
+}
+
 bool AppSettings::livePhotoAutoPlay() const {
     return m_settings.value("livephoto/autoplay", true).toBool();
 }
