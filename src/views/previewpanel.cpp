@@ -600,9 +600,19 @@ double PreviewPanel::stepZoom(double cur, bool up) const {
 
 // Viewer/hidpiPixel:1:1 语义(默认关 = 1 图像像素 : 1 逻辑像素,与改造前一致)
 double PreviewPanel::oneToOneScale() const {
-    if (!s_bool("Viewer/hidpiPixel", false)) return 1.0;
-    const double dpr = devicePixelRatioF();
-    return dpr > 0.01 ? 1.0 / dpr : 1.0;
+    double s = 1.0;
+    if (s_bool("Viewer/hidpiPixel", false)) {
+        const double dpr = devicePixelRatioF();
+        s = dpr > 0.01 ? 1.0 / dpr : 1.0;
+    }
+    // General/exifDpi:按 EXIF/JFIF 标称 DPI 还原物理尺寸(300dpi 的图 1:1 时
+    // 按 300/96 ≈ 3.13 倍显示)。dpiAdjust 关时 X/Y 不等也统一用 X,保住长宽比
+    if (s_bool("General/exifDpi", true) && (m_dpiX > 0 || m_dpiY > 0)) {
+        const double dx = m_dpiX > 0 ? m_dpiX : 96.0;
+        const double dy = (s_bool("General/dpiAdjust", true) && m_dpiY > 0) ? m_dpiY : dx;
+        s *= (dx + dy) / 2.0 / 96.0;
+    }
+    return s;
 }
 
 // Viewer/autoFit 取值语义:
