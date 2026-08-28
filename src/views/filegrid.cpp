@@ -47,19 +47,17 @@ FileGrid::FileGrid(QWidget* parent) : QScrollArea(parent) {
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
     setWidgetResizable(false);
 
-    m_canvas = new QWidget;
+    m_canvas = new FileCanvas(this);
     m_canvas->setStyleSheet("background:" C_CONTENT ";");
     setWidget(m_canvas);
 
     connect(verticalScrollBar(), &QScrollBar::valueChanged,
             this, [this]() {
-        // 滚动中(滚轮/拖动滚动条):推迟缩略图解码防洪流卡顿;
-        // 停止 120ms 后由 m_scrollTimer 批量补齐。
-        // layoutCards 同步跑(文件必须始终可见,不能延迟创建导致空白);
-        // 真正的卡顿源是建卡时的逐条目读盘,已改用 FileEntry 缓存字段消除。
+        // 自绘模式下滚动不产生任何控件级工作:画布移动 + Qt 自动曝光重绘。
+        // 这里只做一件事——把缩略图解码推迟到滚动停下后批量提交,
+        // 避免快速拖动时按帧发起上千个解码任务把线程池打满。
         m_scrollSettled = false;
         m_scrollTimer.start();
-        layoutCards();
     });
 
     connect(&Thumbnailer::instance(), &Thumbnailer::thumbnailReady,
