@@ -21,6 +21,8 @@
 #include <QAbstractButton>
 #include <QDialog>
 #include <QAbstractButton>
+#include <QDialog>
+#include <QAbstractButton>
 #include <QFileInfo>
 #include <QDir>
 #include <QStandardPaths>
