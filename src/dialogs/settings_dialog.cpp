@@ -569,7 +569,7 @@ QWidget* SettingsDialog::pageThumbs() {
     fProc->setVerticalSpacing(10);
     fProc->addRow(chk("Thumbs/alpha", QString::fromUtf8("使用alpha通道"), true));
     fProc->addRow(chk("Thumbs/transparencyGrid", QString::fromUtf8("使用透明网格"), true));
-    fProc->addRow(chk("Thumbs/sharpen", QString::fromUtf8("锐化缩略图"), true));
+    fProc->addRow(chk("Thumbs/sharpen", QString::fromUtf8("锐化缩略图"), false));
     fProc->addRow(chk("Thumbs/gamma", QString::fromUtf8("使用 Gamma 纠正"), false));
     root->addWidget(group(QString::fromUtf8("处理"), fProc));
     return wrapTitled(QString::fromUtf8("缩略图"), root);
