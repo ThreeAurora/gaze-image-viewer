@@ -36,6 +36,8 @@ public:
     void setVideoAutoPlay(bool on);
 
     QString iniPath() const;
+    // ini 所在目录:缩略图库等随配置文件一起走(默认同为 exe 目录)
+    QString dataDir() const;
 
 signals:
     void changed();
