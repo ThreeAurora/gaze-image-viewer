@@ -95,9 +95,6 @@ private:
     // 后处理(设置→缩略图→处理):alpha/透明网格/锐化/gamma 统一出口
     QImage postProcess(QImage img, int size) const;
 
-    // 缓存完整性校验(Cache/checkOnStartup):丢掉读不出来的坏条目
-    void verifyCache();
-
     // ── 缓存 ──
     QString cacheKey(const QString& filePath, int size) const;
     bool    cacheLookup(const QString& key, double mtime, QImage& out);
