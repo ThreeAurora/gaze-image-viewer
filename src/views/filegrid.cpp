@@ -33,6 +33,7 @@
 #include <QFile>
 #include <QCoreApplication>
 #include <QThreadPool>
+#include <QThreadPool>
 #include <QMessageBox>
 #include <QInputDialog>
 #include <QLineEdit>
