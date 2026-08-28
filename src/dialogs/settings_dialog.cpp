@@ -111,6 +111,9 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent) {
     bottom->addStretch();
     auto* okBtn = new QPushButton(QString::fromUtf8("确定"));
     okBtn->setObjectName("okBtn");
+    // 显式默认:Enter=确定;对话框空格过滤器的候选也按 default 优先
+    // (不设的话 autoDefault 会先命中创建更早的"恢复默认")
+    okBtn->setDefault(true);
     okBtn->setStyleSheet(btnQss);
     auto* cancelBtn = new QPushButton(QString::fromUtf8("取消"));
     cancelBtn->setStyleSheet(btnQss);
