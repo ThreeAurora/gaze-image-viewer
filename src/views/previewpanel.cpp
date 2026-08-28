@@ -420,6 +420,143 @@ void PreviewPanel::setViewerMode(bool on) {
     if (m_viewerMode == on) return;
     m_viewerMode = on;
     applyBackdrop();
+    applyViewerChrome();
+}
+
+// ═══════════════════════════════════════════
+// 设置活接线:查看器/全屏界面元素
+// ═══════════════════════════════════════════
+void PreviewPanel::applyViewerChrome() {
+    updateOverlayScrollbars();
+    updateInfoBar();
+    updateFloatBar();
+    updatePanTool();
+    updateSelectionHighlight();
+}
+
+// Viewer|Fullscreen/showScrollbar:图比视口大时才出现,位置贴边浮在图上
+void PreviewPanel::updateOverlayScrollbars() {
+    const bool on = m_mode == "image" && m_origPix
+                    && s_bool(modeKey("showScrollbar"), false);
+    if (!on) {
+        m_hScroll->hide();
+        m_vScroll->hide();
+        return;
+    }
+    const int iw = m_imgLabel->width(), ih = m_imgLabel->height();
+    const int bw = width(), bh = height();
+    const bool needH = iw > bw, needV = ih > bh;
+    const int thick = 10;
+    if (needH) {
+        m_hScroll->setGeometry(0, bh - thick, bw - (needV ? thick : 0), thick);
+        m_hScroll->setRange(0, iw - bw);
+        m_hScroll->setPageStep(bw);
+        m_hScroll->setSingleStep(24);
+        m_hScroll->setValue(qBound(0, -m_imgLabel->x(), iw - bw));
+        m_hScroll->show();
+    } else m_hScroll->hide();
+    if (needV) {
+        m_vScroll->setGeometry(bw - thick, 0, thick, bh - (needH ? thick : 0));
+        m_vScroll->setRange(0, ih - bh);
+        m_vScroll->setPageStep(bh);
+        m_vScroll->setSingleStep(24);
+        m_vScroll->setValue(qBound(0, -m_imgLabel->y(), ih - bh));
+        m_vScroll->show();
+    } else m_vScroll->hide();
+}
+
+// Fullscreen/showInfo:全屏时左上角显示文件名/尺寸/缩放
+void PreviewPanel::updateInfoBar() {
+    const bool on = inFullscreen() && s_bool("Fullscreen/showInfo", true)
+                    && !m_filePath.isEmpty();
+    if (!on) { m_infoLabel->hide(); return; }
+    QFileInfo fi(m_filePath);
+    QString dim;
+    if (m_origPix) dim = QString("  %1x%2").arg(m_origPix->width()).arg(m_origPix->height());
+    m_infoLabel->setText(QString::fromUtf8("%1%2  %3  %4%")
+        .arg(fi.fileName(), dim, formatSize(fi.size()))
+        .arg(int(m_scale * 100)));
+    m_infoLabel->adjustSize();
+    m_infoLabel->move(12, 12);
+    m_infoLabel->raise();
+    m_infoLabel->show();
+}
+
+// Fullscreen/showToolbar(常显) + Fullscreen/floatView(鼠标移到顶侧/右侧才浮现)
+void PreviewPanel::updateFloatBar(const QPoint* cursor) {
+    if (!inFullscreen()) { m_floatBar->hide(); return; }
+    const bool always = s_bool("Fullscreen/showToolbar", false);
+    const bool floating = s_bool("Fullscreen/floatView", true);
+    bool show = always;
+    if (!show && floating && cursor) {
+        const int edge = 48;
+        show = cursor->y() <= edge || cursor->x() >= width() - edge;
+    }
+    if (!show) { m_floatBar->hide(); return; }
+    m_floatBar->adjustSize();
+    m_floatBar->move((width() - m_floatBar->width()) / 2, 10);
+    m_floatBar->raise();
+    m_floatBar->show();
+}
+
+// Viewer/panTool:右下角导航小窗(缩略图 + 当前视口框)。仅图溢出视口时出现
+void PreviewPanel::updatePanTool() {
+    const bool on = s_bool("Viewer/panTool", true) && m_mode == "image" && m_origPix
+                    && (m_imgLabel->width() > width() || m_imgLabel->height() > height());
+    if (!on) { m_panTool->hide(); return; }
+
+    const int boxW = m_panThumb->width() - 4, boxH = m_panThumb->height() - 4;
+    if (m_panThumb->pixmap() && m_panKey != m_filePath) m_panThumb->setPixmap(QPixmap());
+    if (m_panKey != m_filePath) {
+        m_panThumb->setPixmap(m_origPix->scaled(boxW, boxH, Qt::KeepAspectRatio,
+                                                Qt::SmoothTransformation));
+        m_panKey = m_filePath;
+    }
+    const double k = double(m_origPix->width()) / m_imgLabel->width();
+    const int vw = int(width() * k), vh = int(height() * k);
+    m_panView->setGeometry(1 + qMax(0, -m_imgLabel->x()) * boxW / m_imgLabel->width(),
+                           1 + qMax(0, -m_imgLabel->y()) * boxH / m_imgLabel->height(),
+                           qMin(boxW, vw * boxW / m_imgLabel->width()),
+                           qMin(boxH, vh * boxH / m_imgLabel->height()));
+    m_panView->show();
+    m_panView->raise();
+    m_panTool->move(width() - m_panTool->width() - 12, height() - m_panTool->height() - 12);
+    m_panTool->raise();
+    m_panTool->show();
+}
+
+// Viewer/highlightSelection:查看器里给当前图片加一层强调框(选中高亮)
+void PreviewPanel::updateSelectionHighlight() {
+    const bool on = s_bool("Viewer/highlightSelection", true) && m_mode == "image";
+    m_imgLabel->setStyleSheet(on && !s_bool("Viewer/showBorder", false)
+        ? QStringLiteral("QLabel{background:transparent;border:1px solid #4C9AF5;}")
+        : (s_bool("Viewer/showBorder", false)
+            ? QStringLiteral("QLabel{border:1px solid #FFFFFF;background:transparent;}")
+            : QStringLiteral("QLabel{background:transparent;}")));
+}
+
+// Viewer/pixelRatio:非正方形像素的显示宽高比
+double PreviewPanel::pixelAspect() const {
+    static const double ratios[] = {1.00, 0.91, 0.95, 1.09, 1.20,
+                                    1.33, 1.46, 1.50, 1.90, 2.00};
+    const int i = qBound(0, s_int("Viewer/pixelRatio", 0), 9);
+    return ratios[i];
+}
+
+// Viewer/autoPlayAudioCompanion:图片旁存在同名音频时自动播放
+void PreviewPanel::playAudioCompanion(const QString& imagePath) {
+    if (!s_bool("Viewer/autoPlayAudioCompanion", false)) return;
+    QFileInfo fi(imagePath);
+    static const char* audioExts[] = {".mp3", ".wav", ".flac", ".m4a", ".ogg", ".aac"};
+    for (const char* ext : audioExts) {
+        const QString side = fi.absolutePath() + "/" + fi.completeBaseName() + ext;
+        if (!QFileInfo::exists(side)) continue;
+        setupPlayer();
+        if (!m_player) return;
+        m_player->setSource(QUrl::fromLocalFile(side));
+        m_player->play();
+        return;
+    }
 }
 
 // Viewer/autoFit 取值语义:
