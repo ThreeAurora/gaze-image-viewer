@@ -493,16 +493,22 @@ void PreviewPanel::updateOverlayScrollbars() {
 }
 
 // Fullscreen/showInfo:全屏时左上角显示文件名/尺寸/缩放
+// 文件名/尺寸/体积按文件缓存(QFileInfo::size() 是 stat 系统调用,
+// 拖动窗口时 resize 每帧都进来,不能反复问磁盘),缩放百分比单独拼
 void PreviewPanel::updateInfoBar() {
     const bool on = inFullscreen() && s_bool("Fullscreen/showInfo", true)
                     && !m_filePath.isEmpty();
     if (!on) { m_infoLabel->hide(); return; }
-    QFileInfo fi(m_filePath);
-    QString dim;
-    if (m_origPix) dim = QString("  %1x%2").arg(m_origPix->width()).arg(m_origPix->height());
-    m_infoLabel->setText(QString::fromUtf8("%1%2  %3  %4%")
-        .arg(fi.fileName(), dim, formatSize(fi.size()))
-        .arg(int(m_scale * 100)));
+    if (m_infoFileKey != m_filePath) {
+        m_infoFileKey = m_filePath;
+        QFileInfo fi(m_filePath);
+        m_infoBase = fi.fileName()
+                   + (m_origPix ? QString("  %1x%2")
+                          .arg(m_origPix->width()).arg(m_origPix->height()) : QString())
+                   + "  " + formatSize(fi.size());
+    }
+    m_infoLabel->setText(QString::fromUtf8("%1  %2%")
+        .arg(m_infoBase).arg(int(m_scale * 100)));
     m_infoLabel->adjustSize();
     m_infoLabel->move(12, 12);
     m_infoLabel->raise();
