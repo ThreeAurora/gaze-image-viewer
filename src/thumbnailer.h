@@ -54,8 +54,6 @@ private:
         bool wholeFolder   = false; // Thumbs/wholeFolder:整目录预生成
         // ── 设置→缓存数据库 ──
         bool useCatalog    = true;  // Cache/useCatalog:总开关(关=完全不落库)
-        int  thumbW        = 465;   // Cache/thumbWidth:缓存缩略图包围盒宽
-        int  thumbH        = 365;   // Cache/thumbHeight:缓存缩略图包围盒高
         bool checkStartup  = false; // Cache/checkOnStartup:启动后校验缓存完整性
     };
     void  snapshotPrefs();
