@@ -234,12 +234,20 @@ private:
     // 占位图标(文件夹/类型图标)按尺寸缓存,避免每卡片重复平滑缩放
     QHash<QString, QPixmap> m_iconCache;
     QPixmap iconPixmap(const FileEntry& e, int side);
-    QPixmap thumbPixmap(const QString& path, const QRect& box, bool cover);
+    // 成品图:绘制路径只查缓存(命中即一次 blit);缩放/圆角在预建阶段完成
+    QPixmap fitFor(const QString& path, const QRect& box) const;
+    void    buildFit(const QString& path, const QRect& box, bool cover);
+
+    // 绘制/命中窗口:m_geom 按顶边排序的序号 + 二分定位,
+    // 让每帧成本只与"视口内条目数"有关,与目录总条目数无关
+    std::vector<int> m_byY;
+    int  m_maxCardH   = 0;
+    int  lowerBoundRow(int y) const;
 
     QTimer m_resizeTimer;
     QTimer m_reEnqueueTimer;  // 尺寸停止变化后重新生成高清缩略图(防抖)
-    QTimer m_scrollTimer;     // 滚轮防抖:滚动中推迟缩略图提交,停止后批量补齐
-    bool   m_scrollSettled = true;
+    QTimer m_scrollCoalesce;  // 滚动中合并为"每轮事件循环一次"请求可见缩略图
+    int    m_lastScrollVal = -1;   // 跨屏跳转时清掉离屏解码队列
     bool   m_loading = false;
     int    m_hoverIdx = -1;   // 悬停条目(自绘高亮)
 
