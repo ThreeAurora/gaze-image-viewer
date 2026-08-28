@@ -181,34 +181,12 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
     addSeparator();
 
     // ── 剪贴板组 ──
-    auto setClip = [sel](bool cut) {
-        auto* mime = new QMimeData;
-        QList<QUrl> urls;
-        for (const auto& p : sel) urls << QUrl::fromLocalFile(p);
-        mime->setUrls(urls);
-        // Windows 资源管理器语义:Preferred DropEffect 2=移动 5=复制
-        QByteArray drop(4, Qt::Uninitialized);
-        DWORD effect = cut ? 2 : 5;
-        memcpy(drop.data(), &effect, sizeof(DWORD));
-        mime->setData("Preferred DropEffect", drop);
-        QApplication::clipboard()->setMimeData(mime);
-    };
-    addAction(IconLib::appIcon("cmd_cut"), "剪切", this, [setClip]() { setClip(true); });
-    addAction(IconLib::appIcon("cmd_copy"), "复制", this, [setClip]() { setClip(false); });
+    addAction(IconLib::appIcon("cmd_cut"), "剪切", this, [sel]() { clipboardSetFiles(sel, true); });
+    addAction(IconLib::appIcon("cmd_copy"), "复制", this, [sel]() { clipboardSetFiles(sel, false); });
     addAction("粘贴", this, [this]() {
-        const QMimeData* mime = QApplication::clipboard()->mimeData();
-        if (!mime || !mime->hasUrls()) return;
         QDir target = QFileInfo(m_filePath).isDir()
             ? QDir(m_filePath) : QFileInfo(m_filePath).dir();
-        for (const auto& u : mime->urls()) {
-            if (!u.isLocalFile()) continue;
-            QString src = u.toLocalFile();
-            QString dst = target.filePath(QFileInfo(src).fileName());
-            if (QFileInfo(src).isDir())
-                QDir().mkpath(dst);
-            else
-                QFile::copy(src, dst);
-        }
+        clipboardPasteInto(target);
     });
     addSeparator();
 
