@@ -102,6 +102,10 @@ public:
         return (index >= 0 && index < static_cast<int>(m_entries.size()))
             ? m_entries[index].path : QString();
     }
+    QString pathOf(int index) const {   // 按序号取当前列表条目路径(越界返回空)
+        return (index >= 0 && index < static_cast<int>(m_entries.size()))
+            ? m_entries[index].path : QString();
+    }
     int     fileCount()     const;
     int     selectedCount() const;
     int64_t selectedSize()  const;
