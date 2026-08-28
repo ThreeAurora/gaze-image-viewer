@@ -106,6 +106,18 @@ private:
     // 先显示静态图,提取完成自动切播放)
     void startExtractAsync(const QString& path, const LivePhoto::Info& info);
 
+    // ── 设置活接线:查看器/全屏的界面元素 ──
+    void applyViewerChrome();              // 改设置/换文件后统一刷新下列元素
+    void updateOverlayScrollbars();        // Viewer|Fullscreen/showScrollbar
+    void updateInfoBar();                  // Fullscreen/showInfo
+    void updateFloatBar(const QPoint* cursor = nullptr); // Fullscreen/showToolbar + floatView
+    void updatePanTool();                  // Viewer/panTool 平移导航小窗
+    void updateSelectionHighlight();       // Viewer/highlightSelection
+    double pixelAspect() const;            // Viewer/pixelRatio 像素比
+    void playAudioCompanion(const QString& imagePath);  // Viewer/autoPlayAudioCompanion
+    // Viewer/gamma + Viewer/sharpen 的显示后处理(结果按目标尺寸缓存)
+    const QPixmap& processedFor(int w, int h, const QPixmap& src);
+
     QString m_filePath;
     QString m_mode; // "image", "video", "audio", "none"
     QString m_livePhotoOriginalPath;
