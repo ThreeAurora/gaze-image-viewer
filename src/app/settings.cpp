@@ -92,6 +92,10 @@ QString AppSettings::iniPath() const {
     return m_settings.fileName();
 }
 
+QString AppSettings::dataDir() const {
+    return QFileInfo(m_settings.fileName()).absolutePath();
+}
+
 void AppSettings::clearAll() {
     m_settings.clear();   // 清空后 get() 返回代码内默认值(= 用户配置清单)
     m_settings.sync();
