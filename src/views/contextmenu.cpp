@@ -339,16 +339,30 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
                     }
                 }
                 QFile f(tmp);
-                if (!out.isNull() && f.open(QIODevice::WriteOnly)) {
-                    ok = out.save(&f, nullptr, 95);
+                // 必须显式给格式:save(device, nullptr) 会让 Qt 拿 device 的文件名
+                // 后缀猜格式,而临时文件后缀是 "gaze_rot_tmp",无任何 handler 匹配
+                // → 保存恒失败 → 非 JPEG 的旋转/翻转成了静默空操作。
+                QByteArray fmt = rotExt.toUtf8();
+                if (fmt == "jpg") fmt = "jpeg";
+                else if (fmt == "tif") fmt = "tiff";
+                const bool canWrite = !out.isNull()
+                    && QImageWriter::supportedImageFormats().contains(fmt);
+                if (canWrite && f.open(QIODevice::WriteOnly)) {
+                    ok = out.save(&f, fmt.constData(), 95);
                     f.close();
                 }
                 if (!ok) QFile::remove(tmp);
             }
 
-            if (!ok) return;
+            if (!ok) {
+                QMessageBox::warning(nullptr, QString::fromUtf8("旋转/翻转"),
+                    QString::fromUtf8("无法完成该变换(解码或写回失败):\n") + m_filePath);
+                return;
+            }
 
             // 原子替换 + 恢复创建/修改时间(元数据不因替换改变)
+            // 走到这里结果已经落盘成功,才允许留原件备份
+            makeBackup();
             if (!QFile::rename(tmp, m_filePath)) {
                 QFile::remove(tmp);
                 QMessageBox::warning(nullptr, QString::fromUtf8("旋转/翻转"),
