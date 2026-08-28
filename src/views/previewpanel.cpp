@@ -1135,6 +1135,7 @@ void PreviewPanel::setupPlayer() {
 
 void PreviewPanel::teardownPlayer() {
     if (!m_player) return;
+    Logger::event(QStringLiteral("teardownPlayer src='%1'").arg(m_player->source().toLocalFile()));
     // 立即断开视频输出:阻止播放器继续往 QVideoWidget 渲染帧
     if (m_vw)
         m_player->setVideoOutput(static_cast<QVideoWidget*>(nullptr));
