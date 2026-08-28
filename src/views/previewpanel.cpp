@@ -1059,7 +1059,7 @@ void PreviewPanel::setupPlayer() {
             this, [this](QMediaPlayer::MediaStatus status) {
         // teardownPlayer 断连后不会到此;但快速切换文件时旧信号可能迟到送达
         if (!m_player) return;
-        // WMF 后端的加载/失效/卡住都会从这里过——卡死排查的关键轨迹
+        // 媒体后端的加载/失效/卡住都会从这里过——卡死排查的关键轨迹
         if (m_mode == "video" || m_isLivePhoto)
             Logger::event(QStringLiteral("mediaStatus=%1 src='%2'")
                               .arg(int(status))
