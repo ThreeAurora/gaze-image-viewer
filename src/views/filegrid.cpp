@@ -10,6 +10,8 @@
 #include "perflog.h"
 
 #include <set>
+#include <algorithm>
+#include <numeric>
 #include <memory>
 
 #include <QDrag>
