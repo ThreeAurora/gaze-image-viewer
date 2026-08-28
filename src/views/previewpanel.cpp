@@ -318,6 +318,10 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     m_panThumb->setCursor(Qt::PointingHandCursor);
     m_panThumb->installEventFilter(this);
     m_panView->installEventFilter(this);
+    // 拖动蓝框/缩略图 → 视口跟随(事件过滤器在 eventFilter 里处理)
+    m_panThumb->setCursor(Qt::PointingHandCursor);
+    m_panThumb->installEventFilter(this);
+    m_panView->installEventFilter(this);
 
     // 设置页改动 → 背景/挡板/图片边框即时重涂(无需重启)
     applyBackdrop();
