@@ -97,8 +97,6 @@ void Thumbnailer::snapshotPrefs() {
     p.gamma     = st.get("Thumbs/gamma", false).toBool();
     // ── 设置→缓存数据库 ──
     p.useCatalog   = st.get("Cache/useCatalog", true).toBool();
-    p.thumbW       = qBound(64, st.get("Cache/thumbWidth", 465).toInt(), 1024);
-    p.thumbH       = qBound(64, st.get("Cache/thumbHeight", 365).toInt(), 1024);
     p.checkStartup = st.get("Cache/checkOnStartup", false).toBool();
     QMutexLocker lk(&m_prefMutex);
     m_prefs = p;
