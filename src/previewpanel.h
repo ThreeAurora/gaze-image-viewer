@@ -72,6 +72,9 @@ private:
     QString modeKey(const char* suffix) const;  // "Viewer/xxx" ↔ "Fullscreen/xxx"
     // Viewer/autoFit → 目标缩放系数(见 previewpanel.cpp 的取值语义表)
     double fitScaleFor(const QSize& viewSize) const;
+    // 拖拽平移约束:图片在某轴不超出预览框 → 该轴锁死居中(两侧黑边等宽),
+    // 只允许在溢出的轴平移,且平移到图片边缘即停(不露白边)。
+    QPoint clampedLabelPos(QPoint p) const;
     // 设置活应用:背景色/挡板底纹/图片边框(设置→查看→背景与界面元素)
     void applyBackdrop();
     void restoreCursor();             // Fullscreen/hideCursor:指针移动即恢复
