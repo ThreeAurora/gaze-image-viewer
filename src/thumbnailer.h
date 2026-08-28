@@ -18,6 +18,8 @@ public:
     void enqueue(const QString& filePath, int size, bool isVideo);
     void clearQueue();
     QImage generate(const QString& filePath, int size, bool isVideo);
+    // 缓存完整性校验(Cache/checkOnStartup):丢掉读不出来的坏条目
+    void verifyCache();
 
     // Windows Shell 缩略图(供 PDF 等外部格式的预览回退使用)
     static QImage shellThumbFor(const QString& filePath, int size);
