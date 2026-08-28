@@ -81,7 +81,8 @@ private:
     QImage imageThumb(const QString& filePath, int size);
 
     // ── 视频缩略图（FFmpeg C API）──
-    QImage videoThumbFFmpeg(const QString& filePath, int size);
+    // pctOverride >= 0 时忽略 Thumbs/videoFramePct,取指定百分比处(4 帧拼图用)
+    QImage videoThumbFFmpeg(const QString& filePath, int size, int pctOverride = -1);
     // 回退方案：QProcess fork ffmpeg
     QImage videoThumbFallback(const QString& filePath, int size);
     // 文件夹缩略图(Thumbs/folder4):开=2x2 拼前 4 张图,关=单张封面
