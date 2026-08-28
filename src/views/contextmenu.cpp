@@ -58,7 +58,7 @@ static void openWithDialog(const QString& path) {
 static bool rotateJpegOrientationOnly(const QString& path, int quarterCW) {
     QFile f(path);
     if (!f.open(QIODevice::ReadWrite)) return false;
-    const QByteArray d = f.readAll();
+    QByteArray d = f.readAll();
     if (d.size() < 64 || d.size() > (1 << 26)) return false;   // >64MB 不冒这个险
     if (static_cast<unsigned char>(d[0]) != 0xFF
         || static_cast<unsigned char>(d[1]) != 0xD8) return false;
