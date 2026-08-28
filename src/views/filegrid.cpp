@@ -239,12 +239,34 @@ void FileGrid::reloadAfterDelete(const QStringList& deleted) {
 void FileGrid::loadDirectory(const QString& dirPath) {
     if (m_loading) return;
     m_loading = true;
+
+    // 同一目录重载(refresh/删除后)才谈得上"新增文件":换目录时全部条目都是新的,
+    // 若按 newAtEnd/autoSelectNew 处理会把整列表打乱、并抢走正常导航的选中项
+    const bool sameDir = (m_currentDir == dirPath);
+    QSet<QString> prevPaths;
+    if (sameDir)
+        for (const auto& e : m_allEntries) prevPaths.insert(e.path);
+
     m_currentDir = dirPath;
 
     // 清掉上一目录的缩略图任务
     Thumbnailer::instance().clearQueue();
 
     m_allEntries = fastScanDir(dirPath);
+
+    // ── FileList/recognizeByExt(默认开)= 只看扩展名 ──
+    // 关掉时按文件头魔数判定真实格式(扩展名被改错/缺失仍能正确归类);
+    // 是否允许读头由 FileList/scanHeader 按卷类型决定(软盘/光盘默认不读,
+    // 免得逐文件寻道把 removable 介质拖垮)
+    if (!AppSettings::instance().get("FileList/recognizeByExt", true).toBool()
+        && headerScanAllowed(dirPath)) {
+        for (auto& e : m_allEntries) {
+            if (e.isDir) continue;
+            const QString real = sniffExtByHeader(e.path);
+            if (!real.isEmpty()) e.ext = real;
+        }
+    }
+
     m_selected.clear();
     m_lastClicked = -1;
 
