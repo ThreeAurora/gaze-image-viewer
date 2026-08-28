@@ -204,7 +204,6 @@ private:
     QTimer m_resizeTimer;
     QTimer m_reEnqueueTimer;  // 尺寸停止变化后重新生成高清缩略图(防抖)
     QTimer m_scrollTimer;     // 滚轮防抖:滚动中推迟缩略图提交,停止后批量补齐
-    QTimer m_scrollLayoutTimer;  // 滚动 layout 合并:拖动时 8ms 内多次 valueChanged 只跑一次 layoutCards
     bool   m_scrollSettled = true;
     bool   m_loading = false;
     // 网格 layout 行区间缓存:滚动若未跨行,直接跳过 recycle/setup
