@@ -246,16 +246,13 @@ void FileGrid::reloadAfterDelete(const QStringList& deleted) {
 //   0 总是   1 排除软盘/CD/DVD   2 仅电脑本地硬盘   3 从不
 // ═══════════════════════════════════════════
 bool FileGrid::headerScanAllowed(const QString& dirPath) const {
-    switch (AppSettings::instance().get("FileList/scanHeader", 0).toInt()) {
-    case 0: return true;
-    case 3: return false;
-    default: break;
-    }
+    const int mode = AppSettings::instance().get("FileList/scanHeader", 0).toInt();
+    if (mode == 0) return true;
+    if (mode == 3) return false;
     QString root = dirPath;
     if (root.size() >= 2 && root[1] == QLatin1Char(':'))
         root = root.left(2) + QLatin1String("\\");
     const UINT type = GetDriveTypeW(reinterpret_cast<const wchar_t*>(root.utf16()));
-    const int mode = AppSettings::instance().get("FileList/scanHeader", 0).toInt();
     if (mode == 1)   // 排除软盘/CD/DVD:可移动介质上逐文件开门读头代价太高
         return type != DRIVE_REMOVABLE && type != DRIVE_CDROM && type != DRIVE_NO_ROOT_DIR;
     return type == DRIVE_FIXED;   // mode == 2:只认本地硬盘
