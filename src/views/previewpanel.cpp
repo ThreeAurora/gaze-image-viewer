@@ -670,6 +670,30 @@ void PreviewPanel::showText(const QString& path) {
     }
 }
 
+void PreviewPanel::showText(const QString& path) {
+    m_mode = "text";
+    if (m_player) m_player->stop();
+    m_placeholder->hide();
+    m_imgLabel->hide();
+    m_videoWidget->hide();
+    m_audioLabel->hide();
+    m_controlBar->hide();
+    if (m_liveBadge) m_liveBadge->hide();
+
+    QFile f(path);
+    if (f.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        // 大文件截断(预览面板不是编辑器,512KB 足够看开头)
+        const qint64 maxSize = 512 * 1024;
+        QByteArray data = f.read(maxSize);
+        f.close();
+        m_textEdit->setPlainText(QString::fromUtf8(data));
+        m_textEdit->show();
+    } else {
+        m_textEdit->setPlainText(QString::fromUtf8("无法读取文件"));
+        m_textEdit->show();
+    }
+}
+
 void PreviewPanel::setupPlayer() {
     if (m_player) return;
 
