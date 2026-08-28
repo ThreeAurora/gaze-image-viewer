@@ -877,6 +877,8 @@ void PreviewPanel::loadFile(const QString& path) {
     // 换文件(或清空):递增代号,作废任何在途的后台解码结果
     ++m_imgReqGen;
     m_liveInfo.reset();
+    m_pendingPlay.clear();   // 离开当前文件:未决的"装载后接输出"作废
+    m_navClock.restart();    // 浏览扫动检测起点(停稳 600ms 才自动播)
     Logger::event(QStringLiteral("loadFile '%1'").arg(path));
     if (path.isEmpty()) { clear(); return; }
     QFileInfo fi(path);
