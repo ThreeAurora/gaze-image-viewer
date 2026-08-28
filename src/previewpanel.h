@@ -175,7 +175,6 @@ private:
     QElapsedTimer m_navClock;  // 最近一次导航时刻:浏览扫动时暂缓自动播(停稳才切视频)
     QElapsedTimer m_navClock;  // 最近一次导航时刻:浏览扫动时暂缓自动播(停稳才切视频)
     QElapsedTimer m_navClock;  // 最近一次导航时刻:浏览扫动时暂缓自动播(停稳才切视频)
-    QElapsedTimer m_navClock;  // 最近一次导航时刻:浏览扫动时暂缓自动播(停稳才切视频)
     QWidget *m_controlBar;
     QPushButton *m_btnPlay;
     QPushButton *m_btnStop = nullptr;     // 停止(位置归零,再播从头开始)
