@@ -5,6 +5,7 @@
 #include <QHash>
 #include <QSet>
 #include <QQueue>
+#include <QShortcut>
 #include <vector>
 #include "fileentry.h"
 #include "sortheader.h"
