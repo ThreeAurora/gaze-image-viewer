@@ -320,21 +320,33 @@ QImage Thumbnailer::videoContactSheet(const QString& filePath, int size) {
 }
 
 // 缓存完整性校验(Cache/checkOnStartup):逐条尝试解码,读不出来的条目删除。
-// 大库可能上千条,故只在后台线程跑一次,不阻塞启动
+// 大库可能上千条,故只在后台线程跑一次,不阻塞启动;
+// 逐 key 取 blob(内存峰值=单条缩略图),绝不 SELECT 全表 —— 库里可能躺着上百 MB 的图
 void Thumbnailer::verifyCache() {
     const Prefs p = prefs();
     if (!p.useCatalog || !p.inDb) return;
     QThreadPool::globalInstance()->start([p]() {
         QSqlDatabase db = threadDb(p.dbCacheMB);
         if (!db.isOpen()) return;
+        QStringList keys;
+        {
+            QSqlQuery q(db);
+            if (!q.exec("SELECT key FROM thumbs")) return;
+            while (q.next()) keys << q.value(0).toString();
+        }
+        if (keys.isEmpty()) return;
         QStringList bad;
-        QSqlQuery q(db);
-        if (q.exec("SELECT key, png FROM thumbs")) {
-            while (q.next()) {
-                const QByteArray blob = q.value(1).toByteArray();
-                if (blob.isEmpty() || QImage::fromData(blob).isNull())
-                    bad << q.value(0).toString();
+        QSqlQuery one(db);
+        one.prepare("SELECT png FROM thumbs WHERE key = ?");
+        for (const QString& k : keys) {
+            one.addBindValue(k);
+            bool broken = true;
+            if (one.exec() && one.next()) {
+                const QByteArray blob = one.value(0).toByteArray();
+                broken = blob.isEmpty() || QImage::fromData(blob).isNull();
             }
+            if (broken) bad << k;
+            one.finish();
         }
         if (bad.isEmpty()) return;
         db.transaction();
