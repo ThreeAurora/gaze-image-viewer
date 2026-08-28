@@ -188,22 +188,36 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     m_imgLabel->installEventFilter(this);
     installEventFilter(this);
 
-    // 音量按钮:弹出竖向音量滑条
+    // 音量按钮:弹出竖向滑条 + 0-100 数值(拖动实时刷新,按钮 tooltip 跟着走)
     connect(m_btnVolume, &QToolButton::clicked, this, [this]() {
         if (!m_audioOutput) return;
         QMenu volMenu(this);
-        auto* slider = new QSlider(Qt::Vertical, &volMenu);
+        auto* wrap = new QWidget(&volMenu);
+        auto* wl = new QHBoxLayout(wrap);
+        wl->setContentsMargins(10, 10, 10, 10);
+        wl->setSpacing(6);
+        auto* slider = new QSlider(Qt::Vertical, wrap);
         slider->setRange(0, 100);
         slider->setValue(static_cast<int>(m_audioOutput->volume() * 100));
-        slider->setFixedSize(28, 110);
-        connect(slider, &QSlider::valueChanged, this, [this](int v) {
+        slider->setFixedSize(24, 110);
+        auto* val = new QLabel(QString::number(slider->value()), wrap);
+        val->setFixedWidth(30);
+        val->setAlignment(Qt::AlignHCenter | Qt::AlignTop);
+        val->setStyleSheet(
+            QString("QLabel{background:transparent;color:%1;font-size:13px;}").arg(C_TEXT));
+        wl->addWidget(slider);
+        wl->addWidget(val);
+        connect(slider, &QSlider::valueChanged, this, [this, val](int v) {
             if (m_audioOutput) m_audioOutput->setVolume(v / 100.0);
+            val->setText(QString::number(v));
+            m_btnVolume->setToolTip(
+                QString::fromUtf8("音量 %1").arg(v));
         });
         auto* act = new QWidgetAction(&volMenu);
-        act->setDefaultWidget(slider);
+        act->setDefaultWidget(wrap);
         volMenu.addAction(act);
         volMenu.exec(m_btnVolume->mapToGlobal(
-            QPoint(m_btnVolume->width() / 2 - 60, -120)));
+            QPoint(m_btnVolume->width() / 2 - 60, -140)));
     });
 
     // ── Viewer|Fullscreen/showScrollbar:图大于视口时的覆盖式滚动条 ──
