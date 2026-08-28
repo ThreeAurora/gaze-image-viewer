@@ -16,17 +16,17 @@ ImageSearchDialog::ImageSearchDialog(QWidget* parent) : QDialog(parent) {
     setWindowTitle(QString::fromUtf8("以文搜图 - 万象图搜"));
     resize(720, 560);
     setStyleSheet(
-        "QDialog{background:#1E1E1E;}"
+        "QDialog{background:" C_WIN_BG ";}"
         "QLabel{color:#FFFFFF;background:transparent;}"
-        "QLineEdit{background:#151515;color:#FFFFFF;border:1px solid #3C3C3C;"
+        "QLineEdit{background:" C_CONTENT ";color:#FFFFFF;border:1px solid " C_SEPARATOR ";"
         "border-radius:3px;padding:6px 10px;}"
-        "QPushButton{background:#3A3A3A;color:#FFFFFF;border:1px solid #4A4A4A;"
+        "QPushButton{background:" C_TOOLBAR ";color:#FFFFFF;border:1px solid " C_SEPARATOR ";"
         "border-radius:3px;padding:6px 20px;}"
-        "QPushButton:hover{border-color:#2F65C5;}"
-        "QListWidget{background:#151515;color:#FFFFFF;border:1px solid #3C3C3C;"
+        "QPushButton:hover{border-color:" C_ACCENT ";}"
+        "QListWidget{background:" C_CONTENT ";color:#FFFFFF;border:1px solid " C_SEPARATOR ";"
         "outline:none;}"
         "QListWidget::item{padding:4px 6px;}"
-        "QListWidget::item:selected{background:#2F65C5;}");
+        "QListWidget::item:selected{background:" C_ACCENT ";}");
 
     auto* root = new QVBoxLayout(this);
     root->setContentsMargins(14, 14, 14, 12);
