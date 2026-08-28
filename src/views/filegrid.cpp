@@ -256,7 +256,6 @@ void FileGrid::loadDirectory(const QString& dirPath) {
     applyFilter();
 
     sort(m_sortCol, m_sortAsc);
-    updateLayout();
 
     // 清除缩略图缓存
     m_thumbCache.clear();
@@ -265,7 +264,7 @@ void FileGrid::loadDirectory(const QString& dirPath) {
     m_hoverIdx = -1;
 
     m_loading = false;
-    updateLayout();
+    updateLayout();          // 重算列数/几何/滚动范围 + 重绘
     requestVisibleThumbs();
 
     emit fileCountChanged();
