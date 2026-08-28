@@ -10,6 +10,7 @@
 #include "sortheader.h"
 
 class FileCanvas;
+class QPainter;
 class SortHeader;
 
 // 筛选模式(查看菜单/工具栏)
