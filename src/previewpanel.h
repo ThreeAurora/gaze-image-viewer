@@ -188,6 +188,7 @@ private:
     QWidget*    m_panView   = nullptr;     // 导航小窗里的视口指示框
     bool  m_navigating   = false;          // Viewer/resetAutoOnNav:本次是切文件
     bool  m_secondPass   = false;          // Viewer/twoPassRender 第二遍标记
+    QString  m_panKey;                     // 导航小窗缩略图对应的文件
     QPixmap m_procPix;                     // gamma/sharpen 后处理结果
     QString  m_procKey;                    // 缓存键 "<w>x<h>"
     double m_procScale   = 0.0;            // 生成 m_procPix 时的缩放比
