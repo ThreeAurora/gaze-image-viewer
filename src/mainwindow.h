@@ -7,6 +7,8 @@
 #include <QSlider>
 #include <QTimer>
 #include <QStringList>
+#include <QTabBar>
+#include <QFileInfo>
 
 class QVBoxLayout;
 class QComboBox;
