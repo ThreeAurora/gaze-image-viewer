@@ -6,6 +6,11 @@
 #include <QFileInfo>
 #include <QWidget>
 #include <QMessageBox>
+#include <QLabel>
+#include <QTimer>
+#include <QStatusBar>
+#include <QGraphicsOpacityEffect>
+#include <QPropertyAnimation>
 #include "settings.h"
 
 #ifndef NOMINMAX
