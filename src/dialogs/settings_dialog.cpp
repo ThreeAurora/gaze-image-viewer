@@ -578,8 +578,10 @@ QWidget* SettingsDialog::pageAppearance() {
     auto* form = new QFormLayout;
     form->addRow(QString::fromUtf8("自定义缩略图尺寸 - 宽"),
         spin("Appearance/customThumbW", 80, 300, 96));
-    form->addRow(QString::fromUtf8("自定义缩略图尺寸 - 高"),
-        spin("Appearance/customThumbH", 32, 512, 96));
+    // 0 = 与宽同高(接线前的既有行为);>0 才按设置值固定缩略图框高
+    auto* thumbH = spin("Appearance/customThumbH", 0, 512, 0);
+    thumbH->setSpecialValueText(QString::fromUtf8("跟随宽度"));
+    form->addRow(QString::fromUtf8("自定义缩略图尺寸 - 高"), thumbH);
     form->addRow(chk("Appearance/shadow", QString::fromUtf8("使用阴影"), false));
     form->addRow(QString::fromUtf8("边框粗细"), spin("Appearance/borderSize", 0, 10, 0));
     form->addRow(QString::fromUtf8("间距"), spin("Appearance/spacing", 0, 40, 6));
