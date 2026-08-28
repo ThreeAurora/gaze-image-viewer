@@ -872,8 +872,6 @@ void PreviewPanel::loadFile(const QString& path) {
     if (path.isEmpty()) { clear(); return; }
     QFileInfo fi(path);
     if (!fi.exists()) { clear(); return; }
-    // 目录:预览内容 2x2 拼贴(与网格卡片同一管线),不再落"无预览"占位
-    if (fi.isDir()) { showDirPreview(path); return; }
 
     // 换文件(区别于窗口 resize 触发的 fitAuto):Viewer/resetAutoOnNav 靠它判断
     m_navigating = true;
@@ -881,6 +879,9 @@ void PreviewPanel::loadFile(const QString& path) {
     m_livePhotoOriginalPath.clear();
     m_isLivePhoto = false;
     stopMovie();   // 任何类型切换都先回收 GIF 动画(防泄漏/防隐藏继续解码)
+
+    // 目录:预览内容 2x2 拼贴(与网格卡片同一管线),不再落"无预览"占位
+    if (fi.isDir()) { showDirPreview(path); return; }
     stopMovie();   // 任何类型切换都先回收 GIF 动画(防泄漏/防隐藏继续解码)
 
     // 立即清屏:杜绝上一文件(尤其图片→视频切换)残影闪帧
