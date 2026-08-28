@@ -457,6 +457,7 @@ void PreviewPanel::applyViewerChrome() {
     updateFloatBar();
     updatePanTool();
     updateSelectionHighlight();
+    updateRatingBadge();
 }
 
 // Viewer|Fullscreen/showScrollbar:图比视口大时才出现,位置贴边浮在图上
