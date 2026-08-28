@@ -38,10 +38,16 @@ protected:
         if (type == QEvent::Show) {
             box->setDefaultButton(QMessageBox::Yes);
             box->setEscapeButton(QMessageBox::No);
+            QWidget* fw = box->focusWidget();
+            qWarning("[filter] Show: focus=%s isYes=%d isNo=%d",
+                     fw ? fw->metaObject()->className() : "null",
+                     fw == box->button(QMessageBox::Yes),
+                     fw == box->button(QMessageBox::No));
             return false;
         }
         if (type == QEvent::KeyPress) {
             auto* ke = static_cast<QKeyEvent*>(ev);
+            qWarning("[filter] KeyPress on box: key=0x%x", ke->key());
             if (ke->key() == Qt::Key_Space) {
                 QWidget* focused = box->focusWidget();
                 // 焦点在按钮或box本身时让Space=Yes;若落在输入控件则让给它
