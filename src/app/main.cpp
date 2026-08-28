@@ -12,6 +12,7 @@
 #include "mainwindow.h"
 #include "constants.h"
 #include "settings.h"
+#include "thumbnailer.h"
 
 // Yes/No 对话框键盘语义:Space/Enter → Yes,Esc → No
 // 仅在同时存在 Yes 与 No 按钮时介入,不影响 OK/Cancel 等其他场景。
