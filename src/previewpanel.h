@@ -128,6 +128,7 @@ private:
     QPushButton *m_btnPlay;
     QPushButton *m_btnStop = nullptr;     // 停止(位置归零,再播从头开始)
     QPushButton *m_btnStop = nullptr;     // 停止(位置归零,再播从头开始)
+    QPushButton *m_btnStop = nullptr;     // 停止(位置归零,再播从头开始)
     QToolButton *m_btnVolume = nullptr;   // 音量按钮(点击弹竖向滑条)
     QPushButton *m_btnPrev = nullptr;     // 上一文件按钮(播放条最左,仿 XnView)
     QSlider *m_progress;
