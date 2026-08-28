@@ -164,7 +164,7 @@ FileContextMenu::FileContextMenu(FileCard* card, QWidget* parent)
     });
     addAction(IconLib::appIcon("cmd_delete"), "删除", this, [sel, grid, this]() {
         if (!deleteWithSettings(sel, this)) return;
-        if (grid) grid->refreshCurrentDir();
+        if (grid) grid->reloadAfterDelete(sel);
     });
     addAction(IconLib::appIcon("cmd_rename"), "重命名...", this, [this, grid]() {
         QFileInfo fi(m_filePath);
