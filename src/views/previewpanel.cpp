@@ -969,8 +969,8 @@ void PreviewPanel::loadFile(const QString& path) {
     }
 }
 
-// 文件夹预览:后台生成内容 2x2 拼贴(Thumbnailer 同一管线,含缓存)。
-// 进目录默认选中第一项——首个是文件夹时,预览窗格也该有内容
+// 无预览出口:目录 / 未知类型共用。只藏视图,不 teardownPlayer
+// (播放器实例永久复用,销毁重建会露出无帧的透明窗口期,切换瞬间闪回旧画面)
 void PreviewPanel::showNoPreview() {
     m_mode = "none";
     if (m_player) m_player->stop();
