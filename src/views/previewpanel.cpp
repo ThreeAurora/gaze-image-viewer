@@ -55,6 +55,8 @@ static QIcon whiteIcon(const QIcon& base, int size = 32) {
 #include <QWidgetAction>
 #include <QClipboard>
 #include <QBrush>
+#include <QScrollBar>
+#include <cmath>
 #include <QStyle>
 #include <QWidgetAction>
 #include <QMenu>
