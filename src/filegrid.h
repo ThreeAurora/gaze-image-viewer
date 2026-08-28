@@ -165,9 +165,6 @@ private:
     void enqueueVisibleThumbs();  // 滚动停止后批量补齐可见卡片缩略图(防抖配套)
     void beginInlineRename();     // FileOps/renameDialog=关:就地改名
     void endInlineRename(bool commit);
-    // FileOps/renameDialog=关 时的就地改名(画布上压一个编辑器)
-    void beginInlineRename();
-    void endInlineRename(bool commit);
 
     // 键盘操作
     void toggleMark(int index);
