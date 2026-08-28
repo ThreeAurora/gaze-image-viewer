@@ -111,6 +111,22 @@ static QString displayPath(const QString& canonical) {
     return d;
 }
 
+// 路径显示/内部规范形:
+//   内部一律用 '/' 且不带尾斜杠(历史栈 / lastDir / Browser/lastFile 比较都用它)
+//   地址栏按 Windows 习惯显示:反斜杠 + 末尾 "\"(XnView 同款)
+static QString canonicalPath(const QString& raw) {
+    QString p = QDir::fromNativeSeparators(raw.trimmed());
+    while (p.size() > 3 && p.endsWith('/')) p.chop(1);   // "E:/" 根保留斜杠
+    if (p.size() == 2 && p.endsWith(':')) p += '/';
+    return p;
+}
+
+static QString displayPath(const QString& canonical) {
+    QString d = QDir::toNativeSeparators(canonical);
+    if (!d.endsWith('\\')) d += '\\';
+    return d;
+}
+
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     setWindowTitle("Gaze");
     setMinimumSize(1000, 650);
