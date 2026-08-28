@@ -6,6 +6,7 @@
 #include <QSet>
 #include <QQueue>
 #include <QShortcut>
+#include <QLineEdit>
 #include <vector>
 #include "fileentry.h"
 #include "sortheader.h"
