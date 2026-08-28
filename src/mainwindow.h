@@ -118,6 +118,7 @@ private:
     QWidget* m_treePane = nullptr;    // 树面板(查看器模式隐藏)
     QWidget* m_centerPane = nullptr;  // 网格面板(查看器模式隐藏)
     QWidget* m_previewPane = nullptr; // 预览面板包装(标题条 + PreviewPanel)
+    QWidget* m_previewHdr = nullptr;  // 预览标题条(查看器模式下隐藏,单图不需要)
     QWidget* m_addrRow = nullptr;     // 地址栏行(视图菜单可隐藏)
     QWidget* m_toolRow = nullptr;     // 工具栏第二行(视图菜单可隐藏)
     // 面板开关 action(视图菜单),与 m_panesOn 同步 ✓
