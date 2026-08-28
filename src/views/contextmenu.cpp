@@ -185,38 +185,51 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
     addSeparator();
 
     // ── 剪贴板组 ──
+    // 对话框父窗口用网格:本菜单是弹出窗口,弹出结束即销毁,当父窗口会让
+    // 提示跟着一起消失(删除提示因此看不见)
     addAction(IconLib::appIcon("cmd_cut"), "剪切", this, [sel]() { clipboardSetFiles(sel, true); });
     addAction(IconLib::appIcon("cmd_copy"), "复制", this, [sel]() { clipboardSetFiles(sel, false); });
-    addAction("粘贴", this, [this]() {
+    addAction("粘贴", this, [this, grid]() {
         QDir target = QFileInfo(m_filePath).isDir()
             ? QDir(m_filePath) : QFileInfo(m_filePath).dir();
-        clipboardPasteInto(target);
+        QStringList errs;
+        if (!clipboardPasteInto(target, &errs)) {
+            if (!errs.isEmpty())
+                QMessageBox::warning(grid, "粘贴失败", errs.join(QLatin1Char('\n')));
+            return;
+        }
+        if (!errs.isEmpty())
+            QMessageBox::warning(grid, "部分项目未能粘贴", errs.join(QLatin1Char('\n')));
+        if (grid) grid->refreshCurrentDir();
     });
     addSeparator();
 
-    addAction(IconLib::appIcon("cmd_copyTo"), "复制到...", this, [sel]() {
+    // 复制到... / 移动到..:交给 clipboardops 的公共实现。
+    // 旧写法对文件夹只做 mkpath,一个有几万张照片的文件夹粘过去只剩空壳。
+    addAction(IconLib::appIcon("cmd_copyTo"), "复制到...", this, [sel, grid]() {
         QString dst = QFileDialog::getExistingDirectory(
-            nullptr, "复制到...", QString());
+            grid, "复制到...", QString());
         if (dst.isEmpty()) return;
-        for (const auto& p : sel) {
-            QString d = dst + "/" + QFileInfo(p).fileName();
-            if (QFileInfo(p).isDir()) QDir().mkpath(d);
-            else QFile::copy(p, d);
-        }
+        QStringList errs;
+        if (!copyPathsTo(sel, dst, nullptr, &errs) && !errs.isEmpty())
+            QMessageBox::warning(grid, "复制失败", errs.join(QLatin1Char('\n')));
+        else if (!errs.isEmpty())
+            QMessageBox::warning(grid, "部分项目未能复制", errs.join(QLatin1Char('\n')));
+        if (grid) grid->refreshCurrentDir();
     });
     addAction(IconLib::appIcon("min_moveTo"), "移动到..", this, [sel, grid]() {
         QString dst = QFileDialog::getExistingDirectory(
-            nullptr, "移动到...", QString());
+            grid, "移动到...", QString());
         if (dst.isEmpty()) return;
-        for (const auto& p : sel) {
-            QString d = dst + "/" + QFileInfo(p).fileName();
-            if (!QFile::rename(p, d))
-                QMessageBox::warning(nullptr, "移动失败", p);
-        }
+        QStringList errs;
+        if (!movePathsTo(sel, dst, nullptr, &errs) && !errs.isEmpty())
+            QMessageBox::warning(grid, "移动失败", errs.join(QLatin1Char('\n')));
+        else if (!errs.isEmpty())
+            QMessageBox::warning(grid, "部分项目未能移动", errs.join(QLatin1Char('\n')));
         if (grid) grid->refreshCurrentDir();
     });
     addAction(IconLib::appIcon("cmd_delete"), "删除", this, [sel, grid, this]() {
-        if (!deleteWithSettings(sel, this)) return;
+        if (!deleteWithSettings(sel, grid)) return;
         if (grid) grid->reloadAfterDelete(sel);
     });
     addAction(IconLib::appIcon("cmd_rename"), "重命名...", this, [this, grid]() {
