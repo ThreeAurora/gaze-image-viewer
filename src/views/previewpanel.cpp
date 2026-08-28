@@ -1104,19 +1104,9 @@ void PreviewPanel::setupPlayer() {
         }
     });
 
-    // 播放/暂停按钮
-    connect(m_btnPlay, &QPushButton::clicked, this, [this]() {
-        if (!m_player) return;
-        if (m_player->playbackState() == QMediaPlayer::PlayingState)
-            m_player->pause();
-        else
-            m_player->play();
-    });
-
-    // 进度条拖动
-    connect(m_progress, &QSlider::sliderMoved, this, [this](int pos) {
-        if (m_player) m_player->setPosition(pos);
-    });
+    // 注:m_btnPlay::clicked 与 m_progress::sliderMoved 已移出 setupPlayer,
+    // 改在构造函数一次性建立。teardown→setup 循环每次都会新加一份,导致
+    // 点一次播放切换 N 次(N=循环次数)、拖动进度条 N 倍 setPosition 调用。
 
     // 时长变化
     connect(m_player, &QMediaPlayer::durationChanged, this, [this](qint64 dur) {
