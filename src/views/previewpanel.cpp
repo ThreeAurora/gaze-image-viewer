@@ -1164,6 +1164,7 @@ void PreviewPanel::teardownPlayer() {
         delete m_vw;
         m_vw = nullptr;
     }
+    if (m_videoCover) m_videoCover->hide();
 }
 
 void PreviewPanel::clear() {
