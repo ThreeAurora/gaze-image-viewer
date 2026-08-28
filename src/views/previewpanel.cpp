@@ -903,8 +903,10 @@ void PreviewPanel::loadFile(const QString& path) {
     m_isLivePhoto = false;
     stopMovie();   // 任何类型切换都先回收 GIF 动画(防泄漏/防隐藏继续解码)
 
-    // 目录:预览内容 2x2 拼贴(与网格卡片同一管线),不再落"无预览"占位
-    if (fi.isDir()) { showDirPreview(path); return; }
+    // 目录:预览框留空。内容 2x2 拼贴表达的是"这个文件夹长什么样",
+    // 属缩略图卡片的职责(Thumbs/folder4 已在那里出图);预览框只对
+    // "选中的那一个内容"负责,文件夹没有这样一个内容。
+    if (fi.isDir()) { showNoPreview(); return; }
     stopMovie();   // 任何类型切换都先回收 GIF 动画(防泄漏/防隐藏继续解码)
 
     // 立即清屏:杜绝上一文件(尤其图片→视频切换)残影闪帧
