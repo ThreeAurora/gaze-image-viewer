@@ -840,9 +840,12 @@ void PreviewPanel::setViewerMode(bool on) {
 void PreviewPanel::loadFile(const QString& path) {
     // 换文件(或清空):递增代号,作废任何在途的后台解码结果
     ++m_imgReqGen;
+    m_liveInfo.reset();
     if (path.isEmpty()) { clear(); return; }
     QFileInfo fi(path);
     if (!fi.exists()) { clear(); return; }
+    // 目录:预览内容 2x2 拼贴(与网格卡片同一管线),不再落"无预览"占位
+    if (fi.isDir()) { showDirPreview(path); return; }
 
     // 换文件(区别于窗口 resize 触发的 fitAuto):Viewer/resetAutoOnNav 靠它判断
     m_navigating = true;
