@@ -70,9 +70,11 @@ inline void showDeleteToast(QWidget* parent, const QString& text) {
     toast->setAttribute(Qt::WA_DeleteOnClose);
     toast->setAttribute(Qt::WA_TransparentForMouseEvents);
     toast->setTextFormat(Qt::PlainText);
+    // 琥珀底+深字加粗:原灰底白字在深色界面里太不显眼(用户反馈)
     toast->setStyleSheet(
-        "QLabel{background:rgba(46,46,54,235);color:#FFFFFF;font-size:12px;"
-        "padding:8px 14px;border-radius:6px;border:1px solid rgba(255,255,255,45);}");
+        "QLabel{background:" C_SELECT_YELLOW ";color:" C_WIN_BG ";font-size:12px;"
+        "font-weight:600;padding:8px 14px;border-radius:6px;"
+        "border:1px solid rgba(0,0,0,70);}");
     toast->adjustSize();
 
     int bottomInset = 0;
