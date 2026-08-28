@@ -1120,23 +1120,27 @@ void PreviewPanel::setupPlayer() {
 
     // 时长变化
     connect(m_player, &QMediaPlayer::durationChanged, this, [this](qint64 dur) {
+        if (!m_player) return;
         m_progress->setRange(0, static_cast<int>(dur));
     });
 
     // 位置更新（Qt6 signal，替换 Qt5 timer）
     connect(m_player, &QMediaPlayer::positionChanged, this, [this](qint64 pos) {
+        if (!m_player) return;
         qint64 dur = m_player->duration();
         if (dur > 0) {
             m_progress->setValue(static_cast<int>(pos));
         }
         auto fmt = [](qint64 ms) -> QString {
             int sec = static_cast<int>(ms / 1000);
+            // seek 期间 dur < pos:剩余时间为负,qMax 防止 "-X:X" 显示
+            if (sec < 0) sec = 0;
             int h = sec / 3600;
             return h > 0
                 ? QString("%1:%2:%3").arg(h).arg((sec % 3600) / 60, 2, 10, QChar('0')).arg(sec % 60, 2, 10, QChar('0'))
                 : QString("%1:%2").arg(sec / 60).arg(sec % 60, 2, 10, QChar('0'));
         };
-        qint64 shown = m_timeRemaining ? (dur - pos) : pos;
+        qint64 shown = m_timeRemaining ? qMax(qint64(0), dur - pos) : pos;
         m_timeLabel->setText(fmt(shown) + " / " + fmt(dur));
     });
 }
