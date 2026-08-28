@@ -93,6 +93,16 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     m_audioLabel->hide();
     layout->addWidget(m_audioLabel, 1);
 
+    // txt 文本预览(等宽字体,只读,深色底)
+    m_textEdit = new QTextEdit;
+    m_textEdit->setReadOnly(true);
+    m_textEdit->setStyleSheet(
+        "QTextEdit{background:" C_CONTENT ";color:#E0E0E0;border:none;"
+        "font-family:'Consolas','Courier New',monospace;font-size:13px;"
+        "selection-background-color:" C_ACCENT ";}");
+    m_textEdit->hide();
+    layout->addWidget(m_textEdit, 1);
+
     // 视频区
     m_videoWidget = new QWidget;
     m_videoWidget->setStyleSheet("background:#0A0A0C;");
