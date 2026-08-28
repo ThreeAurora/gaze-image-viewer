@@ -4,6 +4,7 @@
 #include <QString>
 #include <QStringList>
 #include <QFileInfo>
+#include <QDir>
 #include <QWidget>
 #include <QMessageBox>
 #include <QLabel>
