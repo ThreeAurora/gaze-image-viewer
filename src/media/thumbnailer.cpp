@@ -83,6 +83,22 @@ void Thumbnailer::snapshotPrefs() {
     p.blobCodec   = qBound(0, st.get("Cache/compression", 4).toInt(), 4);
     p.highQuality = st.get("Thumbs/highQuality", true).toBool();
     p.framePct    = qBound(0, st.get("Thumbs/videoFramePct", 0).toInt(), 100);
+    // ── 设置→缩略图(创建) ──
+    p.useEmbedded   = st.get("Thumbs/useEmbedded", true).toBool();
+    p.embedFallback = st.get("Thumbs/embedFallback", true).toBool();
+    p.folder4       = st.get("Thumbs/folder4", true).toBool();
+    p.video4        = st.get("Thumbs/video4", false).toBool();
+    p.wholeFolder   = st.get("Thumbs/wholeFolder", false).toBool();
+    // ── 设置→缩略图(处理) ──
+    p.alpha     = st.get("Thumbs/alpha", true).toBool();
+    p.transGrid = st.get("Thumbs/transparencyGrid", true).toBool();
+    p.sharpen   = st.get("Thumbs/sharpen", true).toBool();
+    p.gamma     = st.get("Thumbs/gamma", false).toBool();
+    // ── 设置→缓存数据库 ──
+    p.useCatalog   = st.get("Cache/useCatalog", true).toBool();
+    p.thumbW       = qBound(64, st.get("Cache/thumbWidth", 465).toInt(), 1024);
+    p.thumbH       = qBound(64, st.get("Cache/thumbHeight", 365).toInt(), 1024);
+    p.checkStartup = st.get("Cache/checkOnStartup", false).toBool();
     QMutexLocker lk(&m_prefMutex);
     m_prefs = p;
 }
