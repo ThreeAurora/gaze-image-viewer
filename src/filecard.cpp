@@ -19,6 +19,7 @@ int  FileCard::s_labelAlign  = 1;
 int  FileCard::s_labelGap    = 6;
 bool FileCard::s_showRating  = true;
 bool FileCard::s_sizeBytes   = false;
+bool FileCard::s_shadow      = false;   // Appearance/shadow
 
 // FileList/sizeInBytes:卡片详细行/悬浮提示共用(逐条目路径只读缓存)
 static QString cardSizeText(int64_t num) {
