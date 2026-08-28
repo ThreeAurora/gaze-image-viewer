@@ -73,6 +73,14 @@ int main(int argc, char *argv[]) {
     static YesNoKeyFilter s_yesNoFilter;
     app.installEventFilter(&s_yesNoFilter);
 
+    // 卡死/崩溃诊断:事件日志+看门狗+minidump(logger.h);3s 心跳证明 GUI 活着
+    Logger::init();
+    QTimer touchTimer;
+    QObject::connect(&touchTimer, &QTimer::timeout, []() { Logger::touch(); });
+    touchTimer.start(3000);
+    QObject::connect(&app, &QCoreApplication::aboutToQuit,
+                     []() { Logger::event(QStringLiteral("session end")); });
+
     auto cliPaths = []() {
         QStringList out;
         const QStringList args = QCoreApplication::arguments();
