@@ -149,6 +149,16 @@ int main(int argc, char *argv[]) {
             }
             if (!boxes) qWarning("[selftest] no confirm box (silent delete path)");
         });
+        QTimer::singleShot(3400, &w, []() {
+            int stillOpen = 0;
+            const auto tops = QApplication::topLevelWidgets();
+            for (QWidget* t : tops) {
+                auto* box = qobject_cast<QMessageBox*>(t);
+                if (box && box->isVisible()) ++stillOpen;
+            }
+            qWarning("[selftest] confirm boxes still open after Space = %d "
+                     "(0 = Space really accepted)", stillOpen);
+        });
         QTimer::singleShot(4500, &w, []() {
             qWarning("[selftest] survived 4.5s without crashing");
             qApp->quit();
