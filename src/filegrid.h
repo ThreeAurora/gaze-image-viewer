@@ -119,6 +119,8 @@ public:
     int  cardSizeValue()  const { return m_cardSizeAuto; }
     // 缩略图框高度(Appearance/customThumbH;0=沿用"与宽同高"的旧行为)
     int  thumbBoxH() const;
+    // FileList/scanHeader:当前卷是否允许读文件头判格式
+    bool headerScanAllowed(const QString& dirPath) const;
     // 各模式缩略图框以外的固定高度(文件名/详细行/内边距),boxesFor 与 cardH 共用
     static int chromeFor(int mode, int labelGap);
     int  colorLabelOf(const QString& path) const;   // 标题模板 {颜色标签}
