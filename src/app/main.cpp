@@ -127,6 +127,20 @@ int main(int argc, char *argv[]) {
 
     // ── 临时诊断:GAZE_SELFTEST=s 时复现"选中第一项 → 按 S → 确认框按 Space"。
     //    走的是与真实按键同一条事件派发链,但不依赖 OS 输入合成。查完删除。
+    if (qEnvironmentVariableIsSet("GAZE_SELFTEST")) {
+        // GUI 子系统程序的 qWarning 走 OutputDebugString,重定向 stderr 抓不到,
+        // 这里把诊断输出直接落到 selftest.log。临时诊断,查完删除。
+        static QFile slog(QCoreApplication::applicationDirPath() + "/selftest.log");
+        slog.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text);
+        qInstallMessageHandler([](QtMessageHandler::Severity, const QMessageLogContext&,
+                                  const QString& msg) {
+            slog.write(QDateTime::currentDateTime().toString("HH:mm:ss.zzz ").toUtf8());
+            slog.write(msg.toUtf8());
+            slog.write("\n");
+            slog.flush();
+        });
+        qWarning("[selftest] mode=%s", qPrintable(QString::fromLocal8Bit(qgetenv("GAZE_SELFTEST"))));
+    }
     if (qgetenv("GAZE_SELFTEST") == "scroll") {
         // 进程内模拟快速拖动滚动条 + 画布几何自检
         QTimer::singleShot(1500, &w, [&w]() { w.selftestFastScroll(); });
