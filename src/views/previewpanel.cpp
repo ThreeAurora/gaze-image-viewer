@@ -71,7 +71,7 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     layout->setSpacing(0);
 
     // 空态占位(未选中任何文件时)
-    m_placeholder = new QLabel("\xe9\xa2\x84\xe8\xa7\x88\xe5\x8c\xba"); // 预览区
+    m_placeholder = new QLabel;
     m_placeholder->setAlignment(Qt::AlignCenter);
     m_placeholder->setStyleSheet(
         QString("color:%1;font-size:13px;background:transparent;")
