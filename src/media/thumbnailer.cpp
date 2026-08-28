@@ -36,6 +36,7 @@ static QImage windowsShellThumb(const QString& filePath, int size);
 #include <QFile>
 #include <chrono>
 #include <cstring>
+#include <cmath>
 
 #ifdef HAS_FFMPEG
 extern "C" {
