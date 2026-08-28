@@ -14,6 +14,7 @@
 #include <filesystem>
 #include <chrono>
 #include <cmath>
+#include <cstring>
 #include <unordered_map>
 #include "constants.h"
 
