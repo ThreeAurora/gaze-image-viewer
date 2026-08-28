@@ -213,7 +213,8 @@ void MainWindow::selftestFastScroll() {
     if (!m_fileGrid) { qWarning("[selftest] no grid"); return; }
     // 恢复出来的分隔条尺寸只留给网格 185px,一两列根本测不出东西
     if (m_splitter) m_splitter->setSizes({220, 1300, 300});
-    m_fileGrid->selftestFastScroll();
+    // 等分隔条变化引发的重建落地,否则前半程测的是"边改布局边滚"
+    QTimer::singleShot(400, m_fileGrid, [this]() { m_fileGrid->selftestFastScroll(); });
 }
 
 // ═════════════════════════════════════════════════════════
