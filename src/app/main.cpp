@@ -160,7 +160,8 @@ int main(int argc, char *argv[]) {
             qWarning("[selftest] scroll watchdog fired");
             qApp->quit();
         });
-    } else if (qEnvironmentVariableIsSet("GAZE_SELFTEST")) {
+    } else if (const QByteArray m = qgetenv("GAZE_SELFTEST");
+               m == "s" || m == "sb") {
         // s  = Space 投给焦点按钮(走 Qt 原生按钮激活)
         // sb = Space 投给对话框本身(走 YesNoKeyFilter 的排队 click() 分支)
         const bool toBox =
