@@ -209,12 +209,10 @@ QImage Thumbnailer::postProcess(QImage img, int size) const {
     if (img.isNull()) return img;
     const Prefs p = prefs();
 
-    // 尺寸包围盒(Cache/thumbWidth × Cache/thumbHeight):只裁不扩,
-    // 默认 465x365 大于任何卡片缩略图,故默认情况下行为与设置前完全一致
-    const int cap = qMin(p.thumbW, p.thumbH);
-    if (cap > 0 && (img.width() > cap || img.height() > cap))
-        img = img.scaled(cap, cap, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-    Q_UNUSED(size);
+    // 只裁不扩:个别路径(shell 大档位返回等)超出请求尺寸时裁回请求尺寸,
+    // 缓存体积有界;绝不做二次降档(存小了放大必糊)
+    if (size > 0 && (img.width() > size || img.height() > size))
+        img = img.scaled(size, size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 
     // Thumbs/gamma:线性光降采样(已在 imageThumb 内按此开关处理,这里只兜底裁剪)
     // ── 透明处理 ──
