@@ -313,21 +313,17 @@ void FileGrid::clearAllMarks() {
 
 void FileGrid::toggleMark(int index) {
     if (index < 0 || index >= static_cast<int>(m_entries.size())) return;
-    QString path = m_entries[index].path;
+    const QString path = m_entries[index].path;
     if (m_marked.contains(path))
         m_marked.remove(path);
     else
         m_marked.insert(path);
-    for (auto it = m_active.begin(); it != m_active.end(); ++it)
-        if (it.key() == index)
-            it.value()->setMarked(m_marked.contains(path));
+    refreshView();   // 绘制时直接查 m_marked
 }
 
 void FileGrid::clearAllMarks() {
     m_marked.clear();
-    for (auto* card : m_active)
-        card->setMarked(false);
-    if (m_filterMarked) toggleFilter();
+    if (m_filterMarked) toggleFilter(); else refreshView();
 }
 
 void FileGrid::deleteFile(int index) {
