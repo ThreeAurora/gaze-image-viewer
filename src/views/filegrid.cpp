@@ -324,6 +324,12 @@ void FileGrid::loadDirectory(const QString& dirPath) {
             && AppSettings::instance().get("FileList/newAtEnd", false).toBool()) {
             rest.insert(rest.end(), fresh.begin(), fresh.end());
             m_entries = std::move(rest);
+            // 顺序被"新条目挪到末尾"改动,而 m_pathRow 只在 sort() 里建过:
+            // 不重算的话,随后到达的缩略图回调按旧行号定点重绘 → 画到错的卡片
+            m_pathRow.clear();
+            m_pathRow.reserve(static_cast<int>(m_entries.size()));
+            for (int i = 0; i < static_cast<int>(m_entries.size()); ++i)
+                m_pathRow.insert(m_entries[i].path, i);
         }
     }
 
