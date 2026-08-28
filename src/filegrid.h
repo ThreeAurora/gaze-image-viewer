@@ -59,6 +59,8 @@ public:
     void reloadAfterDelete(const QStringList& deleted);
     // 删除后重载:选中被删项的下一项(末项则上一项),对齐 XnView
     void reloadAfterDelete(const QStringList& deleted);
+    // 删除后重载:选中被删项的下一项(末项则上一项),对齐 XnView
+    void reloadAfterDelete(const QStringList& deleted);
     void setCardSize(int size);
     void setFixedCols(int n);    // n=0 自动;1-16 手动列数(缩放时缩略图贴边缩放但列数不变)
     int  fixedCols() const { return m_fixedCols; }
