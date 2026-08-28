@@ -179,5 +179,13 @@ int main(int argc, char *argv[]) {
     }
 
     w.show();
+
+    // Cache/checkOnStartup:启动后延后一会儿再校验缓存完整性 ——
+    // 与首屏缩略图请求错开,避免一上来就抢 I/O(校验在后台线程跑)
+    QTimer::singleShot(4000, &w, []() {
+        if (AppSettings::instance().get("Cache/checkOnStartup", false).toBool())
+            Thumbnailer::instance().verifyCache();
+    });
+
     return app.exec();
 }
