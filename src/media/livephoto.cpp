@@ -9,6 +9,8 @@
 #include <QMutexLocker>
 #include <QTemporaryFile>
 #include <QProcess>
+#include <QElapsedTimer>
+#include <logger.h>
 #include <set>
 
 namespace LivePhoto {
