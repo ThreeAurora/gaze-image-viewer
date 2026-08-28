@@ -224,13 +224,16 @@ std::optional<Info> detectEmbedded(const QString& imagePath) {
 
     if (hasXmp) {
         // 全文件扫描 ftyp
+        Logger::event(QStringLiteral("live: XMP fallback full-scan '%1'").arg(imagePath));
         f.seek(0);
         QByteArray data = f.read(fileSize);
         int pos = -1;
         while (true) {
             pos = data.indexOf(MP4_FTYP, pos + 1);
-            if (pos < 1024) continue; // 跳过图片头部的假 ftyp
+            // 顺序不能反:indexOf 找不到返回 -1,-1 也 < 1024,
+            // 若先判 continue 再判 break 就是死循环(GUI 线程永久卡死)
             if (pos < 0) break;
+            if (pos < 1024) continue; // 跳过图片头部的假 ftyp
             if (pos + 8 < data.size() && MP4_BRANDS.count(data.mid(pos + 4, 4))) {
                 Info info;
                 info.type = "motion";
@@ -242,6 +245,7 @@ std::optional<Info> detectEmbedded(const QString& imagePath) {
             }
         }
         // 有 XMP 但找不到具体偏移
+        Logger::event("live: XMP present, no embedded MP4 (static)");
         Info info;
         info.type = "motion";
         info.videoPath = imagePath;
