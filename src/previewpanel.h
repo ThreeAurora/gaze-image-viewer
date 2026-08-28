@@ -105,6 +105,12 @@ private:
     // Live Photo 内嵌视频后台提取(ffmpeg remux 秒级,不再阻塞:
     // 先显示静态图,提取完成自动切播放)
     void startExtractAsync(const QString& path, const LivePhoto::Info& info);
+    // 动态照片:单击静态预览=重播动态部分(不做临时 1:1 放大)
+    void playLivePhoto();
+    // 文件夹预览:后台生成目录内容 2x2 拼贴(与网格卡片同一 Thumbnailer 管线)
+    void showDirPreview(const QString& path);
+    // 导航小窗拖动:指尖下的缩略图点 → 视口中心(几何与 updatePanTool 同一套)
+    void panNavTo(const QPoint& thumbPos);
 
     // ── 设置活接线:查看器/全屏的界面元素 ──
     void applyViewerChrome();              // 改设置/换文件后统一刷新下列元素
