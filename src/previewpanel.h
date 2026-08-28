@@ -109,8 +109,8 @@ private:
     void startExtractAsync(const QString& path, const LivePhoto::Info& info);
     // 动态照片:单击静态预览=重播动态部分(不做临时 1:1 放大)
     void playLivePhoto();
-    // 文件夹预览:后台生成目录内容 2x2 拼贴(与网格卡片同一 Thumbnailer 管线)
-    void showDirPreview(const QString& path);
+    // 无预览出口:目录 + 未知类型共用(清空各视图,只留占位底)
+    void showNoPreview();
     // 导航小窗拖动:指尖下的缩略图点 → 视口中心(几何与 updatePanTool 同一套)
     void panNavTo(const QPoint& thumbPos);
     // 动态照片:单击静态预览=重播动态部分(不做临时 1:1 放大)
