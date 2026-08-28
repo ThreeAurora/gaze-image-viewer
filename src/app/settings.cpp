@@ -1,5 +1,6 @@
 #include "settings.h"
 #include <QCoreApplication>
+#include <QStandardPaths>
 #include <QDir>
 
 AppSettings& AppSettings::instance() {
@@ -7,9 +8,33 @@ AppSettings& AppSettings::instance() {
     return s;
 }
 
+// ── Integration/iniLocation(设置→系统集成→配置文件)──
+//   0 程序文件夹(便携,默认) 1 系统文件夹 %APPDATA% 2 自定义目录
+// 引导问题:选 1/2 时"该去哪读"本身也存不进远端文件,只能先读 exe 目录那份
+// 便携 ini 拿到这两个键,再决定主配置落到哪。因此 exe 目录会保留一个只含
+// Integration/* 的小引导文件,其余设置全部进目标位置。
+static QString resolveIniPath() {
+    const QString portable = QCoreApplication::applicationDirPath() + "/gaze.ini";
+    QSettings boot(portable, QSettings::IniFormat);
+    const int loc = boot.value("Integration/iniLocation", 0).toInt();
+    if (loc == 1) {
+        const QString dir =
+            QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+        QDir().mkpath(dir);
+        return dir + "/gaze.ini";
+    }
+    if (loc == 2) {
+        const QString dir = boot.value("Integration/customIniDir").toString().trimmed();
+        if (!dir.isEmpty()) {
+            QDir().mkpath(dir);
+            return QDir::fromNativeSeparators(dir) + "/gaze.ini";
+        }
+    }
+    return portable;
+}
+
 AppSettings::AppSettings()
-    : m_settings(QCoreApplication::applicationDirPath() + "/gaze.ini",
-                 QSettings::IniFormat)
+    : m_settings(resolveIniPath(), QSettings::IniFormat)
 {}
 
 bool AppSettings::livePhotoAutoPlay() const {
