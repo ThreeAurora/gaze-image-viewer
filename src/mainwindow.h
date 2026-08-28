@@ -45,6 +45,7 @@ public:
     void saveLayout(const QString& name);   // 布局保存/应用(查看→布局;退出自动存 _last)
     void applyLayout(const QString& name);
     void selftestPressKey(int qtKey);       // 临时诊断:S 键闪退定位,查完删
+    void selftestPressKey(int qtKey);       // 临时诊断:S 键闪退定位,查完删
     void selftestFastScroll();              // 临时诊断:快速拖动滚动条 + 几何自检,查完删
 
 
