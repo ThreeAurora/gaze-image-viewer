@@ -15,6 +15,7 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QToolBar>
+#include <QComboBox>
 #include <QMessageBox>
 #include <QDialog>
 #include <QAbstractButton>
