@@ -319,6 +319,12 @@ void FileGrid::loadDirectory(const QString& dirPath) {
             for (int i = 0; i < static_cast<int>(m_entries.size()); ++i)
                 if (m_entries[i].path == m_preferPath) { idx = i; break; }
         }
+        // FileList/autoSelectNew:有新文件则优先落到第一个新文件上
+        if (m_preferPath.isEmpty() && !freshPaths.isEmpty()
+            && AppSettings::instance().get("FileList/autoSelectNew", false).toBool()) {
+            for (int i = 0; i < static_cast<int>(m_entries.size()); ++i)
+                if (m_entries[i].path == freshPaths.first()) { idx = i; break; }
+        }
         m_preferPath.clear();
         m_selected.insert(idx);
         m_lastClicked = idx;
