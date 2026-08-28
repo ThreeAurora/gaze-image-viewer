@@ -50,3 +50,13 @@ inline const std::unordered_set<QString> VIDEO_EXTS = {
 inline const std::unordered_set<QString> AUDIO_EXTS = {
     ".mp3", ".wav", ".flac", ".aac", ".ogg", ".wma", ".m4a", ".opus"
 };
+
+inline const std::unordered_set<QString> DOCUMENT_EXTS = {
+    ".txt", ".doc", ".docx", ".pdf", ".rtf", ".odt", ".xls", ".xlsx",
+    ".ppt", ".pptx", ".csv", ".md", ".tex", ".epub", ".mobi"
+};
+
+inline const std::unordered_set<QString> EXECUTABLE_EXTS = {
+    ".exe", ".bat", ".cmd", ".ps1", ".sh", ".msi", ".com", ".scr",
+    ".jar", ".py", ".pl", ".rb"
+};
