@@ -135,8 +135,6 @@ private:
     QLineEdit *m_addrBar = nullptr;
     QLabel *m_statusLabel = nullptr;
     QLabel *m_pathLabel = nullptr;
-    QLabel *m_tooltip = nullptr;
-    bool m_fullscreenMode = false;
     QStringList m_history;   // 目录导航历史
     int m_histIdx = -1;
     bool m_histNav = false;  // 历史跳转中,不再入栈
