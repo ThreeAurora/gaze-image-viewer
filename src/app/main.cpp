@@ -274,6 +274,7 @@ int main(int argc, char *argv[]) {
 
     Logger::boot("qss");
     Logger::boot("qss");
+    Logger::boot("qss");
     MainWindow w;
     Logger::boot("mw-ctor");
     Logger::boot("mw-ctor");
