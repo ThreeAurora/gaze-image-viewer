@@ -294,11 +294,27 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
     addAction(IconLib::appIcon("cmd_newFolder"), "新建文件夹", this, [this, grid]() {
         QString base = QFileInfo(m_filePath).isDir()
             ? m_filePath : QFileInfo(m_filePath).absolutePath();
-        QString name = QInputDialog::getText(nullptr, "新建文件夹", "文件夹名:",
-                                             QLineEdit::Normal, "新建文件夹");
+        QWidget* par = grid;
+        QString name = QInputDialog::getText(par, "新建文件夹", "文件夹名:",
+                                             QLineEdit::Normal, "新建文件夹").trimmed();
         if (name.isEmpty()) return;
-        QDir(base).mkpath(name);
-        if (grid) grid->refreshCurrentDir();
+        // mkpath 会照输入把整条路径逐层建出来:"a/b" 一次冒两个目录,
+        // 校验 + mkdir(单层)才是"在这里建一个文件夹"的语义
+        if (const QString why = invalidNameReason(name)) {
+            QMessageBox::warning(par, "新建文件夹", why);
+            return;
+        }
+        QString full = QDir(base).filePath(name);
+        if (QFileInfo::exists(full)) {
+            QMessageBox::warning(par, "新建文件夹",
+                QString::fromUtf8("同名文件夹已存在:\n") + full);
+            return;
+        }
+        if (!QDir().mkdir(full)) {
+            QMessageBox::warning(par, "新建文件夹", QString::fromUtf8("创建失败:\n") + full);
+            return;
+        }
+        if (grid) { grid->setPreferPath(full); grid->refreshCurrentDir(); }
     });
     addSeparator();
 
