@@ -245,7 +245,7 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
             "新名称:", QLineEdit::Normal, fi.fileName()).trimmed();
         if (name.isEmpty() || name == fi.fileName()) return;
         // 分隔符进名字 = QFile::rename 把文件搬去别处,界面上一切如常。必须先挡。
-        if (const QString why = invalidNameReason(name)) {
+        if (const QString why = invalidNameReason(name); !why.isEmpty()) {
             QMessageBox::warning(par, "重命名", why);
             return;
         }
