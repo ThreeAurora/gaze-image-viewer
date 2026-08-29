@@ -640,12 +640,12 @@ void PreviewPanel::updatePanTool() {
 // 导航小窗拖动:指尖下的缩略图点 → 映射回整图坐标 → 让视口中心对准它。
 // 按住蓝框(或缩略图任意处)拖动,蓝框始终跟指尖走,可快速甩到图片任意角落
 void PreviewPanel::panNavTo(const QPoint& thumbPos) {
-    const QPixmap tp = m_panThumb->pixmap();
-    if (!m_origPix || tp.isNull()) return;
-    const int ox = (m_panThumb->width() - tp.width()) / 2;
-    const int oy = (m_panThumb->height() - tp.height()) / 2;
-    const double nx = qBound(0.0, double(thumbPos.x() - ox) / tp.width(), 1.0);
-    const double ny = qBound(0.0, double(thumbPos.y() - oy) / tp.height(), 1.0);
+    const QRect pr = navPixmapRect();
+    if (!m_origPix || pr.isNull() || pr.width() <= 0 || pr.height() <= 0) return;
+    // 入参是缩略图(m_panThumb)坐标,而 pr 是 m_panTool 坐标 —— 同一空间才能相减
+    const QPoint p = m_panThumb->mapTo(m_panTool, thumbPos);
+    const double nx = qBound(0.0, double(p.x() - pr.x()) / pr.width(),  1.0);
+    const double ny = qBound(0.0, double(p.y() - pr.y()) / pr.height(), 1.0);
     // label.x + nx*labelW = 视口中线  →  label.x = 中线 - nx*labelW
     const QPoint pos(width() / 2 - int(nx * m_imgLabel->width()),
                      height() / 2 - int(ny * m_imgLabel->height()));
