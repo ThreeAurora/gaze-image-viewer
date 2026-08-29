@@ -256,21 +256,6 @@ QWidget* SettingsDialog::pageFileOps() {
 QWidget* SettingsDialog::pageInterface() {
     auto* form = new QFormLayout;
     form->setVerticalSpacing(12);
-    auto* multiTabs = chk("Interface/multiViewerTabs",
-                          QString::fromUtf8("同一文件多个查看器标签卡"), false);
-    multiTabs->setToolTip(QString::fromUtf8(
-        "开:同一个文件可以再开一张标签(右键\"在新标签卡中打开\"点两次就有两张)。\n"
-        "关(默认):一个文件只占一张标签,重复打开就切回已有那张。"));
-    form->addRow(multiTabs);
-    form->addRow(chk("Interface/syncBrowser", QString::fromUtf8("关闭视图时,同步调整浏览器"), false));
-    auto* oneTab = chk("Interface/oneViewerTab",
-                       QString::fromUtf8("一个文件仅有一个查看器标签卡"), false);
-    oneTab->setToolTip(QString::fromUtf8(
-        "开:查看器始终只保留一张标签,新打开的文件顶掉当前标签。\n"
-        "关(默认):右键\"在新标签卡中打开\"每张另起一条,张数受下面的上限约束。"));
-    form->addRow(oneTab);
-    form->addRow(QString::fromUtf8("查看器标签卡上限(0=不限)"),
-        spin("Interface/maxViewerTabs", 0, 100, 20));
     auto* panesOnStart = chk("Interface/showPanesOnStart",
         QString::fromUtf8("启动时打开文件列表和预览框"), true);
     panesOnStart->setToolTip(QString::fromUtf8(
