@@ -12,6 +12,7 @@
 
 class QVBoxLayout;
 class QComboBox;
+class QToolButton;
 class FolderTree;
 class FileGrid;
 class PreviewPanel;
