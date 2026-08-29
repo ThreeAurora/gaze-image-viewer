@@ -424,9 +424,8 @@ void FolderTree::newFolderInto(QTreeWidgetItem* base) {
         this, QString::fromUtf8("新建文件夹"), QString::fromUtf8("名称:"),
         QLineEdit::Normal, QString::fromUtf8("新建文件夹"), &ok).trimmed();
     if (!ok) return;
-    if (!isLegalFolderName(name)) {
-        QMessageBox::warning(this, QString::fromUtf8("新建文件夹"),
-            QString::fromUtf8("名称不能包含 / \\ : * ? \" < > | 也不能为空"));
+    if (const QString why = invalidNameReason(name)) {
+        QMessageBox::warning(this, QString::fromUtf8("新建文件夹"), why);
         return;
     }
     const QString full = QDir(dir).filePath(name);
