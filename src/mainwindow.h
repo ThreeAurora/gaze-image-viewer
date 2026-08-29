@@ -70,6 +70,8 @@ private:
     void goForward();
     int  addViewerTab(const QString& path);                 // 追加标签,返回索引
     void setViewerTabPath(int index, const QString& path);  // 就地换某标签指向的文件
+    int  addViewerTab(const QString& path);                 // 追加标签,返回索引
+    void setViewerTabPath(int index, const QString& path);  // 就地换某标签指向的文件
     // #105:索引 0 常驻「浏览器」标签(tabData=哨兵),点它回标准模式
     bool isBrowserTab(int index) const;
     int  firstImageTab() const;             // 第一个图片标签,-1=无
