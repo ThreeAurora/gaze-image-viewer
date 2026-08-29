@@ -1,10 +1,12 @@
 #pragma once
 #include <QImage>
+#include <QImageReader>
 #include <QPainter>
 #include <QColor>
 #include <QSize>
 #include <cmath>
 #include <cstring>
+#include "wicdecode.h"
 
 // ═══════════════════════════════════════════
 // 图像后处理公共件(缩略图管线 + 查看器渲染共用)
