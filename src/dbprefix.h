@@ -15,5 +15,5 @@ inline QString likePrefixPattern(const QString& dir) {
             out += QLatin1Char('\\');
         out += c;
     }
-    return out + QLatin1Char('%');   // 裸 % 才是通配(前面已把目录名里的 % 转义过)
+    return out + QLatin1String("\\%");   // 串尾的通配才是"前缀匹配"的意思
 }
