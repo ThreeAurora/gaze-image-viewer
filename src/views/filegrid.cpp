@@ -444,7 +444,7 @@ void FileGrid::newFolder() {
     const QString name = QInputDialog::getText(this, "新建文件夹", "名称:",
                                         QLineEdit::Normal, "新建文件夹", &ok).trimmed();
     if (!ok || name.isEmpty()) return;
-    if (const QString why = invalidNameReason(name)) {
+    if (const QString why = invalidNameReason(name); !why.isEmpty()) {
         QMessageBox::warning(this, "新建文件夹", why);
         return;
     }
