@@ -441,14 +441,28 @@ void FileGrid::deleteFile(int index) {
 
 void FileGrid::newFolder() {
     bool ok;
-    QString name = QInputDialog::getText(this, "新建文件夹", "名称:",
-                                         QLineEdit::Normal, "新建文件夹", &ok);
+    const QString name = QInputDialog::getText(this, "新建文件夹", "名称:",
+                                        QLineEdit::Normal, "新建文件夹", &ok).trimmed();
     if (!ok || name.isEmpty()) return;
-    QString dir = m_entries.empty() ? QDir::homePath()
-                  : QFileInfo(m_entries[0].path).absolutePath();
-    QString full = QDir(dir).filePath(name);
-    if (QDir().mkdir(full))
-        loadDirectory(dir);
+    if (const QString why = invalidNameReason(name)) {
+        QMessageBox::warning(this, "新建文件夹", why);
+        return;
+    }
+    // 一直用 m_currentDir:旧写法取"第一个条目的父目录",空目录时退回 home,
+    // 于是看着空白文件夹点的"新建文件夹",东西建在了用户主目录里
+    const QString dir = m_currentDir;
+    if (dir.isEmpty()) return;
+    const QString full = QDir(dir).filePath(name);
+    if (QFileInfo::exists(full)) {
+        QMessageBox::warning(this, "新建文件夹", QString::fromUtf8("同名文件夹已存在:\n") + full);
+        return;
+    }
+    if (!QDir().mkdir(full)) {
+        QMessageBox::warning(this, "新建文件夹", QString::fromUtf8("创建失败:\n") + full);
+        return;
+    }
+    m_preferPath = full;
+    loadDirectory(dir);
 }
 
 // ═══════════════════════════════════════════
