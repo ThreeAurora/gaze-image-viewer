@@ -36,7 +36,7 @@ public:
     Q_INVOKABLE void viewerBack();     // ESC:查看器退回浏览器(幂等)
     // 切换模式触发键(设置→交互→切换模式):"SwitchMode/doubleClick" 等
     Q_INVOKABLE void requestSwitchMode(const QString& triggerKey);
-    Q_INVOKABLE void refresh();        // 重载当前目录(查看器右键菜单也经元调用进来)
+    Q_INVOKABLE void refresh();        // 重载当前目录(F5/工具栏/布局菜单)
     Q_INVOKABLE void reloadAfterDelete(const QString& deletedPath);  // 删除后重载并选中下一项
     Q_INVOKABLE void reloadAfterDelete(const QString& deletedPath);  // 删除后重载并选中下一项
     Q_INVOKABLE void reloadAfterDelete(const QString& deletedPath);  // 删除后重载并选中下一项
