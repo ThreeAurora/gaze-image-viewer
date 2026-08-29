@@ -325,7 +325,13 @@ QImage Thumbnailer::folderThumb(const QString& dirPath, int size) {
     const Prefs p = prefs();
     QDir d(dirPath);
     if (!d.exists()) return {};
-    const auto list = d.entryInfoList(QDir::Files | QDir::NoDotAndDotDot, QDir::Name);
+    const auto raw = d.entryInfoList(QDir::Files | QDir::NoDotAndDotDot, QDir::Name);
+    // 挑选顺序必须与网格一致(#98):QDir::Name 是纯字典序(1, 10, 2),
+    // 四合一会取到"1、10、2、3",和点开文件夹看到的前四张对不上
+    QFileInfoList list = raw;
+    std::stable_sort(list.begin(), list.end(), [](const QFileInfo& a, const QFileInfo& b) {
+        return naturalNameLess(a.fileName(), b.fileName());
+    });
     QStringList picked;
     const int want = p.folder4 ? 4 : 1;
     for (const QFileInfo& fi : list) {
