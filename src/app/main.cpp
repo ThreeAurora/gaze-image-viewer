@@ -194,32 +194,27 @@ int main(int argc, char *argv[]) {
 
     MainWindow w;
 
-    QLocalServer* server = nullptr;
-    if (singleInstance) {
-        QLocalServer::removeServer(kSingleServer);
-        server = new QLocalServer(&app);
-        if (server->listen(kSingleServer)) {
-            QObject::connect(server, &QLocalServer::newConnection, &w, [&w, server]() {
-                QLocalSocket* s = server->nextPendingConnection();
-                if (!s) return;
-                QObject::connect(s, &QLocalSocket::readyRead, s, [&w, s]() {
-                    const QList<QByteArray> lines = s->readAll().split('\n');
-                    for (const QByteArray& ln : lines) {
-                        const QString p = QDir::fromNativeSeparators(
-                            QString::fromUtf8(ln).trimmed());
-                        if (p.isEmpty() || !QFileInfo::exists(p)) continue;
-                        if (QFileInfo(p).isDir())
-                            QMetaObject::invokeMethod(&w, "navigateTo", Q_ARG(QString, p));
-                        else
-                            QMetaObject::invokeMethod(&w, "revealFile", Q_ARG(QString, p));
-                    }
-                    w.raise();
-                    w.activateWindow();
-                });
-                QObject::connect(s, &QLocalSocket::disconnected, s, &QObject::deleteLater);
-            });
+    // 单实例监听跟着 General/singleInstance 走:旧写法只在启动时读一次,
+    // 设置页那个勾必须重启才生效(等于半个假开关)。changed() 每次设置写入都会发,
+    // 这里借它做即时起停。
+    QPointer<QLocalServer> singleServer;
+    auto applySingleInstance = [&w, &singleServer]() {
+        const bool on =
+            AppSettings::instance().get("General/singleInstance", false).toBool();
+        if (on && !singleServer) {
+            singleServer = startSingleInstanceListener(&w);
+            if (singleServer)
+                Logger::event(QStringLiteral("single-instance listener up"));
+        } else if (!on && singleServer) {
+            Logger::event(QStringLiteral("single-instance listener off"));
+            singleServer->close();
+            singleServer->deleteLater();
+            singleServer = nullptr;
         }
-    }
+    };
+    applySingleInstance();
+    QObject::connect(&AppSettings::instance(), &AppSettings::changed,
+                     &w, [applySingleInstance]() { applySingleInstance(); });
 
     // ── 临时诊断:GAZE_SELFTEST=s 时复现"选中第一项 → 按 S → 确认框按 Space"。
     //    走的是与真实按键同一条事件派发链,但不依赖 OS 输入合成。查完删除。
