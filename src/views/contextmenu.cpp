@@ -165,8 +165,9 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
     });
     addAction("全屏", this, [this]() {
         // 通知主窗口:导航到该文件所在目录并进入全屏
+        // 查找用 indexOfMethod:openFullscreen 是 Q_INVOKABLE 方法而非槽
         QObject* mw = this;
-        while (mw && mw->metaObject()->indexOfSlot("openFullscreen(QString)") < 0)
+        while (mw && mw->metaObject()->indexOfMethod("openFullscreen(QString)") < 0)
             mw = mw->parent();
         if (mw)
             QMetaObject::invokeMethod(mw, "openFullscreen", Q_ARG(QString, m_filePath));
