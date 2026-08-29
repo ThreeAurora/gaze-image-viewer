@@ -182,9 +182,12 @@ static void runProcessAsync(const QString& program, const QStringList& args,
     };
     QObject::connect(proc, &QProcess::finished, proc,
         [finish, outFile](int code, QProcess::ExitStatus) {
-            const bool good = code == 0
-                && (outFile.isEmpty() || QFileInfo(outFile).size() > 0);
-            finish(good, good ? QString() : QStringLiteral("exit=%1").arg(code));
+            const bool codeGood = code == 0;
+            const bool fileGood = outFile.isEmpty() || QFileInfo(outFile).size() > 0;
+            QString why;
+            if (!codeGood)        why = QStringLiteral("exit=%1").arg(code);
+            else if (!fileGood)   why = QStringLiteral("输出文件为空: %1").arg(outFile);
+            finish(codeGood && fileGood, why);
         });
     QObject::connect(proc, &QProcess::errorOccurred, proc,
         [finish, program](QProcess::ProcessError e) {
