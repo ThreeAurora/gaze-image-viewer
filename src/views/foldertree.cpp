@@ -260,19 +260,56 @@ void FolderTree::mouseDoubleClickEvent(QMouseEvent* event) {
 }
 
 void FolderTree::focusPath(const QString& dirPath) {
-    QFileInfo fi(dirPath);
-    if (!fi.exists()) return;
+    const QString want = QDir::cleanPath(dirPath);
+    if (want.isEmpty()) return;
+    // 树上点出来的导航不该再走一遍定位:先看一眼现答案
+    if (QTreeWidgetItem* cur = currentItem())
+        if (QDir::cleanPath(pathOf(cur)).compare(want, Qt::CaseInsensitive) == 0) return;
+    PerfLog::Scope scope("focusPath", 5);
 
-    // 找到最近的匹配项并展开
-    for (int i = 0; i < topLevelItemCount(); ++i) {
-        auto* item = topLevelItem(i);
-        QString itemPath = item->data(0, Qt::UserRole).toString();
-        if (fi.absoluteFilePath().startsWith(itemPath)) {
-            setCurrentItem(item);
-            item->setExpanded(true);
-            break;
+    // 占位行(懒加载标记)→ 真子行;已物化的不动
+    auto materialize = [this](QTreeWidgetItem* it) {
+        if (it->childCount() == 1 && it->child(0)->text(0).isEmpty()) {
+            delete it->takeChild(0);
+            loadChildren(it);
         }
+    };
+
+    // 顶层起点取"最长前缀"匹配:桌面本身也在 C:/Users/… 下,取最贴的一行
+    QTreeWidgetItem* node = nullptr;
+    for (int i = 0; i < topLevelItemCount(); ++i) {
+        QTreeWidgetItem* top = topLevelItem(i);
+        const QString tp = QDir::cleanPath(pathOf(top));
+        if (tp.isEmpty()) continue;
+        const QString prefix = tp.endsWith(QLatin1Char('/')) ? tp : tp + QLatin1Char('/');
+        const bool hit = tp.compare(want, Qt::CaseInsensitive) == 0
+                      || want.startsWith(prefix, Qt::CaseInsensitive);
+        if (hit && (!node || tp.size() > QDir::cleanPath(pathOf(node)).size())) node = top;
     }
+    if (!node) return;
+
+    while (node) {
+        const QString np = QDir::cleanPath(pathOf(node));
+        if (np.compare(want, Qt::CaseInsensitive) == 0) break;
+        const QString rest = want.mid(np.endsWith(QLatin1Char('/')) ? np.size() : np.size() + 1);
+        const QString head = rest.section(QLatin1Char('/'), 0, 0);
+        if (head.isEmpty()) break;
+        materialize(node);
+        QTreeWidgetItem* next = nullptr;
+        for (int i = 0; i < node->childCount(); ++i) {
+            QTreeWidgetItem* c = node->child(i);
+            const QString cp = QDir::cleanPath(pathOf(c));
+            if (!cp.isEmpty() && QFileInfo(cp).fileName().compare(head, Qt::CaseInsensitive) == 0) {
+                next = c;
+                break;
+            }
+        }
+        if (!next) break;      // 这一层树上没有(隐藏规则外/网络路径):停在最深真实行
+        node->setExpanded(true);
+        node = next;
+    }
+    setCurrentItem(node);
+    scrollToItem(node, QAbstractItemView::PositionAtCenter);
 }
 
 void FolderTree::onItemClicked(QTreeWidgetItem* item, int /*column*/) {
