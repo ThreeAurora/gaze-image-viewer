@@ -106,6 +106,8 @@ private:
     void   applyPaneVisibility();                // 意图 + 查看器模式 → 实际 setVisible
     void   addRecentFile(const QString& path);   // 内存操作 + 防抖合批写盘
     void   flushRecentFiles();                   // 把内存列表写回 ini(closeEvent 也调用)
+    void   ensureRecentLoaded();                 // 懒加载内存副本(ini 只读一次)
+    void   trimRecentList();                     // 按 Interface/maxRecent 截断内存副本
     void   rebuildRecentMenu(QMenu* menu);
     void   openWithSystem(const QString& path);
     void   cycleRedFilter();                      // 红标筛选三态循环
