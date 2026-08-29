@@ -8,6 +8,7 @@
 #include <QAbstractButton>
 #include <QEvent>
 #include <QKeyEvent>
+#include <QEventLoop>
 #include <QTimer>
 #include <QPointer>
 #include <QPointer>
