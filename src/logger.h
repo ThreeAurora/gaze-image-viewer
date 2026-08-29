@@ -86,6 +86,34 @@ inline void boot(const char* phase) {
     prevAge = age;
 }
 
+// ── 冷启动分段计时 ──
+// age = 进程创建至今的墙钟毫秒(GetProcessTimes),CRT/ DLL 加载 / QApplication 构造
+// 全算在内 —— 从 main() 里起表测不到那一段,而"双击到出图"用户是连那段一起等的。
+// dt  = 距上一次 boot() 的毫秒,直接读出哪一段吃掉了启动时间。
+// 只在启动路径调用(一次十几行),不进逐条目热路径。
+inline qint64 processAgeMs() {
+#ifdef _WIN32
+    FILETIME c = {}, e = {}, k = {}, u = {};
+    if (!GetProcessTimes(GetCurrentProcess(), &c, &e, &k, &u)) return -1;
+    FILETIME now = {};
+    GetSystemTimeAsFileTime(&now);
+    auto toU64 = [](const FILETIME& t) {
+        return (quint64(t.dwHighDateTime) << 32) | t.dwLowDateTime;
+    };
+    return qint64((toU64(now) - toU64(c)) / 10000ull);
+#else
+    return -1;
+#endif
+}
+
+inline void boot(const QString& phase) {
+    static qint64 prevAge = 0;
+    const qint64 age = processAgeMs();
+    event(QStringLiteral("startup %1 age=%2ms dt=%3ms")
+              .arg(phase).arg(age).arg(prevAge ? age - prevAge : age));
+    prevAge = age;
+}
+
 // ── Qt 消息分流:qWarning/qCritical(含媒体后端报错)一并落盘 ──
 inline void msgHandler(QtMsgType type, const QMessageLogContext& ctx, const QString& msg) {
     const char* tag = "DBG";
