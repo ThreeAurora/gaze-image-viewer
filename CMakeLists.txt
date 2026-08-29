@@ -118,6 +118,7 @@ target_link_libraries(target_link_libraries(gaze PRIVATE
     Qt6::MultimediaWidgets
     Qt6::Sql
     Qt6::PrintSupport
+    Qt6::PrintSupport
     shell32
     ole32
     comctl32    # SHGetImageList / IImageList::GetIcon
