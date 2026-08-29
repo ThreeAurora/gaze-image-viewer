@@ -42,8 +42,10 @@ struct PrintOptions {
 
 // 一张图的静态信息(标题文案与"原始尺寸"排版都要用,只在这里定一次口径)
 struct PrintImageInfo {
-    QSize   px;                 // 像素尺寸(读得到图时以图为准,读不到时用这个占位)
-    qreal   dpiX = 0;           // 水平 DPI;0=文件没写,按 96 处理
+    QSize   px;                 // **转正后的原始像素尺寸**:排版只按它,不按解码出来的位图。
+                                // QImageReader::size() 给的是未转正尺寸,要按 transformation() 换宽高。
+    qreal   dpiX = 0;           // 水平 DPI;0=文件没写,按 96 处理。
+                                // 必须来自**未降采样**的解码:缩放解码后 PNG 的 DPI 会同比变小、JPEG 不会。
     QString name;
     QString dateText;           // 修改日期(已格式化)
     bool    ok = false;         // false=读不到(文件没了/格式不支持)
