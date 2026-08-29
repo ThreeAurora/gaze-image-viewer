@@ -23,6 +23,7 @@
 #include <QCryptographicHash>
 #include <QPixmap>
 #include <QImageReader>
+#include <algorithm>   // 必须在 windows.h 之前:min/max 宏会咬坏 libstdc++ 头
 
 #include <windows.h>
 #include <shobjidl.h>
