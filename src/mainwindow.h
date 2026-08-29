@@ -35,6 +35,7 @@ public:
     Q_INVOKABLE void revealFile(const QString &path);      // 以文搜图结果:定位到目录并选中
     void enterFullscreen();          // Fullscreen/dualMonitor:可选落到第二显示器
     Q_INVOKABLE void toggleViewer();   // 浏览器 ↔ 查看器(单图模式)
+    Q_INVOKABLE void toggleFullViewer();// G(#108):完全全屏 ↔ 退回窗口化的查看器
     Q_INVOKABLE void viewerBack();     // ESC:查看器退回浏览器(幂等)
     // 切换模式触发键(设置→交互→切换模式):"SwitchMode/doubleClick" 等
     Q_INVOKABLE void requestSwitchMode(const QString& triggerKey);
