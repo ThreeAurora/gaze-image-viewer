@@ -124,6 +124,7 @@ FileGrid::FileGrid(QWidget* parent) : QScrollArea(parent) {
         m_mixSort     = AppSettings::instance().get("FileList/mixSort", false).toBool();
         m_folderAlpha = AppSettings::instance().get("FileList/folderAlphabetical", true).toBool();
     m_showSubFolders = AppSettings::instance().get("FileList/showSubFolders", false).toBool();
+    m_showSubFolders = AppSettings::instance().get("FileList/showSubFolders", false).toBool();
         if (listChanged) {
             applyFilter();
             sort(m_sortCol, m_sortAsc);
