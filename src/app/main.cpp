@@ -272,6 +272,7 @@ int main(int argc, char *argv[]) {
     app.setStyleSheet(Theme::appQss());
 
     Logger::boot("qss");
+    Logger::boot("qss");
     MainWindow w;
     Logger::boot("mw-ctor");
     Logger::boot("mw-ctor");
