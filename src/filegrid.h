@@ -102,6 +102,7 @@ public:
     void selectInvert();
     enum SelectKind { KindMarked, KindFiles, KindDirs, KindImages, KindVideos, KindAudio };
     void selectByKind(int kind);
+    void clearAllMarks();   // 清空 ★ 标记集(编辑菜单/Shift+M)
 
     // 颜色标记:对当前选中(单选时该项;多选时全部)设置
     void applyColorLabelToSelection(int color);
