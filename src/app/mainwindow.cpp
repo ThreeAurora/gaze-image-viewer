@@ -318,15 +318,28 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
         m_formatFilterCombo->setCurrentIndex(idx);
         m_formatFilterCombo->blockSignals(false);
     });
-    // 反向同步:任何入口(筛选菜单/红标循环/键盘)改了 filterMode,下拉框跟着走
+    // 反向同步:任何入口(筛选菜单/红标循环/键盘)改了 filterMode,下拉框跟着走。
+    // 这个框只列 8 种"格式",而筛选菜单/红标三态键/M 键还会给出 图像(+目录)、
+    // 已★标记、红色… 框里没有对应项 —— 旧代码查不到就回落到 idx 0,于是网格只列
+    // 红标、框里却写着"全部"。查不到时如实标出当前筛选名:实测(Qt 6.5.3,
+    // cache/tmp/combo_placeholder_test.cpp 事实B)不可编辑 QComboBox 在
+    // currentIndex(-1) 下会把 placeholderText 画进显示区。
     connect(m_fileGrid, &FileGrid::filterModeChanged, this, [this](int mode) {
         if (!m_formatFilterCombo) return;
-        m_formatFilterCombo->blockSignals(true);
-        int idx = 0;
-        for (int i = 0; i < m_formatFilterCombo->count(); ++i)
-            if (m_formatFilterCombo->itemData(i).toInt() == mode) { idx = i; break; }
-        m_formatFilterCombo->setCurrentIndex(idx);
-        m_formatFilterCombo->blockSignals(false);
+        QComboBox* cb = m_formatFilterCombo;
+        cb->blockSignals(true);
+        int idx = -1;
+        for (int i = 0; i < cb->count(); ++i)
+            if (cb->itemData(i).toInt() == mode) { idx = i; break; }
+        if (idx >= 0) {
+            // 先定位再清占位:index 还是 -1 时清空占位文本会把 index 顶回 0
+            cb->setCurrentIndex(idx);
+            cb->setPlaceholderText(QString());
+        } else {
+            cb->setCurrentIndex(-1);
+            cb->setPlaceholderText(QString::fromUtf8("筛选：") + filterModeName(mode));
+        }
+        cb->blockSignals(false);
     });
 
     // 树右键的文件系统操作要落到网格上:removed 表示"这个目录已经没了",
