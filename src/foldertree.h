@@ -5,6 +5,7 @@
 #include <QPainter>
 #include <QMouseEvent>
 #include <QStringList>
+#include <QStringList>
 
 // ── 自定义展开箭头 ──
 class ArrowStyle : public QProxyStyle {
