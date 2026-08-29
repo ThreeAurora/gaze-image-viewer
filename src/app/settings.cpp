@@ -51,7 +51,14 @@ void AppSettings::set(const QString& key, const QVariant& v) {
         QSettings b(boot, QSettings::IniFormat);
         b.setValue(key, v);
     }
-    emit changed();
+    emit_changed_probe:
+    {
+        QElapsedTimer et;
+        et.start();
+        emit changed();
+        Logger::event(QString("#75PROBE broadcast key=%1 us=%2")
+                          .arg(key).arg(et.nsecsElapsed() / 1000));
+    }
 }
 
 QVariant AppSettings::get(const QString& key, const QVariant& def) const {
