@@ -4,6 +4,7 @@
 #include <QIcon>
 #include <QPainter>
 #include <QMouseEvent>
+#include <QStringList>
 
 // ── 自定义展开箭头 ──
 class ArrowStyle : public QProxyStyle {
