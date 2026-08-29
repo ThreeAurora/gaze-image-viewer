@@ -215,7 +215,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
         QMenu menu(m_viewerTabs);
         menu.addAction(QString::fromUtf8("关闭此标签卡"), this, [this, i]() { closeViewerTab(i); });
         menu.addAction(QString::fromUtf8("关闭所有标签卡"), this, [this]() {
-            m_viewerTabs->clear();   // 整表清:逐个关会在关到最后一个时先跳回浏览器
+            // QTabBar 没有 clear():一张一张摘。摘的过程中不发 currentChanged,
+            // 否则每摘一张预览区就重解码下一张,白白解到底
+            m_viewerTabs->blockSignals(true);
+            while (m_viewerTabs->count() > 0) m_viewerTabs->removeTab(0);
+            m_viewerTabs->blockSignals(false);
             if (m_viewerMode) toggleViewer();
         });
         menu.exec(m_viewerTabs->mapToGlobal(pos));
