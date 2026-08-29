@@ -30,7 +30,7 @@ public:
 signals:
     void folderSelected(const QString& path);
     // 树内文件操作(新建/粘贴/删除/改名/复制到/移动到)造成的结构变化。
-    // changedDirs=受影响的目录(逐个发),removed=已消失的原路径(未删则为空)。
+    // changedDirs=内容变了的目录(可多个),removed=已消失的原路径(未删则为空)。
     void foldersChanged(const QStringList& changedDirs, const QStringList& removed);
     // 改名单独发一条:当前目录正是被改名那一层时,应当跟着进新路径,
     // 而不是被 foldersChanged 的"被删→退回父目录"规则甩出去
