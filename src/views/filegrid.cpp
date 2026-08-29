@@ -508,7 +508,7 @@ void FileGrid::newFolder() {
 // ═══════════════════════════════════════════
 void FileGrid::setCardSize(int size) {
     m_cardSizeAuto = size;   // 记录 slider 设定值(自动模式用)
-    m_cardSize = std::max(80, std::min(300, size));
+    m_cardSize = qBound(THUMB_W_MIN, size, THUMB_W_MAX);
     if (!m_entries.empty()) {
         m_fitCache.clear();  // 盒子变了,圆角成品图作废
         updateLayout();
