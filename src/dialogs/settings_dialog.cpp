@@ -515,8 +515,10 @@ QWidget* SettingsDialog::pageSwitchMode() {
         QString::fromUtf8("什么都不做"),
         QString::fromUtf8("用系统程序打开")};
     auto* form = new QFormLayout;
+    // 双击默认"浏览器↔查看器"(#102)。非图像/非视频(压缩包、文档、exe…不受
+    // 这项管)一律由系统默认程序打开 —— 那种文件没有"模式"可切。
     form->addRow(QString::fromUtf8("双击"),
-        combo("SwitchMode/doubleClick", opts, 5));
+        combo("SwitchMode/doubleClick", opts, 1));
     form->addRow(QString::fromUtf8("中键"),
         combo("SwitchMode/middleClick", opts, 4));
     form->addRow(QString::fromUtf8("回车键"),
