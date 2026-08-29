@@ -262,7 +262,13 @@ QWidget* SettingsDialog::pageInterface() {
         "开:同一个文件可以再开一张标签(右键\"在新标签卡中打开\"点两次就有两张)。\n"
         "关(默认):一个文件只占一张标签,重复打开就切回已有那张。"));
     form->addRow(multiTabs);
-    form->addRow(chk("Interface/syncBrowser", QString::fromUtf8("关闭视图时,同步调整浏览器"), false));
+    auto* syncBrowser = chk("Interface/syncBrowser",
+                            QString::fromUtf8("关闭视图时,同步调整浏览器"), false);
+    syncBrowser->setToolTip(QString::fromUtf8(
+        "开:切换查看器标签、以及退回浏览器时,把文件列表的选中项挪到那个文件上,\n"
+        "于是退回后高亮的就是刚才最后看的那张,标题栏与预览也都跟着它。\n"
+        "关(默认):退回浏览器后列表仍停在你进查看器前的那一行。"));
+    form->addRow(syncBrowser);
     auto* oneTab = chk("Interface/oneViewerTab",
                        QString::fromUtf8("一个文件仅有一个查看器标签卡"), false);
     oneTab->setToolTip(QString::fromUtf8(
