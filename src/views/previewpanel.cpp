@@ -890,6 +890,12 @@ double PreviewPanel::fitScaleFor(const QSize& viewSize) const {
 void PreviewPanel::setViewerMode(bool on) {
     if (m_viewerMode == on) return;
     m_viewerMode = on;
+    // 焦点宿主随身份切换:ViewerShortcut/* 只由本类 keyPressEvent 执行，而 QWidget
+    // 默认 NoFocus → 那张表过去永远收不到键(此刻网格窗格已 setVisible(false)，
+    // 浏览器那套键盘通路也不在)。退回浏览器时必须还回 NoFocus，
+    // 否则点一下预览区就把网格的方向键吞掉。
+    setFocusPolicy(on ? Qt::StrongFocus : Qt::NoFocus);
+    if (on) setFocus();
     applyBackdrop();
     applyViewerChrome();
 }
