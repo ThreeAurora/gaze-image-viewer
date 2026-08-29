@@ -416,10 +416,6 @@ void FolderTree::reportErrors(const QStringList& errors, const QString& title) {
     QMessageBox::warning(this, title, text);
 }
 
-// 名称校验走 validname.h 的 invalidNameReason(与网格/右键/布局同一份口径):
-// 分隔符必须挡住 —— 旧实现把输入直接拼进路径,一个 "a/b" 就能让"重命名"
-// 把整个文件夹搬到别处去(表面上什么都没发生)。
-
 void FolderTree::newFolderInto(QTreeWidgetItem* base) {
     const QString dir = pathOf(base);
     if (dir.isEmpty()) return;
