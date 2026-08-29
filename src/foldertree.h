@@ -48,7 +48,7 @@ private:
     void showContextMenu(const QPoint& pos);
     static QString pathOf(const QTreeWidgetItem* item);   // UserRole 里的目录路径
     static bool    isVolumeRoot(const QString& path);     // 盘符根:禁止剪切/删除/改名
-    QTreeWidgetItem* itemForPath(const QString& path) const;
+    QTreeWidgetItem* itemForPath(const QString& path);
     QStringList selectedPaths() const;                    // 当前操作对象(资源管理器语义)
     void refreshNode(const QString& dirPath);             // 结构变化后同步该层
     void removeNodes(const QStringList& paths);           // 删除后摘掉节点(连子树)
