@@ -17,7 +17,7 @@ inline const QList<ViewerHotkeyCmd>& viewerHotkeyCmds() {
         { "缩小",        "Ctrl+-"  },
         { "适应窗口",    "F"       },
         { "1:1 像素",    ""        },   // #112:裸键 1 撤掉(用户不知道该键是干什么用的)
-        { "播放/暂停",   "P"       },
+        { "播放/暂停",   ""        },   // #108:裸键 P 撤掉(空格仍可播放/暂停)
     };
     return cmds;
 }
