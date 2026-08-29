@@ -275,7 +275,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     tv->setSpacing(0);
     tv->addWidget(createPaneHeader(QString::fromUtf8("文件夹"), "tree"));
     Logger::boot("tree:header");
-
     Logger::boot("tree:before-ft");
     m_folderTree = new FolderTree;
     Logger::boot("tree:after-ft");
