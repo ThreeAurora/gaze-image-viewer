@@ -10,6 +10,7 @@
 #include <QTabBar>
 #include <QFileInfo>
 #include <QPoint>
+#include <QPoint>
 
 class QVBoxLayout;
 class QComboBox;
