@@ -41,6 +41,14 @@
 #define THUMB_W_MIN   48
 #define THUMB_W_MAX   1024
 
+// ── 快速幻灯片间隔区间(毫秒) ──
+// 设置页数值框与 mainwindow 的两处 ini 读取共用。区间只写在设置页时,读侧
+// 就形同"随便信 ini":手改/写坏的 slideInterval 能把定时器变成 14 天不响
+// 或 100ms 一跳(实测见 cache/tmp/combo_placeholder_test.cpp 事实A)。
+#define SLIDE_MS_MIN   100
+#define SLIDE_MS_MAX   60000
+#define SLIDE_MS_DEF   1000
+
 // ── 扩展名白名单 ──
 inline const std::unordered_set<QString> IMAGE_EXTS = {
     ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp",
