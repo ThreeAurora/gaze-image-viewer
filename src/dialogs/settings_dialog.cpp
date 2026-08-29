@@ -1097,6 +1097,8 @@ QWidget* SettingsDialog::pageMaintenance() {
         auto* btns = new QHBoxLayout;
         btns->addStretch();
         auto* runBtn = new QPushButton(QString::fromUtf8("运行"));
+        // 显式默认:否则 Enter 与"空格=确认"按**创建顺序**挑按钮(全靠 runBtn 恰好先建)
+        runBtn->setDefault(true);
         auto* cancelBtn = new QPushButton(QString::fromUtf8("取消"));
         btns->addWidget(runBtn);
         btns->addWidget(cancelBtn);
