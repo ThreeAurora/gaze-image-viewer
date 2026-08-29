@@ -244,8 +244,12 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
         m_tabPaths.removeAt(i);
         m_viewerTabs->removeTab(i);
         if (m_tabPaths.isEmpty()) { toggleViewer(); return; }   // 关掉最后一个退回浏览器
-        const int at = qMin(i, m_tabPaths.size() - 1);
-        m_viewerTabs->setCurrentIndex(at);
+        // removeTab 已把当前索引改指到相邻/平移后的存活标签(关非当前标签时焦点
+        // 本就不该动)。旧写法无条件 setCurrentIndex(qMin(i,...)) 会把焦点从用户
+        // 正在看的那张硬拽到被关位置 — 多标签此前不可达,这条错路一直没人走过。
+        const int cur = m_viewerTabs->currentIndex();
+        if (cur < 0 || cur >= m_tabPaths.size())
+            m_viewerTabs->setCurrentIndex(qMin(qMax(i, 0), m_tabPaths.size() - 1));
     });
     ml->addWidget(m_viewerTabs);
 
