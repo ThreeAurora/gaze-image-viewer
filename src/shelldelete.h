@@ -160,3 +160,15 @@ inline void showShellProperties(const QString& path) {
     sei.nShow = SW_SHOWNORMAL;
     ShellExecuteExW(&sei);
 }
+
+// 系统属性对话框(Shell 自带的那份,含安全/以前的版本等页)。
+// 右键菜单与文件夹树共用,原先是 contextmenu.cpp 里的 file-static,树拿不到。
+inline void showShellProperties(const QString& path) {
+    SHELLEXECUTEINFOW sei = {};
+    sei.cbSize = sizeof(sei);
+    sei.fMask = SEE_MASK_INVOKEIDLIST;
+    sei.lpVerb = L"properties";
+    sei.lpFile = reinterpret_cast<LPCWSTR>(path.utf16());
+    sei.nShow = SW_SHOWNORMAL;
+    ShellExecuteExW(&sei);
+}
