@@ -301,7 +301,7 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
         if (name.isEmpty()) return;
         // mkpath 会照输入把整条路径逐层建出来:"a/b" 一次冒两个目录,
         // 校验 + mkdir(单层)才是"在这里建一个文件夹"的语义
-        if (const QString why = invalidNameReason(name)) {
+        if (const QString why = invalidNameReason(name); !why.isEmpty()) {
             QMessageBox::warning(par, "新建文件夹", why);
             return;
         }
