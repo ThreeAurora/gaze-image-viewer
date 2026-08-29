@@ -264,6 +264,7 @@ int main(int argc, char *argv[]) {
         return 0;
     Logger::boot("handoff-probe");
     Logger::boot("handoff-probe");
+    Logger::boot("handoff-probe");
 
     // 全局 QSS 收编进 Theme::appQss()(#96):Theme::T 让同一张样式表在深/浅两档间取值,
     // Appearance/theme 决定,重启生效。样式文本与占位符表见 theme.cpp
