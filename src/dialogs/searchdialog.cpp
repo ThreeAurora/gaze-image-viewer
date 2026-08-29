@@ -20,14 +20,19 @@ constexpr int kMaxDirs    = 50000;   // 目录上限:junction 成环时靠它兜
 constexpr int kMaxDepth   = 40;      // 深度上限:同上,保证 BFS 一定终止
 constexpr qint64 kTickBudgetMs = 6;  // 每拍最多花这么久,剩下还给事件循环
 
-// 词分隔:空格/分号/逗号等价
 QStringList splitTerms(const QString& text) {
-    QString t = text;
-    t.replace(QLatin1Char(';'), QLatin1Char(' ')).replace(QLatin1Char(','), QLatin1Char(' '));
     QStringList out;
-    for (const QString& raw : t.split(QLatin1Char(' '))) {
-        const QString term = raw.trimmed();
-        if (!term.isEmpty()) out << term;
+#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
+    const QList<QStringView> parts = QStringView(text).split(
+        [&](QChar c) { return c == QLatin1Char(' ') || c == QLatin1Char(';')
+                           || c == QLatin1Char(','); });
+    for (const QStringView v : parts) {
+        const QString t = v.toString().trimmed();
+#else
+    for (const QString& raw : text.split(QRegExp("[ ,;]"), Qt::SkipEmptyParts)) {
+        const QString t = raw.trimmed();
+#endif
+        if (!t.isEmpty()) out << t;
     }
     return out;
 }
@@ -55,6 +60,7 @@ SearchDialog::SearchDialog(const QString& rootDir, QWidget* parent)
     : QDialog(parent), m_root(rootDir)
 {
     setWindowTitle(QString::fromUtf8("搜索 - ") + QFileInfo(rootDir).fileName());
+    setModal(false);            // 边搜边看主窗口,结果双击才跳转
     resize(860, 560);
     setStyleSheet(
         "QDialog{background:" C_WIN_BG ";}"
@@ -109,7 +115,6 @@ SearchDialog::SearchDialog(const QString& rootDir, QWidget* parent)
 
     m_status = new QLabel(QString::fromUtf8("范围:%1").arg(QDir::toNativeSeparators(rootDir)));
     m_status->setStyleSheet("color:#B8B8B8;");
-    m_status->setTextInteractionFlags(Qt::TextSelectableByMouse);
     root->addWidget(m_status);
 
     m_results = new QTreeWidget;
@@ -127,8 +132,9 @@ SearchDialog::SearchDialog(const QString& rootDir, QWidget* parent)
     root->addWidget(m_results, 1);
 
     connect(m_runBtn, &QPushButton::clicked, this, &SearchDialog::startSearch);
-    connect(m_stopBtn, &QPushButton::clicked, this,
-            [this]() { stopScan(QString::fromUtf8("已手动停止")); });
+    connect(m_stopBtn, &QPushButton::clicked, this, [this]() {
+        stopScan(QString::fromUtf8("已停止"));
+    });
     connect(m_include, &QLineEdit::returnPressed, this, &SearchDialog::startSearch);
     connect(m_exclude, &QLineEdit::returnPressed, this, &SearchDialog::startSearch);
     connect(&m_ticker, &QTimer::timeout, this, &SearchDialog::stepScan);
@@ -141,8 +147,8 @@ SearchDialog::SearchDialog(const QString& rootDir, QWidget* parent)
     m_include->setFocus();
 }
 
-// 词法在这里定形:含 * 或 ? 的整词编成正则,其余按子串。想按字面搜名字里带 *
-// 的文件,这里不猜 —— 规则写进占位提示,和 XnView 的口径一致。
+// 词法在这里定形:通配词编成正则,其余按子串。名字里带 * 或 ? 时想按字面搜,
+// 只能整词写成通配(*.txt 那种),这里不猜用户想要哪种 —— 规则写进占位提示。
 void SearchDialog::startSearch() {
     if (m_running) return;
     if (m_root.isEmpty() || !QFileInfo(m_root).isDir()) {
@@ -153,18 +159,12 @@ void SearchDialog::startSearch() {
     m_incWild.clear();
     m_excPlain.clear();
     m_excWild.clear();
-    for (const QString& t : splitTerms(m_include->text())) {
-        if (t.contains(QLatin1Char('*')) || t.contains(QLatin1Char('?')))
-            m_incWild.append(wildcardTerm(t));
-        else
-            m_incPlain.append(t);
-    }
-    for (const QString& t : splitTerms(m_exclude->text())) {
-        if (t.contains(QLatin1Char('*')) || t.contains(QLatin1Char('?')))
-            m_excWild.append(wildcardTerm(t));
-        else
-            m_excPlain.append(t);
-    }
+    for (const QString& t : splitTerms(m_include->text()))
+        (t.contains(QLatin1Char('*')) || t.contains(QLatin1Char('?'))
+             ? m_incWild : m_incPlain).append(t);
+    for (const QString& t : splitTerms(m_exclude->text()))
+        (t.contains(QLatin1Char('*')) || t.contains(QLatin1Char('?'))
+             ? m_excWild : m_excPlain).append(t);
     if (m_incPlain.isEmpty() && m_incWild.isEmpty()) {
         m_status->setText(QString::fromUtf8("请输入名称条件"));
         return;
@@ -185,7 +185,8 @@ void SearchDialog::startSearch() {
 }
 
 bool SearchDialog::matches(const QString& name) const {
-    if (!(plainHit(m_incPlain, name) || wildHit(m_incWild, name))) return false;
+    const bool hit = plainHit(m_incPlain, name) || wildHit(m_incWild, name);
+    if (!hit) return false;
     return !(plainHit(m_excPlain, name) || wildHit(m_excWild, name));
 }
 
@@ -193,24 +194,23 @@ void SearchDialog::stepScan() {
     if (!m_running) return;
     QElapsedTimer clock;
     clock.start();
-    const bool recurse = m_recurse->isChecked();
 
     while (!m_queue.isEmpty()) {
         const auto [dir, depth] = m_queue.dequeue();
         for (const FileEntry& fe : fastScanDir(dir)) {
             if (fe.isDir) {
-                const bool hiddenDir = m_skipHidden && fe.hidden;
-                if (m_wantDirs && !hiddenDir && matches(fe.name)) {
+                if (m_wantDirs && !(m_skipHidden && fe.hidden) && matches(fe.name)) {
                     QTreeWidgetItem* it = new QTreeWidgetItem(m_results);
                     it->setIcon(0, folderIcon(16));
                     it->setText(0, fe.name);
                     it->setText(2, formatDate(fe.mtime));
                     it->setText(3, QDir::toNativeSeparators(dir));
                     it->setData(0, Qt::UserRole, fe.path);
-                    it->setData(0, Qt::UserRole + 1, true);   // 标记:这一行是文件夹
+                    it->setData(0, Qt::UserRole + 1, true);
                     ++m_matches;
                 }
-                if (recurse && !hiddenDir && depth + 1 <= kMaxDepth)
+                if (m_recurse->isChecked() && depth + 1 <= kMaxDepth
+                    && !(m_skipHidden && fe.hidden))
                     m_queue.enqueue({ fe.path, depth + 1 });
                 continue;
             }
@@ -225,13 +225,13 @@ void SearchDialog::stepScan() {
             it->setData(0, Qt::UserRole, fe.path);
             ++m_matches;
             if (m_matches >= kMaxResults) {
-                stopScan(QString::fromUtf8("已达 %1 条命中上限,其余未扫").arg(kMaxResults));
+                stopScan(QString::fromUtf8("已达 %1 条上限,后续未再扫描").arg(kMaxResults));
                 return;
             }
         }
         ++m_scannedDirs;
         if (m_scannedDirs >= kMaxDirs) {
-            stopScan(QString::fromUtf8("已达 %1 个目录上限(可能遇到链接环),其余未扫")
+            stopScan(QString::fromUtf8("已达 %1 个目录上限(可能遇到链接环),后续未再扫描")
                          .arg(kMaxDirs));
             return;
         }
@@ -252,7 +252,7 @@ void SearchDialog::stopScan(const QString& tail) {
     m_ticker.stop();
     m_runBtn->setEnabled(true);
     m_stopBtn->setEnabled(false);
-    QString text = QString::fromUtf8("已扫 %1 个目录,命中 %2 项 —— 双击结果在主窗口定位")
+    QString text = QString::fromUtf8("已扫 %1 个目录,命中 %2 项;双击结果在主窗口定位")
                        .arg(m_scannedDirs).arg(m_matches);
     if (!tail.isEmpty()) text += QString::fromUtf8(" —— ") + tail;
     m_status->setText(text);
@@ -264,14 +264,14 @@ void SearchDialog::closeEvent(QCloseEvent* ev) {
     QDialog::closeEvent(ev);
 }
 
-// 结果落回主窗口:文件走 revealFile(进目录并选中),文件夹行直接进该目录
+// 结果落在主窗口:文件走 revealFile(定位+选中),文件夹直接进目录
 void SearchDialog::openResult(QTreeWidgetItem* it) {
     if (!it) return;
     const QString path = it->data(0, Qt::UserRole).toString();
     if (path.isEmpty()) return;
     const bool isDir = it->data(0, Qt::UserRole + 1).toBool();
-    const char* slot = isDir ? "navigateTo(QString)" : "revealFile(QString)";
     QObject* mw = this;
+    const char* slot = isDir ? "navigateTo(QString)" : "revealFile(QString)";
     while (mw && mw->metaObject()->indexOfSlot(slot) < 0) mw = mw->parent();
     if (!mw) {
         QToolTip::showText(QCursor::pos(), QString::fromUtf8("无法定位主窗口"));
