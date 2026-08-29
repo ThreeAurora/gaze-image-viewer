@@ -140,6 +140,7 @@ private:
     QTabBar*    m_viewerTabs = nullptr;  // 查看器标签条(仅查看器模式可见)
     QStringList m_tabPaths;              // 与标签一一对应的文件路径
     bool   m_viewerNoSync = false;       // 进查看器时不要就地改标签(由"开新标签"自己追加)
+    bool   m_viewerNoSync = false;       // 进查看器时不要就地改标签(由"开新标签"自己追加)
     bool m_viewerMode = false; // 查看器(单图)模式
     QWidget* m_treePane = nullptr;    // 树面板(查看器模式隐藏)
     QWidget* m_centerPane = nullptr;  // 网格面板(查看器模式隐藏)
