@@ -618,18 +618,16 @@ void PreviewPanel::updatePanTool() {
     // 蓝框=视口在整图中的位置。几何必须与拖动映射(panNavTo)完全一致:
     // 都基于缩略图 pixmap 的实际摆放(KeepAspectRatio 居中,可能留边),
     // 否则拖动时蓝框不落在指尖下。旧实现按整个 box 映射,留边时框会偏
-    const QPixmap tp = m_panThumb->pixmap();
-    if (!tp.isNull()) {
-        const int ox = (m_panThumb->width() - tp.width()) / 2;
-        const int oy = (m_panThumb->height() - tp.height()) / 2;
+    const QRect pr = navPixmapRect();
+    if (!pr.isNull()) {
         const double sx = double(m_imgLabel->width()) / m_origPix->width();
         const double sy = double(m_imgLabel->height()) / m_origPix->height();
         const double vx0 = qMax(0.0, -double(m_imgLabel->x())) / sx;   // 视口左缘的图像 x
         const double vy0 = qMax(0.0, -double(m_imgLabel->y())) / sy;
-        const double rw = qMin<double>(1.0, width()  / sx / m_origPix->width())  * tp.width();
-        const double rh = qMin<double>(1.0, height() / sy / m_origPix->height()) * tp.height();
-        m_panView->setGeometry(ox + int(vx0 / m_origPix->width() * tp.width()),
-                               oy + int(vy0 / m_origPix->height() * tp.height()),
+        const double rw = qMin<double>(1.0, width()  / sx / m_origPix->width())  * pr.width();
+        const double rh = qMin<double>(1.0, height() / sy / m_origPix->height()) * pr.height();
+        m_panView->setGeometry(pr.x() + int(vx0 / m_origPix->width() * pr.width()),
+                               pr.y() + int(vy0 / m_origPix->height() * pr.height()),
                                qMax(4, int(rw)), qMax(4, int(rh)));
     }
     m_panView->show();
