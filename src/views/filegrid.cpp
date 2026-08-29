@@ -454,13 +454,18 @@ void FileGrid::clearAllMarks() {
     if (m_filterMarked) toggleFilter(); else refreshView();
 }
 
-void FileGrid::deleteFile(int index) {
-    if (index < 0 || index >= static_cast<int>(m_entries.size())) return;
-    QString path = m_entries[index].path;
+void FileGrid::deleteSelection() {
+    // 作用域 = 整个选中集:右键"删除"删的就是这批,键盘若只删一项,
+    // 确认框里"N 个项目"的数字和实际落盘结果会各说各话。
+    QStringList paths = selectedPaths();
+    if (paths.isEmpty() && m_lastClicked >= 0
+        && m_lastClicked < static_cast<int>(m_entries.size()))
+        paths = { m_entries[m_lastClicked].path };
+    if (paths.isEmpty()) return;
     // 确认框/回收站由 FileOps/confirmDelete + FileOps/useRecycleBin 决定(与右键菜单同一入口)
-    if (deleteWithSettings({path}, this)) {
-        m_marked.remove(path);
-        reloadAfterDelete({path});
+    if (deleteWithSettings(paths, this)) {
+        for (const auto& p : paths) m_marked.remove(p);
+        reloadAfterDelete(paths);
     }
 }
 
