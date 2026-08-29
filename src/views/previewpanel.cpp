@@ -321,9 +321,13 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
 
     // ── Viewer/panTool:右下角平移导航小窗(图溢出视口时才出现) ──
     m_panTool = new QWidget(this);
+    m_panTool->setObjectName(QStringLiteral("panNavTool"));
     m_panTool->setFixedSize(150, 110);
+    // 选择器必须带 #objectName:写成裸 QWidget{} 会**连带子控件**一起吃到这条
+    // 边框与底色(#111 的账)——m_panThumb 一旦有了 1px 边框,Qt 就把缩略图 pixmap
+    // 画进内容矩形(整体右移 1px),而 ox/oy 按控件全宽算,蓝框就比图偏左偏上一格
     m_panTool->setStyleSheet(
-        "QWidget{background:rgba(14,14,18,220);border:1px solid #3A3A42;}");
+        "QWidget#panNavTool{background:rgba(14,14,18,220);border:1px solid #3A3A42;}");
     m_panTool->hide();
     m_panThumb = new QLabel(m_panTool);
     m_panThumb->setAlignment(Qt::AlignCenter);
