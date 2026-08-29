@@ -471,10 +471,12 @@ void PreviewPanel::applyBackdrop() {
 void PreviewPanel::setViewerMode(bool on) {
     if (m_viewerMode == on) return;
     m_viewerMode = on;
-    // 焦点宿主随身份切换:ViewerShortcut/* 只由本类 keyPressEvent 执行，而 QWidget
-    // 默认 NoFocus → 那张表过去永远收不到键(此刻网格窗格已 setVisible(false)，
-    // 浏览器那套键盘通路也不在)。退回浏览器时必须还回 NoFocus，
-    // 否则点一下预览区就把网格的方向键吞掉。
+    // 那张表过去收不到键，原因是全项目没有一处向本面板要过焦点 —— 不是 NoFocus
+    // "屏蔽"了焦点：实测(cache/tmp/focus_probe.cpp)显式 setFocus() 无视策略，
+    // 照样当上 focusWidget 并接到按键。所以真正生效的是下面那句 setFocus()。
+    // 策略切换要留着：它管的是"点一下/敲 Tab 能不能落到面板"。查看器里网格窗格
+    // 已被 setVisible(false)，浏览器那套键盘通路不在，必须让面板可点可 Tab；
+    // 退回浏览器时还回 NoFocus，否则点一下预览区就抢走网格的方向键。
     setFocusPolicy(on ? Qt::StrongFocus : Qt::NoFocus);
     if (on) setFocus();
     applyBackdrop();
