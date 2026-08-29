@@ -33,6 +33,9 @@ public:
     void preload(const QString& prev, const QString& next);
     // 面板身份:浏览器预览窗格 ↔ 独立查看器(背景色各用一个设置项)
     Q_INVOKABLE void setViewerMode(bool on);
+    // 该键事件是否命中 ViewerShortcut/* 表。主窗口的应用级过滤器用它让路:
+    // 查看器里默认表和浏览器键位撞车("适应窗口"=F，浏览器 F=红标)
+    bool claimsHotkey(QKeyEvent* e);
 
 signals:
     void navFile(int delta);
