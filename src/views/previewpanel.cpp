@@ -1188,6 +1188,7 @@ void PreviewPanel::clear() {
     if (m_liveBadge) m_liveBadge->hide();
     m_mode = "none";
     m_scale = 1.0;
+    m_filePath.clear();   // 屏上已空:filePath() 不能还谎报旧路径
     m_livePhotoOriginalPath.clear();
     m_isLivePhoto = false;
 }
