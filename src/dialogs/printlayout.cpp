@@ -103,6 +103,15 @@ int printRenderPage(QPainter& g, const QRectF& paintRect, qreal dpi,
     g.setRenderHint(QPainter::Antialiasing, true);
     g.setBrush(Qt::NoBrush);
 
+    auto markFailed = [&g, mmPix](const QRectF& box) {
+        QPen failPen(QColor(150, 150, 150));
+        failPen.setWidthF(std::max(1.0, 0.3 * mmPix));
+        g.setPen(failPen);
+        g.drawRect(box);
+        g.drawLine(box.topLeft(), box.bottomRight());
+        g.drawLine(box.bottomLeft(), box.topRight());
+    };
+
     for (int i = 0; i < n; ++i) {
         const int idx = first + i;
         const QRectF cell(inner.left() + (i % cols) * (cw + gap),
@@ -117,12 +126,7 @@ int printRenderPage(QPainter& g, const QRectF& paintRect, qreal dpi,
         // 读不到像素就一律占格画叉 —— 不管有没有尺寸信息。
         // 静默少画一张,纸上留个洞,没人会发现。
         if (img.isNull() || img.width() <= 0 || img.height() <= 0) {
-            QPen failPen(QColor(150, 150, 150));
-            failPen.setWidthF(std::max(1.0, 0.3 * mmPix));
-            g.setPen(failPen);
-            g.drawRect(imgBox);
-            g.drawLine(imgBox.topLeft(), imgBox.bottomRight());
-            g.drawLine(imgBox.bottomLeft(), imgBox.topRight());
+            markFailed(imgBox);
             ++res.failed;
         } else {
             const QSizeF isz(img.width(), img.height());
