@@ -118,7 +118,6 @@ SearchDialog::SearchDialog(const QString& rootDir, QWidget* parent)
     m_results->setHeaderLabels({ QString::fromUtf8("名称"), QString::fromUtf8("大小"),
                                  QString::fromUtf8("修改时间"), QString::fromUtf8("位置") });
     m_results->setRootIsDecorated(false);
-    m_results->setUniformItemSizes(true);
     m_results->setSelectionMode(QAbstractItemView::ExtendedSelection);
     m_results->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_results->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
