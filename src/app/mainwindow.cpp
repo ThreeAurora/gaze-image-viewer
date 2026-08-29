@@ -290,6 +290,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     m_splitter->addWidget(treePane);
     Logger::boot("ctor:tree");
     Logger::boot("ctor:tree");
+    Logger::boot("ctor:tree");
 
     auto *centerPanel = new QWidget;
     centerPanel->setMinimumWidth(200);
