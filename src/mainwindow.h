@@ -72,6 +72,7 @@ private:
     void onThumbZoom(int delta);
     void goBack();
     void goForward();
+    void gotoTypedPath();   // 地址栏回车(#109②):目录进目录 / 文件定位到它 / 都不像就吭一声
     void updateNavEnabled();   // 按游标刷新"后退/前进"菜单项+工具栏按钮的可用性(#87)
     void updateNavEnabled();   // 按游标刷新"后退/前进"菜单项+工具栏按钮的可用性(#87)
     // 查看器标签:文件路径存在 QTabBar 的 tabData 里(唯一真源,
