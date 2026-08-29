@@ -17,7 +17,8 @@ class QPainter;
 
 // 每页图片数预设(排版只有这几种确切形状,列表里摆 5/7/8 就是骗人)
 namespace PrintFit {
-enum { Fit = 0, Stretch = 1, Actual = 2, Fill = 3 };   // 适应/拉伸/原始尺寸/填充裁边
+// 适应边框(可放大) / 不放大(小图按原始像素居中) / 原始尺寸(按文件自带 DPI) / 填充裁边
+enum { Fit = 0, NoUpscale = 1, Actual = 2, Fill = 3 };
 }
 namespace PrintCaption {
 enum { None = 0, Name = 1, NameSize = 2, NameDate = 3 };
