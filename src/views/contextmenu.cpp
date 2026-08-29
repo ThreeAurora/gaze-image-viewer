@@ -632,8 +632,10 @@ void FileContextMenu::extractFrames(const QString& videoPath) {
     QString pattern = outDir + "/frame_%05d.png";
 
     // 整段视频拆帧可能几十秒。以前 GUI 线程 waitForFinished(120s) 死等,界面
-    // 整个钉死那么久;而且判据只看"进程结束了没",ffmpeg 不在 PATH(启动失败)
-    // 同样算结束 → 弹一句"帧提取完成"谎报成功。改成后台跑 + 认退出码。
+    // 整个钉死那么久;而且判据是"这次等待返回 true 就算成功"、从不看退出码,
+    // ffmpeg 跑起来但失败照样弹"帧提取完成"。(ffmpeg 不在 PATH 时等待返回 false,
+    // 旧代码因此弹"帧提取超时" —— 原因写错了,实测见 cache/tmp/proc_async_test.cpp)
+    // 改成后台跑 + 认退出码。
     runProcessAsync("ffmpeg",
         { "-i", videoPath, "-vsync", "0", "-q:v", "2", "-y", pattern },
         QString(), 120000,
