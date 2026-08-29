@@ -6,7 +6,7 @@
 
 struct ViewerHotkeyCmd {
     const char* name;    // 动作名(UTF-8;同时是 ini 键后缀与热键匹配串)
-    const char* defKey;  // 默认快捷键
+    const char* defKey;  // 默认快捷键;空串=默认不绑键(动作仍可从菜单/工具条走,设置页仍可自己绑)
 };
 
 inline const QList<ViewerHotkeyCmd>& viewerHotkeyCmds() {
@@ -16,7 +16,7 @@ inline const QList<ViewerHotkeyCmd>& viewerHotkeyCmds() {
         { "放大",        "Ctrl+="  },
         { "缩小",        "Ctrl+-"  },
         { "适应窗口",    "F"       },
-        { "1:1 像素",    "1"       },
+        { "1:1 像素",    ""        },   // #112:裸键 1 撤掉(用户不知道该键是干什么用的)
         { "播放/暂停",   "P"       },
     };
     return cmds;
