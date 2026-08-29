@@ -10,6 +10,7 @@
 #include "validname.h"
 #include "validname.h"
 #include "exifdate.h"
+#include "namesort.h"
 #include "perflog.h"
 #include "logger.h"
 #include "logger.h"
