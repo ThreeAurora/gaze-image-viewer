@@ -173,10 +173,9 @@ int printRenderPage(QPainter& g, const QRectF& paintRect, qreal dpi,
                 ++res.drawn;
                 if (opt.border) { g.setPen(thinPen); g.drawRect(target); }
             } else {
+                markFailed(imgBox);
                 ++res.failed;
             }
-        } else {
-            ++res.failed;      // 有尺寸信息却拿不到像素:同样按没印出来算
         }
 
         if (capBand > 0 && !capText.isEmpty()) {
