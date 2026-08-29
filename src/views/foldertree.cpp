@@ -241,7 +241,10 @@ void FolderTree::loadDrives() {
 }
 
 void FolderTree::loadChildren(QTreeWidgetItem* item) {
-    const QString path = item->data(0, Qt::UserRole).toString();
+    // cleanPath:"E:/" 这类带尾斜杠的盘符行会让 fastScanDir 拼出 "E://name",
+    // 而旧实现 absoluteFilePath() 从不产生双斜杠 —— 路径分隔符数量不一致会
+    // 让下游的前缀比较(canonicalPath/focusPath)整段失配。
+    const QString path = QDir::cleanPath(item->data(0, Qt::UserRole).toString());
     // 一次 FindFirstFileExW 扫描取全 name/path/属性:旧写法 entryInfoList 要为
     // 每个条目建 QFileInfo(名称拆分、缓存、绝对路径再走一遍字符串加工),
     // 目录行数多的时候这笔账全部落在展开的那一帧上。
