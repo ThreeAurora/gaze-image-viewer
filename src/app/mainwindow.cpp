@@ -542,6 +542,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
             applyLastLayout();
     }
     Logger::boot("ctor:layout");
+    Logger::boot("ctor:layout");
 
     // 设置→界面→启动时打开文件列表和预览框:
     //   勾选 = 无视布局状态,强制显示树与预览(未保存过布局时的默认行为)
