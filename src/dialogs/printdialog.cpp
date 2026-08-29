@@ -740,7 +740,7 @@ void PrintDialog::doPrint() {
         all.drawn += r.drawn; all.failed += r.failed; all.shrunk += r.shrunk;
         ++done;
         prog.setValue(done);
-        if (i + 1 < pages.size()) g.newPage();
+        if (i + 1 < pages.size()) m_printer->newPage();   // Qt6:QPainter 不再有 newPage()
     }
     g.end();
     prog.setValue(pages.size());   // 到达 maximum 时 autoClose 会收起;取消时靠下面这行
