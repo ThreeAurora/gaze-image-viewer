@@ -1014,8 +1014,8 @@ QWidget* SettingsDialog::pageMaintenance() {
             QString::fromUtf8("删除该目录的全部缓存条目?\n%1").arg(dir))
             != QMessageBox::Yes) return;
         QSqlQuery q(db());
-        q.prepare("DELETE FROM thumbs WHERE key LIKE ? || '%'");
-        q.addBindValue(dir);
+        q.prepare("DELETE FROM thumbs WHERE key LIKE ? ESCAPE '\\'");
+        q.addBindValue(likePrefixPattern(dir));
         q.exec();
         reload();
     });
