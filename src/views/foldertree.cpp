@@ -129,6 +129,7 @@ FolderTree::FolderTree(QWidget* parent) : QTreeWidget(parent) {
         clear();
         loadDrives();
     });
+    Logger::boot("ft:done");
 }
 
 void FolderTree::makeIcons() {
