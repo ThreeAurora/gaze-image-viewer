@@ -24,6 +24,8 @@ public:
     explicit PreviewPanel(QWidget *parent = nullptr);
     ~PreviewPanel() override;
     void loadFile(const QString &path);
+    // 预览当前显示的文件(空=没有)。调用方用它挡掉"对同一张再解一遍"
+    const QString& filePath() const { return m_filePath; }
     void clear();
     void togglePlayPause();
     void seekDelta(int seconds);
