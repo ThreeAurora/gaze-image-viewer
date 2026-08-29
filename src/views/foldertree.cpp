@@ -92,6 +92,10 @@ FolderTree::FolderTree(QWidget* parent) : QTreeWidget(parent) {
     makeIcons();
 
     connect(this, &QTreeWidget::itemClicked, this, &FolderTree::onItemClicked);
+    // 右键:CustomContextMenu 把坐标交给我们自建菜单(默认策略只会弹 Qt 的空菜单)
+    setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(this, &QWidget::customContextMenuRequested,
+            this, &FolderTree::showContextMenu);
     connect(this, &QTreeWidget::itemExpanded, this, [this](QTreeWidgetItem* item) {
         // 懒加载：展开时加载子项
         if (item->childCount() == 1 && item->child(0)->text(0).isEmpty()) {
