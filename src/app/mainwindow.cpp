@@ -387,6 +387,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 
     m_splitter->addWidget(centerPanel);
     Logger::boot("ctor:grid");
+    Logger::boot("ctor:grid");
 
     // 预览面板:"预览"标题条 + PreviewPanel(包装后才能挂标题条,X 键关闭)
     m_preview = new PreviewPanel;
