@@ -186,7 +186,7 @@ private:
     void endInlineRename(bool commit);
 
     // 键盘操作
-    void deleteFile(int index);
+    void deleteSelection();   // 删除整个选中集(无选中时删当前项),与右键菜单同一作用域
     void newFolder();
 
     // 数据
