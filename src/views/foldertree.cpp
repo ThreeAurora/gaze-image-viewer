@@ -3,6 +3,7 @@
 #include "fileentry.h"
 #include "settings.h"
 #include "perflog.h"
+#include "perflog.h"
 #include "settings.h"
 #include "settings.h"
 #include "settings.h"
