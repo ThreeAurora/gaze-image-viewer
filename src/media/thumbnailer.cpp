@@ -10,6 +10,7 @@
 #include <QImage>
 #include <QThread>
 #include <QPainter>
+#include <QPainterPath>
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QDir>
