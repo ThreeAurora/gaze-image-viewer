@@ -228,6 +228,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
         menu.exec(m_viewerTabs->mapToGlobal(pos));
     });
     ml->addWidget(m_viewerTabs);
+    Logger::boot("ctor:tabbar");
 
     // 查看器标签条(Interface/multiViewerTabs / oneViewerTab,语义见 syncViewerTab 段注释):
     // 只在查看器模式显示,浏览器模式隐藏
