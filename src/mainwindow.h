@@ -29,6 +29,8 @@ public:
     // 查看器标签卡(Interface/multiViewerTabs / oneViewerTab)
     void openViewerTab(const QString& path);
     void syncViewerTab(const QString& path);
+    // 右键"在查看器标签卡中打开":一批文件按两个开关展开成标签
+    Q_INVOKABLE void openViewerTabs(const QStringList& paths);
     Q_INVOKABLE void revealFile(const QString &path);      // 以文搜图结果:定位到目录并选中
     void enterFullscreen();          // Fullscreen/dualMonitor:可选落到第二显示器
     Q_INVOKABLE void toggleViewer();   // 浏览器 ↔ 查看器(单图模式)
