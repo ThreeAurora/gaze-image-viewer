@@ -211,6 +211,11 @@ void FileGrid::reloadAfterDelete(const QStringList& deleted) {
     if (dir.isEmpty()) { m_preferPath.clear(); return; }
     loadDirectory(dir);
     m_preferPath.clear();   // 重载被中止时不让落点串到下次导航
+    // 删掉的文件若还开在查看器标签里,标签就成了指向不存在路径的幽灵
+    // (以前只在"进查看器"时清)。这里是所有删除路径唯一的落点:右键/Del/S/
+    // 预览侧删都汇到这一处,所以逐标签 stat 也只跟着删除发生,不进导航热路径。
+    // pruneDeadViewerTabs 只摘死标签,当前正在看的那张若被删会一并摘掉。
+    if (auto* mw = window()) QMetaObject::invokeMethod(mw, "pruneDeadViewerTabs");
 }
 
 // 删除后重载:落点 = 被删块的后一项,已在末尾则前一项(对齐 XnView)
