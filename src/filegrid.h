@@ -186,7 +186,6 @@ private:
 
     // 键盘操作
     void toggleMark(int index);
-    void clearAllMarks();
     void deleteFile(int index);
     void newFolder();
 
