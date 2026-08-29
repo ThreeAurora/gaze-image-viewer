@@ -36,6 +36,7 @@
 #include <QDateTime>
 #include <QShortcut>
 #include <QKeyEvent>
+#include <QMouseEvent>
 #include <QApplication>
 #include <QToolButton>
 #include <QFrame>
