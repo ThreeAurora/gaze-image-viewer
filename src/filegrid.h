@@ -186,7 +186,6 @@ private:
     void endInlineRename(bool commit);
 
     // 键盘操作
-    void toggleMark(int index);
     void deleteFile(int index);
     void newFolder();
 
