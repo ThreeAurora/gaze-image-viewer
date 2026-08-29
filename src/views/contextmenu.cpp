@@ -148,6 +148,129 @@ static QString findJpegtran() {
     return {};
 }
 
+// ═══════════════════════════════════════════
+// 外部进程异步跑(#70):jpegtran / ffmpeg 以前都在 GUI 线程里 waitForFinished,
+//   无损旋转 20s、拆帧 120s —— 进程只要慢一点(大图解码、杀软拦一道),整个应用
+//   就冻那么久,日志看门狗还会把它记成"卡死"。这里改成 start + finished 回调。
+//   · outFile 非空 → stdout 重定向到它(jpegtran 靠 stdout 出图)
+//   · ok 的判据:退出码 0,且(给了 outFile 时)那个文件非空。
+//     光看 waitForFinished 的返回值不行:进程根本没启动成功时它也是"已结束",
+//     旧的拆帧代码因此在 ffmpeg 不在 PATH 时弹一句"帧提取完成"谎报成功。
+//   · 超时 kill 并回报。回调最多一次(kill 之后 finished 还会再发一发信号)。
+//   · 回调不碰 this:FileContextMenu 每次弹窗现建、关掉即析构,异步续上去就是 UAF。
+//     需要网格的调用方自己带 QPointer。
+// ═══════════════════════════════════════════
+static void runProcessAsync(const QString& program, const QStringList& args,
+                            const QString& outFile, int timeoutMs,
+                            std::function<void(bool ok, QString why)> done) {
+    auto* proc = new QProcess();
+    auto* timer = new QTimer(proc);            // 子对象,跟着进程一起回收
+    timer->setSingleShot(true);
+    timer->setInterval(timeoutMs);
+    if (!outFile.isEmpty()) proc->setStandardOutputFile(outFile);
+    proc->setProcessChannelMode(QProcess::MergedChannels);
+
+    auto once = std::make_shared<bool>(false);
+    auto finish = [once, proc, timer, done, program](bool ok, QString why) {
+        if (*once) return;
+        *once = true;
+        timer->stop();
+        proc->deleteLater();
+        Logger::event(QStringLiteral("proc-async: '%1' %2 %3")
+                          .arg(program, ok ? QStringLiteral("ok") : QStringLiteral("fail"), why));
+        if (done) done(ok, std::move(why));
+    };
+    QObject::connect(proc, &QProcess::finished, proc,
+        [finish, outFile](int code, QProcess::ExitStatus) {
+            const bool good = code == 0
+                && (outFile.isEmpty() || QFileInfo(outFile).size() > 0);
+            finish(good, good ? QString() : QStringLiteral("exit=%1").arg(code));
+        });
+    QObject::connect(proc, &QProcess::errorOccurred, proc,
+        [finish, program](QProcess::ProcessError e) {
+            if (e != QProcess::FailedToStart) return;   // 读写错误由退出码兜住
+            finish(false, QStringLiteral("无法启动 %1(不在 PATH?)").arg(program));
+        });
+    QObject::connect(timer, &QTimer::timeout, proc, [finish, proc, timeoutMs]() {
+        proc->kill();
+        finish(false, QStringLiteral("超过 %1 秒未完成,已终止").arg(timeoutMs / 1000));
+    });
+    proc->start(program, args);
+    timer->start();
+}
+
+// ── FileOps/losslessBackup:动文件之前留一份原件 ──
+// 只在"确实要动文件"的那一刻备份:此前链路可能整个失败,提前备份会留下没用的
+// _original 孤儿文件(#59 的教训)
+static void backupOriginal(const QString& path) {
+    if (!AppSettings::instance().get("FileOps/losslessBackup", true).toBool()) return;
+    QFileInfo fi(path);
+    const QString backup = fi.absolutePath() + "/" + fi.completeBaseName()
+                         + "_original." + fi.suffix();
+    if (!QFileInfo::exists(backup)) QFile::copy(path, backup);
+}
+
+// 内容换了但修改/创建时间按原值还回去(排序、"最近修改"筛选都不该被旋转打乱)
+static void restoreFileTimes(const QString& path, const QDateTime& mod, const QDateTime& birth) {
+    QFile tf(path);
+    if (!tf.open(QIODevice::ReadOnly)) return;
+    tf.setFileTime(mod, QFileDevice::FileModificationTime);
+    if (birth.isValid()) tf.setFileTime(birth, QFileDevice::FileBirthTime);
+}
+
+// ── 非 JPEG 或 jpegtran 不可用/失败:QImage 重编码到 tmp。true=结果可用 ──
+// (PNG/BMP 像素无损;JPEG 回退为 95 有损 + EXIF 无法保留,仅兜底)
+static bool reencodeRotate(const QString& path, const QString& tmp,
+                           int mode, const QString& rotExt) {
+    QImage img(path);
+    QImage out;
+    QTransform t;
+    if (!img.isNull()) {
+        switch (mode) {
+        case 0: t.rotate(-90); out = img.transformed(t, Qt::SmoothTransformation); break;
+        case 1: t.rotate(90);  out = img.transformed(t, Qt::SmoothTransformation); break;
+        case 2: out = img.mirrored(true, false); break;
+        case 3: out = img.mirrored(false, true); break;
+        }
+    }
+    QFile f(tmp);
+    // 必须显式给格式:save(device, nullptr) 会让 Qt 拿 device 的文件名
+    // 后缀猜格式,而临时文件后缀是 "gaze_rot_tmp",无任何 handler 匹配
+    // → 保存恒失败 → 非 JPEG 的旋转/翻转成了静默空操作。
+    QByteArray fmt = rotExt.toUtf8();
+    if (fmt == "jpg") fmt = "jpeg";
+    else if (fmt == "tif") fmt = "tiff";
+    const bool canWrite = !out.isNull()
+        && QImageWriter::supportedImageFormats().contains(fmt);
+    bool ok = false;
+    if (canWrite && f.open(QIODevice::WriteOnly)) {
+        ok = out.save(&f, fmt.constData(), 95);
+        f.close();
+    }
+    if (!ok) QFile::remove(tmp);
+    return ok;
+}
+
+static void rotateFailedMsg(const QString& path) {
+    QMessageBox::warning(nullptr, QString::fromUtf8("旋转/翻转"),
+        QString::fromUtf8("无法完成该变换(解码或写回失败):\n") + path);
+}
+
+// 结果已经在 tmp 落盘:备份原件 → 原子替换 → 恢复时间戳 → 让网格重读
+static void commitRotateResult(const QString& path, const QString& tmp,
+                               const QDateTime& mod, const QDateTime& birth,
+                               QPointer<FileGrid> grid) {
+    backupOriginal(path);
+    if (!QFile::rename(tmp, path)) {
+        QFile::remove(tmp);
+        QMessageBox::warning(nullptr, QString::fromUtf8("旋转/翻转"),
+            QString::fromUtf8("写回文件失败:\n") + path);
+        return;
+    }
+    restoreFileTimes(path, mod, birth);
+    if (grid) grid->refreshCurrentDir();
+}
+
 FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
     : QMenu(parent), m_filePath(grid ? grid->pathOf(index) : QString()),
       m_isLive(false)   // 与原实现一致:卡片侧从未做过 Live Photo 检测
