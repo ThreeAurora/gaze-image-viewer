@@ -270,13 +270,16 @@ void SearchDialog::openResult(QTreeWidgetItem* it) {
     const QString path = it->data(0, Qt::UserRole).toString();
     if (path.isEmpty()) return;
     const bool isDir = it->data(0, Qt::UserRole + 1).toBool();
+    // 探测要规范签名、调用要裸方法名(两种写法互斥,见 cache/tmp/invoke_sig.cpp);
+    // navigateTo/revealFile 都是 Q_INVOKABLE 而非槽,所以用 indexOfMethod
     const char* slot = isDir ? "navigateTo(QString)" : "revealFile(QString)";
+    const char* name = isDir ? "navigateTo" : "revealFile";
     QObject* mw = this;
-    while (mw && mw->metaObject()->indexOfSlot(slot) < 0) mw = mw->parent();
+    while (mw && mw->metaObject()->indexOfMethod(slot) < 0) mw = mw->parent();
     if (!mw) {
         QToolTip::showText(QCursor::pos(), QString::fromUtf8("无法定位主窗口"));
         return;
     }
-    QMetaObject::invokeMethod(mw, slot, Q_ARG(QString, path));
+    QMetaObject::invokeMethod(mw, name, Q_ARG(QString, path));
     if (isDir) accept();
 }
