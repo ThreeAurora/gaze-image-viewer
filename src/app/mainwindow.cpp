@@ -164,6 +164,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
         m_panesOn.removeAll(QStringLiteral("info"));
 
     createMenubar();
+    Logger::boot("ctor:menubar");
 
     // 查看器标签条(Edge 式,只在查看器模式显示):标签的文件路径存在 tabData 里,
     // 增删/拖拽重排都带着它走,所以没有并行的路径数组需要同步(语义见文件末尾段注释)
