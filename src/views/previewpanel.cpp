@@ -766,6 +766,21 @@ QPoint PreviewPanel::clampedLabelPos(QPoint p) const {
     return p;
 }
 
+// 锚点缩放:anchor 下的那个图像点,缩放前后停在 anchor 上不动。
+// 尺寸一律取 m_imgLabel 的**当前**与**新**几何,不用 origW*scale 二次推导 ——
+// render() 还会乘 Viewer/pixelRatio 并重新居中,自己推的那份跟屏幕上的不是一张图,
+// 长按放大的落点就会跑偏(#101);滚轮同理要以光标为中心(#100)。
+void PreviewPanel::zoomAnchored(double newScale, const QPoint& anchor) {
+    m_scale = newScale;
+    if (m_mode != "image" || !m_origPix || m_origPix->isNull()) return;
+    render();                        // 先把新尺寸画出来(顺带居中),再按锚点挪回去
+    const QSize after = m_imgLabel->size();
+    const QSize before = m_panAnchorSize;   // 上一次缩放/渲染后的尺寸,见下方说明
+    Q_UNUSED(before);
+    m_imgLabel->move(clampedLabelPos(QPoint(
+        anchor.x() - int(anchor.x() - m_panAnchorPos.x()) ... , 0)));
+}
+
 // 拖拽平移约束(临时 1:1 放大与 Ctrl 缩放态通用):
 //   图片某轴 ≤ 预览框 → 该轴锁死居中(两侧黑边等宽,不能挪动)
 //   图片某轴 > 预览框 → 允许平移,但图片边缘不进入框内(平到顶即停,不露白边)
