@@ -1,10 +1,8 @@
 #include "settings.h"
-#include "logger.h"
 #include <QCoreApplication>
 #include <QStandardPaths>
 #include <QDir>
 #include <QFileInfo>
-#include <QElapsedTimer>
 
 AppSettings& AppSettings::instance() {
     static AppSettings s;
