@@ -241,20 +241,30 @@ void FolderTree::loadDrives() {
 }
 
 void FolderTree::loadChildren(QTreeWidgetItem* item) {
-    QString path = item->data(0, Qt::UserRole).toString();
-    QDir dir(path);
-    QFileInfoList list = dir.entryInfoList(
-        QDir::Dirs | QDir::Hidden | QDir::NoDotAndDotDot, QDir::Name);
-    for (const QFileInfo& fi : list) {
+    const QString path = item->data(0, Qt::UserRole).toString();
+    // 一次 FindFirstFileExW 扫描取全 name/path/属性:旧写法 entryInfoList 要为
+    // 每个条目建 QFileInfo(名称拆分、缓存、绝对路径再走一遍字符串加工),
+    // 目录行数多的时候这笔账全部落在展开的那一帧上。
+    auto raw = fastScanDir(path);
+    std::vector<FileEntry> dirs;
+    dirs.reserve(raw.size());
+    for (auto& fe : raw)
+        if (fe.isDir) dirs.push_back(std::move(fe));
+    // 与 QDir::Name 同序:忽略大小写为主、区分大小写为次,换实现不改显示顺序
+    std::sort(dirs.begin(), dirs.end(), [](const FileEntry& a, const FileEntry& b) {
+        int r = QString::compare(a.name, b.name, Qt::CaseInsensitive);
+        return r != 0 ? r < 0 : a.name < b.name;
+    });
+
+    for (const FileEntry& fe : dirs) {
         auto* child = new QTreeWidgetItem;
-        child->setText(0, fi.fileName());
+        child->setText(0, fe.name);
         // 隐藏文件夹用淡灰文字 + 半透明图标；普通文件夹正常
-        bool hidden = fi.isHidden() || fi.fileName().startsWith('.');
-        child->setIcon(0, hidden ? m_folderIconDim : m_folderIcon);
-        child->setData(0, Qt::UserRole, fi.absoluteFilePath());
-        child->setForeground(0, QBrush(QColor(hidden ? C_TEXT_HIDDEN : C_TREE_TEXT)));
+        child->setIcon(0, fe.hidden ? m_folderIconDim : m_folderIcon);
+        child->setData(0, Qt::UserRole, fe.path);
+        child->setForeground(0, QBrush(QColor(fe.hidden ? C_TEXT_HIDDEN : C_TREE_TEXT)));
         // 检测是否有子文件夹（含隐藏）；没有就不留展开按钮
-        if (hasVisibleSubdirs(fi.absoluteFilePath()))
+        if (hasVisibleSubdirs(fe.path))
             child->addChild(new QTreeWidgetItem); // 占位
         item->addChild(child);
     }
