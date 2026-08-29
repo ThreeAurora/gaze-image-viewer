@@ -61,11 +61,24 @@ void ArrowStyle::drawPrimitive(PrimitiveElement element, const QStyleOption* opt
 // ═══════════════════════════════════════════
 
 // 统计子文件夹（含隐藏目录），用于判断是否应显示展开箭头
+// 只要"有一个子文件夹"就够:见到第一个即收工。旧写法 entryList 会把整层枚举完
+// 并分配 QStringList,而这一句对每个子行都要问一次 —— 是展开最贵的一笔账。
 static bool hasVisibleSubdirs(const QString& path) {
-    QDir dir(path);
-    const QStringList list = dir.entryList(
-        QDir::Dirs | QDir::Hidden | QDir::NoDotAndDotDot);
-    return !list.isEmpty();
+    const QString pattern = path + QStringLiteral("\\*");
+    WIN32_FIND_DATAW data;
+    HANDLE h = FindFirstFileExW((const wchar_t*)pattern.utf16(), FindExInfoBasic, &data,
+                                FindExSearchLimitToDirectories, nullptr,
+                                FIND_FIRST_EX_LARGE_FETCH);
+    if (h == INVALID_HANDLE_VALUE) return false;
+    bool found = false;
+    do {
+        const wchar_t* n = data.cFileName;
+        if (n[0] == L'.' && (n[1] == 0 || (n[1] == L'.' && n[2] == 0))) continue;
+        // 部分文件系统不理会"只要目录"的下推,自己按属性位兜底
+        if (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) { found = true; break; }
+    } while (FindNextFileW(h, &data));
+    FindClose(h);
+    return found;
 }
 
 FolderTree::FolderTree(QWidget* parent) : QTreeWidget(parent) {
