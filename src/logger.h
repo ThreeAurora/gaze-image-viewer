@@ -78,11 +78,11 @@ inline qint64 processAgeMs() {
 #endif
 }
 
-inline void boot(const QString& phase) {
+inline void boot(const char* phase) {
     static qint64 prevAge = 0;
     const qint64 age = processAgeMs();
     event(QStringLiteral("startup %1 age=%2ms dt=%3ms")
-              .arg(phase).arg(age).arg(prevAge ? age - prevAge : age));
+              .arg(QLatin1String(phase)).arg(age).arg(prevAge ? age - prevAge : age));
     prevAge = age;
 }
 
