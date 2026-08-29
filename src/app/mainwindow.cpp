@@ -512,7 +512,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
         }
     }
 
+    Logger::boot("ctor:startdir");
+
     applyShortcuts();   // 应用用户自定义快捷键(ini 覆盖默认)
+    Logger::boot("ctor:shortcuts");
 
     // 启动布局:"跟随上次窗口状态"开 → 用上次关闭状态;否则用最后应用的命名布局
     // (active 指向的布局已被删除/不在名称列表时退回"跟随上次",不再引用孤儿布局)
