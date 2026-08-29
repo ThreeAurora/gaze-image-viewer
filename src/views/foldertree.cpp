@@ -1,6 +1,7 @@
 #include "foldertree.h"
 #include "constants.h"
 #include "fileentry.h"
+#include "namesort.h"
 #include "settings.h"
 #include "perflog.h"
 #include "perflog.h"
