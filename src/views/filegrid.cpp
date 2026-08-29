@@ -302,6 +302,21 @@ void FileGrid::loadDirectory(const QString& dirPath) {
         }
     }
 
+    // ── FileList/showSubFolders(树右键"显示子文件夹中的文件")──
+    // 目录行仍只列本层,只有文件向下递归铺开。整棵子树的枚举代价由探针记账,
+    // 逛巨型仓库时慢在哪一眼可见,不用靠猜。
+    if (m_showSubFolders) {
+        QStringList subDirs;
+        subDirs.reserve(static_cast<int>(m_allEntries.size()));
+        for (const auto& e : m_allEntries)
+            if (e.isDir) subDirs << e.path;
+        if (!subDirs.isEmpty()) {
+            PerfLog::Scope probe("loadDir.subFolders", 50);
+            for (const QString& d : subDirs)
+                fastScanSubFiles(d, m_allEntries, !m_showHidden);
+        }
+    }
+
     // ── FileList/recognizeByExt(默认开)= 只看扩展名 ──
     // 关掉时按文件头魔数判定真实格式(扩展名被改错/缺失仍能正确归类);
     // 是否允许读头由 FileList/scanHeader 按卷类型决定(软盘/光盘默认不读,
