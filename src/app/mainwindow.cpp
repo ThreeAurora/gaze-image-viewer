@@ -10,6 +10,7 @@
 #include "livephoto.h"
 #include "constants.h"
 #include "validname.h"
+#include "validname.h"
 #include "keytarget.h"
 
 #include <QMenuBar>
