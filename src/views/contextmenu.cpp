@@ -33,6 +33,14 @@
 #include <memory>
 
 #include "logger.h"
+#include <QPointer>
+#include <QTimer>
+#include <QDateTime>
+
+#include <functional>
+#include <memory>
+
+#include "logger.h"
 #include <QImageWriter>
 #include <QImageWriter>
 #include <QImageWriter>
