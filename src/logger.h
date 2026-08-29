@@ -180,6 +180,7 @@ inline void init() {
               .arg(qApp->applicationPid())
               .arg(QLatin1String(qVersion()))
               .arg(QCoreApplication::applicationFilePath()));
+    boot("pre-main");   // 进程创建 → 这里:DLL 加载 + Qt 插件探测 + QApplication 构造
     qInstallMessageHandler(msgHandler);
 #ifdef _WIN32
     SetUnhandledExceptionFilter(sehFilter);
