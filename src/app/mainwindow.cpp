@@ -280,6 +280,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     connect(m_folderTree, &FolderTree::folderSelected, this, &MainWindow::navigateTo);
     tv->addWidget(m_folderTree, 1);
     m_splitter->addWidget(treePane);
+    Logger::boot("ctor:tree");
 
     auto *centerPanel = new QWidget;
     centerPanel->setMinimumWidth(200);
