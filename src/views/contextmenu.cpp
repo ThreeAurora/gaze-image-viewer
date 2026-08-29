@@ -193,7 +193,8 @@ static void runProcessAsync(const QString& program, const QStringList& args,
         });
     QObject::connect(timer, &QTimer::timeout, proc, [finish, proc, timeoutMs]() {
         proc->kill();
-        finish(false, QStringLiteral("超过 %1 秒未完成,已终止").arg(timeoutMs / 1000));
+        finish(false, QStringLiteral("超过 %1 秒未完成,已终止")
+                         .arg(timeoutMs / 1000.0, 0, 'g', 3));
     });
     proc->start(program, args);
     timer->start();
