@@ -129,20 +129,35 @@ int printRenderPage(QPainter& g, const QRectF& paintRect, qreal dpi,
             markFailed(imgBox);
             ++res.failed;
         } else {
-            const QSizeF isz(img.width(), img.height());
-            const qreal fitScale = std::min(imgBox.width() / isz.width(),
-                                            imgBox.height() / isz.height());
+            // 排版一律按"原始像素尺寸"算,不按这次解码出来的位图尺寸算。
+            // 预览为提速给的是降采样图,而各格式对降采样的处理并不一致
+            // (实测 Qt6.5.3:JPEG 缩到 1/6.67 后 dotsPerMeter 仍是 300,
+            //  PNG 同样缩到 1/6.67 后 DPI 也变成 300/6.67=45)。
+            // 用位图自身尺寸,"不放大/原始尺寸"两档在预览里和出图里就会给出两套排版。
+            QSizeF nom(img.width(), img.height());          // 排版用
+            const QSizeF dec(img.width(), img.height());    // src 矩形用
+            if (meta.px.width() > 0 && meta.px.height() > 0) {
+                const QSizeF orig(meta.px.width(), meta.px.height());
+                // 长宽比对不上 = 取图器没按 EXIF 转正,这时只能信图本身
+                if (std::abs((orig.width() / orig.height()) / (dec.width() / dec.height()) - 1.0) < 0.01)
+                    nom = orig;
+            }
+            const qreal rx = dec.width() / nom.width();
+            const qreal ry = dec.height() / nom.height();
+
+            const qreal fitScale = std::min(imgBox.width() / nom.width(),
+                                            imgBox.height() / nom.height());
             qreal scale;
             switch (opt.fit) {
             case PrintFit::Fill:
-                scale = std::max(imgBox.width() / isz.width(),
-                                 imgBox.height() / isz.height());
+                scale = std::max(imgBox.width() / nom.width(),
+                                 imgBox.height() / nom.height());
                 break;
             case PrintFit::Actual: {
                 const qreal d = meta.dpiX > 0 ? meta.dpiX : 96.0;
                 scale = dpi / d;                    // 像素 → 该 DPI 下的真实物理尺寸
-                if (isz.width() * scale > imgBox.width() + 0.5 ||
-                    isz.height() * scale > imgBox.height() + 0.5) {
+                if (nom.width() * scale > imgBox.width() + 0.5 ||
+                    nom.height() * scale > imgBox.height() + 0.5) {
                     scale = std::min(scale, fitScale);   // 放不下才收缩,并如实计数
                     ++res.shrunk;
                 }
@@ -155,12 +170,15 @@ int printRenderPage(QPainter& g, const QRectF& paintRect, qreal dpi,
                 scale = fitScale;
             }
 
-            QRectF target(0, 0, isz.width() * scale, isz.height() * scale);
-            QRectF src(0, 0, isz.width(), isz.height());
+            QRectF target(0, 0, nom.width() * scale, nom.height() * scale);
+            QRectF src(0, 0, dec.width(), dec.height());
             if (opt.fit == PrintFit::Fill) {
                 target = imgBox;
-                src.setSize(QSizeF(imgBox.width() / scale, imgBox.height() / scale));
-                src.moveCenter(QRectF(0, 0, isz.width(), isz.height()).center());
+                // 可见的原始像素宽 / 缩放 → 再乘回解码比例,才是位图坐标系里的裁剪框
+                src = QRectF(0, 0, imgBox.width() / scale * rx, imgBox.height() / scale * ry)
+                      .translated((dec.width() - imgBox.width() / scale * rx) / 2.0,
+                                  (dec.height() - imgBox.height() / scale * ry) / 2.0)
+                      .intersected(QRectF(0, 0, dec.width(), dec.height()));
             } else {
                 target.moveCenter(imgBox.center());
             }
