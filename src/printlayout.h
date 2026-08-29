@@ -42,7 +42,7 @@ struct PrintOptions {
 
 // 一张图的静态信息(标题文案与"原始尺寸"排版都要用,只在这里定一次口径)
 struct PrintImageInfo {
-    QSize   px;                 // 像素尺寸
+    QSize   px;                 // 像素尺寸(读得到图时以图为准,读不到时用这个占位)
     qreal   dpiX = 0;           // 水平 DPI;0=文件没写,按 96 处理
     QString name;
     QString dateText;           // 修改日期(已格式化)
