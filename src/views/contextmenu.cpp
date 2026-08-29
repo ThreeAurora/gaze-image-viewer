@@ -476,8 +476,8 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
     });
     addSeparator();
 
-    addAction(IconLib::appIcon("cmd_print"), "打印...(Ctrl+P)", this, []() {
-        QMessageBox::information(nullptr, "打印", "打印功能即将支持");
+    addAction(IconLib::appIcon("cmd_print"), "打印...(Ctrl+P)", this, [grid, sel]() {
+        PrintDialog::printImages(grid, sel);
     });
 
     // ── 旋转/翻转(仅图片;先备份原件,保留修改时间) ──
