@@ -589,6 +589,20 @@ void PreviewPanel::updateRatingBadge() {
     m_ratingDot->show();
 }
 
+// 缩略图 pixmap 在导航小窗里的**实际摆放矩形**,坐标系是 m_panTool(蓝框的父)。
+// QLabel 用 AlignCenter 画 pixmap,留边时图并不铺满控件;而 m_panThumb 又嵌在
+// m_panTool 的 (1,1)。蓝框与指尖映射都只走这一个函数,不在两处各算一遍偏移
+// ——分开算时一处是缩略图坐标、一处是工具条坐标,差的就是那 1px(#111)
+QRect PreviewPanel::navPixmapRect() const {
+    const QPixmap tp = m_panThumb->pixmap();
+    if (tp.isNull()) return {};
+    const QRect c = m_panThumb->contentsRect();
+    return QRect(m_panThumb->pos()
+                     + QPoint(c.x() + (c.width()  - tp.width())  / 2,
+                              c.y() + (c.height() - tp.height()) / 2),
+                 tp.size());
+}
+
 // Viewer/panTool:右下角导航小窗(缩略图 + 当前视口框)。仅图溢出视口时出现
 void PreviewPanel::updatePanTool() {
     const bool on = s_bool("Viewer/panTool", true) && m_mode == "image" && m_origPix
