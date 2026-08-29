@@ -439,13 +439,21 @@ void FileGrid::clearAllMarks() {
     if (m_filterMarked) toggleFilter(); else refreshView();
 }
 
-void FileGrid::toggleMark(int index) {
-    if (index < 0 || index >= static_cast<int>(m_entries.size())) return;
-    const QString path = m_entries[index].path;
-    if (m_marked.contains(path))
-        m_marked.remove(path);
-    else
-        m_marked.insert(path);
+// ★ 标记:切换选中项。多选时以锚点(最后点击项)当前状态决定整批加或整批去 ——
+// 一次动作一个确定结果,不做逐项翻转(与颜色标签的批量语义对齐)。
+void FileGrid::toggleMarkOnSelection() {
+    if (m_selected.isEmpty() || m_entries.empty()) return;
+    int anchor = m_lastClicked;
+    if (anchor < 0 || anchor >= static_cast<int>(m_entries.size())
+        || !m_selected.contains(anchor))
+        anchor = *m_selected.constBegin();
+    if (anchor < 0 || anchor >= static_cast<int>(m_entries.size())) return;
+    const bool add = !m_marked.contains(m_entries[anchor].path);
+    for (int idx : m_selected) {
+        if (idx < 0 || idx >= static_cast<int>(m_entries.size())) continue;
+        const QString& p = m_entries[idx].path;
+        if (add) m_marked.insert(p); else m_marked.remove(p);
+    }
     refreshView();   // 绘制时直接查 m_marked
 }
 
