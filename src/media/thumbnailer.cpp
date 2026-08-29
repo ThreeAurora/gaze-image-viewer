@@ -344,6 +344,19 @@ QImage Thumbnailer::folderThumb(const QString& dirPath, int size) {
     const FolderFrame f = folderFrame(size);
     paintFolderBack(pt, f);
 
+    // 单格:等比铺满后**居中**裁切(旧代码注释写着居中,实际从左上裁,横图看着偏)
+    auto drawCell = [this, &pt](const QString& path, const QRectF& cell) {
+        const int cw = qMax(1, qRound(cell.width()));
+        const int ch = qMax(1, qRound(cell.height()));
+        QImage t = windowsShellThumb(path, qMax(cw, ch));
+        if (t.isNull()) t = imageThumb(path, qMax(cw, ch));
+        if (t.isNull()) return;
+        t = t.scaled(cw, ch, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
+        pt.drawImage(cell, t, QRectF((t.width() - cell.width()) / 2,
+                                     (t.height() - cell.height()) / 2,
+                                     cell.width(), cell.height()));
+    };
+
     // 图先裁进内容区(圆角),再由前板压住下沿 → 不足 4 张时空格露后板
     pt.save();
     QPainterPath clip;
@@ -351,17 +364,15 @@ QImage Thumbnailer::folderThumb(const QString& dirPath, int size) {
     pt.setClipPath(clip);
     const int n = qMin(picked.size(), want);
     if (n == 1) {
-        const QString one = picked.first();
-        drawFolderCell(pt, one, f.content);
+        drawCell(picked.first(), f.content);
     } else {
         const qreal gap = qMax<qreal>(1.0, size * 0.008);
         const qreal cw = (f.content.width() - gap) / 2;
         const qreal ch = (f.content.height() - gap) / 2;
-        for (int i = 0; i < n; ++i) {
-            const QRectF cell(f.content.left() + (i % 2) * (cw + gap),
-                              f.content.top()  + (i / 2) * (ch + gap), cw, ch);
-            drawFolderCell(pt, picked[i], cell);
-        }
+        for (int i = 0; i < n; ++i)
+            drawCell(picked[i], QRectF(f.content.left() + (i % 2) * (cw + gap),
+                                       f.content.top()  + (i / 2) * (ch + gap),
+                                       cw, ch));
     }
     pt.restore();
 
