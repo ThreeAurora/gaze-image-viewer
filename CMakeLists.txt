@@ -13,6 +13,7 @@ find_package(Qt6 REQUIRED COMPONENTS
     Multimedia
     MultimediaWidgets
     Sql
+    PrintSupport
 )
 
 # FFmpeg
