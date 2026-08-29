@@ -601,6 +601,11 @@ void FolderTree::showContextMenu(const QPoint& pos) {
         emit subFoldersToggled(on);
     });
     menu.addSeparator();
+    // ── 搜索...:以光标下这一层为根的递归名称搜索(非模态,可边搜边看主窗口) ──
+    menu.addAction(IconLib::appIcon("cmd_search"), QString::fromUtf8("搜索..."),
+                   this, [this, base]() {
+        (new SearchDialog(base, window()))->show();
+    });
     // ── 用资源管理器打开:交给 Shell,尊重第三方文件管理器的接管 ──
     menu.addAction(IconLib::appIcon("cmd_browse"),
                    QString::fromUtf8("用资源管理器打开文件"), this, [paths]() {
