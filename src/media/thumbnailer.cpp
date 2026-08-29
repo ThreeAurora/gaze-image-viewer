@@ -244,10 +244,82 @@ QImage Thumbnailer::postProcess(QImage img, int size) const {
 }
 
 // ═══════════════════════════════════════════
-// 文件夹缩略图(Thumbs/folder4)
-//   开 → 2x2 拼前 4 张图;关 → 只取第一张做封面
-//   目录内无可用图片则返回空(交由调用方显示系统文件夹图标)
+// 文件夹卡片外框(XnView MP 同款):文件夹还是文件夹,内容图嵌在里面
+//   几何比例与 fileentry.h::folderIcon 一致 —— 有图卡片与"目录内无图"回落的
+//   纯图标因此是同一个轮廓,只差里面那几格图。
+//   底不透明(颜色=列表底色):Cache/compression 选 JPEG 时 alpha 会被压成黑底,
+//   Thumbs/transparencyGrid 还会给它铺一层棋盘格,两者都会把外框毁成一坨
 // ═══════════════════════════════════════════
+namespace {
+
+struct FolderFrame {
+    QRectF tab;      // 左上凸出的标签
+    QRectF back;     // 后板:内容图坐在它上面
+    QRectF front;    // 前板:压住内容图下沿 → "图收在文件夹里"的层叠
+    QRectF content;  // 内容图区
+    qreal  r;        // 圆角
+};
+
+FolderFrame folderFrame(int size) {
+    const qreal m = size * 0.03;
+    FolderFrame f;
+    f.r     = qMax<qreal>(1.0, size * 0.025);
+    f.tab   = QRectF(m, size * 0.09, (size - 2 * m) * 0.42, size * 0.14);
+    f.back  = QRectF(m, size * 0.18, size - 2 * m, size * 0.78);
+    f.content = f.back.adjusted(size * 0.035, size * 0.045,
+                                -size * 0.035, -size * 0.135);
+    const qreal frontTop = f.content.bottom() - size * 0.015;  // 压住图底一点
+    f.front = QRectF(f.back.left(), frontTop,
+                     f.back.width(), f.back.bottom() - frontTop);
+    // 极小尺寸(列表/详细 64px 以下)内缩可能吃掉内容区:保底留一半后板
+    if (f.content.width() < f.back.width() * 0.5 || f.content.height() <= 2)
+        f.content = f.back.adjusted(1, 1, -1, -f.back.height() * 0.22);
+    return f;
+}
+
+// 只圆下方两角的矩形(前板的顶边是"文件夹口",必须是直的)
+QPainterPath bottomRounded(const QRectF& r, qreal rad) {
+    const qreal k = qMin(rad, qMin(r.width(), r.height()) / 2.0);
+    QPainterPath p;
+    p.moveTo(r.left(), r.top());
+    p.lineTo(r.right(), r.top());
+    p.lineTo(r.right(), r.bottom() - k);
+    p.quadTo(r.right(), r.bottom(), r.right() - k, r.bottom());
+    p.lineTo(r.left() + k, r.bottom());
+    p.quadTo(r.left(), r.bottom(), r.left(), r.bottom() - k);
+    p.closeSubpath();
+    return p;
+}
+
+void paintFolderBack(QPainter& pt, const FolderFrame& f) {
+    pt.setPen(Qt::NoPen);
+    QLinearGradient g(0, f.tab.top(), 0, f.back.bottom());
+    g.setColorAt(0.0, QColor("#EFD98F"));
+    g.setColorAt(1.0, QColor("#E0BC60"));
+    pt.setBrush(g);
+    pt.drawRoundedRect(f.tab, f.r, f.r);
+    pt.drawRoundedRect(f.back, f.r, f.r);
+}
+
+// 前板比后板亮一档(受光面),再压一条暗唇线 —— 层次全靠这两笔
+void paintFolderFront(QPainter& pt, const FolderFrame& f, int size) {
+    pt.setPen(QPen(QColor(0, 0, 0, 46), qMax<qreal>(1.0, size * 0.006)));
+    pt.drawLine(QPointF(f.front.topLeft().x(), f.front.top() - 0.5),
+                QPointF(f.front.topRight().x(), f.front.top() - 0.5));
+    pt.setPen(Qt::NoPen);
+    QLinearGradient g(0, f.front.top(), 0, f.front.bottom());
+    g.setColorAt(0.0, QColor("#FBEFB9"));
+    g.setColorAt(1.0, QColor("#EFCB6E"));
+    pt.setBrush(g);
+    pt.drawPath(bottomRounded(f.front, f.r));
+    pt.setBrush(QColor("#D9AE52"));
+    pt.drawPath(bottomRounded(QRectF(f.front.left(),
+                                     f.front.bottom() - size * 0.035,
+                                     f.front.width(), size * 0.035), f.r));
+}
+
+} // namespace
+
 QImage Thumbnailer::folderThumb(const QString& dirPath, int size) {
     const Prefs p = prefs();
     QDir d(dirPath);
@@ -263,28 +335,37 @@ QImage Thumbnailer::folderThumb(const QString& dirPath, int size) {
     }
     if (picked.isEmpty()) return {};
 
-    // 单封面(folder4 关)
-    if (!p.folder4) {
-        QImage one = windowsShellThumb(picked.first(), size);
-        if (one.isNull()) one = imageThumb(picked.first(), size);
-        return postProcess(one, size);
-    }
-
-    // 2x2 拼图:每格留 2px 间隙,格内等比裁切居中(与系统文件夹缩略图观感一致)
-    const int gap = 2;
-    const int cell = (size - gap) / 2;
     QImage sheet(size, size, QImage::Format_RGB32);
-    sheet.fill(0xFF1E1E22);
+    sheet.fill(QColor(QStringLiteral(C_CONTENT)));
     QPainter pt(&sheet);
-    for (int i = 0; i < picked.size() && i < 4; ++i) {
-        QImage t = windowsShellThumb(picked[i], cell);
-        if (t.isNull()) t = imageThumb(picked[i], cell);
-        if (t.isNull()) continue;
-        t = t.scaled(cell, cell, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
-        const int ox = (i % 2) * (cell + gap);
-        const int oy = (i / 2) * (cell + gap);
-        pt.drawImage(ox, oy, t.copy(0, 0, qMin(cell, t.width()), qMin(cell, t.height())));
+    pt.setRenderHint(QPainter::Antialiasing);
+    pt.setRenderHint(QPainter::SmoothPixmapTransform);
+
+    const FolderFrame f = folderFrame(size);
+    paintFolderBack(pt, f);
+
+    // 图先裁进内容区(圆角),再由前板压住下沿 → 不足 4 张时空格露后板
+    pt.save();
+    QPainterPath clip;
+    clip.addRoundedRect(f.content, f.r, f.r);
+    pt.setClipPath(clip);
+    const int n = qMin(picked.size(), want);
+    if (n == 1) {
+        const QString one = picked.first();
+        drawFolderCell(pt, one, f.content);
+    } else {
+        const qreal gap = qMax<qreal>(1.0, size * 0.008);
+        const qreal cw = (f.content.width() - gap) / 2;
+        const qreal ch = (f.content.height() - gap) / 2;
+        for (int i = 0; i < n; ++i) {
+            const QRectF cell(f.content.left() + (i % 2) * (cw + gap),
+                              f.content.top()  + (i / 2) * (ch + gap), cw, ch);
+            drawFolderCell(pt, picked[i], cell);
+        }
     }
+    pt.restore();
+
+    paintFolderFront(pt, f, size);
     pt.end();
     return postProcess(sheet, size);
 }
