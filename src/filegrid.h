@@ -80,6 +80,10 @@ public:
     void toggleFilter();
     void setFilterMode(int mode);            // FilterMode
     int  filterMode() const { return m_filterMode; }
+    // 文件夹树右键"显示子文件夹中的文件":目录行仍只列本层,文件向下递归展开。
+    // 真源在这里,FolderTree 只持有镜像用于画 ✓。持久化 FileList/showSubFolders。
+    void setShowSubFolders(bool on);
+    bool showSubFolders() const { return m_showSubFolders; }
     void navigateSelection(int delta);
     void selectIndex(int idx, bool scrollToVisible = true);  // 滚动联动时传 false 防反馈回路
     void selftestFastScroll();   // 临时诊断:进程内模拟快速拖动,查完删
