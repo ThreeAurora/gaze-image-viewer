@@ -625,16 +625,17 @@ void FileContextMenu::extractFrames(const QString& videoPath) {
     QString outDir = fi.isDir() ? m_filePath : fi.dir().absolutePath();
     QString pattern = outDir + "/frame_%05d.png";
 
-    QProcess proc;
-    proc.setProcessChannelMode(QProcess::MergedChannels);
-    proc.start("ffmpeg", {
-        "-i", videoPath, "-vsync", "0", "-q:v", "2", "-y", pattern
-    });
-
-    if (proc.waitForFinished(120000)) {
-        QMessageBox::information(nullptr, "完成", "帧提取完成");
-    } else {
-        proc.kill();
-        QMessageBox::warning(nullptr, "错误", "帧提取超时");
-    }
+    // 整段视频拆帧可能几十秒。以前 GUI 线程 waitForFinished(120s) 死等,界面
+    // 整个钉死那么久;而且判据只看"进程结束了没",ffmpeg 不在 PATH(启动失败)
+    // 同样算结束 → 弹一句"帧提取完成"谎报成功。改成后台跑 + 认退出码。
+    runProcessAsync("ffmpeg",
+        { "-i", videoPath, "-vsync", "0", "-q:v", "2", "-y", pattern },
+        QString(), 120000,
+        [outDir](bool ok, const QString& why) {
+            if (ok)
+                QMessageBox::information(nullptr, "完成",
+                    QString::fromUtf8("帧提取完成:\n") + outDir);
+            else
+                QMessageBox::warning(nullptr, "帧提取失败", why + "\n" + outDir);
+        });
 }
