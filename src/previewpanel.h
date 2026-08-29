@@ -64,6 +64,8 @@ private:
     void raiseVideoCover();     // 升起纯黑遮罩(盖住控件残帧,Playing 后收回)
     void raiseVideoCover();     // 升起纯黑遮罩(盖住控件残帧,Playing 后收回)
     void showImage(const QString &path);
+    void showGif(const QString &path);        // GIF:第一帧定几何,动画只换像素(#103/#96)
+    void showImageHint(const QString &text);  // 无可显示位图:label 收成一格提示条,不沿用上图尺寸
     void showVideo(const QString &path);
     void showAudio(const QString &path);
     void showText(const QString &path);
