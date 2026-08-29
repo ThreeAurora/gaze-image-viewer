@@ -457,7 +457,7 @@ QWidget* SettingsDialog::pageKeyboardMouse() {
             QString::fromUtf8("什么都不做"),
             QString::fromUtf8("下一个文件"), QString::fromUtf8("快速幻灯片")}, 0));
     form->addRow(QString::fromUtf8("快速幻灯片间隔(毫秒)"),
-        spin("Interface/slideInterval", 100, 60000, 1000));
+        spin("Interface/slideInterval", SLIDE_MS_MIN, SLIDE_MS_MAX, SLIDE_MS_DEF));
     form->addRow(chk("Keyboard/escCloseBrowser", QString::fromUtf8("按 ESC 关闭:浏览器模式"), false));
     form->addRow(chk("Keyboard/escCloseViewer", QString::fromUtf8("按 ESC 关闭:查看器"), true));
     return wrapTitled(QString::fromUtf8("键盘"), form);
