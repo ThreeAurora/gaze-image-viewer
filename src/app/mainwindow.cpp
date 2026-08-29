@@ -11,6 +11,7 @@
 #include "constants.h"
 #include "validname.h"
 #include "keytarget.h"
+#include "logger.h"
 #include "validname.h"
 #include "keytarget.h"
 
