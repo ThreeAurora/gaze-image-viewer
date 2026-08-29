@@ -281,7 +281,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     tv->addWidget(createPaneHeader(QString::fromUtf8("文件夹"), "tree"));
     Logger::boot("tree:header");
 
+    Logger::boot("tree:before-ft");
     m_folderTree = new FolderTree;
+    Logger::boot("tree:after-ft");
     m_folderTree->setMinimumWidth(160);
     connect(m_folderTree, &FolderTree::folderSelected, this, &MainWindow::navigateTo);
     tv->addWidget(m_folderTree, 1);
