@@ -182,8 +182,8 @@ inline bool parseIfdRaw(const Tiff& t, quint32 off, const QString& ifdName,
         const uchar* d = valuePtr(t, e, &avail);
         if (!d) continue;                            // 越界/被截断:整条丢
         if (ifdName == QLatin1String("IFD0") && type == 4 && cnt == 1) {
-            if (tag == 0x8769) { exifSub.append(t.u32(e + 8)); continue; }
-            if (tag == 0x8825) { gpsSub.append(t.u32(e + 8));  continue; }
+            if (tag == 0x8769) { exifSub.append(t.u32p(e + 8)); continue; }
+            if (tag == 0x8825) { gpsSub.append(t.u32p(e + 8));  continue; }
         }
         Raw r;
         r.ifd = ifdName;
