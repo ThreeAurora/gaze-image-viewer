@@ -3,6 +3,7 @@
 #include "integration.h"
 #include "labelstore.h"
 #include "constants.h"
+#include "dbprefix.h"
 #include "viewerhotkeys.h"
 #include "viewerhotkeys.h"
 
