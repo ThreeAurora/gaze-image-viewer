@@ -224,6 +224,7 @@ private:
     bool m_mixSort     = false;   // 混合文件/文件夹排序(关=目录恒在最前)
     bool m_folderAlpha = true;    // 文件夹总是按字母序排列
     bool m_showSubFolders = false;// FileList/showSubFolders 递归展开子文件夹文件
+    bool m_showSubFolders = false;// FileList/showSubFolders 递归展开子文件夹文件
     // 文件列表规则(FileList/*;设置改动时刷新,逐条目路径不再读 ini)
     bool m_showHidden  = true;
     bool m_mixSort     = false;   // 混合文件/文件夹排序(关=目录恒在最前)
