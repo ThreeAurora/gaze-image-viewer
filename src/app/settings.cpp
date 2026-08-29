@@ -78,7 +78,14 @@ void AppSettings::clearAll() {
     m_settings.sync();
     // 必须和 set() 一样广播:否则"恢复默认"之后网格/树/标题/预览/缩略图
     // 全部还挂着旧值,只有重启才恢复(五个 changed() 订阅者都收不到通知)
-    emit changed();
+    emit_changed_probe:
+    {
+        QElapsedTimer et;
+        et.start();
+        emit changed();
+        Logger::event(QString("#75PROBE broadcast key=%1 us=%2")
+                          .arg(key).arg(et.nsecsElapsed() / 1000));
+    }
 }
 
 bool AppSettings::livePhotoAutoPlay() const {
