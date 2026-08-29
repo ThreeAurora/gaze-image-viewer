@@ -103,6 +103,7 @@ public:
     enum SelectKind { KindMarked, KindFiles, KindDirs, KindImages, KindVideos, KindAudio };
     void selectByKind(int kind);
     void clearAllMarks();   // 清空 ★ 标记集(编辑菜单/Shift+M)
+    void clearAllMarks();   // 清空 ★ 标记集(编辑菜单/Shift+M)
     void toggleMarkOnSelection();   // ★ 标记:切换选中项(多选时以当前项为准整批加/去)
 
     // 颜色标记:对当前选中(单选时该项;多选时全部)设置
