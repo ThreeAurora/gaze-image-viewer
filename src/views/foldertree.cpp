@@ -423,7 +423,7 @@ void FolderTree::newFolderInto(QTreeWidgetItem* base) {
         this, QString::fromUtf8("新建文件夹"), QString::fromUtf8("名称:"),
         QLineEdit::Normal, QString::fromUtf8("新建文件夹"), &ok).trimmed();
     if (!ok) return;
-    if (const QString why = invalidNameReason(name)) {
+    if (const QString why = invalidNameReason(name); !why.isEmpty()) {
         QMessageBox::warning(this, QString::fromUtf8("新建文件夹"), why);
         return;
     }
