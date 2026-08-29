@@ -338,7 +338,7 @@ void FolderTree::removeNodes(const QStringList& paths) {
         QTreeWidgetItem* it = itemForPath(p);
         if (!it) continue;
         if (QTreeWidgetItem* par = it->parent()) par->removeChild(it);
-        else removeTopLevelItem(it);
+        else takeTopLevelItem(indexOfTopLevelItem(it));
         delete it;   // removeChild 只是摘出树,所有权仍在调用方
     }
 }
