@@ -9,6 +9,7 @@
 #include <QStringList>
 #include <QTabBar>
 #include <QFileInfo>
+#include <QPoint>
 
 class QVBoxLayout;
 class QComboBox;
