@@ -185,6 +185,17 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
         for (const auto& p : sel)
             QDesktopServices::openUrl(QUrl::fromLocalFile(p));
     });
+    // 查看器标签:这是唯一"另起一张标签"的入口。没有它,标签表永远只有一张,
+    // Interface/multiViewerTabs 与 oneViewerTab 两个开关就没有任何可观测差别。
+    if (!QFileInfo(m_filePath).isDir()) {
+        addAction("在新标签卡中打开", this, [this]() {
+            QObject* mw = this;
+            while (mw && mw->metaObject()->indexOfMethod("openViewerTab(QString)") < 0)
+                mw = mw->parent();
+            if (mw)
+                QMetaObject::invokeMethod(mw, "openViewerTab", Q_ARG(QString, m_filePath));
+        });
+    }
     addSeparator();
 
     // ── 剪贴板组 ──
