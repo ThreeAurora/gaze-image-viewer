@@ -285,6 +285,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     tv->addWidget(m_folderTree, 1);
     m_splitter->addWidget(treePane);
     Logger::boot("ctor:tree");
+    Logger::boot("ctor:tree");
 
     auto *centerPanel = new QWidget;
     centerPanel->setMinimumWidth(200);
