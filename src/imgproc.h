@@ -168,17 +168,4 @@ inline QImage decodeFull(const QString& path, bool exifRotate) {
     return decodeScaled(path, exifRotate, 0);
 }
 
-// 转正后的原始像素尺寸(不解码,只读文件头)。
-// QImageReader::size() 报的是**未转正**尺寸 —— 实测 Qt6.5.3:方向 6 的文件
-// size()=400x200 而 read() 得到 200x400。打印排版要用后者。
-inline QSize orientedSize(const QString& path, bool exifRotate) {
-    QImageReader r(path);
-    r.setAutoTransform(exifRotate);
-    QSize s = r.size();
-    if (exifRotate && s.isValid() &&
-        r.transformation().testFlag(QImageIOHandler::TransformationRotate90))
-        s.transpose();                          // Rotate90 位=4:90/180 组合里带它的都要换宽高
-    return s;
-}
-
 } // namespace ImgProc
