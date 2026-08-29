@@ -436,7 +436,10 @@ void FolderTree::renameItem(QTreeWidgetItem* item) {
     // 下次展开按新前缀重新物化 —— 代价只有一次 readdir。
     while (item->childCount()) delete item->takeChild(0);
     if (hasVisibleSubdirs(newPath)) item->addChild(new QTreeWidgetItem);
-    emit foldersChanged({parent, newPath}, {oldPath});
+    // removed 的语义是"这个目录没了,请离开":重命名不该把用户甩到父目录,
+    // 路径迁移交给 folderRenamed 处理,避免先跳一次再重定向的二次加载。
+    emit foldersChanged({parent, newPath}, {});
+    emit folderRenamed(oldPath, newPath);
 }
 
 void FolderTree::showContextMenu(const QPoint& pos) {
