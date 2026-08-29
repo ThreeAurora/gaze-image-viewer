@@ -107,6 +107,24 @@ inline FileEntry entryFromFindData(const WIN32_FIND_DATAW& data, const QString& 
     return fe;
 }
 
+// 一条 FindNextFile 记录 → FileEntry(单层扫描与递归扫描共用,避免两处口径漂移)
+inline FileEntry entryFromFindData(const WIN32_FIND_DATAW& data, const QString& dirPath) {
+    FileEntry fe;
+    fe.name = QString::fromWCharArray(data.cFileName);
+    fe.path = dirPath + QLatin1Char('/') + fe.name;
+    const int dot = fe.name.lastIndexOf(QLatin1Char('.'));
+    fe.ext = (dot > 0) ? fe.name.mid(dot).toLower() : QString();
+    // Windows 隐藏属性 / 点开头文件/夹都算隐藏,显示时用淡灰色
+    fe.hidden = (data.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN)
+                || fe.name.startsWith(QLatin1Char('.'));
+    fe.isDir = (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+    fe.ctime = fileTimeToEpoch(data.ftCreationTime);
+    fe.mtime = fileTimeToEpoch(data.ftLastWriteTime);
+    if (!fe.isDir)
+        fe.size = (int64_t(data.nFileSizeHigh) << 32) | data.nFileSizeLow;
+    return fe;
+}
+
 inline std::vector<FileEntry> fastScanDir(const QString& dirPath) {
     std::vector<FileEntry> entries;
     entries.reserve(500);
