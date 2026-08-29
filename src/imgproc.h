@@ -144,12 +144,13 @@ inline QSize orientedSize(const QString& path, bool exifRotate) {
 //   属跨线程访问(未加锁),表现偶发但真存在崩溃/脏读。
 inline QImage decodeScaled(const QString& path, bool exifRotate, int maxSide) {
     if (WicDecode::isFourChannelJpeg(path)) {
+        // WIC 这条路**不做 EXIF 转正**(decodeCmyk 只按 frame 原始宽高走 scaler),
+        // 所以 want 必须按未转正尺寸算。CMYK JPEG 带拍摄方向是极罕见的组合,
+        // 表现与查看器/缩略图一致(都不转正),打印排版靠长宽比自检退回位图尺寸。
         QSize want;
-        if (maxSide > 0) {
-            const QSize s0 = orientedSize(path, exifRotate);
-            if (s0.isValid() && qMax(s0.width(), s0.height()) > maxSide)
-                want = s0.scaled(maxSide, maxSide, Qt::KeepAspectRatio);
-        }
+        const QSize s0 = QImageReader(path).size();
+        if (maxSide > 0 && s0.isValid() && qMax(s0.width(), s0.height()) > maxSide)
+            want = s0.scaled(maxSide, maxSide, Qt::KeepAspectRatio);
         QImage wic = WicDecode::decodeCmyk(path, want);
         if (!wic.isNull()) return wic;          // 失败则回退 Qt 常规路径(绝不空手而归)
     }
