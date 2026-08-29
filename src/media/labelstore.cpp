@@ -68,8 +68,8 @@ QHash<QString,int> LabelStore::colorsForDir(const QString& dir) {
     QString prefix = QDir::fromNativeSeparators(dir);
     if (!prefix.endsWith('/') && !prefix.endsWith('\\')) prefix += '/';
     QSqlQuery q(d);
-    q.prepare("SELECT path, color FROM labels WHERE path LIKE ? || '%' AND color > 0");
-    q.addBindValue(prefix);
+    q.prepare("SELECT path, color FROM labels WHERE path LIKE ? ESCAPE '\\' AND color > 0");
+    q.addBindValue(likePrefixPattern(prefix));
     if (q.exec()) {
         while (q.next())
             out.insert(q.value(0).toString(), q.value(1).toInt());
