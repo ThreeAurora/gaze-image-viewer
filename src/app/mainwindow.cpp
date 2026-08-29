@@ -290,6 +290,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     cl->setSpacing(0);
 
     createToolbar2(cl);
+    Logger::boot("ctor:toolbar");
 
     m_sortHeader = new SortHeader;
     cl->addWidget(m_sortHeader);
