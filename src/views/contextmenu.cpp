@@ -240,12 +240,25 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
             return;
         }
         QFileInfo fi(m_filePath);
-        QString name = QInputDialog::getText(nullptr, "重命名",
-            "新名称:", QLineEdit::Normal, fi.fileName());
+        QWidget* par = grid;   // 挂到网格:菜单一关就没了,不能当对话框父窗口
+        QString name = QInputDialog::getText(par, "重命名",
+            "新名称:", QLineEdit::Normal, fi.fileName()).trimmed();
         if (name.isEmpty() || name == fi.fileName()) return;
-        QString np = fi.absolutePath() + "/" + name;
-        if (!QFile::rename(m_filePath, np))
-            QMessageBox::warning(nullptr, "重命名失败", m_filePath);
+        // 分隔符进名字 = QFile::rename 把文件搬去别处,界面上一切如常。必须先挡。
+        if (const QString why = invalidNameReason(name)) {
+            QMessageBox::warning(par, "重命名", why);
+            return;
+        }
+        QString np = QDir(fi.absolutePath()).filePath(name);
+        if (QFileInfo::exists(np)) {
+            QMessageBox::warning(par, "重命名", QString::fromUtf8("目标名已存在:\n") + np);
+            return;
+        }
+        if (!QFile::rename(m_filePath, np)) {
+            QMessageBox::warning(par, "重命名失败", m_filePath);
+            return;
+        }
+        if (grid) grid->setPreferPath(np);
         if (grid) grid->refreshCurrentDir();
     });
     // ── FileOps/duplicateTemplate:创建副本的命名模板 ──
