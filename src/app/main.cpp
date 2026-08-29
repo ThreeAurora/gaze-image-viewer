@@ -182,19 +182,9 @@ int main(int argc, char *argv[]) {
         return out;
     };
 
-    const bool singleInstance =
-        AppSettings::instance().get("General/singleInstance", false).toBool();
-    if (singleInstance) {
-        QLocalSocket probe;
-        probe.connectToServer(kSingleServer);
-        if (probe.waitForConnected(300)) {
-            for (const QString& p : cliPaths())
-                probe.write((p + "\n").toUtf8());
-            probe.waitForBytesWritten(500);
-            probe.disconnectFromServer();
-            return 0;
-        }
-    }
+    if (AppSettings::instance().get("General/singleInstance", false).toBool()
+        && handOffToRunningInstance(cliPaths()))
+        return 0;
     Logger::boot("handoff-probe");
 
     // 全局 QSS 收编进 Theme::appQss()(#96):Theme::T 让同一张样式表在深/浅两档间取值,
