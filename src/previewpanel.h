@@ -138,8 +138,10 @@ private:
     void updatePanTool();                  // Viewer/panTool 平移导航小窗
     void updateSelectionHighlight();       // Viewer/highlightSelection
     void updateRatingBadge();              // Viewer/showRating 颜色标记点
-    double oneToOneScale() const;          // Viewer/hidpiPixel:1:1 的实际缩放
+    double oneToOneScale() const;          // 1:1 = 1 图像像素 : 1 屏幕像素
     double stepZoom(double cur, bool up) const;  // Viewer/zoomMode=0 的固定档位
+    // 以屏幕锚点为中心缩放:锚点下的图像点缩放前后停在原地(滚轮/长按都走这里)
+    void zoomAnchored(double newScale, const QPoint& anchor);
     double pixelAspect() const;            // Viewer/pixelRatio 像素比
     void playAudioCompanion(const QString& imagePath);  // Viewer/autoPlayAudioCompanion
     // Viewer/gamma + Viewer/sharpen 的显示后处理(结果按目标尺寸缓存)
