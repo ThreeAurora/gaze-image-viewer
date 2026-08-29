@@ -123,6 +123,7 @@ private:
     void showNoPreview();
     // 导航小窗拖动:指尖下的缩略图点 → 视口中心(几何与 updatePanTool 同一套)
     void panNavTo(const QPoint& thumbPos);
+    QRect navPixmapRect() const;           // 缩略图 pixmap 的实际摆放矩形(m_panTool 坐标)
     // 动态照片:单击静态预览=重播动态部分(不做临时 1:1 放大)
     void playLivePhoto();
     // 无预览出口:目录 + 未知类型共用(清空各视图,只留占位底)
