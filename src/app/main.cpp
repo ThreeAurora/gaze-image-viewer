@@ -270,6 +270,7 @@ int main(int argc, char *argv[]) {
     Theme::init();
     app.setStyleSheet(Theme::appQss());
 
+    Logger::boot("qss");
     MainWindow w;
     Logger::boot("mw-ctor");
 
