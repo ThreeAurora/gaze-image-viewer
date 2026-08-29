@@ -52,6 +52,7 @@ private:
     PrintOptions options() const;
 
     QString  cacheKey(int idx) const;
+    int      previewMaxSide() const;         // "原始尺寸"档=0(全尺寸,DPI 才可信)
     void     requestPageDecode();            // 当前页缺图就丢线程池
     void     renderPreview();
     void     updateSummary();
