@@ -360,7 +360,7 @@ bool FolderTree::isVolumeRoot(const QString& path) {
 
 // 树里只物化了"展开过的那些行",所以这里查的是已存在的节点;查不到通常意味着
 // 该目录在某条折叠分支下面 —— 那也正是不需要维护的情况(展开时会重扫)
-QTreeWidgetItem* FolderTree::itemForPath(const QString& path) const {
+QTreeWidgetItem* FolderTree::itemForPath(const QString& path) {
     if (path.isEmpty()) return nullptr;
     const QString want = QDir::cleanPath(path);
     for (QTreeWidgetItemIterator it(this); *it; ++it) {
