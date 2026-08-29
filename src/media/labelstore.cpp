@@ -1,6 +1,7 @@
 #include "labelstore.h"
 #include "settings.h"
 #include "constants.h"
+#include "dbprefix.h"
 
 #include <QSqlDatabase>
 #include <QSqlQuery>
