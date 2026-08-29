@@ -18,6 +18,9 @@ public:
     // 只落盘不广播 changed():仅用于"唯一读者是下次启动"的状态键
     // (Browser/lastDir、Browser/lastFile)。界面要即时跟随的设置必须用 set()。
     void     setPersist(const QString& key, const QVariant& v);
+    // 只落盘不广播 changed():仅用于"唯一读者是下次启动"的状态键
+    // (Browser/lastDir、Browser/lastFile)。界面要即时跟随的设置必须用 set()。
+    void     setPersist(const QString& key, const QVariant& v);
     void     clearAll();   // 恢复默认(清空 ini,回到代码内默认值)
 
     QString iniPath() const;
