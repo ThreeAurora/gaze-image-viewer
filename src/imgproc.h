@@ -116,4 +116,55 @@ inline QImage checkerBg(int w, int h) {
     return bg;
 }
 
+// ── 全图解码统一入口(查看器 + 打印共用) ──────────────────
+// 原先只住在 previewpanel.cpp 里(叫 loadFullImage)。打印要的是"屏幕上看到什么,
+// 纸上就是什么",所以解码口径必须只有一份 —— CMYK 印刷 JPG 走 WIC 色彩管理那套,
+// 复制一份到打印路径迟早会和查看器偏色不一致。
+//
+// maxSide>0:按最长边降采样解码(预览用,省内存省时间);0:全尺寸。
+// ⚠ 降采样后的 QImage 自带 DPI 不可信(实测 Qt6.5.3:JPEG 密度不变、PNG 同比缩小),
+//   需要 DPI 的调用方(打印"原始尺寸"档)必须传 maxSide=0。
+// ⚠ exifRotate 必须由 GUI 线程 caller 快照后传入:worker 里读 AppSettings/QSettings
+//   属跨线程访问(未加锁),表现偶发但真存在崩溃/脏读。
+inline QImage decodeScaled(const QString& path, bool exifRotate, int maxSide) {
+    if (WicDecode::isFourChannelJpeg(path)) {
+        QSize want;
+        if (maxSide > 0) {
+            const QSize s0 = orientedSize(path, exifRotate);
+            if (s0.isValid() && qMax(s0.width(), s0.height()) > maxSide)
+                want = s0.scaled(maxSide, maxSide, Qt::KeepAspectRatio);
+        }
+        QImage wic = WicDecode::decodeCmyk(path, want);
+        if (!wic.isNull()) return wic;          // 失败则回退 Qt 常规路径(绝不空手而归)
+    }
+    QImageReader r(path);
+    r.setAutoTransform(exifRotate);
+    if (maxSide > 0) {
+        // setScaledSize 工作在**未转正**的像素空间(实测:请求 60x30 + 方向 6 → 得到 30x60)
+        const QSize s0 = r.size();
+        if (s0.isValid() && qMax(s0.width(), s0.height()) > maxSide) {
+            const QSize fit = s0.scaled(maxSide, maxSide, Qt::KeepAspectRatio);
+            if (fit.isValid()) r.setScaledSize(fit);
+        }
+    }
+    return r.read();
+}
+
+inline QImage decodeFull(const QString& path, bool exifRotate) {
+    return decodeScaled(path, exifRotate, 0);
+}
+
+// 转正后的原始像素尺寸(不解码,只读文件头)。
+// QImageReader::size() 报的是**未转正**尺寸 —— 实测 Qt6.5.3:方向 6 的文件
+// size()=400x200 而 read() 得到 200x400。打印排版要用后者。
+inline QSize orientedSize(const QString& path, bool exifRotate) {
+    QImageReader r(path);
+    r.setAutoTransform(exifRotate);
+    QSize s = r.size();
+    if (exifRotate && s.isValid() &&
+        r.transformation().testFlag(QImageIOHandler::TransformationRotate90))
+        s.transpose();                          // Rotate90 位=4:90/180 组合里带它的都要换宽高
+    return s;
+}
+
 } // namespace ImgProc
