@@ -239,5 +239,6 @@ private:
     QStringList m_preloadOrder;            // 插入序(逐出最旧)
     bool m_preloadBusy = false;
 public:
-    void reloadViewerHotkeys();                     // 设置页修改后刷新缓存
+    // 设置页修改后刷新缓存。设置页不 include 本头文件,靠元调用通知 → 必须 Q_INVOKABLE
+    Q_INVOKABLE void reloadViewerHotkeys();
 };
