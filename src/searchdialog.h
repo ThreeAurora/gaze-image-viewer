@@ -6,15 +6,13 @@
 #include <QLabel>
 #include <QTreeWidget>
 #include <QTimer>
-#include <QQueue>
-#include <QRegularExpression>
 #include <QStringList>
 
 class QTreeWidgetItem;
 
-// 名称搜索对话框:文件夹树右键"搜索..."。在指定根目录内按名称匹配文件/文件夹。
-// 扫描由定时器按"每拍 6ms 预算"驱动:大目录树下界面不冻结、结果边扫边出;
-// 深度/目录数/命中数都有硬上限,触顶时状态栏如实写明,不假装扫完。
+// 名称搜索对话框:文件夹树右键"搜索..."。在指定根目录内按名称匹配文件。
+// 扫描按"每拍一个时间预算"由定时器驱动:大目录树下界面不冻结,结果边扫边出,
+// 上限写进状态栏,不假装扫完了。
 class SearchDialog : public QDialog {
     Q_OBJECT
 public:
@@ -36,19 +34,13 @@ private:
     QCheckBox*   m_hidden;
     QCheckBox*   m_dirsToo;
     QPushButton* m_runBtn;
-    QPushButton* m_stopBtn;
     QLabel*      m_status;
     QTreeWidget* m_results;
-    QTimer       m_ticker;
 
     QString m_root;
-    QQueue<QPair<QString, int>> m_queue;   // 待扫目录 + 深度
-    QStringList m_incPlain;                // 子串词:命中任一即算
-    QStringList m_excPlain;
-    QList<QRegularExpression> m_incWild;   // 通配词(* ?)
-    QList<QRegularExpression> m_excWild;
-    bool m_skipHidden = true;
-    bool m_wantDirs = false;
+    QStringList m_queue;        // 待扫目录(BFS)
+    QStringList m_incTerms;     // 命中任一即算
+    QStringList m_excTerms;
     bool m_running = false;
     int  m_scannedDirs = 0;
     int  m_matches = 0;
