@@ -386,7 +386,7 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
     addAction(IconLib::appIcon("cmd_rename"), "重命名...", this, [this, grid]() {
         // FileOps/renameDialog:开=弹对话框(默认,既有行为);关=在卡片上就地改
         if (!AppSettings::instance().get("FileOps/renameDialog", true).toBool()) {
-            if (grid) QMetaObject::invokeMethod(grid, "beginInlineRename");
+            if (grid) grid->beginInlineRename();   // 普通方法,元调用够不着(见 #89)
             return;
         }
         QFileInfo fi(m_filePath);
