@@ -154,8 +154,10 @@ static QString findJpegtran() {
 //   就冻那么久,日志看门狗还会把它记成"卡死"。这里改成 start + finished 回调。
 //   · outFile 非空 → stdout 重定向到它(jpegtran 靠 stdout 出图)
 //   · ok 的判据:退出码 0,且(给了 outFile 时)那个文件非空。
-//     光看 waitForFinished 的返回值不行:进程根本没启动成功时它也是"已结束",
-//     旧的拆帧代码因此在 ffmpeg 不在 PATH 时弹一句"帧提取完成"谎报成功。
+//     旧代码只问"等完了没有"、从不看退出码:ffmpeg 真跑起来但失败(编码错、目标
+//     不可写)照样弹"帧提取完成"。实测(Qt 6.5.3/Windows,见 cache/tmp/proc_async_test.cpp)
+//     反向的坑也有:程序根本不在 PATH 时 waitForFinished 返回的是 **false**,
+//     所以旧代码在那个场景下弹的是"帧提取超时" —— 谎报的是原因,不是结果。
 //   · 超时 kill 并回报。回调最多一次(kill 之后 finished 还会再发一发信号)。
 //   · 回调不碰 this:FileContextMenu 每次弹窗现建、关掉即析构,异步续上去就是 UAF。
 //     需要网格的调用方自己带 QPointer。
