@@ -701,21 +701,19 @@ double PreviewPanel::stepZoom(double cur, bool up) const {
     return steps[0];
 }
 
-// Viewer/hidpiPixel:1:1 语义(默认关 = 1 图像像素 : 1 逻辑像素,与改造前一致)
+// "1:1"只有一个口径:1 图像像素 = 1 屏幕像素。长按看原图、autoFit=1、
+// 右键"1:1 像素"与全屏工具条共用这一个函数,不留第二套数学。
+// 这里**不看**文件自带的 DPI:乘上 dpi/96 之后"1:1"就不再是分辨率意义上的
+// 原图,而是"按标称物理尺寸显示"。低 DPI 的截图与网络图(常见 72)因此会被画得
+// 比"适应窗口"还小 —— 用户报的"长按后直接小到看不清"就是这一乘(#95)。
+// DPI 该在的地方是打印"原始尺寸"档(printlayout)与元数据面板,不是看图缩放。
 double PreviewPanel::oneToOneScale() const {
-    double s = 1.0;
+    // Viewer/hidpiPixel:1 图像像素映射到 1 物理像素(HiDPI 屏下更锐利,仍不穿透 1:1)
     if (s_bool("Viewer/hidpiPixel", false)) {
         const double dpr = devicePixelRatioF();
-        s = dpr > 0.01 ? 1.0 / dpr : 1.0;
+        return dpr > 0.01 ? 1.0 / dpr : 1.0;
     }
-    // General/exifDpi:按 EXIF/JFIF 标称 DPI 还原物理尺寸(300dpi 的图 1:1 时
-    // 按 300/96 ≈ 3.13 倍显示)。dpiAdjust 关时 X/Y 不等也统一用 X,保住长宽比
-    if (s_bool("General/exifDpi", true) && (m_dpiX > 0 || m_dpiY > 0)) {
-        const double dx = m_dpiX > 0 ? m_dpiX : 96.0;
-        const double dy = (s_bool("General/dpiAdjust", true) && m_dpiY > 0) ? m_dpiY : dx;
-        s *= (dx + dy) / 2.0 / 96.0;
-    }
-    return s;
+    return 1.0;
 }
 
 // Viewer/autoFit 取值语义:
