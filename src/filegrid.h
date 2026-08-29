@@ -158,6 +158,9 @@ protected:
     void resizeEvent(QResizeEvent* event) override;
     void keyPressEvent(QKeyEvent* event) override;
     void wheelEvent(QWheelEvent* event) override;
+    // 焦点变化必须重绘:多选落点的焦点线按 hasFocus() 画,不重绘就会留过期指示器
+    void focusInEvent(QFocusEvent* event) override;
+    void focusOutEvent(QFocusEvent* event) override;
     bool eventFilter(QObject* obj, QEvent* event) override;
 
 private:
