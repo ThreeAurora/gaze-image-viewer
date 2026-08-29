@@ -75,6 +75,9 @@ DbMaintenanceDialog::DbMaintenanceDialog(QWidget* parent) : QDialog(parent) {
     addBtn(QString::fromUtf8("删除全部"), [this]() { deleteAll(); });
     btns->addStretch();
     auto* closeBtn = new QPushButton(QString::fromUtf8("关闭"));
+    // 显式默认:不设时 Enter 与"空格=确认"都落在**创建最早**的按钮上,而那是
+    // "删除选中目录条目"(直接 DELETE,无二次确认)。实测见 cache/tmp/space_confirm_test.cpp
+    closeBtn->setDefault(true);
     connect(closeBtn, &QPushButton::clicked, this, &QDialog::accept);
     btns->addWidget(closeBtn);
     root->addLayout(btns);
