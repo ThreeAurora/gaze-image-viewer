@@ -466,9 +466,8 @@ void FolderTree::renameItem(QTreeWidgetItem* item) {
         this, QString::fromUtf8("重命名"), QString::fromUtf8("新名称:"),
         QLineEdit::Normal, oldName, &ok).trimmed();
     if (!ok || name == oldName) return;
-    if (!isLegalFolderName(name)) {
-        QMessageBox::warning(this, QString::fromUtf8("重命名"),
-            QString::fromUtf8("名称不能包含 / \\ : * ? \" < > | 也不能为空"));
+    if (const QString why = invalidNameReason(name)) {
+        QMessageBox::warning(this, QString::fromUtf8("重命名"), why);
         return;
     }
     const QString parent = QFileInfo(oldPath).dir().absolutePath();
