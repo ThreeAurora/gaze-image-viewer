@@ -600,7 +600,7 @@ QWidget* SettingsDialog::pageThumbs() {
 QWidget* SettingsDialog::pageAppearance() {
     auto* form = new QFormLayout;
     form->addRow(QString::fromUtf8("自定义缩略图尺寸 - 宽"),
-        spin("Appearance/customThumbW", 80, 300, 96));
+        spin("Appearance/customThumbW", THUMB_W_MIN, THUMB_W_MAX, 96));
     // 0 = 与宽同高(接线前的既有行为);>0 才按设置值固定缩略图框高
     auto* thumbH = spin("Appearance/customThumbH", 0, 512, 0);
     thumbH->setSpecialValueText(QString::fromUtf8("跟随宽度"));
