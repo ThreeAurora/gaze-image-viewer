@@ -441,7 +441,7 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
         });
     }
     labelMenu->addSeparator();
-    labelMenu->addAction("取消标记", this, [grid]() {
+    labelMenu->addAction("取消颜色标记", this, [grid]() {
         if (grid) grid->applyColorLabelToSelection(0);
     });
 
