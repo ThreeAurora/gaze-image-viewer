@@ -9,6 +9,7 @@
 #include "fileentry.h"
 #include "livephoto.h"
 #include "constants.h"
+#include "validname.h"
 
 #include <QMenuBar>
 #include <QStatusBar>
