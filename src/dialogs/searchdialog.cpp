@@ -55,6 +55,7 @@ SearchDialog::SearchDialog(const QString& rootDir, QWidget* parent)
     : QDialog(parent), m_root(rootDir)
 {
     setWindowTitle(QString::fromUtf8("搜索 - ") + QFileInfo(rootDir).fileName());
+    setAttribute(Qt::WA_DeleteOnClose);   // 非模态:关掉就该回收
     resize(860, 560);
     setStyleSheet(
         "QDialog{background:" C_WIN_BG ";}"
