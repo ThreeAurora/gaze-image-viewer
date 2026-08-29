@@ -255,10 +255,10 @@ void FolderTree::loadChildren(QTreeWidgetItem* item) {
     dirs.reserve(raw.size());
     for (auto& fe : raw)
         if (fe.isDir) dirs.push_back(std::move(fe));
-    // 与 QDir::Name 同序:忽略大小写为主、区分大小写为次,换实现不改显示顺序
+    // 数字顺序:1 < 2 < 10(#98)。旧的纯忽略大小写比较等于 QDir::Name,
+    // 编号文件夹(2022-12-28、1、2、10…)会排成 1,10,2,与网格默认序打架
     std::sort(dirs.begin(), dirs.end(), [](const FileEntry& a, const FileEntry& b) {
-        int r = QString::compare(a.name, b.name, Qt::CaseInsensitive);
-        return r != 0 ? r < 0 : a.name < b.name;
+        return naturalNameLess(a.name, b.name);
     });
 
     for (const FileEntry& fe : dirs) {
