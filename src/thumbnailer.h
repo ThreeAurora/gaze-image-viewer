@@ -85,7 +85,8 @@ private:
     QImage videoThumbFFmpeg(const QString& filePath, int size, int pctOverride = -1);
     // 回退方案：QProcess fork ffmpeg
     QImage videoThumbFallback(const QString& filePath, int size);
-    // 文件夹缩略图(Thumbs/folder4):开=2x2 拼前 4 张图,关=单张封面
+    // 文件夹缩略图:外框画成文件夹,里面嵌内容图(Thumbs/folder4 开=2x2 四格,关=单张封面)
+    // 目录内不足 4 张图就有几格画几格;一张都没有则返回空 → 卡片回落 folderIcon
     QImage folderThumb(const QString& dirPath, int size);
     // 视频四帧拼图(Thumbs/video4):按 framePct 起均匀取 4 帧
     QImage videoContactSheet(const QString& filePath, int size);
