@@ -221,8 +221,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     });
     ml->addWidget(m_viewerTabs);
 
-    // 查看器标签条(Interface/multiViewerTabs / oneViewerTab):
-    // 只在查看器模式显示,浏览器模式隐藏;默认单标签,行为与改造前一致
+    // 查看器标签条(Interface/multiViewerTabs / oneViewerTab,语义见 syncViewerTab 段注释):
+    // 只在查看器模式显示,浏览器模式隐藏
     m_viewerTabs = new QTabBar;
     m_viewerTabs->setDocumentMode(true);
     m_viewerTabs->setExpanding(false);
