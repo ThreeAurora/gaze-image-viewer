@@ -13,6 +13,7 @@
 #include <QPointer>
 #include "mainwindow.h"
 #include "constants.h"
+#include "keytarget.h"
 #include "settings.h"
 #include "thumbnailer.h"
 #include "logger.h"
