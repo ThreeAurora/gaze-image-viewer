@@ -50,25 +50,19 @@ public:
     bool inRange(qint64 off, qint64 len) const {
         return len >= 0 && off >= 0 && len <= n && off <= n - len;
     }
-    quint16 u16(qint64 o) const {
-        return le ? quint16(p[o] | (p[o + 1] << 8))
-                  : quint16((quint16(p[o]) << 8) | p[o + 1]);
+    quint16 u16p(const uchar* b) const {
+        return le ? quint16(b[0] | (b[1] << 8)) : quint16((quint16(b[0]) << 8) | b[1]);
     }
-    quint32 u32(qint64 o) const {
-        return le ? (quint32(p[o]) | (quint32(p[o + 1]) << 8)
-                    | (quint32(p[o + 2]) << 16) | (quint32(p[o + 3]) << 24))
-                  : ((quint32(p[o]) << 24) | (quint32(p[o + 1]) << 16)
-                     | (quint32(p[o + 2]) << 8) | quint32(p[o + 3]));
+    quint32 u32p(const uchar* b) const {
+        return le ? (quint32(b[0]) | (quint32(b[1]) << 8)
+                    | (quint32(b[2]) << 16) | (quint32(b[3]) << 24))
+                  : ((quint32(b[0]) << 24) | (quint32(b[1]) << 16)
+                     | (quint32(b[2]) << 8) | quint32(b[3]));
     }
-    quint32 uAt(const uchar* b, int i) const {          // 从任意指针按端序取 u32
-        const uchar* q = b + i * 4;
-        return le ? (quint32(q[0]) | (quint32(q[1]) << 8) | (quint32(q[2]) << 16) | (quint32(q[3]) << 24))
-                  : ((quint32(q[0]) << 24) | (quint32(q[1]) << 16) | (quint32(q[2]) << 8) | quint32(q[3]));
-    }
-    quint16 uAt16(const uchar* b, int i) const {
-        const uchar* q = b + i * 2;
-        return le ? quint16(q[0] | (q[1] << 8)) : quint16((quint16(q[0]) << 8) | q[1]);
-    }
+    quint16 u16(qint64 o) const { return u16p(p + o); }
+    quint32 u32(qint64 o) const { return u32p(p + o); }
+    quint32 uAt(const uchar* b, int i) const { return u32p(b + i * 4); }   // 从任意指针按端序取 u32
+    quint16 uAt16(const uchar* b, int i) const { return u16p(b + i * 2); }
 };
 
 inline int typeSize(quint16 t) {
