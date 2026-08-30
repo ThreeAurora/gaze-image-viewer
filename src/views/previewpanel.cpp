@@ -801,6 +801,21 @@ QPoint PreviewPanel::clampedLabelPos(QPoint p) const {
 void PreviewPanel::zoomAnchored(double newScale, const QPoint& anchor) {
     m_scale = newScale;
     if (m_mode != "image" || !m_origPix || m_origPix->isNull()) return;
+    render();                        // 先把新尺寸画出来(顺带居中),再按锚点挪回去
+    const QSize after = m_imgLabel->size();
+    const QSize before = m_panAnchorSize;   // 上一次缩放/渲染后的尺寸,见下方说明
+    Q_UNUSED(before);
+    m_imgLabel->move(clampedLabelPos(QPoint(
+        anchor.x() - int(anchor.x() - m_panAnchorPos.x()) ... , 0)));
+}
+
+// 锚点缩放:anchor 下的那个图像点,缩放前后停在 anchor 上不动。
+// 尺寸一律取 m_imgLabel 的**当前**与**新**几何,不用 origW*scale 二次推导 ——
+// render() 还会乘 Viewer/pixelRatio 并重新居中,自己推的那份跟屏幕上的不是一张图,
+// 长按放大的落点就会跑偏(#101);滚轮同理要以光标为中心(#100)。
+void PreviewPanel::zoomAnchored(double newScale, const QPoint& anchor) {
+    m_scale = newScale;
+    if (m_mode != "image" || !m_origPix || m_origPix->isNull()) return;
     // 缩放前:anchor 处在图像上的相对位置(0..1 之外也允许 —— 光标落在黑边上时
     // 相当于盯住画面外的一个虚拟点,缩放后仍按同一比例对齐,不会突然跳开)
     const QSize before = m_imgLabel->size();
