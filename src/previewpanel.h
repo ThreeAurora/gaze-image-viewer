@@ -64,6 +64,7 @@ private:
     void ensureVideoWidget();   // 视频控件唯一创建/复用入口
     void raiseVideoCover();     // 升起纯黑遮罩(盖住控件残帧,Playing 后收回)
     void syncVideoChildren();   // vw/cover 几何同步到 videoWidget(布局激活后必须重跑)
+    void syncVideoChildren();   // vw/cover 几何同步到 videoWidget(布局激活后必须重跑)
     void raiseVideoCover();     // 升起纯黑遮罩(盖住控件残帧,Playing 后收回)
     void showImage(const QString &path);
     void showGif(const QString &path);        // GIF:第一帧定几何,动画只换像素(#103/#96)
