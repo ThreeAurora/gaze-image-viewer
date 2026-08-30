@@ -326,8 +326,7 @@ void PrintDialog::buildUi() {
     connect(m_rangeEd, &QLineEdit::textEdited, this, [this]() { updateSummary(); });
     connect(m_paperCb,  &QComboBox::activated, this, [this]() { scheduleRefresh(true); });
     connect(m_orientCb, &QComboBox::activated, this, [this]() { scheduleRefresh(true); });
-    connect(m_copiesSpn, qOverload<void(int)>(&QSpinBox::valueChanged), this,
-            [this]() { updateSummary(); });
+    connect(m_copiesSpn, &QSpinBox::valueChanged, this, [this]() { updateSummary(); });
     connect(m_printerCb, &QComboBox::activated, this, [this]() { onPrinterChanged(); });
     connect(m_prevBtn, &QToolButton::clicked, this, [this]() { goPage(-1); });
     connect(m_nextBtn, &QToolButton::clicked, this, [this]() { goPage(1); });
