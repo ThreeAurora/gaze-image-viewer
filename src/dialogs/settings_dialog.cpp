@@ -359,9 +359,6 @@ static QWidget* titleTemplateRow(const QString& key, const QString& def) {
     addVar(QString::fromUtf8("宽"));
     addVar(QString::fromUtf8("高"));
     addVar(QString::fromUtf8("颜色标签"));
-    auto* act = menu->addAction(QString::fromUtf8("评级"));
-    act->setEnabled(false);
-    act->setText(QString::fromUtf8("评级(程序无评级模型,恒为空)"));
     auto* timeMenu = menu->addMenu(QString::fromUtf8("时间格式变量"));
     auto addTime = [timeMenu, e](const QString& var) {
         timeMenu->addAction(var, e, [e, var]() { e->insert("{" + var + "}"); });
