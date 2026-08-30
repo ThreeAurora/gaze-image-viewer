@@ -1161,6 +1161,7 @@ void PreviewPanel::showText(const QString& path) {
     m_videoWidget->hide();
     m_audioLabel->hide();
     m_controlBar->hide();
+    m_imgSpace->hide();
     if (m_liveBadge) m_liveBadge->hide();
 
     QFile f(path);
