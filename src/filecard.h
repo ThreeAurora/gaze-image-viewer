@@ -70,7 +70,6 @@ private:
     QLabel* m_nameLabel  = nullptr;
     QLabel* m_detailLabel = nullptr;   // 第二行/详细列(大小 日期)
     QLabel* m_liveBadge  = nullptr;
-    QLabel* m_starLabel  = nullptr;
 
     static int  s_border;        // Appearance/borderSize 卡片边框粗细(0=无)
     static int  s_imageAlign;    // Appearance/imageAlign 0左 1中 2右
