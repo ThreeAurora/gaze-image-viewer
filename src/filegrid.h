@@ -92,6 +92,8 @@ public:
     void setShowSubFolders(bool on);
     bool showSubFolders() const { return m_showSubFolders; }
     void navigateSelection(int delta);
+    // #107 内联搜索条:Ctrl+F 落在文件列表上(不弹窗;输入即搜,Enter/Shift+Enter 翻页)
+    void startFind();
     void selectIndex(int idx, bool scrollToVisible = true);  // 滚动联动时传 false 防反馈回路
     void selftestFastScroll();   // 临时诊断:进程内模拟快速拖动,查完删
     void selftestFastScroll();   // 临时诊断:进程内模拟快速拖动,查完删
