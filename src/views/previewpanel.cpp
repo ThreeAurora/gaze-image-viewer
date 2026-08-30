@@ -119,6 +119,15 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     m_videoWidget->hide();
     layout->addWidget(m_videoWidget, 1);
 
+    // 图片/GIF 形态的空间吸收器:布局里带 stretch 的四项(占位/音频/文本/视频区)
+    // 在图片形态下全是隐藏的,剩下的 40px 控制栏会被 QVBoxLayout 居中
+    // (剩余空间均分到上下)。这个不画东西、不收鼠标的吸收器顶到 stretch,
+    // 把控制栏压回底部;只由 applyGifChrome 点亮,其余形态一律隐藏。
+    m_imgSpace = new QWidget;
+    m_imgSpace->setAttribute(Qt::WA_TransparentForMouseEvents);
+    m_imgSpace->hide();
+    layout->addWidget(m_imgSpace, 1);
+
     // 控制栏(XnView 排布):上一文件 / 播放暂停 / 停止 / 音量 / 进度 / 时间
     m_controlBar = new QWidget;
     m_controlBar->setFixedHeight(40);
