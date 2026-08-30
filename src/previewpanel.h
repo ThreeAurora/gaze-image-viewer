@@ -273,6 +273,7 @@ private:
     QElapsedTimer m_navClock;  // 最近一次导航时刻:浏览扫动时暂缓自动播(停稳才切视频)
     QWidget *m_controlBar;
     QWidget *m_imgSpace;   // 图片/GIF 形态的空间吸收器:没有它 40px 的控制栏会被布局垂直居中
+    QWidget *m_imgSpace;   // 图片/GIF 形态的空间吸收器:没有它 40px 的控制栏会被布局垂直居中
     QPushButton *m_btnPlay;
     QPushButton *m_btnStop = nullptr;     // 停止(位置归零,再播从头开始)
     QPushButton *m_btnStop = nullptr;     // 停止(位置归零,再播从头开始)
