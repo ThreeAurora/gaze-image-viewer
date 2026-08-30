@@ -174,9 +174,9 @@ inline bool parseIfdRaw(const Tiff& t, quint32 off, const QString& ifdName,
     QVector<quint32> exifSub, gpsSub;
     for (quint16 i = 0; i < count; ++i) {
         const uchar* e = t.p + off + 2 + i * 12;
-        const quint16 tag  = t.u16(e);
-        const quint16 type = t.u16(e + 2);
-        const quint32 cnt  = t.u32(e + 4);
+        const quint16 tag  = t.u16p(e);
+        const quint16 type = t.u16p(e + 2);
+        const quint32 cnt  = t.u32p(e + 4);
         if (typeSize(type) <= 0) continue;
         qint64 avail = 0;
         const uchar* d = valuePtr(t, e, &avail);
