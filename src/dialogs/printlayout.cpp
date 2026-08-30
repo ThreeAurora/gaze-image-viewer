@@ -114,8 +114,9 @@ int printRenderPage(QPainter& g, const QRectF& paintRect, qreal dpi,
         QImage img = imageFn ? imageFn(idx) : QImage();
         const QString capText = captionFor(opt.caption, meta, paths.value(idx));
 
-        if (img.isNull() && !meta.ok) {
-            // 坏文件也占格 + 画叉:静默少画一张是发现不了的
+        // 读不到像素就一律占格画叉 —— 不管有没有尺寸信息。
+        // 静默少画一张,纸上留个洞,没人会发现。
+        if (img.isNull() || img.width() <= 0 || img.height() <= 0) {
             QPen failPen(QColor(150, 150, 150));
             failPen.setWidthF(std::max(1.0, 0.3 * mmPix));
             g.setPen(failPen);
@@ -123,7 +124,7 @@ int printRenderPage(QPainter& g, const QRectF& paintRect, qreal dpi,
             g.drawLine(imgBox.topLeft(), imgBox.bottomRight());
             g.drawLine(imgBox.bottomLeft(), imgBox.topRight());
             ++res.failed;
-        } else if (!img.isNull() && img.width() > 0 && img.height() > 0) {
+        } else {
             const QSizeF isz(img.width(), img.height());
             const qreal fitScale = std::min(imgBox.width() / isz.width(),
                                             imgBox.height() / isz.height());
