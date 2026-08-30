@@ -71,6 +71,7 @@ private:
     void buildGifTimeline();                  // 逐帧时长表 → 进度条范围 + 时长文本
     void gifSyncToFrame(int f);               // 帧号 → 播放头(进度条 + 时间文本)
     void gifSeekMs(int ms);                   // 播放头 → 帧号 → jumpToFrame + 出图
+    void progressScrub(qreal x);              // 进度条擦洗公共落点(按下/拖动共用)
     void setGifPaused(bool p);                // GIF 播放/暂停唯一出口(按钮/单击/空格)
     void applyGifChrome();                    // 控制栏显隐 + 音量键(GIF 没有音轨)
     // ── GIF 走视频那套形态(#97):同一条控制栏 + 时间轴 + 播放暂停 ──
