@@ -1160,11 +1160,14 @@ void PreviewPanel::showText(const QString& path) {
 
     QFile f(path);
     if (f.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        // 大文件截断(预览面板不是编辑器,512KB 足够看开头)
-        const qint64 maxSize = 512 * 1024;
-        QByteArray data = f.read(maxSize);
+        // #111:行数与"单行字符数"都要截。只卡字节数不够 —— 实测一个 512KB 的
+        // 无空格单行(压缩 JS/base64)setPlainText 要 62 秒,界面彻底冻死。
+        // 上限与实测依据都写在 textlimit.h 头部。
+        bool byteCut = false;
+        qint64 total = 0;
+        const QString raw = TextCut::readHead(f, &byteCut, &total);
         f.close();
-        m_textEdit->setPlainText(QString::fromUtf8(data));
+        m_textEdit->setPlainText(TextCut::apply(raw, byteCut, total));
         m_textEdit->show();
     } else {
         m_textEdit->setPlainText(QString::fromUtf8("无法读取文件"));
