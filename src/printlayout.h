@@ -52,17 +52,25 @@ struct PrintImageInfo {
 using PrintInfoFetcher  = std::function<PrintImageInfo(int index)>;
 using PrintImageFetcher = std::function<QImage(int index)>;   // 空 QImage=读失败
 
-// 每页张数 → 行列。横向优先左右铺,纵向优先上下铺;拿不到正好方阵时用最少格数。
+// 每页张数 → 行列。横向优先左右铺,纵向优先上下铺。
 void printGridShape(int perPage, bool landscape, int& cols, int& rows);
 
-// 一页要画几张 / 共几页
+// 共几页
 int  printPageCount(int imageCount, int perPage);
 
+// 一页画完的实况,给状态栏/进度框用(不静默吞掉坏文件与超尺寸)
+struct PrintPageResult {
+    int drawn  = 0;   // 成功画出的图片数
+    int failed = 0;   // 读不到(文件消失/格式不支持)—— 仍占一格并画叉
+    int shrunk = 0;   // "原始尺寸"放不下而被收缩的张数
+};
+
 // 渲染第 pageIndex 页(0 基)。paintRect 是"可印区"矩形,单位=绘制坐标设备像素,
-// dpi 是画布 DPI(边距/间距的 mm 靠它换算)。返回实际画出的图片张数。
+// 并且**带 origin 偏移**(打印机的可印区不在纸张左上角);dpi 用于 mm 换算。
 // 读到坏文件也占一格并画叉,不静默少画 —— 少了没人会发现。
 int  printRenderPage(QPainter& g, const QRectF& paintRect, qreal dpi,
                      const PrintOptions& opt,
                      const QStringList& paths, int pageIndex,
                      const PrintInfoFetcher& info,
-                     const PrintImageFetcher& image);
+                     const PrintImageFetcher& image,
+                     PrintPageResult* result = nullptr);
