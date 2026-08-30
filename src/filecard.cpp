@@ -299,11 +299,6 @@ void FileCard::setMarked(bool marked) {
     m_starLabel->setVisible(marked);
 }
 
-void FileCard::setMarked(bool marked) {
-    m_marked = marked;
-    m_starLabel->setVisible(marked);
-}
-
 void FileCard::deactivate() {
     m_active = false;
     hide();  // 立即隐藏，防止旧数据残留
