@@ -15,7 +15,6 @@ class QDoubleSpinBox;
 class QLabel;
 class QLineEdit;
 class QPrinter;
-class QPushButton;
 class QRadioButton;
 class QResizeEvent;
 class QScrollArea;
@@ -52,7 +51,6 @@ private:
     PrintOptions options() const;
 
     QString  cacheKey(int idx) const;
-    int      previewMaxSide() const;         // "原始尺寸"档=0(全尺寸,DPI 才可信)
     void     requestPageDecode();            // 当前页缺图就丢线程池
     void     renderPreview();
     void     updateSummary();
@@ -106,8 +104,6 @@ private:
     QTimer*  m_debounce       = nullptr;
     int      m_previewPage    = 0;
     int      m_pending        = 0;           // 在途解码数,归零才出图
-    int      m_gen            = 0;           // 解码代次:旧批结果回来后一律丢弃
-    bool     m_printing       = false;       // 出图中:不许重入(定时器/resize/预览)
     int      m_failedLastPage = 0;
     int      m_shrunkLastPage = 0;
     bool     m_geometryDirty  = false;       // 纸/方向变了要重排(预览尺寸跟着变)
