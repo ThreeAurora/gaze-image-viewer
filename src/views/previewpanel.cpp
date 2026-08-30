@@ -1354,6 +1354,7 @@ void PreviewPanel::clear() {
     m_videoWidget->hide();
     m_audioLabel->hide();
     m_controlBar->hide();
+    m_imgSpace->hide();
     m_placeholder->show();
     if (m_liveBadge) m_liveBadge->hide();
     m_mode = "none";
