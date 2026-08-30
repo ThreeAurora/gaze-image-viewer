@@ -65,6 +65,7 @@ private:
     void raiseVideoCover();     // 升起纯黑遮罩(盖住控件残帧,Playing 后收回)
     void showImage(const QString &path);
     void showGif(const QString &path);        // GIF:第一帧定几何,动画只换像素(#103/#96)
+    void blitMovieFrame();                    // GIF 取帧唯一出口:当前帧缩到 label 尺寸
     void showImageHint(const QString &text);  // 无可显示位图:label 收成一格提示条,不沿用上图尺寸
     void showGif(const QString &path);        // GIF:第一帧定几何,动画只换像素(#103/#96)
     void blitMovieFrame();                    // GIF 取帧唯一出口:当前帧缩到 label 尺寸
