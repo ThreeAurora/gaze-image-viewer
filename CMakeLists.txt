@@ -154,6 +154,17 @@ add_custom_command(TARGET gaze POST_BUILD
     VERBATIM
 )
 
+# ── 内置 Ghostscript 部署(PDF 预览)──
+# 用户 2026-08-31 明令:PDF 预览用随 gaze 分发的 Ghostscript,而不是搜系统装没装。
+# 必须整目录拷:gs\bin\gswin64c.exe 靠"相对自身 exe 的 ../Resource"找 gs_init.ps,
+# 还要同目录 gsdll64.dll 与 lib/ 的初始化文件 —— 只拷 exe 会直接报错退出。
+add_custom_command(TARGET gaze POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CMAKE_SOURCE_DIR}/vendor/gs" "$<TARGET_FILE_DIR:gaze>/gs"
+    COMMENT "同步内置 Ghostscript vendor/gs -> 构建目录 gs/"
+    VERBATIM
+)
+
 # ── Ghostscript 自动部署(PDF 预览)──
 # 用户 2026-08-31 明令:PDF 预览用随 gaze 分发的 Ghostscript,不去搜系统目录。
 # 必须整目录拷:gs\bin\gswin64c.exe 靠相对自身exe的 ../Resource 找 gs_init.ps,
