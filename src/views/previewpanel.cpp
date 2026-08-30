@@ -23,7 +23,6 @@
 #include <QFileInfo>
 #include <QImageReader>
 #include <QMovie>
-#include <QMovie>
 #include <QPainter>
 #include <QtMath>
 #include <QApplication>
