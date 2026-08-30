@@ -301,6 +301,7 @@ private:
     bool m_rbtnWheel  = false;   // 右键+滚轮缩放过:松开右键那次不弹上下文菜单
     bool m_rbtnWheel  = false;   // 右键+滚轮缩放过:松开右键那次不弹上下文菜单
     bool m_rbtnWheel  = false;   // 右键+滚轮缩放过:松开右键那次不弹上下文菜单
+    bool m_rbtnWheel  = false;   // 右键+滚轮缩放过:松开右键那次不弹上下文菜单
     QTimer m_cursorTimer;        // Fullscreen/hideCursor:指针静止一段时间后隐藏
     bool   m_cursorHidden = false;
     QTimer m_cursorTimer;        // Fullscreen/hideCursor:指针静止一段时间后隐藏
