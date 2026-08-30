@@ -17,8 +17,7 @@ class QPainter;
 
 // 每页图片数预设(排版只有这几种确切形状,列表里摆 5/7/8 就是骗人)
 namespace PrintFit {
-// 适应边框(可放大) / 不放大(小图按原始像素居中) / 原始尺寸(按文件自带 DPI) / 填充裁边
-enum { Fit = 0, NoUpscale = 1, Actual = 2, Fill = 3 };
+enum { Fit = 0, Stretch = 1, Actual = 2, Fill = 3 };   // 适应/拉伸/原始尺寸/填充裁边
 }
 namespace PrintCaption {
 enum { None = 0, Name = 1, NameSize = 2, NameDate = 3 };
@@ -42,10 +41,8 @@ struct PrintOptions {
 
 // 一张图的静态信息(标题文案与"原始尺寸"排版都要用,只在这里定一次口径)
 struct PrintImageInfo {
-    QSize   px;                 // **转正后的原始像素尺寸**:排版只按它,不按解码出来的位图。
-                                // QImageReader::size() 给的是未转正尺寸,要按 transformation() 换宽高。
-    qreal   dpiX = 0;           // 水平 DPI;0=文件没写,按 96 处理。
-                                // 必须来自**未降采样**的解码:缩放解码后 PNG 的 DPI 会同比变小、JPEG 不会。
+    QSize   px;                 // 像素尺寸
+    qreal   dpiX = 0;           // 水平 DPI;0=文件没写,按 96 处理
     QString name;
     QString dateText;           // 修改日期(已格式化)
     bool    ok = false;         // false=读不到(文件没了/格式不支持)
@@ -54,25 +51,17 @@ struct PrintImageInfo {
 using PrintInfoFetcher  = std::function<PrintImageInfo(int index)>;
 using PrintImageFetcher = std::function<QImage(int index)>;   // 空 QImage=读失败
 
-// 每页张数 → 行列。横向优先左右铺,纵向优先上下铺。
+// 每页张数 → 行列。横向优先左右铺,纵向优先上下铺;拿不到正好方阵时用最少格数。
 void printGridShape(int perPage, bool landscape, int& cols, int& rows);
 
-// 共几页
+// 一页要画几张 / 共几页
 int  printPageCount(int imageCount, int perPage);
 
-// 一页画完的实况,给状态栏/进度框用(不静默吞掉坏文件与超尺寸)
-struct PrintPageResult {
-    int drawn  = 0;   // 成功画出的图片数
-    int failed = 0;   // 读不到(文件消失/格式不支持)—— 仍占一格并画叉
-    int shrunk = 0;   // "原始尺寸"放不下而被收缩的张数
-};
-
 // 渲染第 pageIndex 页(0 基)。paintRect 是"可印区"矩形,单位=绘制坐标设备像素,
-// 并且**带 origin 偏移**(打印机的可印区不在纸张左上角);dpi 用于 mm 换算。
+// dpi 是画布 DPI(边距/间距的 mm 靠它换算)。返回实际画出的图片张数。
 // 读到坏文件也占一格并画叉,不静默少画 —— 少了没人会发现。
 int  printRenderPage(QPainter& g, const QRectF& paintRect, qreal dpi,
                      const PrintOptions& opt,
                      const QStringList& paths, int pageIndex,
                      const PrintInfoFetcher& info,
-                     const PrintImageFetcher& image,
-                     PrintPageResult* result = nullptr);
+                     const PrintImageFetcher& image);
