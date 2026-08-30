@@ -1051,7 +1051,9 @@ void PreviewPanel::loadFile(const QString& path) {
     // 换文件(或清空):递增代号,作废任何在途的后台解码结果
     ++m_imgReqGen;
     m_liveInfo.reset();
-    m_pendingPlay.clear();   // 离开当前文件:未决的"装载后接输出"作废
+    // 同路径重复 loadFile(启动恢复双触发)不清票:票对应的就是这次装载,
+    // 清掉会让 showVideo 走"装载期抢接输出+play"旧路,实测掐断视频管线(只出声不出画)
+    if (m_pendingPlay != path) m_pendingPlay.clear();
     Logger::event(QStringLiteral("loadFile '%1'").arg(path));
     if (path.isEmpty()) { clear(); return; }
     QFileInfo fi(path);
