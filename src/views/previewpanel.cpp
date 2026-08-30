@@ -1289,6 +1289,8 @@ void PreviewPanel::setupPlayer() {
         if (status == QMediaPlayer::InvalidMedia) {
             m_pendingPlay.clear();
             if (m_videoCover) m_videoCover->hide();   // 源失效:收遮罩,露出空态而非永久黑屏
+            disconnect(m_coverConn);                  // 收遮罩即解除布防,免留死等首帧的连接
+            m_coverArmed = false;
         }
         if (status != QMediaPlayer::EndOfMedia) return;
         // setSource 已发→旧源还未完全退场:忽略过渡期 EndOfMedia,
