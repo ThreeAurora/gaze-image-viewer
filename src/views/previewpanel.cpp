@@ -1254,6 +1254,7 @@ void PreviewPanel::setupPlayer() {
                 m_player->setVideoOutput(m_vw);
                 m_videoOutAttached = true;
                 vidProbeReset();
+                vidProbeAttach();
                 vidProbeReset();
                 if (m_isLivePhoto || (m_mode == "video" && pp_impl::s_bool("Viewer/autoPlayVideo", true))) {
                     m_player->play();
