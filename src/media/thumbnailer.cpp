@@ -19,7 +19,10 @@
 #include <QBuffer>
 #include <QProcess>
 #include <QTemporaryFile>
+#include <QStandardPaths>
 #include <QCoreApplication>
+#include <QHash>
+#include <QMutex>
 #include <QCryptographicHash>
 #include <QPixmap>
 #include <QImageReader>
