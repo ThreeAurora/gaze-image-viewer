@@ -90,26 +90,24 @@ inline Clip clip(const QString& raw, bool byteCut_, qint64 totalBytes_) {
     return out;
 }
 
-// 提示语(纯文本、无前导换行)。没有截任何东西时返回空串。
-inline QString noticeOf(const Clip& c) {
+// 一次性:截断 + 追加提示行(纯文本预览用)
+inline QString apply(const QString& raw, bool byteCut_, qint64 totalBytes_,
+                     QString* notice = nullptr) {
+    const Clip c = clip(raw, byteCut_, totalBytes_);
     QStringList notes;
     if (c.lineCut)
         notes << QString::fromUtf8("行数超过 %1，仅显示前 %2 行").arg(maxLines).arg(c.lines);
     else if (c.byteCut)
         notes << QString::fromUtf8("文件 %1 KB，仅读取前 %2 KB")
-                     .arg(c.totalBytes / 1024).arg(c.shownBytes / 1024);
+                      .arg(c.totalBytes / 1024).arg(c.shownBytes / 1024);
     if (c.longLines > 0)
         notes << QString::fromUtf8("%1 行超过 %2 字符，每行只显示前 %2 字符")
                      .arg(c.longLines).arg(maxLineChars);
-    return notes.isEmpty() ? QString()
-                           : QString::fromUtf8("已截断：%1").arg(notes.join(QString::fromUtf8("；")));
-}
-
-// 纯文本预览用:截断 + 末尾追加提示行
-inline QString apply(const QString& raw, bool byteCut_, qint64 totalBytes_) {
-    const Clip c = clip(raw, byteCut_, totalBytes_);
-    const QString n = noticeOf(c);
-    return n.isEmpty() ? c.text : c.text + QStringLiteral("\n\n—— ") + n + QStringLiteral(" ——");
+    const QString n = notes.isEmpty()
+        ? QString()
+        : QStringLiteral("\n\n—— 已截断：%1 ——").arg(notes.join(QString::fromUtf8("；")));
+    if (notice) *notice = n;
+    return c.text + n;
 }
 
 } // namespace TextCut
