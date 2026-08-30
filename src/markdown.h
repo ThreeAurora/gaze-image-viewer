@@ -10,6 +10,7 @@
 #include <QStringList>
 #include <QRegularExpression>
 #include <QFile>
+#include "textlimit.h"
 
 namespace Md {
 
