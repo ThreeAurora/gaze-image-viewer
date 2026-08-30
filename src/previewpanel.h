@@ -261,6 +261,17 @@ private:
     // 会积压成"快进+卡"。start() 天然取消上一拍,同一时刻最多一拍在飞。
     QTimer* m_gifPlayTimer = nullptr;
     QTimer* m_gifSeekTimer = nullptr;
+    // 游标与帧缓存(#94):Qt 6.8.3 的 QImageReader::jumpToImage/jumpToNextImage
+    // 对 GIF 实测一律返回 false(见 cache/tmp/gif_seek_probe),跳帧只能"顺解"或
+    // "重建后从头解"。m_gifNext = reader 下一次 read() 会产出的帧号(-1=游标不可信)。
+    int m_gifNext = -1;
+    int m_gifWant = -1;                // 擦洗目标帧(-1=无待办)
+    QHash<int, QImage> m_gifCache;     // 已解码帧(围绕播放头淘汰)
+    qint64 m_gifCacheBytes = 0;
+    // 成员定时器:QTimer::singleShot 每排一拍就多一个未决事件,拖动期间
+    // 会积压成"快进+卡"。start() 天然取消上一拍,同一时刻最多一拍在飞。
+    QTimer* m_gifPlayTimer = nullptr;
+    QTimer* m_gifSeekTimer = nullptr;
 
     // GIF 时间轴状态(#97)。逐帧时长自己解析文件字节:QMovie/QImageReader 在
     // Qt 6.5.3 都不暴露 per-frame delay,而时长表与帧数必须同一次扫描得出,
