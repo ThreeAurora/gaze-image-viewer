@@ -11,6 +11,7 @@
 #include <QRegularExpression>
 #include <QFile>
 #include "textlimit.h"
+#include "textlimit.h"
 
 namespace Md {
 
