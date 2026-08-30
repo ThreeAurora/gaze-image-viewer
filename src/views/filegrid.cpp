@@ -48,6 +48,9 @@
 #include <QPainter>
 #include <QPainterPath>
 #include <QCollator>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
+#include <QStyle>
 #include <algorithm>
 #include <cmath>
 #include "filegrid_internal.h"
