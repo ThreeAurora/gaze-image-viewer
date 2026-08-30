@@ -62,12 +62,6 @@ FileCard::FileCard(QWidget* parent) : QFrame(parent) {
         "background:rgba(0,0,0,150);color:#FFF;font-size:9px;font-weight:bold;"
         "padding:2px 7px;border-radius:8px;border:1px solid rgba(255,255,255,60);");
     m_liveBadge->hide();
-
-    // 标记星
-    m_starLabel = new QLabel(QString::fromUtf8("\xe2\x98\x85"), this); // ★
-    m_starLabel->setStyleSheet(
-        "color:#E8B339;font-size:14px;background:transparent;");
-    m_starLabel->hide();
 }
 
 void FileCard::setup(const FileEntry& entry, int size, int viewMode, int height) {
