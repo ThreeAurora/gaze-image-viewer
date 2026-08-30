@@ -6,6 +6,7 @@
 #include "printdialog.h"
 #include "printdialog.h"
 #include "printdialog.h"
+#include "printdialog.h"
 #include "infopanel.h"
 #include "shelldelete.h"   // showDeleteToast:拖放复制成功的左下角提示
 #include "sortheader.h"
