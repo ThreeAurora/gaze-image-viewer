@@ -8,6 +8,7 @@
 #include <QAudioOutput>
 #include <QVideoWidget>
 #include <QMap>
+#include <QVector>
 #include <QTimer>
 #include <QImage>
 #include <QHash>
