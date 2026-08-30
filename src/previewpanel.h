@@ -318,6 +318,9 @@ private:
     // #104:遮罩收回的归属权。armed 期间只有"本路源送出的第一帧"能收回遮罩
     bool m_coverArmed = false;
     QMetaObject::Connection m_coverConn;
+    // #104:遮罩收回的归属权。armed 期间只有"本路源送出的第一帧"能收回遮罩
+    bool m_coverArmed = false;
+    QMetaObject::Connection m_coverConn;
     // 延迟 attach:setSource 后不立刻接输出/播,等 mediaStatus 就绪再接
     QString m_pendingPlay;     // 已 setSource、待就绪 attach+play 的源
     bool m_videoOutAttached = false;   // 视频输出当前是否已接到 m_vw
