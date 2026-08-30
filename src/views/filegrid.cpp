@@ -207,6 +207,22 @@ void FileGrid::buildFindBar() {
     m_findEdit->setClearButtonEnabled(true);
     m_findEdit->setFixedSize(180, 24);
     m_findEdit->installEventFilter(this);   // Enter/Shift+Enter/Up/Down/Esc
+    // 输入即搜:当前项仍命中就原地不动,否则跳到落点之后(无落点则从头)的第一个命中
+    connect(m_findEdit, &QLineEdit::textChanged, this, [this](const QString&) {
+        const QString q = m_findEdit->text().trimmed();
+        const int n = static_cast<int>(m_entries.size());
+        const int cur = m_lastClicked;
+        if (!q.isEmpty() && !(cur >= 0 && cur < n
+                && m_entries[cur].name.contains(q, Qt::CaseInsensitive))) {
+            int start = (cur >= 0 && cur < n) ? cur : -1;
+            for (int k = 1; k <= n; ++k) {
+                const int i = start + k;
+                if (i >= n) break;
+                if (m_entries[i].name.contains(q, Qt::CaseInsensitive)) { selectIndex(i); break; }
+            }
+        }
+        findRefresh();
+    });
     lay->addWidget(m_findEdit);
 
     m_findInfo = new QLabel(m_findBar);
