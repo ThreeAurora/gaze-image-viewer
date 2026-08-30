@@ -383,66 +383,6 @@ static QWidget* titleTemplateRow(const QString& key, const QString& def) {
     return row;
 }
 
-QWidget* SettingsDialog::pageMouse() {
-    // 四组动作矩阵(对齐 XnView;默认值 = Gaze 当前实际行为)
-    // 左键: 0=缩放与移动 1=什么都不做
-    // 滚轮: 0=上一个/下一个 1=放大/缩小 2=什么都不做
-    // 右键: 0=上下文菜单 1=什么都不做
-    // 中键: 复用 SwitchMode/middleClick
-    auto mouseGroup = [this](const QString& title,
-                             const QList<QPair<QString, QPair<QString, int>>>& rows,
-                             const QStringList& opts) -> QWidget* {
-        auto* f = new QFormLayout;
-        f->setVerticalSpacing(8);
-        f->setHorizontalSpacing(12);
-        for (const auto& r : rows)
-            f->addRow(r.first, combo(r.second.first, opts, r.second.second));
-        return group(title, f);
-    };
-
-    auto* grid = new QGridLayout;
-    grid->setHorizontalSpacing(14);
-    grid->setVerticalSpacing(12);
-
-    grid->addWidget(mouseGroup(QString::fromUtf8("鼠标左键"), {
-        { {QString::fromUtf8("无修饰键")}, {"Mouse/leftNone", 0} },
-        { "Ctrl", {"Mouse/leftCtrl", 0} },
-        { "Alt",  {"Mouse/leftAlt", 1} },
-        { "Shift",{"Mouse/leftShift", 1} },
-    }, {QString::fromUtf8("缩放与移动"), QString::fromUtf8("什么都不做")}), 0, 0);
-
-    grid->addWidget(mouseGroup(QString::fromUtf8("鼠标滚轮"), {
-        { {QString::fromUtf8("无修饰键")}, {"Mouse/wheelNone", 0} },
-        { "Ctrl", {"Mouse/wheelCtrl", 1} },
-        { "Alt",  {"Mouse/wheelAlt", 0} },
-        { "Shift",{"Mouse/wheelShift", 0} },
-    }, {QString::fromUtf8("上一个文件/下一个文件"), QString::fromUtf8("放大/缩小"),
-        QString::fromUtf8("什么都不做")}), 0, 1);
-
-    grid->addWidget(mouseGroup(QString::fromUtf8("鼠标右键"), {
-        { {QString::fromUtf8("无修饰键")}, {"Mouse/rightNone", 0} },
-        { "Ctrl", {"Mouse/rightCtrl", 0} },
-        { "Alt",  {"Mouse/rightAlt", 0} },
-        { "Shift",{"Mouse/rightShift", 0} },
-    }, {QString::fromUtf8("上下文菜单"), QString::fromUtf8("什么都不做")}), 1, 0);
-
-    grid->addWidget(mouseGroup(QString::fromUtf8("鼠标中键"), {
-        { {QString::fromUtf8("无修饰键")}, {"SwitchMode/middleClick", 4} },
-    }, {QString::fromUtf8("浏览器 ↔ 全屏 | 查看器 ↔ 全屏"),
-        QString::fromUtf8("浏览器 ↔ 查看器"),
-        QString::fromUtf8("浏览器 → 全屏 → 查看器"),
-        QString::fromUtf8("浏览器 → 查看器 → 全屏"),
-        QString::fromUtf8("什么都不做"),
-        QString::fromUtf8("用系统程序打开")}), 1, 1);
-
-    auto* holder = new QWidget;
-    auto* v = new QVBoxLayout(holder);
-    v->setContentsMargins(0, 0, 0, 0);
-    v->addLayout(grid);
-    v->addStretch();
-    return wrapTitled(QString::fromUtf8("鼠标"), v);
-}
-
 QWidget* SettingsDialog::pageKeyboardMouse() {
     auto* form = new QFormLayout;
     form->setVerticalSpacing(12);
