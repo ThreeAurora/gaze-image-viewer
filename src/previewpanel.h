@@ -229,6 +229,16 @@ private:
     QPoint m_gifPressPos;              // 单击=播放/暂停:按下点与松开点足够近才算单击
     bool   m_gifToggleArm = false;
 
+    // GIF 时间轴状态(#97)。逐帧时长自己解析文件字节:QMovie/QImageReader 在
+    // Qt 6.5.3 都不暴露 per-frame delay,而时长表与帧数必须同一次扫描得出,
+    // 否则进度条刻度会和实际播放的帧对不上
+    bool m_isGif = false;
+    bool m_gifPaused = false;
+    QVector<int> m_gifDelay;           // 每帧时长(ms)
+    QVector<int> m_gifStart;           // 每帧起始时间(ms),长度 = m_gifDelay + 1
+    QPoint m_gifPressPos;              // 单击=播放/暂停:按下点与松开点足够近才算单击
+    bool   m_gifToggleArm = false;
+
     QWidget *m_videoWidget;
     QVideoWidget *m_vw = nullptr;   // 复用的视频控件(切视频不重建,杜绝叠加透出窗口期)
     QWidget *m_videoCover = nullptr;   // 纯黑遮罩:attach→新视频首帧之间盖住控件里的残帧
