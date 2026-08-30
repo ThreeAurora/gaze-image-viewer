@@ -158,17 +158,22 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     mkBtn(m_btnPlay, QStyle::SP_MediaPlay, 32,
           QString::fromUtf8("\xe6\x92\xad\xe6\x94\xbe/\xe6\x9a\x82\xe5\x81\x9c")); // 播放/暂停
     connect(m_btnPlay, &QPushButton::clicked, this, [this]() {
-        if (!m_player) return;
-        if (m_player->playbackState() == QMediaPlayer::PlayingState)
-            m_player->pause();
-        else
-            m_player->play();
+        // #97:GIF 与视频共用这一条控制栏,必须经 togglePlayPause 分流,
+        // 否则在 GIF 上点播放会把上一段视频接着放出来
+        togglePlayPause();
     });
 
     m_btnStop = new QPushButton;
     mkBtn(m_btnStop, QStyle::SP_MediaStop, 30,
           QString::fromUtf8("\xe5\x81\x9c\xe6\xad\xa2(\xe5\x9b\x9e\xe5\x88\xb0\xe5\xbc\x80\xe5\xa4\xb4)")); // 停止(回到开头)
     connect(m_btnStop, &QPushButton::clicked, this, [this]() {
+        if (m_isGif) {
+            if (m_movie) m_movie->jumpToFrame(0);
+            setGifPaused(true);
+            blitMovieFrame();
+            gifSyncToFrame(0);
+            return;
+        }
         if (!m_player) return;
         m_player->stop();          // Qt6 stop 同时把位置归零 → 再播从头开始
         m_progress->setValue(0);
