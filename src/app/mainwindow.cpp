@@ -492,6 +492,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     Logger::boot("ctor:drives");
     Logger::boot("ctor:drives");
     Logger::boot("ctor:drives");
+    Logger::boot("ctor:drives");
 
     // 启动目录/文件:此前 Start/withFile、Start/withoutFile、Start/rememberFilename
     // 三键只被设置页写入、无人读取(永远打开桌面)。argv 优先,其次按设置恢复。
