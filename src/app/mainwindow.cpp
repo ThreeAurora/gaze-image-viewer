@@ -542,7 +542,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 
     Logger::boot("ctor:startdir");
 
+    Logger::boot("ctor:startdir");
+
     applyShortcuts();   // 应用用户自定义快捷键(ini 覆盖默认)
+    Logger::boot("ctor:shortcuts");
     Logger::boot("ctor:shortcuts");
     Logger::boot("ctor:shortcuts");
     Logger::boot("ctor:shortcuts");
