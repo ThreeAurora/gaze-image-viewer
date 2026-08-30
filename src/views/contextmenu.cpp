@@ -584,11 +584,6 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
             QString::fromUtf8("垂直翻转"), this, [doRot]() { doRot(3); });
     }
 
-    // ── ★ 标记(内存工作集,与下面的颜色标记是两套) ──
-    addAction(QString::fromUtf8("\xe2\x98\x85 标记 / 取消标记  (M)"), this, [grid]() {
-        if (grid) grid->toggleMarkOnSelection();
-    });
-
     // ── 颜色标记子菜单 ──
     auto* labelMenu = addMenu(IconLib::appIcon("label_item"), "添加颜色标记");
     struct { int c; QString name; } colors[] = {
