@@ -70,7 +70,8 @@ private:
     void syncVideoChildren();   // vw/cover 几何同步到 videoWidget(布局激活后必须重跑)
     void syncVideoChildren();   // vw/cover 几何同步到 videoWidget(布局激活后必须重跑)
     void syncVideoChildren();   // vw/cover 几何同步到 videoWidget(布局激活后必须重跑)
-    void raiseVideoCover();     // 升起纯黑遮罩(盖住控件残帧,Playing 后收回)
+    void raiseVideoCover();     // 升起纯黑遮罩(盖住控件残帧,首帧到达后收回)
+    void armCoverUntilFirstFrame();  // #104:改由"本路源第一帧"收回遮罩,而非 PlayingState
     void showImage(const QString &path);
     void showGif(const QString &path);        // GIF:第一帧定几何,动画只换像素(#103/#96)
     void blitGifFrame(const QImage& img);     // GIF 取帧唯一出口:当前帧缩到 label 尺寸
