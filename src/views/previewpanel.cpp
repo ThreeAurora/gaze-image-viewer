@@ -1211,6 +1211,7 @@ void PreviewPanel::setupPlayer() {
         m_player->setVideoOutput(m_vw);
         m_videoOutAttached = true;
         vidProbeReset();
+        vidProbeAttach();
     }
 
     // 播放状态（视频/音频通用）
