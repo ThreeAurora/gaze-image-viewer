@@ -132,6 +132,7 @@ private:
     void updatePdfBar();
     void fitAuto();
     void render();
+    int  barReserve() const;   // 控制栏可见时要从可用高度里扣掉的像素(GIF 画面不被栏压住)
     // 设置活应用:背景色/挡板底纹/图片边框(设置→查看→背景与界面元素)
     void applyBackdrop();
     void restoreCursor();             // Fullscreen/hideCursor:指针移动即恢复
