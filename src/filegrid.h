@@ -252,7 +252,6 @@ private:
     // 选择状态
     QSet<int>            m_selected;
     int                  m_lastClicked = -1;
-    QSet<QString>        m_marked;
     QString              m_preferPath;  // 一次性:本次 loadDirectory 完成后要选中的路径
 
     // 内联搜索条(#107):叠在视口右上角,不占布局;命中数与按钮置灰每次按键/翻页重算
