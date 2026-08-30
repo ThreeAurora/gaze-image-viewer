@@ -77,13 +77,13 @@ inline int typeSize(quint16 t) {
 
 // 条目数据指针:总量 <=4 字节时值就在偏移字段里,否则是相对 TIFF 头的偏移
 inline const uchar* valuePtr(const Tiff& t, const uchar* e, qint64* avail) {
-    const quint16 type = t.u16(e + 2);
-    const quint32 cnt  = t.u32(e + 4);
+    const quint16 type = t.u16p(e + 2);
+    const quint32 cnt  = t.u32p(e + 4);
     const int sz = typeSize(type);
     if (sz <= 0) return nullptr;
     const quint64 total = quint64(cnt) * quint64(sz);
     if (total <= 4) { *avail = qint64(total); return e + 8; }
-    const quint64 off = t.u32(e + 8);
+    const quint64 off = t.u32p(e + 8);
     if (!t.inRange(qint64(off), qint64(total))) return nullptr;   // 越界/被截断
     *avail = qint64(total);
     return t.p + off;
