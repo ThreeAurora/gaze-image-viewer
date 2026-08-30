@@ -56,7 +56,6 @@ private:
     bool    m_active   = false;
     bool    m_selected = false;
     bool    m_hovered  = false;
-    bool    m_marked   = false;
     int     m_colorLabel = 0;
     bool    m_cover    = false;   // true=缩略图 cover 填满(瀑布流)
     bool    m_isLive   = false;
