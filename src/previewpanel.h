@@ -225,7 +225,10 @@ private:
     QLabel *m_placeholder = nullptr;   // 空态占位
     QTextEdit *m_textEdit = nullptr;   // txt 文本预览
     QTextEdit *m_textEdit = nullptr;   // txt 文本预览
-    QMovie *m_movie = nullptr;         // GIF 动画(切换时 stop+deleteLater,防泄漏)
+    QImageReader* m_gifReader = nullptr; // GIF 解码器(2026-08-30 弃 QMovie:跳帧卡死解码器)
+    QPixmap m_gifPix;                    // 当前帧原始画面(render() 重贴用)
+    int m_gifFrameIdx = 0;               // 当前帧号(与 reader 游标同步)
+    bool m_gifPlaying = false;           // 自管播放时钟开关
     // GIF 时间轴状态(#97)。逐帧时长自己解析文件字节:QMovie/QImageReader 在
     // Qt 6.5.3 都不暴露 per-frame delay,而时长表与帧数必须同一次扫描得出,
     // 否则进度条刻度会和实际播放的帧对不上
