@@ -81,7 +81,6 @@ public:
     int  nameOrder() const { return m_nameOrder; }
     void setNameOrder(int order);   // NameOrder;持久化到 Browser/nameOrder 并重排
     int  nameOrder() const { return m_nameOrder; }
-    void toggleFilter();
     void setFilterMode(int mode);            // FilterMode
     int  filterMode() const { return m_filterMode; }
     // 文件夹树右键"显示子文件夹中的文件":目录行仍只列本层,文件向下递归展开。
