@@ -118,6 +118,20 @@ inline QImage checkerBg(int w, int h) {
     return bg;
 }
 
+// 转正后的原始像素尺寸(不解码,只读文件头)。
+// QImageReader::size() 报的是**未转正**尺寸 —— 实测 Qt6.5.3:方向 6 的文件
+// size()=400x200 而 read() 得到 200x400。打印排版要用后者。
+// 也放在 decodeScaled 之前:同命名空间 inline 函数同样要先声明后使用。
+inline QSize orientedSize(const QString& path, bool exifRotate) {
+    QImageReader r(path);
+    r.setAutoTransform(exifRotate);
+    QSize s = r.size();
+    if (exifRotate && s.isValid() &&
+        r.transformation().testFlag(QImageIOHandler::TransformationRotate90))
+        s.transpose();                          // Rotate90 位=4:90/180 组合里带它的都要换宽高
+    return s;
+}
+
 // ── 全图解码统一入口(查看器 + 打印共用) ──────────────────
 // 原先只住在 previewpanel.cpp 里(叫 loadFullImage)。打印要的是"屏幕上看到什么,
 // 纸上就是什么",所以解码口径必须只有一份 —— CMYK 印刷 JPG 走 WIC 色彩管理那套,
