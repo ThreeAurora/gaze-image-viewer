@@ -342,8 +342,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
         m_formatFilterCombo->blockSignals(false);
     });
     // 反向同步:任何入口(筛选菜单/红标循环/键盘)改了 filterMode,下拉框跟着走。
-    // 这个框只列 8 种"格式",而筛选菜单/红标三态键/M 键还会给出 图像(+目录)、
-    // 已★标记、红色… 框里没有对应项 —— 旧代码查不到就回落到 idx 0,于是网格只列
+    // 这个框只列 8 种"格式",而筛选菜单/红标三态键还会给出 图像(+目录)、
+    // 红色… 框里没有对应项 —— 旧代码查不到就回落到 idx 0,于是网格只列
     // 红标、框里却写着"全部"。查不到时如实标出当前筛选名:实测(Qt 6.5.3,
     // cache/tmp/combo_placeholder_test.cpp 事实B)不可编辑 QComboBox 在
     // currentIndex(-1) 下会把 placeholderText 画进显示区。
