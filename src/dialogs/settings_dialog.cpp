@@ -755,7 +755,7 @@ QWidget* SettingsDialog::pageViewer() {
     fUI->addRow(chk("Viewer/checkerMode", QString::fromUtf8("背景以挡板模式显示"), false));
     fUI->addRow(chk("Viewer/showBorder", QString::fromUtf8("显示边框"), false));
     fUI->addRow(chk("Viewer/panTool", QString::fromUtf8("显示平移工具"), true));
-    fUI->addRow(chk("Viewer/showRating", QString::fromUtf8("显示评级&标签颜色"), true));
+    fUI->addRow(chk("Viewer/showRating", QString::fromUtf8("显示颜色标记"), true));
     fUI->addRow(chk("Viewer/showScrollbar", QString::fromUtf8("显示滚动条"), false));
     fUI->addRow(QString::fromUtf8("选中的"),
         combo("Viewer/selectedOverlay", {QString::fromUtf8("正常"),
