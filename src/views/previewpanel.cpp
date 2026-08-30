@@ -709,20 +709,16 @@ void PreviewPanel::panNavTo(const QPoint& thumbPos) {
     updatePanTool();
 }
 
-// Viewer/highlightSelection:查看器里给当前图片加一层强调框(选中高亮)
+// Viewer/showBorder:查看器里给当前图片加白色细框(默认关)。
+// 2026-08-30 裁决:highlightSelection 蓝框整个删除,预览区不再有选中强调框;
+// 文件列表的选中/悬停框归 filegrid 自绘,与本函数无关
 // setStyleSheet 会触发样式重算,而本函数在 resize/切文件时都会被调,
 // 所以按最终形态缓存,值没变就一个字节都不碰控件
 void PreviewPanel::updateSelectionHighlight() {
-    const bool hl     = s_bool("Viewer/highlightSelection", true) && m_mode == "image";
-    const bool border = s_bool("Viewer/showBorder", false);
-    const int  want   = border ? 2 : (hl ? 1 : 0);
+    const int want = s_bool("Viewer/showBorder", false) ? 2 : 0;
     if (want == m_labelStyleState) return;
     m_labelStyleState = want;
     switch (want) {
-    case 1:
-        m_imgLabel->setStyleSheet(
-            QStringLiteral("QLabel{background:transparent;border:1px solid #4C9AF5;}"));
-        break;
     case 2:
         m_imgLabel->setStyleSheet(
             QStringLiteral("QLabel{border:1px solid #FFFFFF;background:transparent;}"));
