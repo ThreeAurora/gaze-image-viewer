@@ -15,6 +15,7 @@ class QDoubleSpinBox;
 class QLabel;
 class QLineEdit;
 class QPrinter;
+class QPushButton;
 class QRadioButton;
 class QResizeEvent;
 class QScrollArea;
