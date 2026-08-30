@@ -269,6 +269,7 @@ private:
     void placeFindBar();               // 视口尺寸变化后重新贴角
     void findRefresh();                // 重算命中数/序号/按钮置灰(轻量,O(n) 只在交互时跑)
     void findStep(int delta);          // +1 下一个 / -1 上一个;到边界不动(按钮已置灰)
+    void closeFind();                  // Esc/✕:收条,焦点还给列表
 
     // 内联搜索条(#107):叠在视口右上角,不占布局;命中数与按钮置灰每次按键/翻页重算
     QWidget*     m_findBar  = nullptr;
