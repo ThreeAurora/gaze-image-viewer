@@ -185,7 +185,7 @@ private:
     void updateInfoBar();                  // Fullscreen/showInfo
     void updateFloatBar(const QPoint* cursor = nullptr); // Fullscreen/showToolbar + floatView
     void updatePanTool();                  // Viewer/panTool 平移导航小窗
-    void updateSelectionHighlight();       // Viewer/highlightSelection
+    void updateSelectionHighlight();       // Viewer/showBorder 白框;蓝框已删(2026-08-30)
     void updateRatingBadge();              // Viewer/showRating 颜色标记点
     double oneToOneScale() const;          // 1:1 = 1 图像像素 : 1 屏幕像素
     double stepZoom(double cur, bool up) const;  // Viewer/zoomMode=0 的固定档位
