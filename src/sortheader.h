@@ -22,7 +22,6 @@ enum SortCol {
     SORT_ORIENTATION = 14,// 图像方向(横/竖)
     SORT_PRINTSIZE = 15,  // 打印尺寸
     SORT_COMMENT   = 16,  // 注释
-    SORT_RATING    = 17,  // 评级
     SORT_COLORLABEL= 18,  // 颜色标签
     SORT_CUSTOM    = 19,  // 自定义
 };
