@@ -579,8 +579,8 @@ void PreviewPanel::updateFloatBar(const QPoint* cursor) {
     m_floatBar->show();
 }
 
-// Viewer/showRating:查看器右上角显示当前文件的颜色标记(程序无独立评级数据模型,
-// 这里如实呈现 Gaze 实际拥有的"颜色标记",不假装显示星级)
+// Viewer/showRating:查看器右上角显示当前文件的颜色标记圆点
+// (键名沿用历史 showRating;程序只有颜色标记,没有评级概念)
 void PreviewPanel::updateRatingBadge() {
     const bool on = s_bool("Viewer/showRating", true) && !m_filePath.isEmpty();
     if (!on) { if (m_ratingDot) m_ratingDot->hide(); return; }
