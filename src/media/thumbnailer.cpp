@@ -464,7 +464,7 @@ void Thumbnailer::verifyCache() {
 // 公开接口
 // ═══════════════════════════════════════════
 void Thumbnailer::enqueue(const QString& filePath, int size, bool isVideo) {
-    QString ck = cacheKey(filePath, size);
+    QString ck = cacheKey(filePath, size, isVideo);
 
     // 检查内存缓存
     QFileInfo fi(filePath);
