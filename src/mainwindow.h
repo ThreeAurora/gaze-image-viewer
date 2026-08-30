@@ -160,6 +160,9 @@ private:
     // 地址栏单击全选(#109①③):按下前是否已整条选中 + 按下点(用来分清单击和拖选)
     QPoint  m_addrPressPt;
     bool    m_addrWasAllSelected = false;
+    // 地址栏单击全选(#109①③):按下前是否已整条选中 + 按下点(用来分清单击和拖选)
+    QPoint  m_addrPressPt;
+    bool    m_addrWasAllSelected = false;
     QLabel *m_statusLabel = nullptr;
     QLabel *m_pathLabel = nullptr;
     QStringList m_history;   // 目录导航历史
