@@ -76,7 +76,11 @@ private:
     // ── GIF 走视频那套形态(#97):同一条控制栏 + 时间轴 + 播放暂停 ──
     void buildGifTimeline();                  // 逐帧时长表 → 进度条范围 + 时长文本
     void gifSyncToFrame(int f);               // 帧号 → 播放头(进度条 + 时间文本)
-    void gifSeekMs(int ms);                   // 播放头 → 帧号 → jumpToImage + 出图
+    void gifSeekMs(int ms);                   // 播放头 → 目标帧 → 排队擦洗(合帧)
+    void gifRequestSeek(int f);               // 记下目标帧,多次调用在事件循环里合一帧
+    void gifApplySeek();                      // 擦洗落拍:真正解码到目标帧并出图
+    bool gifDecodeTo(int f, QImage& out);     // 取帧唯一路径:缓存→游标顺解→重建重解
+    void gifCachePut(int f, const QImage& img);  // 有预算的解码帧缓存(围绕播放头淘汰)
     void gifScheduleNext();                   // 自管时钟:按当前帧延迟排下一拍
     void gifPlayTick();                       // 一拍:读一帧、显示、排下一拍
     bool gifAdvance();                        // 顺序读下一帧(到尾回卷);失败返回 false
