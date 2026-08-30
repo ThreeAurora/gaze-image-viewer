@@ -1358,6 +1358,9 @@ void PreviewPanel::teardownPlayer() {
         m_vw = nullptr;
     }
     if (m_videoCover) m_videoCover->hide();
+    // 遮罩布防连的是 player 的 QVideoSink,不受上面 disconnect(m_player,...) 管辖
+    disconnect(m_coverConn);
+    m_coverArmed = false;
 }
 
 void PreviewPanel::clear() {
