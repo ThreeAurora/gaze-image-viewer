@@ -192,8 +192,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
         if (i >= 0 && isBrowserTab(i)) { toggleViewer(); return; }
         const QString p = tabPath(i);
         if (p.isEmpty()) return;
-        // PROBE97 临时诊断,查完删
-        Logger::event(QStringLiteral("PROBE97 tabChanged i=%1 path='%2'").arg(i).arg(p));
         // Interface/syncBrowser:切标签时把浏览器选中项挪过去(它会一路 loadFile)
         if (AppSettings::instance().get("Interface/syncBrowser", false).toBool())
             m_fileGrid->selectByPath(p);
