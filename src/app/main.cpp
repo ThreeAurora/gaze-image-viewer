@@ -280,6 +280,7 @@ int main(int argc, char *argv[]) {
     Logger::boot("mw-ctor");
     Logger::boot("mw-ctor");
     Logger::boot("mw-ctor");
+    Logger::boot("mw-ctor");
 
     // 单实例监听跟着 General/singleInstance 走:旧写法只在启动时读一次,
     // 设置页那个勾必须重启才生效(等于半个假开关)。changed() 每次设置写入都会发,
