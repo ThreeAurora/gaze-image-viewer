@@ -254,6 +254,19 @@ private:
     int                  m_lastClicked = -1;
     QSet<QString>        m_marked;
     QString              m_preferPath;  // 一次性:本次 loadDirectory 完成后要选中的路径
+
+    // 内联搜索条(#107):叠在视口右上角,不占布局;命中数与按钮置灰每次按键/翻页重算
+    QWidget*     m_findBar  = nullptr;
+    QLineEdit*   m_findEdit = nullptr;
+    QLabel*      m_findInfo = nullptr;
+    QToolButton* m_findPrev = nullptr;
+    QToolButton* m_findNext = nullptr;
+    int          m_findHitCount = 0;   // 当前查询的命中总数
+    int          m_findOrdinal  = -1;  // 当前选中项是第几个命中(0 基;-1=当前项不命中)
+    void buildFindBar();
+    void placeFindBar();               // 视口尺寸变化后重新贴角
+    void findRefresh();                // 重算命中数/序号/按钮置灰(轻量,O(n) 只在交互时跑)
+    void findStep(int delta);          // +1 下一个 / -1 上一个;到边界不动(按钮已置灰)
     QString              m_preferPath;  // 一次性:本次 loadDirectory 完成后要选中的路径
     QString              m_preferPath;  // 一次性:本次 loadDirectory 完成后要选中的路径
     QString              m_preferPath;  // 一次性:本次 loadDirectory 完成后要选中的路径
