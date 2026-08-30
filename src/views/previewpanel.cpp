@@ -944,7 +944,7 @@ QPoint PreviewPanel::clampedLabelPos(QPoint p) const {
     const int imgW = m_imgLabel->width();
     const int imgH = m_imgLabel->height();
     const int boxW = width();
-    const int boxH = height();
+    const int boxH = height() - barReserve();   // 栏占的那一条不算画面可站的地方
     if (imgW <= boxW)
         p.setX((boxW - imgW) / 2);
     else
