@@ -277,6 +277,7 @@ private:
     QWidget *m_imgSpace;   // 图片/GIF 形态的空间吸收器:没有它 40px 的控制栏会被布局垂直居中
     QWidget *m_imgSpace;   // 图片/GIF 形态的空间吸收器:没有它 40px 的控制栏会被布局垂直居中
     QWidget *m_imgSpace;   // 图片/GIF 形态的空间吸收器:没有它 40px 的控制栏会被布局垂直居中
+    QWidget *m_imgSpace;   // 图片/GIF 形态的空间吸收器:没有它 40px 的控制栏会被布局垂直居中
     QPushButton *m_btnPlay;
     QPushButton *m_btnStop = nullptr;     // 停止(位置归零,再播从头开始)
     QPushButton *m_btnStop = nullptr;     // 停止(位置归零,再播从头开始)
