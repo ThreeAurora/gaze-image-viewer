@@ -95,7 +95,7 @@ private:
     QImage postProcess(QImage img, int size) const;
 
     // ── 缓存 ──
-    QString cacheKey(const QString& filePath, int size) const;
+    QString cacheKey(const QString& filePath, int size, bool isVideo = false) const;
     bool    cacheLookup(const QString& key, double mtime, QImage& out);
     void    cacheStore(const QString& key, const QImage& pix, double mtime);
     void    initDatabase();
