@@ -744,7 +744,8 @@ void PrintDialog::doPrint() {
         if (i + 1 < pages.size()) g.newPage();
     }
     g.end();
-    prog.finish();
+    prog.setValue(pages.size());   // 到达 maximum 时 autoClose 会收起;取消时靠下面这行
+    prog.hide();
     const bool jobError = m_printer->printerState() == QPrinter::Error;
 
     QString txt = aborted ? QString::fromUtf8("已取消:前 %1 页已送印。").arg(done)
