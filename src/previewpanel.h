@@ -127,6 +127,7 @@ private:
     void showMarkdown(const QString& path);
     void showPdf(const QString& path);
     void renderPdfPage();          // 后台渲染当前页(不卡 UI)
+    void requestPdf(bool needPageCount);  // 后台跑 Ghostscript;进文件时顺带问页数
     void requestPdf(bool needPageCount);  // 真正干活的后台任务;进文件时顺带问页数
     void requestPdf(bool needPageCount);  // 后台跑 Ghostscript;进文件时顺带问页数
     void pdfGotoPage(int page);
