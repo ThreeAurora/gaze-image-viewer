@@ -11,6 +11,7 @@
 #include <QFileInfo>
 #include <QPoint>
 #include <QPoint>
+#include <QPoint>
 
 class QVBoxLayout;
 class QComboBox;
