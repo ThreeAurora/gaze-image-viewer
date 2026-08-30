@@ -1253,6 +1253,7 @@ void PreviewPanel::setupPlayer() {
                 m_player->setVideoOutput(m_vw);
                 m_videoOutAttached = true;
                 vidProbeReset();
+                vidProbeReset();
                 if (m_isLivePhoto || (m_mode == "video" && pp_impl::s_bool("Viewer/autoPlayVideo", true))) {
                     m_player->play();
                     m_btnPlay->setIcon(pp_impl::whiteIcon(style()->standardIcon(QStyle::SP_MediaPause)));
