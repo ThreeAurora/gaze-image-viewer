@@ -1296,7 +1296,8 @@ void PreviewPanel::setupPlayer() {
     connect(m_player, &QMediaPlayer::positionChanged, this, [this](qint64 pos) {
         if (!m_player) return;
         qint64 dur = m_player->duration();
-        if (dur > 0) {
+        // 擦洗中别回写句柄,否则播放位置会把用户正拖着的滑块拽走
+        if (dur > 0 && !m_progress->isSliderDown()) {
             m_progress->setValue(static_cast<int>(pos));
         }
         auto fmt = [](qint64 ms) -> QString {
