@@ -3,6 +3,7 @@
 #include "fileentry.h"
 #include "namesort.h"
 #include "namesort.h"
+#include "namesort.h"
 #include "settings.h"
 #include "perflog.h"
 #include "perflog.h"
