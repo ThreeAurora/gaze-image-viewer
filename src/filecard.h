@@ -14,7 +14,6 @@ public:
     void setThumbnail(const QPixmap& pixmap);
     void setCover(bool on) { m_cover = on; }   // 瀑布流:缩略图按比例填满(cover)
     void setSelected(bool sel, bool multi = false);
-    void setMarked(bool marked);
     void setColorLabel(int color);   // 颜色标记:0无 1红 2橙 3黄 4绿 5蓝
     void refreshLabelBg();           // 标签颜色设置变更后重涂文件名底色
     void deactivate();
