@@ -241,6 +241,17 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     m_gifSeekTimer->setSingleShot(true);
     connect(m_gifSeekTimer, &QTimer::timeout, this, &PreviewPanel::gifApplySeek);
 
+    // GIF 时钟(#94):两条都是成员单发定时器。播放拍用 start() 取代
+    // QTimer::singleShot —— 后者每排一拍就多一个未决事件,拖动期间
+    // gifSeekMs 会反复重排,未决拍堆成"快进+忽快忽慢";start() 天然取消上一拍。
+    // 擦洗拍 0ms:把同一事件循环批次里的多个 move 并成"最后一个目标帧"再解。
+    m_gifPlayTimer = new QTimer(this);
+    m_gifPlayTimer->setSingleShot(true);
+    connect(m_gifPlayTimer, &QTimer::timeout, this, &PreviewPanel::gifPlayTick);
+    m_gifSeekTimer = new QTimer(this);
+    m_gifSeekTimer->setSingleShot(true);
+    connect(m_gifSeekTimer, &QTimer::timeout, this, &PreviewPanel::gifApplySeek);
+
     // 事件过滤器
     m_imgLabel->installEventFilter(this);
     m_videoWidget->installEventFilter(this);   // 视频区左键=播放/暂停(见 eventFilter)
