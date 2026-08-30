@@ -472,7 +472,7 @@ QWidget* SettingsDialog::pageBrowser() {
     fPrev->setVerticalSpacing(10);
     fPrev->addRow(QString::fromUtf8("预览背景色"),
                   colorPick("Browser/previewBackColor", "#000000"));
-    fPrev->addRow(chk("Browser/showRating", QString::fromUtf8("显示评级(颜色标签)"), true));
+    fPrev->addRow(chk("Browser/showRating", QString::fromUtf8("显示颜色标记"), true));
     fPrev->addRow(chk("Preview/previewTxt", QString::fromUtf8("预览 txt 文本文件内容"), true));
     root->addWidget(group(QString::fromUtf8("预览"), fPrev));
 
