@@ -177,10 +177,8 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
           QString::fromUtf8("\xe5\x81\x9c\xe6\xad\xa2(\xe5\x9b\x9e\xe5\x88\xb0\xe5\xbc\x80\xe5\xa4\xb4)")); // 停止(回到开头)
     connect(m_btnStop, &QPushButton::clicked, this, [this]() {
         if (m_isGif) {
-            if (m_movie) m_movie->jumpToFrame(0);
-            setGifPaused(true);
-            blitMovieFrame();
-            gifSyncToFrame(0);
+            setGifPaused(true);   // 先停:跳帧走暂停态,避开运行态 jumpToFrame 卡死
+            gifSeekMs(0);
             return;
         }
         if (!m_player) return;
