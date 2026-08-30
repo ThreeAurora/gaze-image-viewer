@@ -8,6 +8,7 @@
 #include "labelstore.h"
 #include "markdown.h"
 #include "pdfrender.h"
+#include "textlimit.h"
 #include "imgproc.h"
 #include "constants.h"
 #include "viewerhotkeys.h"
