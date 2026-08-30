@@ -226,6 +226,15 @@ static QLocalServer* startSingleInstanceListener(QWidget* w) {
 }
 
 int main(int argc, char *argv[]) {
+    // #101 AV1 黑屏:FFmpeg 原生 av1 解码器只是硬解外壳,拿不到 hwaccel 不会回退软解
+    // (实测 `ffmpeg -c:v av1 -i av1.mp4` exit=69 并打印 "platform doesn't support
+    // hardware accelerated AV1 decoding";本机 RTX 2060 是 Turing,无 AV1 硬解)。
+    // 唯一的软解通路是随 avcodec 一起换入的 libdav1d,而它要求 Qt 别递硬件设备:
+    // 同一份新 avcodec,默认(允许硬解)零帧、none 满帧,两件事缺一不可。
+    // 代价:所有编码都走软解——实测预览场景首帧反而快 2~3 倍(1080p H.264 306→58ms)。
+    // 位置要求:FFmpeg 插件首次载入时读一次,故必须在 QApplication 之前。
+    qputenv("QT_FFMPEG_DECODING_HW_DEVICE_TYPES", "none");
+
     QApplication app(argc, argv);
     app.setApplicationName("Gaze");
     app.setApplicationDisplayName("Gaze");
