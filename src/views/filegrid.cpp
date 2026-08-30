@@ -771,7 +771,6 @@ void FileGrid::deleteSelection() {
     if (paths.isEmpty()) return;
     // 确认框/回收站由 FileOps/confirmDelete + FileOps/useRecycleBin 决定(与右键菜单同一入口)
     if (deleteWithSettings(paths, this)) {
-        for (const auto& p : paths) m_marked.remove(p);
         reloadAfterDelete(paths);
     }
 }
