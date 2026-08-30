@@ -761,29 +761,6 @@ void FileGrid::clearAllMarks() {
     if (m_filterMarked) toggleFilter(); else refreshView();
 }
 
-// ★ 标记:切换选中项。多选时以锚点(最后点击项)当前状态决定整批加或整批去 ——
-// 一次动作一个确定结果,不做逐项翻转(与颜色标签的批量语义对齐)。
-void FileGrid::toggleMarkOnSelection() {
-    if (m_selected.isEmpty() || m_entries.empty()) return;
-    int anchor = m_lastClicked;
-    if (anchor < 0 || anchor >= static_cast<int>(m_entries.size())
-        || !m_selected.contains(anchor))
-        anchor = *m_selected.constBegin();
-    if (anchor < 0 || anchor >= static_cast<int>(m_entries.size())) return;
-    const bool add = !m_marked.contains(m_entries[anchor].path);
-    for (int idx : m_selected) {
-        if (idx < 0 || idx >= static_cast<int>(m_entries.size())) continue;
-        const QString& p = m_entries[idx].path;
-        if (add) m_marked.insert(p); else m_marked.remove(p);
-    }
-    refreshView();   // 绘制时直接查 m_marked
-}
-
-void FileGrid::clearAllMarks() {
-    m_marked.clear();
-    if (m_filterMarked) toggleFilter(); else refreshView();
-}
-
 void FileGrid::deleteSelection() {
     // 作用域 = 整个选中集:右键"删除"删的就是这批,键盘若只删一项,
     // 确认框里"N 个项目"的数字和实际落盘结果会各说各话。
