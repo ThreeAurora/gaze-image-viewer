@@ -235,9 +235,6 @@ void FileCard::setup(const FileEntry& entry, int size, int viewMode, int height)
 
     m_liveBadge->adjustSize();
     m_liveBadge->move(8, 8);
-    m_starLabel->setGeometry(width() - 24, 4, 20, 20);
-    m_marked = false;
-    m_starLabel->hide();
 
     setColorLabel(entry.colorLabel);
     applyLabelBg();
