@@ -13,7 +13,6 @@ enum SortCol {
     SORT_MDATE   = 5,
     SORT_EXIF    = 6,
     SORT_PATH    = 7,
-    SORT_MARKED  = 8,
     SORT_WIDTH   = 9,
     SORT_HEIGHT  = 10,
     // ── 查看菜单扩展 ──
