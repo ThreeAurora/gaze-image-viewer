@@ -197,6 +197,7 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     m_progress->installEventFilter(this);   // 播放条点击直接跳转
     // 同 m_btnPlay,拖动进度条的槽也移出 setupPlayer 以免重复注册。
     connect(m_progress, &QSlider::sliderMoved, this, [this](int pos) {
+        if (m_isGif) { gifSeekMs(pos); return; }
         if (m_player) m_player->setPosition(pos);
     });
     cl->addWidget(m_progress, 1);
