@@ -7,6 +7,8 @@
 #include <QQueue>
 #include <QShortcut>
 #include <QLineEdit>
+#include <QLabel>
+#include <QToolButton>
 #include <vector>
 #include "fileentry.h"
 #include "sortheader.h"
