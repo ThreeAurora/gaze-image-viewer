@@ -295,6 +295,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     Logger::boot("ctor:tree");
     Logger::boot("ctor:tree");
     Logger::boot("ctor:tree");
+    Logger::boot("ctor:tree");
 
     auto *centerPanel = new QWidget;
     centerPanel->setMinimumWidth(200);
