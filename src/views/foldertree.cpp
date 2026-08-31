@@ -300,8 +300,10 @@ void FolderTree::mouseDoubleClickEvent(QMouseEvent* event) {
 void FolderTree::mousePressEvent(QMouseEvent* event) {
     m_sweepCur = itemAt(event->pos());
     if (m_sweepSwitch && event->button() == Qt::LeftButton && m_sweepCur) {
-        const int branchRight = visualRect(m_sweepCur).left()
-                              + (m_sweepCur->depth() + 1) * indentation();
+        int depth = 0;                       // 层级:QTreeWidgetItem 没有 depth(),自己数
+        for (QTreeWidgetItem* p = m_sweepCur->parent(); p; p = p->parent()) ++depth;
+        const int branchRight = visualRect(indexFromItem(m_sweepCur)).left()
+                              + (depth + 1) * indentation();
         const QString path = pathOf(m_sweepCur);
         if (!path.isEmpty() && event->pos().x() >= branchRight) {
             m_pressActivated = path;
