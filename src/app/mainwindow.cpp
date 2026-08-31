@@ -732,42 +732,62 @@ void MainWindow::dropEvent(QDropEvent* e) {
         }
     }
 
-    // 拖到文件夹上 = 复制进去(不动原件;用户没要求"移动"语义)
-    // 凡是改动文件的拖放都先弹窗确认(用户明令"但凡拖动都加个窗口确认");
-    // 拖到空白处只是导航,不改任何文件,不弹
+    // 拖放语义(用户 2026-08-31 明令):拖放=移动,Ctrl+拖放=复制。
+    // 落点压在文件夹上会改动文件;是否弹窗由 FileOps/dropConfirm 控制,
+    // 弹窗文案按实际动作区分,并把"Ctrl+拖放=复制"写进提示里。
+    // 拖到空白处只是导航,不改任何文件,不弹。
     if (!dropIntoDir.isEmpty()) {
+        const bool copy = (QApplication::keyboardModifiers() & Qt::ControlModifier) != 0;
+        const QString verb = copy ? QString::fromUtf8("复制") : QString::fromUtf8("移动");
         const QString what = paths.size() == 1
             ? QFileInfo(paths.first()).fileName()
             : QString::fromUtf8("%1 个项目").arg(paths.size());
-        if (QMessageBox::question(this, QString::fromUtf8("拖放复制"),
-                QString::fromUtf8("将 %1 复制到\n%2 ?\n\n(不移动、不删除,只复制)")
-                    .arg(what, dropIntoDir),
-                QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
-            return;   // 用户取消:什么都不做
+
+        // 同一个文件已是目的地(拖到自己/拖进自己所在目录)没有意义,提前拦下
+        QStringList actionable;
+        for (const QString& p : paths) {
+            const QFileInfo fi(p);
+            if (fi.absolutePath() == QDir::fromNativeSeparators(dropIntoDir)) continue;
+            actionable << p;
+        }
+        if (actionable.isEmpty()) return;
+
+        if (AppSettings::instance().get("FileOps/dropConfirm", true).toBool()) {
+            const QString tip = copy
+                ? QString::fromUtf8("(松开 Ctrl 再拖即为移动)")
+                : QString::fromUtf8("(按住 Ctrl 拖放即为复制)");
+            if (QMessageBox::question(this, QString::fromUtf8("拖放%1").arg(verb),
+                    QString::fromUtf8("将 %1 %2到\n%3 ?\n\n%4")
+                        .arg(what, verb, dropIntoDir, tip),
+                    QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
+                return;   // 用户取消:什么都不做
+            }
         }
 
         QStringList errs;
-        int copied = 0;
-        for (const QString& p : paths) {
+        int done = 0;
+        for (const QString& p : actionable) {
             const QFileInfo fi(p);
             const QString dst = dropIntoDir + "/" + fi.fileName();
             if (QFileInfo::exists(dst)) { errs << dst; continue; }
-            if (fi.isDir()) {
-                if (!QDir().rename(p, dst)) { errs << dst; continue; }
-            } else {
-                if (!QFile::copy(p, dst)) { errs << dst; continue; }
-            }
-            ++copied;
+            // 移动 = QFile::rename(Windows MoveFileEx 跨盘也能走,失败才报错);
+            // 复制 = 文件用 copy,目录用 rename(目录改名即整棵搬移)
+            const bool ok = copy ? (fi.isDir() ? QDir().rename(p, dst)
+                                               : QFile::copy(p, dst))
+                                 : QDir().rename(p, dst) || QFile::rename(p, dst);
+            if (!ok) { errs << dst; continue; }
+            ++done;
         }
-        if (copied) {
+        if (done) {
             m_fileGrid->refreshCurrentDir();
             if (m_folderTree) m_folderTree->refreshCurrent();
             // 与删除提示同一套左下角 toast,反馈简短明确
-            showDeleteToast(this, QString::fromUtf8("已复制 %1 项到目标文件夹").arg(copied));
+            showDeleteToast(this, QString::fromUtf8("已%1 %2 项到目标文件夹").arg(verb).arg(done));
         }
         if (!errs.isEmpty())
-            QMessageBox::warning(this, QString::fromUtf8("部分项目未能复制"),
-                                 errs.join(QLatin1Char('\n')));
+            QMessageBox::warning(this,
+                QString::fromUtf8("部分项目未能%1").arg(verb),
+                errs.join(QLatin1Char('\n')));
         return;
     }
 
