@@ -150,10 +150,10 @@ static bool rotateJpegOrientationOnly(const QString& path, int quarterCW) {
     return false;
 }
 
-// ── jpegtran 无损变换工具查找(PATH + 常见安装位置) ──
+// ── jpegtran 无损变换工具查找(exe旁 jpegtran/ → PATH → 常见安装位置) ──
 static QString findJpegtran() {
-    QString p = QStandardPaths::findExecutable("jpegtran");
-    if (!p.isEmpty()) return p;
+    const QString vendored = locateVendoredTool(QStringLiteral("jpegtran"), QStringLiteral("jpegtran"));
+    if (!vendored.isEmpty()) return vendored;
     const QStringList fallbacks = {
         "C:/miniconda3",
         "C:/Program Files/ImageMagick/jpegtran",
