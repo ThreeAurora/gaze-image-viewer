@@ -4,6 +4,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QFile>
+#include <QFile>
 
 AppSettings& AppSettings::instance() {
     static AppSettings s;
