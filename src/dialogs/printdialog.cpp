@@ -167,6 +167,7 @@ void PrintDialog::buildUi() {
         m_orientCb = new QComboBox(pageBox);
         addCb(m_orientCb, QString::fromUtf8("纵向"), 0);
         addCb(m_orientCb, QString::fromUtf8("横向"), 1);
+        m_orientCb->setCurrentIndex(st.get("Print/landscape", false).toBool() ? 1 : 0);   // #106:landscape 此前只写不读
         f->addRow(QString::fromUtf8("方向"), m_orientCb);
         m_marginSpn = new QDoubleSpinBox(pageBox);
         m_marginSpn->setRange(0, 50);
