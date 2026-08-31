@@ -57,7 +57,7 @@ void PreviewPanel::showMarkdown(const QString& path) {
     m_placeholder->hide();
     m_imgLabel->hide();
     m_videoWidget->hide();
-    m_audioLabel->hide();
+    setAudioChrome(false);
     m_controlBar->hide();
     if (m_imgSpace) m_imgSpace->hide();
     if (m_pdfBar) m_pdfBar->hide();
