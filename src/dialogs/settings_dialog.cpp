@@ -242,6 +242,10 @@ QWidget* SettingsDialog::pageFileOps() {
     toastMs->setSingleStep(100);
     toastMs->setSuffix(QString::fromUtf8(" 毫秒"));
     form->addRow(QString::fromUtf8("删除提示停留时长"), toastMs);
+    // 拖放语义(用户 2026-08-31 明令):拖放=移动,Ctrl+拖放=复制;
+    // 落到文件夹上都会改文件,是否弹窗确认由这一项控制
+    form->addRow(chk("FileOps/dropConfirm",
+        QString::fromUtf8("拖放改动文件前确认(移动/复制到文件夹时弹窗)"), true));
     form->addRow(chk("FileOps/losslessBackup", QString::fromUtf8("为无损翻转/旋转生成备份"), true));
     form->addRow(chk("FileOps/losslessKeepMeta", QString::fromUtf8("为无损翻转/旋转保留原始元数据"), true));
     form->addRow(chk("FileOps/renameDialog", QString::fromUtf8("使用对话框重命名文件/文件夹"), true));
