@@ -34,7 +34,6 @@
 #include <QCoreApplication>
 #include <QFileInfo>
 #include <QPointer>
-#include <QSharedPointer>
 #include <QThread>
 #include <QDateTime>
 #include "settings.h"
@@ -101,16 +100,15 @@ public:
                          QNetworkRequest::NoLessSafeRedirectPolicy);
         QNetworkReply* reply = m_nam.get(req);
         armTimeout(reply, timeoutMs);
-        // ctx 挂为连接上下文:ctx 析构 → 连接自动断开,回调不会触碰悬空指针
-        auto onDone = [reply, cb = std::move(cb)] {
-            const int st = reply->attribute(
-                QNetworkRequest::HttpStatusCodeAttribute).toInt();
-            const QByteArray data = reply->readAll();
-            reply->deleteLater();
-            cb(st, data);
-        };
-        if (ctx) QObject::connect(reply, &QNetworkReply::finished, ctx, onDone);
-        else     QObject::connect(reply, &QNetworkReply::finished, this, onDone);
+        QObject::connect(reply, &QNetworkReply::finished, this,
+            [reply, ctx, cb = std::move(cb)] {
+                const int st = reply->attribute(
+                    QNetworkRequest::HttpStatusCodeAttribute).toInt();
+                const QByteArray data = reply->readAll();
+                reply->deleteLater();
+                if (!ctx) return;
+                cb(st, data);
+            });
     }
 
     void post(const QString& path, const QByteArray& json,
@@ -121,15 +119,15 @@ public:
         req.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
         QNetworkReply* reply = m_nam.post(req, json);
         armTimeout(reply, timeoutMs);
-        auto onDone = [reply, cb = std::move(cb)] {
-            const int st = reply->attribute(
-                QNetworkRequest::HttpStatusCodeAttribute).toInt();
-            const QByteArray data = reply->readAll();
-            reply->deleteLater();
-            cb(st, data);
-        };
-        if (ctx) QObject::connect(reply, &QNetworkReply::finished, ctx, onDone);
-        else     QObject::connect(reply, &QNetworkReply::finished, this, onDone);
+        QObject::connect(reply, &QNetworkReply::finished, this,
+            [reply, ctx, cb = std::move(cb)] {
+                const int st = reply->attribute(
+                    QNetworkRequest::HttpStatusCodeAttribute).toInt();
+                const QByteArray data = reply->readAll();
+                reply->deleteLater();
+                if (!ctx) return;
+                cb(st, data);
+            });
     }
 
 private:
@@ -185,18 +183,14 @@ inline void ensureRunningAsync(QObject* ctx, std::function<void(QString)> onRead
         }
         servicePid() = pid;
         const qint64 deadline = QDateTime::currentMSecsSinceEpoch() + 30000;
-        // 轮询请求存在在途并发:done 保证 onReady 只回调一次
-        auto done = QSharedPointer<bool>::create(false);
         auto* t = new QTimer(ctx);
-        QObject::connect(t, &QTimer::timeout, ctx, [ctx, deadline, onReady, t, done]() {
-            pingAsync(ctx, [deadline, onReady, t, done](bool alive) {
-                if (*done) return;
+        QObject::connect(t, &QTimer::timeout, ctx, [ctx, deadline, onReady, t]() {
+            pingAsync(ctx, [ctx, deadline, onReady, t](bool alive) {
+                if (!ctx) return;
                 if (alive) {
-                    *done = true;
                     t->stop(); t->deleteLater();
                     onReady({});
                 } else if (QDateTime::currentMSecsSinceEpoch() >= deadline) {
-                    *done = true;
                     t->stop(); t->deleteLater();
                     onReady(QString::fromUtf8(
                         "服务启动超时(30s)。可手动运行 main.py,或在 设置 → 以文搜图 检查配置"));
