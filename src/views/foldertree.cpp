@@ -590,6 +590,18 @@ void FolderTree::pasteInto(QTreeWidgetItem* base) {
     emit foldersChanged({dir}, {});
 }
 
+// #136:F2/F3 的键盘入口。守卫与右键那条**同源**：空行、盘符根、多选都静默不动
+// （右键那三项是 setEnabled(false)，键盘没有"置灰"可看，只能什么都不做）。
+// 改名逻辑仍然只有 renameItem 一份 —— 不要再抄第二份，早晚不同步。
+void FolderTree::renameSelected() {
+    QTreeWidgetItem* it = currentItem();
+    if (!it) return;
+    const QString p = pathOf(it);
+    if (p.isEmpty() || isVolumeRoot(p)) return;
+    if (selectedPaths().size() > 1) return;
+    renameItem(it);
+}
+
 void FolderTree::renameItem(QTreeWidgetItem* item) {
     const QString oldPath = pathOf(item);
     if (oldPath.isEmpty() || isVolumeRoot(oldPath)) return;
