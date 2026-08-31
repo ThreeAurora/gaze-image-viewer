@@ -266,7 +266,6 @@ namespace {
 struct FolderFrame {
     QRectF tab;      // 左上凸出的标签
     QRectF back;     // 后板:内容图坐在它上面
-    QRectF front;    // 前板:压住内容图下沿 → "图收在文件夹里"的层叠
     QRectF content;  // 内容图区
     qreal  r;        // 圆角
 };
