@@ -390,8 +390,8 @@ QMenu* MainWindow::createSortMenu(QWidget* parent) {
     });
     m->addSeparator();
     auto* zoomMenu = m->addMenu(QString::fromUtf8("缩略图缩放"));
-    zoomMenu->addAction(QString::fromUtf8("放大"), this, [this](){ onThumbZoom(1); }, QKeySequence("Ctrl+="));
-    zoomMenu->addAction(QString::fromUtf8("缩小"), this, [this](){ onThumbZoom(-1); }, QKeySequence("Ctrl+-"));
+    zoomMenu->addAction(QString::fromUtf8("放大"), QKeySequence("Ctrl+="), this, [this](){ onThumbZoom(1); });
+    zoomMenu->addAction(QString::fromUtf8("缩小"), QKeySequence("Ctrl+-"), this, [this](){ onThumbZoom(-1); });
     return m;
 }
 
