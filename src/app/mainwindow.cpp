@@ -833,5 +833,9 @@ void MainWindow::closeEvent(QCloseEvent* event) {
     // 面板意图(m_panesOn)而非控件实时可见性:查看器模式临时藏了树/网格,
     // 用实时可见性落盘会把"只是进了查看器"误存成"用户关掉了面板"
     s.setValue("Layout/last/panes", m_panesOn.join(','));
+    // 由 Gaze 拉起的万象图搜服务:按设置决定是否随 Gaze 退出一起结束
+    if (ImgSearch::servicePid() > 0
+        && AppSettings::instance().get("ImgSearch/killOnExit", false).toBool())
+        ImgSearch::killStartedService();
     QMainWindow::closeEvent(event);
 }
