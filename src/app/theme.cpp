@@ -1,4 +1,5 @@
 #include "theme.h"
+#include "constants.h"
 #include "settings.h"
 
 namespace Theme {
@@ -10,13 +11,13 @@ bool g_light = false;
 void init() {
     g_light = AppSettings::instance().get("Appearance/theme", "dark").toString()
               == QLatin1String("light");
-    // 后续诊断日志要能区分本次会话的主题
-    if (g_light) qputenv("GAZE_THEME", "light");
 }
 
 bool light() { return g_light; }
 
 QString appQss() {
+    // 占位符按 %1..%17 顺序逐个 .arg:单个 arg() 每次替换最小编号占位符,
+    // 取值全是 #hex,不含 %N 字样,链式安全
     return QStringLiteral(
         "QWidget {"
         "  font-family: \"Microsoft YaHei\", \"Segoe UI\", sans-serif;"
@@ -142,10 +143,23 @@ QString appQss() {
         "  background: %17; border-color: %5;"
         "}"
     )
-        .arg(C_TEXT(), C_WIN_BG(), C_TOOLBAR(), C_SEPARATOR(), C_ACCENT(),
-             C_SB_TRACK(), C_SB_HANDLE(), C_SB_HANDLE_H(), C_SB_BUTTON(),
-             C_SB_BUTTON_H(), C_SB_ARROW(), C_CARD_BORDER(), C_CONTENT(),
-             C_SIDEBAR(), C_PREVIEW_BG(), C_CARD_HOVER(), C_PANE_HDR());
+        .arg(C_TEXT)
+        .arg(C_WIN_BG)
+        .arg(C_TOOLBAR)
+        .arg(C_SEPARATOR)
+        .arg(C_ACCENT)
+        .arg(C_SB_TRACK)
+        .arg(C_SB_HANDLE)
+        .arg(C_SB_HANDLE_H)
+        .arg(C_SB_BUTTON)
+        .arg(C_SB_BUTTON_H)
+        .arg(C_SB_ARROW)
+        .arg(C_CARD_BORDER)
+        .arg(C_CONTENT)
+        .arg(C_SIDEBAR)
+        .arg(C_PREVIEW_BG)
+        .arg(C_CARD_HOVER)
+        .arg(C_PANE_HDR);
 }
 
 } // namespace Theme
