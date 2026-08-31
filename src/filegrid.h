@@ -242,8 +242,6 @@ private:
     int    m_nameOrder    = NameNatural;
 
 
-
-
     int    m_filterMode   = FILTER_ALL;
     QHash<QString, int> m_colorLabels;  // path → 颜色标记(目录加载时批量读入)
     // 文件列表规则(FileList/*;设置改动时刷新,逐条目路径不再读 ini)
