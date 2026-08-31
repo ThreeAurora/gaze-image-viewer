@@ -141,11 +141,11 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
 
     // 按钮统一样式 + 白色图标:播放/暂停图标在别处切换时必须同样走 whiteIcon,
     // 否则标准图标自带深色,在深底上直接"变黑看不见"
-    const char* btnQss =
-        "QPushButton{background:transparent;border:none;border-radius:4px;padding:4px;}"
-        "QPushButton:hover{background:" C_CARD_HOVER ";}"
+    const QString btnQss =
+        QString::fromUtf8("QPushButton{background:transparent;border:none;border-radius:4px;padding:4px;}"
+        "QPushButton:hover{background:%1;}"
         "QToolButton{background:transparent;border:none;border-radius:4px;padding:4px;}"
-        "QToolButton:hover{background:" C_CARD_HOVER ";}";
+        "QToolButton:hover{background:%1;}").arg(C_CARD_HOVER);
     auto mkBtn = [&](auto* b, QStyle::StandardPixmap sp, int w, const QString& tip) {
         b->setIcon(pp_impl::whiteIcon(style()->standardIcon(sp)));
         b->setIconSize(QSize(16, 16));
