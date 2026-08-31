@@ -1266,6 +1266,9 @@ void PreviewPanel::loadFile(const QString& path) {
         showMarkdown(path);
     } else if (ext == "pdf" && pp_impl::s_bool("Preview/showPdf", false)) {
         showPdf(path);
+    } else if (RAW_EXTS.count("." + ext)) {
+        // RAW(#140):不自动解码(全解数秒级重活),占位 + 按需全解按钮
+        showRawPlaceholder(path);
     } else {
         showNoPreview();
     }
