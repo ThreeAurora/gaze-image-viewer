@@ -111,6 +111,8 @@ FileGrid::FileGrid(QWidget* parent) : QScrollArea(parent) {
     m_fixedCols = qBound(0, AppSettings::instance().get("Browser/fixedCols", 0).toInt(), 16);
     m_viewMode  = qBound(0, AppSettings::instance().get("Browser/viewMode", int(VM_THUMBS_NAME)).toInt(), int(VM_WATERFALL));
     m_nameOrder = qBound(0, AppSettings::instance().get("Browser/nameOrder", int(NameNatural)).toInt(), int(NameNormal));
+    // #106:筛选模式同样落盘恢复(此前切"视频"重启回"全部")
+    m_filterMode = qBound(int(FILTER_ALL), AppSettings::instance().get("Browser/filterMode", int(FILTER_ALL)).toInt(), int(FILTER_UNRED));
     m_spacing   = qBound(0, AppSettings::instance().get("Appearance/spacing", 6).toInt(), 40);
 
     // 设置活应用:标签颜色(开关/配色)+ 外观间距 + 文件列表过滤/排序规则
