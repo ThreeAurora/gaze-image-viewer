@@ -46,6 +46,9 @@ private:
     // #126:「缩略图 → 标签颜色」(真正的颜色编辑器) 那一页的树节点,
     // 外观页的"打开颜色编辑器"按钮靠它跳转
     QTreeWidgetItem* m_labelColorsItem = nullptr;
+    // #126:「缩略图 → 标签颜色」(真正的颜色编辑器) 那一页的树节点,
+    // 外观页的"打开颜色编辑器"按钮靠它跳转
+    QTreeWidgetItem* m_labelColorsItem = nullptr;
 
     // 控件工厂:载入当前值,变更即时保存
     QCheckBox* chk(const QString& key, const QString& label, bool def);
