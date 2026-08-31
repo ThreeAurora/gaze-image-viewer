@@ -522,6 +522,10 @@ QWidget* SettingsDialog::pageBrowser() {
     fMisc->addRow(QString::fromUtf8("文件树左键按住拖动"),
         combo("FolderTree/leftDragSweep", {QString::fromUtf8("切换文件夹(扫过即进入)"),
                                            QString::fromUtf8("拖动多选(原行为)")}, 0));
+    // #117:文件树左键按住拖动的语义。默认=扫过即切入,方便连续快速预览不同目录
+    fMisc->addRow(QString::fromUtf8("文件树左键按住拖动"),
+        combo("FolderTree/leftDragSweep", {QString::fromUtf8("切换文件夹(扫过即进入)"),
+                                           QString::fromUtf8("拖动多选(原行为)")}, 0));
     root->addLayout(fMisc);
     return wrapTitled(QString::fromUtf8("浏览器"), root);
 }
