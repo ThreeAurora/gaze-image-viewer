@@ -108,8 +108,7 @@ void MainWindow::createMenubar() {
     // 助记符用 &R(Rename)：Qt 的助记符只要求**同一菜单内**唯一，编辑菜单里没有别的 &R
     // (「刷新(&R)」在文件菜单，不冲突)。
     editMenu->addAction(IconLib::appIcon("cmd_rename"),
-        QString::fromUtf8("重命名(&R)"), this, &MainWindow::renameFocused,
-        QKeySequence("F3"));
+        QString::fromUtf8("重命名(&R)"), QKeySequence("F3"), this, &MainWindow::renameFocused);
     // #136:重命名必须是一条**带 shortcut 的 QAction**，不能只在键盘过滤器里加分支 ——
     // 设置→交互→快捷键配置页(settings_pages_input.cpp 的 fillTable)只列"带非空 shortcut
     // 的 QAction"，而 applyShortcuts() 也只按 Shortcuts/<动作文本> 读 ini 覆盖。
