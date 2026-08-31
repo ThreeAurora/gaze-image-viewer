@@ -211,14 +211,13 @@ inline QSize orientedSize(const QString& path, bool exifRotate) {
     return s;
 }
 
-// ── 全图解码统一入口(查看器 + 打印共用) ──────────────────
-// 原先只住在 previewpanel.cpp 里(叫 loadFullImage)。打印要的是"屏幕上看到什么,
-// 纸上就是什么",所以解码口径必须只有一份 —— CMYK 印刷 JPG 走 WIC 色彩管理那套,
-// 复制一份到打印路径迟早会和查看器偏色不一致。
+// ── 全图解码统一入口(查看器) ──────────────────
+// 原先只住在 previewpanel.cpp 里(叫 loadFullImage)。解码口径必须只有一份 ——
+// CMYK 印刷 JPG 走 WIC 色彩管理那套,复制一份解码路径迟早和查看器偏色不一致。
 //
 // maxSide>0:按最长边降采样解码(预览用,省内存省时间);0:全尺寸。
 // ⚠ 降采样后的 QImage 自带 DPI 不可信(实测 Qt6.5.3:JPEG 密度不变、PNG 同比缩小),
-//   需要 DPI 的调用方(打印"原始尺寸"档)必须传 maxSide=0。
+//   需要 DPI 的调用方必须传 maxSide=0。
 // ⚠ exifRotate 必须由 GUI 线程 caller 快照后传入:worker 里读 AppSettings/QSettings
 //   属跨线程访问(未加锁),表现偶发但真存在崩溃/脏读。
 inline QImage decodeScaled(const QString& path, bool exifRotate, int maxSide) {
