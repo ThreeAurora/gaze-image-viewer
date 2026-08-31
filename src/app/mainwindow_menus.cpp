@@ -105,9 +105,10 @@ void MainWindow::createMenubar() {
     // 设置→交互→快捷键配置页(settings_pages_input.cpp 的 fillTable)只列"带非空 shortcut
     // 的 QAction"，而 applyShortcuts() 也只按 Shortcuts/<动作文本> 读 ini 覆盖。
     // 挂在过滤器里的 F2 从来进不了那张表，这正是用户要求「写入快捷键配置页」的原因。
-    // 助记符用 &N：&R 已被上面的「刷新(&R)」占掉(同一菜单里撞车会抢焦点)。
+    // 助记符用 &R(Rename)：Qt 的助记符只要求**同一菜单内**唯一，编辑菜单里没有别的 &R
+    // (「刷新(&R)」在文件菜单，不冲突)。
     editMenu->addAction(IconLib::appIcon("cmd_rename"),
-        QString::fromUtf8("重命名(&N)"), this, &MainWindow::renameFocused,
+        QString::fromUtf8("重命名(&R)"), this, &MainWindow::renameFocused,
         QKeySequence("F3"));
     // #136:重命名必须是一条**带 shortcut 的 QAction**，不能只在键盘过滤器里加分支 ——
     // 设置→交互→快捷键配置页(settings_pages_input.cpp 的 fillTable)只列"带非空 shortcut
