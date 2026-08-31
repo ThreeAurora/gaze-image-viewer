@@ -4,6 +4,7 @@
 //
 //   .avif/.avifs/.jxl → 随 gaze 分发的 LGPL ffmpeg 子进程(dav1d/libjxl)
 //                       → PNG 管道(不经临时文件)
+//   #103 工单② 起 .exr/.dds/.qoi/.jp2/.dpx/.apng 同走上述 ffmpeg 分流
 //   .heic/.heif/.hif  → Windows WIC "Microsoft HEIF Decoder"(进程内;
 //                       系统未装 HEIF 图像扩展时解码失败 → 空图回退)
 //
