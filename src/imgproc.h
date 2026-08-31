@@ -159,7 +159,7 @@ inline QImage decodeScaled(const QString& path, bool exifRotate, int maxSide) {
     if (WicDecode::isFourChannelJpeg(path)) {
         // WIC 这条路**不做 EXIF 转正**(decodeCmyk 只按 frame 原始宽高走 scaler),
         // 所以 want 必须按未转正尺寸算。CMYK JPEG 带拍摄方向是极罕见的组合,
-        // 表现与查看器/缩略图一致(都不转正),打印排版靠长宽比自检退回位图尺寸。
+        // 表现与查看器/缩略图一致(都不转正)。
         QSize want;
         const QSize s0 = QImageReader(path).size();
         if (maxSide > 0 && s0.isValid() && qMax(s0.width(), s0.height()) > maxSide)
