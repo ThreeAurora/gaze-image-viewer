@@ -215,6 +215,31 @@ endif()
 # (CR2/NEF/ARW/RAF/ORF/DNG 无损变体等)全覆盖;JPEG 有损压缩与 deflate DNG
 # 后续按需补库。
 if(EXISTS "${CMAKE_SOURCE_DIR}/thirdparty/LibRaw/libraw/libraw.h")
+    file(GLOB_RECURSE LIBRAW_SOURCES CONFIGURE_DEPENDS
+        "${CMAKE_SOURCE_DIR}/thirdparty/LibRaw/src/*.cpp")
+    list(APPEND LIBRAW_SOURCES
+        "${CMAKE_SOURCE_DIR}/thirdparty/LibRaw/internal/dcraw_common.cpp"
+        "${CMAKE_SOURCE_DIR}/thirdparty/LibRaw/internal/dcraw_fileio.cpp"
+        "${CMAKE_SOURCE_DIR}/thirdparty/LibRaw/internal/demosaic_packs.cpp")
+    add_library(rawdec STATIC ${LIBRAW_SOURCES})
+    target_include_directories(rawdec PUBLIC "${CMAKE_SOURCE_DIR}/thirdparty/LibRaw")
+    # dcraw 血统代码有类型双关,-fno-strict-aliasing 保优化下行为不漂
+    target_compile_options(rawdec PRIVATE -O2 -fno-strict-aliasing)
+    target_link_libraries(gaze PRIVATE rawdec)
+    target_compile_definitions(gaze PRIVATE HAS_RAWDEC=1)
+else()
+    message(STATUS "RAW 全解:thirdparty/LibRaw 不存在 → RAW 按钮显示未编入提示")
+endif()
+
+# ── LibRaw 源码编译(RAW 按需全解,#140)──
+# 全囊括铁令(2026-09-01):一切功能自带依赖,不默认用户装有 WIC Raw 图像扩展
+# 等系统解码器。LibRaw(LGPL-2.1/CDDL 双许可)源码放 thirdparty/LibRaw,静态
+# 编进 gaze —— 无 DLL、无分发决策。目录不存在(未下载)时跳过:gaze 照常编译,
+# RAW 按钮点击给"未编入解码器"的诚实文案。
+# 无外部依赖构建(不开 USE_JPEG/USE_ZLIB/USE_LCMS2):无损 JPEG 系 RAW
+# (CR2/NEF/ARW/RAF/ORF/DNG 无损变体等)全覆盖;JPEG 有损压缩与 deflate DNG
+# 后续按需补库。
+if(EXISTS "${CMAKE_SOURCE_DIR}/thirdparty/LibRaw/libraw/libraw.h")
     # 0.21.x 源码全在 src/(internal/ 只有头文件),一个 GLOB 收齐
     file(GLOB_RECURSE LIBRAW_SOURCES CONFIGURE_DEPENDS
         "${CMAKE_SOURCE_DIR}/thirdparty/LibRaw/src/*.cpp")
