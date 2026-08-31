@@ -456,6 +456,9 @@ private:
     QMap<QString, QImage> m_preloadCache;  // 预载结果
     QStringList m_preloadOrder;            // 插入序(逐出最旧)
     bool m_preloadBusy = false;
+
+private slots:
+    void onWaveSnapshot(Audiowave::Snapshot snap);   // worker 快照到货(跨线程 queued)
 public:
     // 设置页修改后刷新缓存。设置页不 include 本头文件,靠元调用通知 → 必须 Q_INVOKABLE
     Q_INVOKABLE void reloadViewerHotkeys();
