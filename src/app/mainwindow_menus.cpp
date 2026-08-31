@@ -79,7 +79,7 @@ void MainWindow::createMenubar() {
         rebuildRecentMenu(recentMenu);
     });
     fileMenu->addAction(IconLib::appIcon("cmd_print"), QString::fromUtf8("打印..."),
-        this, [this]() {
+        QKeySequence("Ctrl+P"), this, [this]() {
             // 有选中打选中,没选中打当前列表全部(和右键"打印"同一口径);
             // 夹在里面的文件夹/视频由 PrintDialog 按扩展名滤掉并如实提示
             QStringList paths = m_fileGrid->selectedPaths();
@@ -87,7 +87,7 @@ void MainWindow::createMenubar() {
                 for (int i = 0; i < m_fileGrid->fileCount(); ++i)
                     paths << m_fileGrid->pathOf(i);
             PrintDialog::printImages(this, paths);
-        }, QKeySequence("Ctrl+P"));
+        });
     fileMenu->addSeparator();
     fileMenu->addAction(QString::fromUtf8("刷新(&R)"), this, [this](){ refresh(); }, QKeySequence("F5"));
     fileMenu->addSeparator();
