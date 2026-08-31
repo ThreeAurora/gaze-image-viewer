@@ -123,9 +123,16 @@ void MainWindow::gotoTypedPath() {
         raw = raw.mid(1, raw.size() - 2).trimmed();
     if (raw.isEmpty()) return;
     m_lastAddrJumpMs = QDateTime::currentMSecsSinceEpoch();   // #128②:见 Enter 宽限
-    if (navigateTo(raw)) return;
+    if (navigateTo(raw)) {
+        Logger::event(QStringLiteral("addr: navigated '%1'").arg(raw));   // 取证
+        return;
+    }
     const QFileInfo fi(mw_impl::canonicalPath(raw));
-    if (fi.isFile()) { revealFile(fi.absoluteFilePath()); return; }
+    if (fi.isFile()) {
+        Logger::event(QStringLiteral("addr: reveal file '%1'").arg(raw)); // 取证
+        revealFile(fi.absoluteFilePath());
+        return;
+    }
     Logger::event(QStringLiteral("addr: cannot jump to '%1'").arg(raw));
     m_statusLabel->setText(QString::fromUtf8("路径不存在: %1")
                                .arg(QDir::toNativeSeparators(raw)));
