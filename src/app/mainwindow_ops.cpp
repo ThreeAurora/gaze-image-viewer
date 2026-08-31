@@ -130,7 +130,10 @@ int MainWindow::seekSeconds() const {
 // 地址栏/内联搜索条/任何弹窗里按 F3 不该改名。
 void MainWindow::renameFocused() {
     QWidget* f = QApplication::focusWidget();
-    if (f && (textInputWidget(f) || activationKeyWidget(f) || insideDialog(f))) return;
+    // 只挡"键盘是输入手段"的那类控件与弹窗。故意**不**用 activationKeyWidget：
+    // 它含 QAbstractItemView，而文件树/文件网格正是 item view —— 用它等于两处都改不了名。
+    // 与 keytarget.h 的既有口径一致："F/D/F2 这类键对 item view 仍全局生效"。
+    if (f && (textInputWidget(f) || insideDialog(f))) return;
     if (f && m_folderTree && m_folderTree->isAncestorOf(f)) {
         m_folderTree->renameSelected();
         return;
