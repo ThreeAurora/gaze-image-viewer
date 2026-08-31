@@ -395,6 +395,11 @@ QWidget* SettingsDialog::pageKeyboardMouse() {
             QString::fromUtf8("下一个文件"), QString::fromUtf8("快速幻灯片")}, 0));
     form->addRow(QString::fromUtf8("快速幻灯片间隔(毫秒)"),
         spin("Interface/slideInterval", SLIDE_MS_MIN, SLIDE_MS_MAX, SLIDE_MS_DEF));
+    // Viewer/seekSeconds:Ctrl+PgUp/PgDn 一次跳多少秒。
+    // 来源 @147575「鼠标右键+滚轮具体滚动多少秒,这个应该在设置里能体现,从1秒到3600秒」
+    // —— 右键+滚轮后来被用户改判为"等同于 Ctrl+滚轮缩放"(@635777),秒数设置落到快进快退上
+    form->addRow(QString::fromUtf8("快进/快退秒数"),
+        spin("Viewer/seekSeconds", 1, 3600, 3));
     form->addRow(chk("Keyboard/escCloseBrowser", QString::fromUtf8("按 ESC 关闭:浏览器模式"), false));
     form->addRow(chk("Keyboard/escCloseViewer", QString::fromUtf8("按 ESC 关闭:查看器"), true));
     return wrapTitled(QString::fromUtf8("键盘"), form);
