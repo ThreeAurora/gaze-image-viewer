@@ -285,6 +285,7 @@ inline QString mimeType(const QString& ext) {
         {".mp3","MP3 音频"},{".wav","WAV 音频"},
         {".flac","FLAC 音频"},{".aac","AAC 音频"},{".ogg","OGG 音频"},
         {".m4a","M4A 音频"},{".wma","WMA 音频"},{".opus","OPUS 音频"},
+        {".amr","AMR 音频"},{".ac3","AC3 音频"},{".wma","WMA 音频"},{".opus","OPUS 音频"},
         {".amr","AMR 音频"},{".ac3","AC3 音频"},{".zip","ZIP 压缩"},{".rar","RAR 压缩"},
         {".7z","7Z 压缩"},{".txt","文本文档"},{".md","Markdown"},
         {".py","Python"},{".js","JavaScript"},{".pdf","PDF 文档"},
