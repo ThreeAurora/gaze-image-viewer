@@ -77,6 +77,10 @@ QString AppSettings::iniPath() const {
     return m_settings.fileName();
 }
 
+QString AppSettings::iniPathForLocation(int loc, const QString& customDir) {
+    return pathForLocation(loc, customDir);
+}
+
 QString AppSettings::dataDir() const {
     return QFileInfo(m_settings.fileName()).absolutePath();
 }
