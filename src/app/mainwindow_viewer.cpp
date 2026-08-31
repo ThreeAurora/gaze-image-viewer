@@ -293,7 +293,12 @@ void MainWindow::createViewMenu() {
     struct Item { const char* id; const char* name; const char* key; };
     const Item items[] = {
         { "tree",    "\xe6\x96\x87\xe4\xbb\xb6\xe5\xa4\xb9\xe6\xa0\x91", "" },      // 文件夹树
-        { "preview", "\xe9\xa2\x84\xe8\xa7\x88\xe9\x9d\xa2\xe6\x9d\xbf", "F3" },     // 预览面板
+        // #136:用户令「F3 不是预览的快捷键，而是重命名的快捷键」→ F3 让给重命名。
+        // **这一行不能删**：kPanes/m_paneActs/items 是三张并行表，数量由下面的
+        // static_assert 钉死，删行=编译不过 + 按下标写 m_paneActs 会错位。
+        // 连带影响（如实记录）：预览面板从此没有默认快捷键，而设置→快捷键配置页
+        // 只列"带 shortcut 的动作"，所以它不再出现在那张表里。
+        { "preview", "\xe9\xa2\x84\xe8\xa7\x88\xe9\x9d\xa2\xe6\x9d\xbf", "" },     // 预览面板
         { "addr",    "\xe5\x9c\xb0\xe5\x9d\x80\xe6\xa0\x8f", "" },                 // 地址栏
         { "tool",    "\xe5\xb7\xa5\xe5\x85\xb7\xe6\xa0\x8f", "" },                 // 工具栏
         { "status",  "\xe7\x8a\xb6\xe6\x80\x81\xe6\xa0\x8f", "" },                 // 状态栏
