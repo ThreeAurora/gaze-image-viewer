@@ -23,7 +23,11 @@ namespace ForeignImg {
 
 inline bool isFfmpegStill(const QString& suffix) {
     return suffix == QLatin1String("avif") || suffix == QLatin1String("avifs")
-        || suffix == QLatin1String("jxl");
+        || suffix == QLatin1String("jxl")
+        // #103 工单②:Qt 无原生插件的补充格式,同走 ffmpeg 管线
+        || suffix == QLatin1String("exr") || suffix == QLatin1String("dds")
+        || suffix == QLatin1String("qoi") || suffix == QLatin1String("jp2")
+        || suffix == QLatin1String("dpx") || suffix == QLatin1String("apng");
 }
 
 inline bool isWicHeif(const QString& suffix) {
