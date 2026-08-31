@@ -606,6 +606,17 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
         m_slideTimer.setInterval(mw_impl::slideIntervalMs());
     });
     Logger::boot("ctor:done");
+
+    // ⚠ 临时探针(#120 用,查完就删):GAZE_PROBE_PRINT=<图片路径> → 启动 3s 后
+    // 自动走一遍真实的打印对话框路径(进程内自己触发,不碰系统输入)。
+    if (const QByteArray env = qgetenv("GAZE_PROBE_PRINT"); !env.isEmpty()) {
+        QTimer::singleShot(3000, this, [env]() {
+            const QString p = QString::fromUtf8(env);
+            Logger::event(QStringLiteral("PROBE:print open '%1'").arg(p));
+            PrintDialog::printImages(nullptr, QStringList{ p });
+            Logger::event(QStringLiteral("PROBE:print closed"));
+        });
+    }
 }
 
 // ═══════════════════════════════════════════
