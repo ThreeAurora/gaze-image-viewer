@@ -225,11 +225,11 @@ inline QString render(const QString& src) {
     closeList();
     if (inCode) html += QStringLiteral("</code></pre>\n");
 
-    // 包一层带样式的壳(深色主题,和预览面板一致)
+    // 包一层带样式的壳(自持深底:浅色主题下 MD 仍是暗底阅读面,如同代码块)
     return QStringLiteral(
         "<html><head><meta charset=\"utf-8\"><style>"
         "body{font-family:'Microsoft YaHei','Segoe UI',sans-serif;font-size:13px;"
-        "color:#E0E0E0;line-height:1.7;margin:0;padding:0;}"
+        "background:#1A1A1F;color:#E0E0E0;line-height:1.7;margin:0;padding:0;}"
         "h1,h2,h3,h4,h5,h6{color:#FFFFFF;margin:18px 0 8px;line-height:1.35;}"
         "h1{font-size:22px;border-bottom:1px solid #3A3A42;padding-bottom:6px;}"
         "h2{font-size:19px;border-bottom:1px solid #3A3A42;padding-bottom:5px;}"
