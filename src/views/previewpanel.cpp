@@ -195,12 +195,12 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     m_progress->setFixedHeight(16);
     m_progress->setMouseTracking(true);   // hover 移动即请求秒级缩略图
     m_progress->setStyleSheet(
-        "QSlider::groove:horizontal{height:3px;background:" C_SEPARATOR ";border-radius:1px;}"
-        "QSlider::sub-page:horizontal{background:" C_ACCENT ";border-radius:1px;}"
-        "QSlider::add-page:horizontal{background:" C_SEPARATOR ";border-radius:1px;}"
+        QString::fromUtf8("QSlider::groove:horizontal{height:3px;background:%1;border-radius:1px;}"
+        "QSlider::sub-page:horizontal{background:%2;border-radius:1px;}"
+        "QSlider::add-page:horizontal{background:%3;border-radius:1px;}"
         "QSlider::handle:horizontal{width:9px;height:9px;margin:-3px 0;"
-        "background:#FFFFFF;border-radius:4px;}"
-        "QSlider::handle:horizontal:hover{background:#DCE7FF;}");
+        "background:%4;border-radius:4px;}"   // 旋钮用 C_TEXT:浅色下 #FFFFFF 在白底上会消失
+        "QSlider::handle:horizontal:hover{background:#DCE7FF;}").arg(C_SEPARATOR, C_ACCENT, C_SEPARATOR, C_TEXT));
     m_progress->installEventFilter(this);   // 播放条点击直接跳转
     // 同 m_btnPlay,拖动进度条的槽也移出 setupPlayer 以免重复注册。
     connect(m_progress, &QSlider::sliderMoved, this, [this](int pos) {
