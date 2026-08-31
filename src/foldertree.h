@@ -50,6 +50,11 @@ protected:
     void mousePressEvent(QMouseEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
     void mouseReleaseEvent(QMouseEvent* event) override;
+    // #117:左键按住"扫过"文件夹 = 逐个切入(默认,FolderTree/leftDragSweep=0);
+    //      取 1 时退回原来的"拖动多选",行为一个字节都不改
+    void mousePressEvent(QMouseEvent* event) override;
+    void mouseMoveEvent(QMouseEvent* event) override;
+    void mouseReleaseEvent(QMouseEvent* event) override;
 
 private:
     void onItemClicked(QTreeWidgetItem* item, int column);
