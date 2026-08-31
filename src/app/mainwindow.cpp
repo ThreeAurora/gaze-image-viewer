@@ -275,7 +275,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     ml->addWidget(m_viewerTabs);
 
     m_splitter = new QSplitter(Qt::Horizontal);
-    m_splitter->setStyleSheet("QSplitter::handle{background:" C_SEPARATOR ";width:1px;}");
+    m_splitter->setStyleSheet(QString::fromUtf8(
+        "QSplitter::handle{background:%1;width:1px;}").arg(C_SEPARATOR));
     ml->addWidget(m_splitter, 1);
 
     // 树面板:"文件夹"标题条 + FolderTree(标题条右侧 X 关闭)
