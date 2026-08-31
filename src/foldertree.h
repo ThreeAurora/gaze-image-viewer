@@ -81,5 +81,7 @@ private:
     bool  m_subFoldersShown = false;  // FileGrid::showSubFolders 的镜像
     bool  m_sweepSwitch = true;   // FolderTree/leftDragSweep==0 → 扫过即切换
     QTreeWidgetItem* m_sweepCur = nullptr;  // 本次手势里最后切入的那一行
+    bool  m_sweepSwitch = true;   // FolderTree/leftDragSweep==0 → 扫过即切换
+    QTreeWidgetItem* m_sweepCur = nullptr;  // 本次手势里最后切入的那一行
     bool  m_showDesktop = true;   // Browser/showDesktopInTree 当前已应用值
 };
