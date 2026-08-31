@@ -381,7 +381,8 @@ QImage Thumbnailer::folderThumb(const QString& dirPath, int size) {
     if (n == 1) {
         drawCell(picked.first(), f.content);
     } else {
-        const qreal gap = qMax<qreal>(1.0, size * 0.008);
+        // 格缝 2.5%(≥2px)才够 XnView 参考图那种"黄缝可见"——1% 时 160px 卡上只有 1px,看着像贴死的
+        const qreal gap = qMax<qreal>(2.0, size * 0.025);
         const qreal cw = (f.content.width() - gap) / 2;
         const qreal ch = (f.content.height() - gap) / 2;
         for (int i = 0; i < n; ++i)
