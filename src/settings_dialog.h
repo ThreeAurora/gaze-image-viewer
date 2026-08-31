@@ -39,6 +39,7 @@ private:
     QWidget* pageMaintenance();    // 维护(缩略图库统计/筛选/删除/重建)
     QWidget* pageIntegration();    // 高级 → 系统集成
     QWidget* pageImgSearch();      // 以文搜图(万象图搜服务位置/生命周期/测试连接)
+    QWidget* pageImgSearch();      // 以文搜图(万象图搜服务位置/生命周期/测试连接)
 
     void populatePages();          // 构建/重建全部分类与页面(恢复默认后调用)
 
