@@ -476,6 +476,7 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
 }
 
 PreviewPanel::~PreviewPanel() {
+    teardownWave();   // 波形线程必须走完再拆面板(wait 2s 兜底)
     teardownPlayer();
     cleanupExtractCache();
 }
