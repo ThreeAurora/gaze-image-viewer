@@ -213,6 +213,9 @@ private:
     QString m_currentDir;                // 当前加载的目录
     int    m_thumbH       = 0;     // Appearance/customThumbH:0=与宽同高(旧行为)
     bool   m_scrollPreview = true; // Browser/thumbScrollPreview:滚动中就出缩略图
+    QPoint   m_dragOrigin;             // 拖出起点(画布坐标)
+    int      m_dragOriginIdx = -1;     // 按下时命中的条目
+    bool     m_dragStarted   = false;  // 本次按下已发起过拖拽
     QLineEdit* m_renameEdit = nullptr; // 就地改名编辑器(存在时表示正在改名)
     int        m_renameIdx  = -1;
     QString    m_renamePath;
