@@ -65,9 +65,12 @@
 #define THUMB_W_MAX   1024
 
 // ── 扩展名白名单 ──
+// avif/avifs/jxl:Qt 无原生插件(MSVC ABI 不兼容,#116),走 ffmpeg 分流;
+// hif 是 HEIF 的 Nokia 变体扩展名,与 heic/heif 同走 WIC。
 inline const std::unordered_set<QString> IMAGE_EXTS = {
     ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp",
-    ".heic", ".heif", ".tiff", ".tif", ".ico", ".svg"
+    ".heic", ".heif", ".hif", ".avif", ".avifs", ".jxl",
+    ".tiff", ".tif", ".ico", ".svg"
 };
 
 inline const std::unordered_set<QString> VIDEO_EXTS = {
