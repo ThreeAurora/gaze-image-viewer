@@ -170,9 +170,16 @@ QImage Thumbnailer::folderThumb(const QString& dirPath, int size) {
     auto drawCell = [this, &pt](const QString& path, const QRectF& cell) {
         const int cw = qMax(1, qRound(cell.width()));
         const int ch = qMax(1, qRound(cell.height()));
-        const int want = qMax(256, 2 * qMax(cw, ch));
-        QImage t = imageThumb(path, want);
-        if (t.isNull()) t = th_impl::windowsShellThumb(path, want);
+        const int res = qMax(256, 2 * qMax(cw, ch));
+        QImage t;
+        if (VIDEO_EXTS.count("." + QFileInfo(path).suffix().toLower())) {
+            // 视频格:进程内 libav 单帧(取帧位置跟 Thumbs/videoFramePct 同源),
+            // 内部失败时自走 fallback 链,这里不再叠加 shell 回退
+            t = videoThumbFFmpeg(path, res);
+        } else {
+            t = imageThumb(path, res);
+            if (t.isNull()) t = th_impl::windowsShellThumb(path, res);
+        }
         if (t.isNull()) return;
         // 2x 超采样图上做居中裁切,画进 1x 格子 → 净效果是降采样,不放大不软
         const int sw = cw * 2, sh = ch * 2;
