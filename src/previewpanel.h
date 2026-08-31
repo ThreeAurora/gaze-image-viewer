@@ -234,6 +234,8 @@ private:
     QPixmap *m_origPix = nullptr;
     double m_scale = 1.0;
     double m_lastScale = 0.0;   // 上次实际应用的缩放(Viewer/autoFit=0"上次使用过的"用)
+    double m_dpiX = 0.0;        // #122 文件自带 DPI(0=文件没写)·General/exifDpi 的输入
+    double m_dpiY = 0.0;
     double m_dpiX = 0.0;        // #122 文件自带 DPI(0=文件没写):General/exifDpi 的输入
     double m_dpiY = 0.0;
     bool   m_viewerMode = false; // 独立查看器(true)/浏览器预览窗格(false)
