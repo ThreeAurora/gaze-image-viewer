@@ -1334,6 +1334,8 @@ void PreviewPanel::setupPlayer() {
                 armCoverUntilFirstFrame();
                 // #104:装载期 raiseVideoCover() 升起的遮罩,收回权交给本路首帧
                 armCoverUntilFirstFrame();
+                // #104:装载期 raiseVideoCover() 升起的遮罩,收回权交给本路首帧
+                armCoverUntilFirstFrame();
                 vidProbeAttach();
                 vidProbeReset();
                 if (m_isLivePhoto || (m_mode == "video" && pp_impl::s_bool("Viewer/autoPlayVideo", true))) {
