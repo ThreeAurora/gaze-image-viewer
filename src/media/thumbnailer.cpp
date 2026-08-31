@@ -285,20 +285,6 @@ FolderFrame folderFrame(int size) {
     return f;
 }
 
-// 只圆下方两角的矩形(前板的顶边是"文件夹口",必须是直的)
-QPainterPath bottomRounded(const QRectF& r, qreal rad) {
-    const qreal k = qMin(rad, qMin(r.width(), r.height()) / 2.0);
-    QPainterPath p;
-    p.moveTo(r.left(), r.top());
-    p.lineTo(r.right(), r.top());
-    p.lineTo(r.right(), r.bottom() - k);
-    p.quadTo(r.right(), r.bottom(), r.right() - k, r.bottom());
-    p.lineTo(r.left() + k, r.bottom());
-    p.quadTo(r.left(), r.bottom(), r.left(), r.bottom() - k);
-    p.closeSubpath();
-    return p;
-}
-
 void paintFolderBack(QPainter& pt, const FolderFrame& f) {
     pt.setPen(Qt::NoPen);
     QLinearGradient g(0, f.tab.top(), 0, f.back.bottom());
@@ -307,23 +293,6 @@ void paintFolderBack(QPainter& pt, const FolderFrame& f) {
     pt.setBrush(g);
     pt.drawRoundedRect(f.tab, f.r, f.r);
     pt.drawRoundedRect(f.back, f.r, f.r);
-}
-
-// 前板比后板亮一档(受光面),再压一条暗唇线 —— 层次全靠这两笔
-void paintFolderFront(QPainter& pt, const FolderFrame& f, int size) {
-    pt.setPen(QPen(QColor(0, 0, 0, 46), qMax<qreal>(1.0, size * 0.006)));
-    pt.drawLine(QPointF(f.front.topLeft().x(), f.front.top() - 0.5),
-                QPointF(f.front.topRight().x(), f.front.top() - 0.5));
-    pt.setPen(Qt::NoPen);
-    QLinearGradient g(0, f.front.top(), 0, f.front.bottom());
-    g.setColorAt(0.0, QColor("#FBEFB9"));
-    g.setColorAt(1.0, QColor("#EFCB6E"));
-    pt.setBrush(g);
-    pt.drawPath(bottomRounded(f.front, f.r));
-    pt.setBrush(QColor("#D9AE52"));
-    pt.drawPath(bottomRounded(QRectF(f.front.left(),
-                                     f.front.bottom() - size * 0.035,
-                                     f.front.width(), size * 0.035), f.r));
 }
 
 } // namespace
