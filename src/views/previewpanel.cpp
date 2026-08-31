@@ -1155,6 +1155,10 @@ void PreviewPanel::setViewerMode(bool on) {
 void PreviewPanel::loadFile(const QString& path) {
     // 换文件(或清空):递增代号,作废任何在途的后台解码结果
     ++m_imgReqGen;
+    // 波形跟文件走:换文件即停旧解码(选中图片时上一音频不该在后台白烧 CPU;
+    // 若这次又落在音频上,showAudio 的 start 会带新代次重新起解)
+    if (m_waveWorker)
+        QMetaObject::invokeMethod(m_waveWorker, "cancel");
     m_liveInfo.reset();
     // 同路径重复 loadFile(启动恢复双触发)不清票:票对应的就是这次装载,
     // 清掉会让 showVideo 走"装载期抢接输出+play"旧路,实测掐断视频管线(只出声不出画)
