@@ -101,15 +101,16 @@ public:
                          QNetworkRequest::NoLessSafeRedirectPolicy);
         QNetworkReply* reply = m_nam.get(req);
         armTimeout(reply, timeoutMs);
-        QObject::connect(reply, &QNetworkReply::finished, this,
-            [reply, ctx, cb = std::move(cb)] {
-                const int st = reply->attribute(
-                    QNetworkRequest::HttpStatusCodeAttribute).toInt();
-                const QByteArray data = reply->readAll();
-                reply->deleteLater();
-                if (!ctx) return;
-                cb(st, data);
-            });
+        // ctx 挂为连接上下文:ctx 析构 → 连接自动断开,回调不会触碰悬空指针
+        auto onDone = [reply, cb = std::move(cb)] {
+            const int st = reply->attribute(
+                QNetworkRequest::HttpStatusCodeAttribute).toInt();
+            const QByteArray data = reply->readAll();
+            reply->deleteLater();
+            cb(st, data);
+        };
+        if (ctx) QObject::connect(reply, &QNetworkReply::finished, ctx, onDone);
+        else     QObject::connect(reply, &QNetworkReply::finished, this, onDone);
     }
 
     void post(const QString& path, const QByteArray& json,
