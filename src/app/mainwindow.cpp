@@ -4,6 +4,7 @@
 #include "previewpanel.h"
 #include "imgsearchdialog.h"
 #include "imgsearch.h"     // ImgSearch::servicePid/killStartedService:退出时按设置回收自启服务
+#include "imgsearch.h"     // ImgSearch::servicePid/killStartedService:退出时按设置回收自启服务
 #include "printdialog.h"
 #include "printdialog.h"
 #include "printdialog.h"
