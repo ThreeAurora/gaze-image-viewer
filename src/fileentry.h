@@ -273,7 +273,8 @@ inline QString mimeType(const QString& ext) {
     static const std::unordered_map<QString, QString> map = {
         {".jpg","JPEG 图片"},{".jpeg","JPEG 图片"},{".png","PNG 图片"},
         {".gif","GIF 图片"},{".bmp","BMP 图片"},{".webp","WebP 图片"},
-        {".heic","HEIC 图片"},{".heif","HEIF 图片"},
+        {".heic","HEIC 图片"},{".heif","HEIF 图片"},{".hif","HEIF 图片"},
+        {".avif","AVIF 图片"},{".avifs","AVIF 序列"},{".jxl","JPEG XL 图片"},
         {".tiff","TIFF 图片"},{".tif","TIFF 图片"},{".svg","SVG 图片"},
         {".mp4","MP4 视频"},{".mov","MOV 视频"},{".avi","AVI 视频"},
         {".mkv","MKV 视频"},{".webm","WebM 视频"},{".wmv","WMV 视频"},
