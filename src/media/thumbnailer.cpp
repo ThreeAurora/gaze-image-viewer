@@ -340,7 +340,7 @@ QImage Thumbnailer::folderThumb(const QString& dirPath, int size) {
                                      cell.width(), cell.height()));
     };
 
-    // 图先裁进内容区(圆角),再由前板压住下沿 → 不足 4 张时空格露后板
+    // 图裁进内容区(圆角) → 不足 4 张时空格露后板
     pt.save();
     QPainterPath clip;
     clip.addRoundedRect(f.content, f.r, f.r);
