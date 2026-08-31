@@ -276,14 +276,12 @@ FolderFrame folderFrame(int size) {
     f.r     = qMax<qreal>(1.0, size * 0.025);
     f.tab   = QRectF(m, size * 0.09, (size - 2 * m) * 0.42, size * 0.14);
     f.back  = QRectF(m, size * 0.18, size - 2 * m, size * 0.78);
+    // #118:四边对称内缩 5% —— 底部不再给前板留 13.5%,缩略图吃满文件夹体
     f.content = f.back.adjusted(size * 0.05, size * 0.05,
-                                -size * 0.05, -size * 0.135);
-    const qreal frontTop = f.content.bottom() - size * 0.015;  // 压住图底一点
-    f.front = QRectF(f.back.left(), frontTop,
-                     f.back.width(), f.back.bottom() - frontTop);
+                                -size * 0.05, -size * 0.05);
     // 极小尺寸(列表/详细 64px 以下)内缩可能吃掉内容区:保底留一半后板
     if (f.content.width() < f.back.width() * 0.5 || f.content.height() <= 2)
-        f.content = f.back.adjusted(1, 1, -1, -f.back.height() * 0.22);
+        f.content = f.back.adjusted(1, 1, -1, -f.back.height() * 0.05);
     return f;
 }
 
