@@ -359,6 +359,21 @@ QString FolderTree::pathOf(const QTreeWidgetItem* item) {
     return item ? item->data(0, Qt::UserRole).toString() : QString();
 }
 
+// 拖放(#81):落点 → 目录路径。itemAt 直接给出命中行,取 UserRole 里的路径
+QString FolderTree::pathAt(const QPoint& pos) const {
+    QTreeWidgetItem* it = itemAt(pos);
+    if (!it) return {};
+    const QString p = it->data(0, Qt::UserRole).toString();
+    return QFileInfo(p).isDir() ? p : QString();
+}
+
+void FolderTree::refreshCurrent() {
+    if (QTreeWidgetItem* it = currentItem()) {
+        const QString p = it->data(0, Qt::UserRole).toString();
+        if (!p.isEmpty()) refreshNode(p);
+    }
+}
+
 bool FolderTree::isVolumeRoot(const QString& path) {
     return !path.isEmpty() && QDir(path).isRoot();
 }
