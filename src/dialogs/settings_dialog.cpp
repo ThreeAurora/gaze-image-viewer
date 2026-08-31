@@ -221,9 +221,27 @@ QWidget* SettingsDialog::pageStartup() {
     form->addRow(QString::fromUtf8("带文件启动"),
         combo("Start/withFile", {QString::fromUtf8("查看器"), QString::fromUtf8("全屏 - 查看器"),
                                  QString::fromUtf8("浏览器"), QString::fromUtf8("浏览器 - 全屏")}, 0));
-    form->addRow(QString::fromUtf8("不带文件启动"),
-        combo("Start/withoutFile", {QString::fromUtf8("无"), QString::fromUtf8("上次使用的目录"),
-                                    QString::fromUtf8("指定目录")}, 1));
+    auto* wof = combo("Start/withoutFile", {QString::fromUtf8("无"), QString::fromUtf8("上次使用的目录"),
+                                            QString::fromUtf8("指定目录")}, 1);
+    form->addRow(QString::fromUtf8("不带文件启动"), wof);
+    // #106:Browser/startDir 此前只有读点(启动分支)没有写点,"指定目录"是死选项
+    auto* row = new QWidget;
+    auto* hl = new QHBoxLayout(row);
+    hl->setContentsMargins(0, 0, 0, 0);
+    auto* ed = edit("Browser/startDir", QString());
+    ed->setToolTip(QString::fromUtf8("「不带文件启动」选「指定目录」时,浏览器从这里打开"));
+    hl->addWidget(ed, 1);
+    auto* btn = new QToolButton(row);
+    btn->setText(QString::fromUtf8("浏览…"));
+    hl->addWidget(btn);
+    form->addRow(QString::fromUtf8("启动目录"), row);
+    connect(btn, &QToolButton::clicked, this, [this, ed]() {
+        const QString d = QFileDialog::getExistingDirectory(this, QString::fromUtf8("选择启动目录"), ed->text());
+        if (d.isEmpty()) return;
+        ed->setText(d);   // edit() 挂在 textChanged 上,改文本即落盘
+    });
+    connect(wof, &QComboBox::currentIndexChanged, this, [row](int idx) { row->setEnabled(idx == 2); });
+    row->setEnabled(wof->currentIndex() == 2);
     form->addRow(chk("Start/rememberFilename", QString::fromUtf8("记录选择的文件名"), true));
     return wrapTitled(QString::fromUtf8("启动"), form);
 }
