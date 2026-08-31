@@ -541,7 +541,13 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
         btn->setIcon(ic);
         btn->setIconSize(QSize(17, 17));
         btn->setToolTip(tip);
-        btn->setFixedSize(34, 26);
+        // #134(复报)：这三颗是"有菜单但没有箭头"的元凶 —— barQss 里
+        // QToolButton::menu-indicator{image:none} 把 Qt 自带指示也关了，于是只剩一个
+        // 方形图标，肉眼完全看不出能展开(违反「控件须有可见指示器」)。
+        // 改成图标旁带一颗 ▼，与地址栏历史按钮(histBtn)同一形态 = 用户点名的参照物。
+        btn->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+        btn->setText(QString::fromUtf8("\xe2\x96\xbc")); // ▼
+        btn->setFixedSize(46, 26);
         btn->setPopupMode(QToolButton::InstantPopup);
         btn->setMenu(menu);
         b2->addWidget(btn);
