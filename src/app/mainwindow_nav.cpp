@@ -251,6 +251,7 @@ void MainWindow::revealFile(const QString& path) {
     QFileInfo fi(path);
     if (!fi.exists()) return;
     Logger::event(QStringLiteral("revealFile '%1'").arg(path));   // #128② 取证
+    Logger::event(QStringLiteral("revealFile '%1'").arg(path));   // #128② 取证
     // 目录没变就别 navigateTo:那会重扫整目录并把旧选中项再解一遍
     // (实测交接日志里 loadFile 134 紧跟着 loadFile 目标 = 两遍解码)
     if (fi.absolutePath() != m_currentDir) navigateTo(fi.absolutePath());
