@@ -34,6 +34,7 @@
 #include <QCoreApplication>
 #include <QFileInfo>
 #include <QPointer>
+#include <QSharedPointer>
 #include <QThread>
 #include <QDateTime>
 #include "settings.h"
