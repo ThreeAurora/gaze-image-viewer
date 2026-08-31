@@ -12,8 +12,8 @@ namespace Theme {
 void init();                 // main() 里 setStyleSheet 前调用一次
 bool light();                // 当前是否浅色
 
-inline const char* T(const char* dk, const char* lt) {
-    return light() ? lt : dk;   // 参数名避开 light():形参遮蔽会让分支永远取浅色值
+inline const char* T(const char* dark, const char* light) {
+    return light() ? light : dark;
 }
 
 QString appQss();            // 应用级 QSS(自 main.cpp 收编,含全套令牌取值)
