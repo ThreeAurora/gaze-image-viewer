@@ -349,23 +349,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     // 红标、框里却写着"全部"。查不到时如实标出当前筛选名:实测(Qt 6.5.3,
     // cache/tmp/combo_placeholder_test.cpp 事实B)不可编辑 QComboBox 在
     // currentIndex(-1) 下会把 placeholderText 画进显示区。
-    connect(m_fileGrid, &FileGrid::filterModeChanged, this, [this](int mode) {
-        if (!m_formatFilterCombo) return;
-        QComboBox* cb = m_formatFilterCombo;
-        cb->blockSignals(true);
-        int idx = -1;
-        for (int i = 0; i < cb->count(); ++i)
-            if (cb->itemData(i).toInt() == mode) { idx = i; break; }
-        if (idx >= 0) {
-            // 先定位再清占位:index 还是 -1 时清空占位文本会把 index 顶回 0
-            cb->setCurrentIndex(idx);
-            cb->setPlaceholderText(QString());
-        } else {
-            cb->setCurrentIndex(-1);
-            cb->setPlaceholderText(QString::fromUtf8("筛选：") + filterModeName(mode));
-        }
-        cb->blockSignals(false);
-    });
+    connect(m_fileGrid, &FileGrid::filterModeChanged,
+            this, &MainWindow::syncFilterIndicators);
 
     // 树右键的文件系统操作要落到网格上:removed 表示"这个目录已经没了",
     // 只有这种情况才把用户请出去,其余一律原地刷新。
