@@ -19,9 +19,12 @@
 #include <QSettings>
 #include <QKeySequence>
 #include <QShortcut>
+#include <algorithm>
+#include <cmath>
 
+// 刻意不加 Q_OBJECT:这是纯头文件类,不进 AUTOMOC(加了会缺 vtable)。
+// 本类不声明任何信号/槽/属性,连的都是 QDialog 已有的槽,不需要元对象。
 class CropDialog : public QDialog {
-    Q_OBJECT
 public:
     CropDialog(const QString& path, QWidget* parent = nullptr)
         : QDialog(parent), m_path(path)
@@ -61,7 +64,8 @@ public:
         });
         connect(cancel, &QPushButton::clicked, this, &QDialog::reject);
         connect(m_btnOk, &QPushButton::clicked, this, &QDialog::accept);
-        (void)new QShortcut(QKeySequence(Qt::Key_Escape), this, SLOT(reject()));
+        auto* esc = new QShortcut(QKeySequence(Qt::Key_Escape), this);
+        connect(esc, &QShortcut::activated, this, [this]() { reject(); });
 
         // 初始给个居中 80% 的默认选区,省得用户从零开始拖
         const int w = m_img.width() * 4 / 5, h = m_img.height() * 4 / 5;
