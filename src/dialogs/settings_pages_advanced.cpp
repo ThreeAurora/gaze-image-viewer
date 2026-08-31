@@ -493,6 +493,119 @@ QWidget* SettingsDialog::pageImgSearch() {
 
     // 分组"服务位置"
     auto* fLoc = new QFormLayout;
+    fLoc->setVerticalSpacing(10);
+    // 项目目录:输入 + 浏览 + main.py 存在性指示
+    auto* dirEdit = edit("ImgSearch/dir", ImgSearch::defaultDir());
+    auto* dirState = new QLabel;
+    auto probeDir = [dirEdit, dirState] {
+        const QString d = dirEdit->text().trimmed();
+        const bool ok = !d.isEmpty() && QFileInfo::exists(d + "/main.py");
+        dirState->setText(ok ? QString::fromUtf8("✓ 找到 main.py")
+                             : QString::fromUtf8("✗ 未找到 main.py"));
+        dirState->setStyleSheet(QString("background:transparent;color:%1;")
+                                    .arg(ok ? "#7BC97B" : "#E07070"));
+    };
+    auto* dirBrowse = new QPushButton(QString::fromUtf8("浏览…"));
+    connect(dirBrowse, &QPushButton::clicked, this, [this, dirEdit] {
+        const QString d = QFileDialog::getExistingDirectory(
+            this, QString::fromUtf8("选择万象图搜项目目录"), dirEdit->text());
+        if (!d.isEmpty()) dirEdit->setText(d);
+    });
+    connect(dirEdit, &QLineEdit::textChanged, dirEdit, probeDir);
+    probeDir();
+    auto* dirRow = new QWidget;
+    auto* dirLay = new QHBoxLayout(dirRow);
+    dirLay->setContentsMargins(0, 0, 0, 0);
+    dirLay->setSpacing(6);
+    dirLay->addWidget(dirEdit, 1);
+    dirLay->addWidget(dirBrowse);
+    dirLay->addWidget(dirState);
+    fLoc->addRow(QString::fromUtf8("项目目录"), dirRow);
+
+    // Python 解释器:输入 + 浏览 + 存在性指示
+    auto* pyEdit = edit("ImgSearch/python",
+                        QStringLiteral("C:/miniconda3"));
+    auto* pyState = new QLabel;
+    auto probePy = [pyEdit, pyState] {
+        const bool ok = QFileInfo::exists(pyEdit->text().trimmed());
+        pyState->setText(ok ? QString::fromUtf8("✓ 存在")
+                            : QString::fromUtf8("✗ 未找到"));
+        pyState->setStyleSheet(QString("background:transparent;color:%1;")
+                                   .arg(ok ? "#7BC97B" : "#E07070"));
+    };
+    auto* pyBrowse = new QPushButton(QString::fromUtf8("浏览…"));
+    connect(pyBrowse, &QPushButton::clicked, this, [this, pyEdit] {
+        const QString f = QFileDialog::getOpenFileName(
+            this, QString::fromUtf8("选择 Python 解释器"), pyEdit->text(),
+            QString::fromUtf8("可执行文件 (python*.exe)"));
+        if (!f.isEmpty()) pyEdit->setText(QDir::toNativeSeparators(f));
+    });
+    connect(pyEdit, &QLineEdit::textChanged, pyEdit, probePy);
+    probePy();
+    auto* pyRow = new QWidget;
+    auto* pyLay = new QHBoxLayout(pyRow);
+    pyLay->setContentsMargins(0, 0, 0, 0);
+    pyLay->setSpacing(6);
+    pyLay->addWidget(pyEdit, 1);
+    pyLay->addWidget(pyBrowse);
+    pyLay->addWidget(pyState);
+    fLoc->addRow(QString::fromUtf8("Python"), pyRow);
+
+    fLoc->addRow(QString::fromUtf8("端口"),
+                 spin("ImgSearch/port", 1024, 65535, 8747));
+    auto* portNote = new QLabel(QString::fromUtf8(
+        "与 imgseek 服务实际监听端口一致(默认 8747);服务已在运行时改动需重启服务。"));
+    portNote->setStyleSheet(
+        QString("background:transparent;color:%1;").arg(C_TEXT_FAINT));
+    fLoc->addRow(portNote);
+    root->addWidget(group(QString::fromUtf8("服务位置"), fLoc));
+
+    // 分组"服务生命周期"
+    auto* fLife = new QFormLayout;
+    fLife->setVerticalSpacing(10);
+    fLife->addRow(chk("ImgSearch/killOnExit",
+        QString::fromUtf8("退出 Gaze 时结束由 Gaze 拉起的图搜服务"), false));
+    auto* lifeNote = new QLabel(QString::fromUtf8(
+        "只回收由 Gaze 自动拉起的服务实例;手动启动的不受影响。"));
+    lifeNote->setStyleSheet(
+        QString("background:transparent;color:%1;").arg(C_TEXT_FAINT));
+    fLife->addRow(lifeNote);
+    root->addWidget(group(QString::fromUtf8("服务生命周期"), fLife));
+
+    // 分组"连接"
+    auto* fTest = new QFormLayout;
+    fTest->setVerticalSpacing(10);
+    auto* testBtn = new QPushButton(QString::fromUtf8("测试连接"));
+    auto* testState = new QLabel;
+    connect(testBtn, &QPushButton::clicked, testState, [testBtn, testState] {
+        testBtn->setEnabled(false);
+        testState->setText(QString::fromUtf8("正在连接…"));
+        testState->setStyleSheet(
+            QString("background:transparent;color:%1;").arg(C_TEXT_FAINT));
+        // ctx 挂在 testState:页销毁/重建后回调自动丢弃
+        ImgSearch::pingAsync(testState, [testBtn, testState](bool alive) {
+            testBtn->setEnabled(true);
+            testState->setText(alive ? QString::fromUtf8("✓ 服务在线")
+                                     : QString::fromUtf8("✗ 无法连接(服务未运行)"));
+            testState->setStyleSheet(QString("background:transparent;color:%1;")
+                                         .arg(alive ? "#7BC97B" : "#E07070"));
+        });
+    });
+    fTest->addRow(testBtn, testState);
+    root->addWidget(group(QString::fromUtf8("连接"), fTest));
+
+    return wrapTitled(QString::fromUtf8("以文搜图"), root);
+}
+
+// ── 以文搜图:万象图搜(imgseek)服务位置/生命周期/测试连接 ──
+// 键:ImgSearch/dir python port killOnExit(消费方在 imgsearch.h 与
+// mainwindow closeEvent;改动即时落 ini)
+QWidget* SettingsDialog::pageImgSearch() {
+    auto* root = new QVBoxLayout;
+    root->setSpacing(9);
+
+    // 分组"服务位置"
+    auto* fLoc = new QFormLayout;
     fLoc->setVerticalSpacing(6);
     // 项目目录:输入 + 浏览 + main.py 存在性指示
     auto* dirEdit = edit("ImgSearch/dir", ImgSearch::defaultDir());
