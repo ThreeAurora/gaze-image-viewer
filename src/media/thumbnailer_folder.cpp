@@ -106,20 +106,46 @@ QImage Thumbnailer::folderThumb(const QString& dirPath, int size) {
     const Prefs p = prefs();
     QDir d(dirPath);
     if (!d.exists()) return {};
-    const auto raw = d.entryInfoList(QDir::Files | QDir::NoDotAndDotDot, QDir::Name);
-    // 挑选顺序必须与网格一致(#98):QDir::Name 是纯字典序(1, 10, 2),
-    // 四合一会取到"1、10、2、3",和点开文件夹看到的前四张对不上
-    QFileInfoList list = raw;
-    std::stable_sort(list.begin(), list.end(), [](const QFileInfo& a, const QFileInfo& b) {
-        return naturalNameLess(a.fileName(), b.fileName());
-    });
-    QStringList picked;
+    QElapsedTimer ftClock;
+    ftClock.start();
+
+    // #139:候选不再"只挑图片"。本级文件(图+视频)按自然序挑;
+    // folder4 且本级不足 4 格时,按自然序扫**直接子目录**补格(深度 1,不往下递归)。
+    // 视频格走进程内 libav 单帧(videoThumbFFmpeg),不 spawn 外部 ffmpeg.exe;
+    // 最坏 4 格全视频也只是 4 次解码,首生成付一次,之后命中 DB/内存缓存。
+    // 单封面(folder4 关)维持原样:只取本级第一个候选,不扫子目录。
     const int want = p.folder4 ? 4 : 1;
-    for (const QFileInfo& fi : list) {
-        // 只挑图片:视频格要跑 ffmpeg 抽帧,一个目录几十个子目录时会拖慢浏览
-        if (IMAGE_EXTS.count("." + fi.suffix().toLower()))
+    int videoCount = 0;
+    QStringList picked;
+    auto tryPick = [want, &picked, &videoCount](const QString& dir) {
+        QDir sub(dir);
+        auto raw = sub.entryInfoList(QDir::Files | QDir::NoDotAndDotDot, QDir::Name);
+        QFileInfoList list = raw;
+        std::stable_sort(list.begin(), list.end(), [](const QFileInfo& a, const QFileInfo& b) {
+            return naturalNameLess(a.fileName(), b.fileName());
+        });
+        for (const QFileInfo& fi : list) {
+            const QString ext = "." + fi.suffix().toLower();
+            const bool isImg = IMAGE_EXTS.count(ext) > 0;
+            const bool isVid = !isImg && VIDEO_EXTS.count(ext) > 0;
+            if (!isImg && !isVid) continue;
+            if (isVid) ++videoCount;
             picked << fi.absoluteFilePath();
-        if (picked.size() >= want) break;
+            if (picked.size() >= want) return true;
+        }
+        return false;
+    };
+    int subDirsScanned = 0;
+    if (!tryPick(dirPath) && want > 1) {
+        auto rawDirs = d.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+        QFileInfoList dirs = rawDirs;
+        std::stable_sort(dirs.begin(), dirs.end(), [](const QFileInfo& a, const QFileInfo& b) {
+            return naturalNameLess(a.fileName(), b.fileName());
+        });
+        for (const QFileInfo& di : dirs) {
+            ++subDirsScanned;
+            if (tryPick(di.absoluteFilePath())) break;
+        }
     }
     if (picked.isEmpty()) return {};
 
