@@ -690,6 +690,84 @@ void MainWindow::dropEvent(QDropEvent* e) {
     m_pendingDropSelect.clear();
 }
 
+// ═══════════════════════════════════════════
+// 拖放(#81)
+//   拖入文件 → 导航到所在目录并选中(同目录的多个一起选中)
+//   拖入目录 → 直接进入
+//   拖到文件夹上(网格卡片或树节点)→ 复制进去(与"拖出=复制"对称)
+// ═══════════════════════════════════════════
+void MainWindow::dragEnterEvent(QDragEnterEvent* e) {
+    if (e->mimeData() && e->mimeData()->hasUrls()) e->acceptProposedAction();
+}
+void MainWindow::dragMoveEvent(QDragMoveEvent* e) {
+    if (e->mimeData() && e->mimeData()->hasUrls()) e->acceptProposedAction();
+}
+
+void MainWindow::dropEvent(QDropEvent* e) {
+    const QMimeData* md = e->mimeData();
+    if (!md || !md->hasUrls()) return;
+
+    QStringList paths;
+    for (const QUrl& u : md->urls()) {
+        if (!u.isLocalFile()) continue;
+        const QString p = QDir::fromNativeSeparators(u.toLocalFile());
+        if (QFileInfo::exists(p)) paths << p;
+    }
+    if (paths.isEmpty()) return;
+    e->acceptProposedAction();
+
+    // 落点是否压在某个文件夹上:先看网格,再看树
+    QString dropIntoDir;
+    const QPoint gpos = e->position().toPoint();
+    if (QWidget* child = childAt(gpos)) {
+        if (m_fileGrid && (child == m_fileGrid || m_fileGrid->isAncestorOf(child))) {
+            const int idx = m_fileGrid->indexAt(m_fileGrid->mapFrom(this, gpos));
+            const QString hit = m_fileGrid->pathAt(idx);
+            if (!hit.isEmpty() && QFileInfo(hit).isDir()) dropIntoDir = hit;
+        } else if (m_folderTree && (child == m_folderTree
+                                    || m_folderTree->isAncestorOf(child))) {
+            const QString hit = m_folderTree->pathAt(m_folderTree->mapFrom(this, gpos));
+            if (!hit.isEmpty() && QFileInfo(hit).isDir()) dropIntoDir = hit;
+        }
+    }
+
+    // 拖到文件夹上 = 复制进去(不动原件;用户没要求"移动"语义)
+    if (!dropIntoDir.isEmpty()) {
+        QStringList errs;
+        int copied = 0;
+        for (const QString& p : paths) {
+            const QFileInfo fi(p);
+            const QString dst = dropIntoDir + "/" + fi.fileName();
+            if (QFileInfo::exists(dst)) { errs << dst; continue; }
+            if (fi.isDir()) {
+                if (!QDir().rename(p, dst)) { errs << dst; continue; }
+            } else {
+                if (!QFile::copy(p, dst)) { errs << dst; continue; }
+            }
+            ++copied;
+        }
+        if (copied) {
+            m_fileGrid->refreshCurrentDir();
+            if (m_folderTree) m_folderTree->refreshCurrent();
+        }
+        if (!errs.isEmpty())
+            QMessageBox::warning(this, QString::fromUtf8("部分项目未能复制"),
+                                 errs.join(QLatin1Char('\n')));
+        return;
+    }
+
+    // 拖到空白 = 导航到目标目录并选中拖进来的文件
+    const QFileInfo first(paths.first());
+    const QString dir = first.isDir() ? first.absoluteFilePath() : first.absolutePath();
+    // 目录加载完成后按 m_preferPath 选中首项;同目录的其余项随后补选
+    if (!first.isDir()) m_fileGrid->setPreferPath(first.absoluteFilePath());
+    navigateTo(dir);
+    if (!first.isDir()) {
+        for (const QString& p : paths)
+            if (QFileInfo(p).absolutePath() == dir) m_fileGrid->selectByPath(p, true);
+    }
+}
+
 void MainWindow::closeEvent(QCloseEvent* event) {
     if (AppSettings::instance().get("Interface/clearRecentOnExit", false).toBool()) {
         // 退出时清理"最近的文件":不落盘,直接把内存 + ini 一起清空
