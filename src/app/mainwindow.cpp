@@ -733,7 +733,19 @@ void MainWindow::dropEvent(QDropEvent* e) {
     }
 
     // 拖到文件夹上 = 复制进去(不动原件;用户没要求"移动"语义)
+    // 凡是改动文件的拖放都先弹窗确认(用户明令"但凡拖动都加个窗口确认");
+    // 拖到空白处只是导航,不改任何文件,不弹
     if (!dropIntoDir.isEmpty()) {
+        const QString what = paths.size() == 1
+            ? QFileInfo(paths.first()).fileName()
+            : QString::fromUtf8("%1 个项目").arg(paths.size());
+        if (QMessageBox::question(this, QString::fromUtf8("拖放复制"),
+                QString::fromUtf8("将 %1 复制到\n%2 ?\n\n(不移动、不删除,只复制)")
+                    .arg(what, dropIntoDir),
+                QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
+            return;   // 用户取消:什么都不做
+        }
+
         QStringList errs;
         int copied = 0;
         for (const QString& p : paths) {
@@ -750,6 +762,8 @@ void MainWindow::dropEvent(QDropEvent* e) {
         if (copied) {
             m_fileGrid->refreshCurrentDir();
             if (m_folderTree) m_folderTree->refreshCurrent();
+            // 与删除提示同一套左下角 toast,反馈简短明确
+            showDeleteToast(this, QString::fromUtf8("已复制 %1 项到目标文件夹").arg(copied));
         }
         if (!errs.isEmpty())
             QMessageBox::warning(this, QString::fromUtf8("部分项目未能复制"),
