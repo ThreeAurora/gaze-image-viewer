@@ -315,11 +315,18 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
                     // 回车:按 SwitchMode/enterKey 切换模式
                     if ((ke->key() == Qt::Key_Return || ke->key() == Qt::Key_Enter)
                         && !forActivation) {
-                        // #128②:刚用地址栏跳过路径,这一下就不再切模式 ——
-                        // 跳转会把焦点交给网格并自动选中第一项(#35),同一个物理
-                        // 回车接着落到网格上会被再消费一次,用户看到的就是
-                        // "跳转的同时查看器又打开了那个视频"。
-                        if (QDateTime::currentMSecsSinceEpoch() - m_lastAddrJumpMs < 500)
+                        // #128② 取证埋点:用户复报"跳转后查看器仍弹"。本分支是
+                        // 全应用唯一的 Enter→查看器消费点,但成功跳转/模式切换
+                        // 此前零日志,复报无法定案。落盘:谁收到、距上次地址栏
+                        // 跳转多少毫秒,再看走宽限还是切换。
+                        const qint64 sinceJump =
+                            QDateTime::currentMSecsSinceEpoch() - m_lastAddrJumpMs;
+                        Logger::event(QStringLiteral(
+                            "enter: tgt=%1 sinceJump=%2ms")
+                                          .arg(QString::fromUtf8(
+                                              tgt->metaObject()->className()))
+                                          .arg(sinceJump));
+                        if (sinceJump < 500)
                             return true;
                         requestSwitchMode("SwitchMode/enterKey");
                         return true;
