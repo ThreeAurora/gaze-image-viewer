@@ -1,14 +1,17 @@
 #pragma once
 // ═══════════════════════════════════════════════════════════
-// WIC 色彩管理解码(仅用于 CMYK JPEG)
+// WIC 色彩管理解码
 //
-// 无嵌入 ICC 的 CMYK 印刷图,Qt/libjpeg 做"简单反演"(R=255-C 级别)
-// 显示明显偏亮;Windows WIC 按系统默认印刷假定(SWOP 系)转换 sRGB,
-// 与 QQ/Windows 照片应用同一条色彩管线,颜色沉实接近印刷意图。
+// 两条用途:
+//   1. CMYK JPEG(#57):Qt/libjpeg 简单反演偏亮;WIC 按印刷假定转 sRGB,
+//      与 QQ/Windows 照片应用同一条色彩管线。
+//   2. HEIF/HEIC(#116):Qt 无插件(MinGW 加载不了 MSVC 插件),系统
+//      "HEIF 图像扩展"装了就有 Microsoft HEIF Decoder 可用;没装则失败
+//      回退空图。CreateDecoderFromFilename 按容器魔数自动选解码器,
+//      CMYK 与 HEIF 共用同一条"开解码器→取帧→转 PBGRA"管线。
 //
-// 触发条件由调用方保证:仅 4 通道(CMYK/YCCK) JPEG 调用本文件;
-// 普通 RGB 图片一律走 Qt 原路径,行为零变化。
-// 解码失败返回空 QImage,调用方回退 Qt 路径(绝不黑屏)。
+// 触发条件由调用方保证;普通 RGB 图片一律走 Qt 原路径,行为零变化。
+// 解码失败返回空 QImage,调用方回退原路径(绝不黑屏)。
 //
 // GUID 手动定义(不链接 windowscodecs.lib,CoCreateInstance 走 ole32
 // 激活即可)——沿用 IID_IImageList 的先例,规避 MinGW GUID 符号缺失问题。
