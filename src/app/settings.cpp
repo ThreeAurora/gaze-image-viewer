@@ -3,6 +3,7 @@
 #include <QStandardPaths>
 #include <QDir>
 #include <QFileInfo>
+#include <QFile>
 
 AppSettings& AppSettings::instance() {
     static AppSettings s;
