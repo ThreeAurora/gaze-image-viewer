@@ -21,13 +21,28 @@ inline QString escapeHtml(const QString& s) {
     return o;
 }
 
+// 行内代码手动替换:Qt 6.8 的 QString::replace(QRegularExpression, Functor)
+// 在本工具链上不可用,这里自己走 globalMatch
+inline QString wrapInlineCode(const QString& s) {
+    QRegularExpression re(QStringLiteral("`([^`]+)`"));
+    QString out;
+    int last = 0;
+    auto it = re.globalMatch(s);
+    while (it.hasNext()) {
+        const auto m = it.next();
+        out += s.mid(last, m.capturedStart() - last);
+        out += QStringLiteral("<code>") + escapeHtml(m.captured(1))
+             + QStringLiteral("</code>");
+        last = m.capturedEnd();
+    }
+    out += s.mid(last);
+    return out;
+}
+
 // 行内:先抽行内代码占位(避免代码里的 * _ 被当强调),再按顺序应用强调规则
 inline QString inlineMd(QString s, const QStringList& codeStore) {
     // 行内代码 `x`
-    s.replace(QRegularExpression(QStringLiteral("`([^`]+)`")),
-              [&](const QRegularExpressionMatch& m) {
-                  return QStringLiteral("<code>%1</code>").arg(escapeHtml(m.captured(1)));
-              });
+    s = wrapInlineCode(s);
     // 图片 ![alt](src) —— 摆在链接之前,否则会被链接规则吃掉
     s.replace(QRegularExpression(QStringLiteral("!\\[([^\\]]*)\\]\\(([^\\s)]+)(?:\\s+\"([^\"]*)\")?\\)")),
               QStringLiteral(R"(<img src="\2" alt="\1" title="\3"/>)"));
