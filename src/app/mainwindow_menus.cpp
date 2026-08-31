@@ -244,7 +244,7 @@ void MainWindow::createMenubar() {
             "Ctrl+PgUp/PgDn — 快退/快进(秒数见设置→键盘)\n"
             "按住右键+滚轮 — 缩放(等同 Ctrl+滚轮)\n"
             "双击预览区 — 全屏\n"
-            "F5 — 刷新  F3 — 预览面板  F11 — 全屏\n"
+            "F5 — 刷新  F11 — 全屏\n"
             "G — 全屏预览(只铺画面;再按 G 或 ESC 完全回到原布局)\n"
             "Alt+←/→ — 后退/前进  Backspace — 上级\n"
             "Ctrl+1~5 — 设置颜色标记(红橙黄绿蓝)\n"
