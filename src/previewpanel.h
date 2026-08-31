@@ -346,6 +346,17 @@ private:
     QElapsedTimer m_navClock;  // 最近一次导航时刻:浏览扫动时暂缓自动播(停稳才切视频)
     QWidget *m_controlBar;
     QWidget *m_imgSpace;   // 图片/GIF 形态的空间吸收器:没有它 40px 的控制栏会被布局垂直居中
+
+    // ── #82 PDF 预览状态 ──
+    QString   m_pdfPath;
+    QString   m_pdfLastPath;   // 上一次渲染的文件(换文件才重置页码)
+    int       m_pdfPage  = 1;
+    int       m_pdfPages = 0;  // 0 = 未知(拿不到页数时不显示总数)
+    bool      m_pdfBusy  = false;
+    QWidget*  m_pdfBar   = nullptr;
+    QPushButton* m_pdfPrev  = nullptr;
+    QPushButton* m_pdfNext  = nullptr;
+    QLabel*      m_pdfLabel = nullptr;
     QWidget *m_imgSpace;   // 图片/GIF 形态的空间吸收器:没有它 40px 的控制栏会被布局垂直居中
     QWidget *m_imgSpace;   // 图片/GIF 形态的空间吸收器:没有它 40px 的控制栏会被布局垂直居中
     QWidget *m_imgSpace;   // 图片/GIF 形态的空间吸收器:没有它 40px 的控制栏会被布局垂直居中
