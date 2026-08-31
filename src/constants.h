@@ -95,7 +95,10 @@ inline const std::unordered_set<QString> VIDEO_EXTS = {
 };
 
 inline const std::unordered_set<QString> AUDIO_EXTS = {
-    ".mp3", ".wav", ".flac", ".aac", ".ogg", ".wma", ".m4a", ".opus"
+    ".mp3", ".wav", ".flac", ".aac", ".ogg", ".wma", ".m4a", ".opus",
+    // #103 工单③(2026-09-01 用户裁决全加):amr(须 8kHz)与 ac3 样张均
+    // 实测解码通过;列表内播放走 Qt Multimedia ffmpeg 后端,真机播放待点验。
+    ".amr", ".ac3"
 };
 
 inline const std::unordered_set<QString> DOCUMENT_EXTS = {
