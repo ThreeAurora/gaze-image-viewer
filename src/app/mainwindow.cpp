@@ -353,6 +353,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     // currentIndex(-1) 下会把 placeholderText 画进显示区。
     connect(m_fileGrid, &FileGrid::filterModeChanged,
             this, &MainWindow::syncFilterIndicators);
+    // #107:启动即按落盘筛选(Browser/filterMode)对齐下拉框/红钮 —— 原先恒显"全部"。
+    // 放这里而不是工具栏里:构造序是 createToolbar2 → sortHeader → FileGrid,
+    // 工具栏阶段 m_fileGrid 还是空的。
+    syncFilterIndicators(m_fileGrid->filterMode());
 
     // 树右键的文件系统操作要落到网格上:removed 表示"这个目录已经没了",
     // 只有这种情况才把用户请出去,其余一律原地刷新。
