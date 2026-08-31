@@ -388,8 +388,9 @@ void FileGrid::buildFindBar() {
     lay->addWidget(m_findEdit);
 
     m_findInfo = new QLabel(m_findBar);
-    m_findInfo->setStyleSheet(
-        "color:" C_TEXT_SUB ";font-size:12px;background:transparent;border:none;");
+    m_findInfo->setStyleSheet(QString::fromUtf8(
+        "color:%1;font-size:12px;background:transparent;border:none;")
+        .arg(C_TEXT_SUB));
     m_findInfo->setAlignment(Qt::AlignCenter);
     m_findInfo->setMinimumWidth(52);
     lay->addWidget(m_findInfo);
