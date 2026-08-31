@@ -45,6 +45,10 @@ endif()
 # 带状态的改成"返回函数局部 static 引用的访问器",保住全程序单实例语义)。
 # 规矩:给某个类加实现就放进它对应的那一组,不要再往主 .cpp 里续。
 file(GLOB_RECURSE GAZE_HEADERS CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/src/*.h")
+# 例外:filecard.h 声明的 FileCard 早已不参与构建(FileGrid 改单画布自绘后留下的死类)。
+# 把它交给 AUTOMOC 会生成引用 FileCard::ctor/各事件处理函数的元代码,而实现文件
+# 没编进来 → 链接期一堆 undefined reference。留着文件只为读史,别进 moc 名单。
+list(REMOVE_ITEM GAZE_HEADERS "${CMAKE_SOURCE_DIR}/src/filecard.h")
 
 add_executable(gaze WIN32
     ${GAZE_HEADERS}
