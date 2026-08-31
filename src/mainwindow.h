@@ -110,6 +110,12 @@ private:
     int  imageTabCount() const;
     void ensureBrowserTab();                // 常驻标签缺失/错位时补齐归位
     void requestTabThumb(const QString& path);  // 标签名左侧小缩略图(异步)
+    // #105:索引 0 常驻「浏览器」标签(tabData=哨兵),点它回标准模式
+    bool isBrowserTab(int index) const;
+    int  firstImageTab() const;             // 第一个图片标签,-1=无
+    int  imageTabCount() const;
+    void ensureBrowserTab();                // 常驻标签缺失/错位时补齐归位
+    void requestTabThumb(const QString& path);  // 标签名左侧小缩略图(异步)
     void installTabCloseButton(int index);  // 自绘 × (主题色,系统图标在深色下看不见)
     Q_INVOKABLE void pruneDeadViewerTabs();  // 丢掉指向已消失文件的标签(删除后网格也会叫)
     int  addViewerTab(const QString& path);                 // 追加标签,返回索引
