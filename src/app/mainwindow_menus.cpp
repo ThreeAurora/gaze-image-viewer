@@ -116,8 +116,7 @@ void MainWindow::createMenubar() {
     // 助记符用 &R(Rename)：Qt 的助记符只要求**同一菜单内**唯一，编辑菜单里没有别的 &R
     // (「刷新(&R)」在文件菜单，不冲突)。
     editMenu->addAction(IconLib::appIcon("cmd_rename"),
-        QString::fromUtf8("重命名(&R)"), this, &MainWindow::renameFocused,
-        QKeySequence("F3"));
+        QString::fromUtf8("重命名(&R)"), QKeySequence("F3"), this, &MainWindow::renameFocused);
     editMenu->addSeparator();
     editMenu->addAction(IconLib::appIcon("cmd_selectAllFile"),
         QString::fromUtf8("全选"), QKeySequence("Ctrl+A"), this, [this](){ m_fileGrid->selectAllEntries(); });
