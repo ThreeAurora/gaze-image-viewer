@@ -174,7 +174,7 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
 
     m_btnStop = new QPushButton;
     mkBtn(m_btnStop, QStyle::SP_MediaStop, 30,
-          QString::fromUtf8("\xe5\x81\x9c\xe6\xad\xa2(\xe5\x9b\x9e\xe5\x88\xb0\xe5\xbc\x80\xe5\xa4\xb4)")); // 停止(回到开头)
+          QString::fromUtf8("\xe5\x81\x9c\xe6\xad\xa2(\xe5\x9b\x9e\xe5\x88\xb0\xe5\xbc\x80\xe5\xa4\xb4, T)")); // 停止(回到开头, T)
     connect(m_btnStop, &QPushButton::clicked, this, [this]() {
         if (m_isGif) {
             setGifPaused(true);   // 先停:跳帧走暂停态,避开运行态 jumpToFrame 卡死
