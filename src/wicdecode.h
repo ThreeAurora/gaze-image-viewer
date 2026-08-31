@@ -150,4 +150,40 @@ inline QImage decodeFrame(const QString& path, const QSize& want = QSize()) {
     return result;
 }
 
+// CMYK JPEG → decodeFrame(JPEG 解码器内部完成 CMYK→sRGB)。旧名保留。
+inline QImage decodeCmyk(const QString& path, const QSize& want = QSize()) {
+    return decodeFrame(path, want);
+}
+
+// HEIF/HEIC → QImage(需系统"HEIF 图像扩展";没装则返回空)。#116
+// maxSide>0 时先探帧尺寸,按等比算 want 再解(两次打开,WIC 打开开销可忽略)。
+inline QImage decodeHeif(const QString& path, int maxSide = 0) {
+    if (maxSide <= 0) return decodeFrame(path);
+
+    ComScope com;
+    IWICImagingFactory* factory = nullptr;
+    if (FAILED(CoCreateInstance(kCLSID_WICImagingFactory, nullptr,
+            CLSCTX_INPROC_SERVER, kIID_IWICImagingFactory, (void**)&factory)))
+        return {};
+    QSize want;
+    {
+        IWICBitmapDecoder* decoder = nullptr;
+        IWICBitmapFrameDecode* frame = nullptr;
+        UINT w = 0, h = 0;
+        if (SUCCEEDED(factory->CreateDecoderFromFilename(
+                (const wchar_t*)path.utf16(), nullptr, GENERIC_READ,
+                WICDecodeMetadataCacheOnDemand, &decoder))
+            && SUCCEEDED(decoder->GetFrame(0, &frame))) {
+            frame->GetSize(&w, &h);
+            if (w > 0 && h > 0 && qMax(w, h) > UINT(maxSide))
+                want = QSize(int(w), int(h)).scaled(maxSide, maxSide, Qt::KeepAspectRatio);
+        }
+        if (frame) frame->Release();
+        if (decoder) decoder->Release();
+    }
+    factory->Release();
+    if (want.isEmpty()) return decodeFrame(path);   // 探不到尺寸就原样解
+    return decodeFrame(path, want);
+}
+
 } // namespace WicDecode
