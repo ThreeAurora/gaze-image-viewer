@@ -86,7 +86,12 @@ inline const std::unordered_set<QString> VIDEO_EXTS = {
     ".mp4", ".mov", ".avi", ".mkv", ".webm", ".wmv", ".flv",
     ".m4v", ".mpg", ".mpeg", ".3gp", ".ts", ".m2ts", ".mts",
     ".vob", ".ogv", ".divx", ".rm", ".rmvb", ".asf", ".f4v",
-    ".avchd", ".mxf", ".qt"
+    ".avchd", ".mxf", ".qt",
+    // #103 工单④(2026-09-01 用户裁决全加):3g2/ogm 样张实测解析通过,
+    // m1v/m2v 裸 ES 流抽帧实测通过(ffprobe duration 对裸流不可靠)。
+    // .avchd 保留:它是 BDMV 盘片目录格式,作文件扩展名几乎不出现,
+    // 移除零收益、误伤风险不为零 → 不动。
+    ".3g2", ".ogm", ".m1v", ".m2v"
 };
 
 inline const std::unordered_set<QString> AUDIO_EXTS = {
