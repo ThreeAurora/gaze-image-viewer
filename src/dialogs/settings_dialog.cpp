@@ -607,12 +607,35 @@ QWidget* SettingsDialog::pageAppearance() {
         combo("Appearance/labelAlign", {QString::fromUtf8("左"), QString::fromUtf8("居中"),
             QString::fromUtf8("右")}, 1));
     form->addRow(chk("Appearance/formatColor", QString::fromUtf8("文件根据格式显示以下颜色(文件名底色)"), true));
-    form->addRow(new QLabel(QString::fromUtf8(
-        "标签颜色列表(扩展名 → 底色):\n"
-        "  gif = rgb(170,170,0)\n"
-        "  mp4/mov/mkv/3gp/amr/asf/avi/bik/dsm/f4v/flc/flv\n"
-        "  ifo/m2t/m4v/mts/mpeg/ogv/rm/rmvb/swf/ts/webm/wmv = rgb(170,85,0)\n"
-        "(颜色编辑器即将支持)")));
+    // #126:这里原来是一段写死的 XnView 说明 + "(颜色编辑器即将支持)"。
+    //   编辑器其实早就存在(「缩略图 → 标签颜色」:增删改扩展名、取色、写 ini、
+    //   FileCard 真生效),那句占位话就是谎话。改成显示**当前真表**并一键跳过去。
+    {
+        QString t = QString::fromUtf8("标签颜色(扩展名 → 文件名底色,当前生效表):\n");
+        QHash<QString, QStringList> byColor;
+        for (const auto& e : LabelColors::all())
+            byColor[e.second.name(QColor::HexRgb)].append(e.first);
+        QStringList colors = byColor.keys();
+        colors.sort();
+        for (const QString& c : colors) {
+            const QStringList exts = byColor.value(c);
+            const QString shown = exts.size() > 8
+                ? exts.mid(0, 8).join(',') + QString::fromUtf8(",…(共 %1 项)").arg(exts.size())
+                : exts.join(',');
+            t += QString::fromUtf8("  %1 ← %2\n").arg(c, shown);
+        }
+        t += QString::fromUtf8("未列出的格式:%1\n(上面总开关关掉时一律不上底色)")
+                 .arg(LabelColors::fallbackColor().name(QColor::HexRgb));
+        auto* lab = new QLabel(t);
+        lab->setTextInteractionFlags(Qt::TextSelectableByMouse);
+        form->addRow(lab);
+    }
+    auto* lcBtn = new QPushButton(
+        QString::fromUtf8("打开颜色编辑器(缩略图 → 标签颜色)"));
+    connect(lcBtn, &QPushButton::clicked, this, [this]() {
+        if (m_labelColorsItem) m_cats->setCurrentItem(m_labelColorsItem);
+    });
+    form->addRow(lcBtn);
     return wrapTitled(QString::fromUtf8("外观"), form);
 }
 
