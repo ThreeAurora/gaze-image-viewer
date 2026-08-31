@@ -82,6 +82,17 @@ inline const std::unordered_set<QString> IMAGE_EXTS = {
     ".exr", ".dds", ".qoi", ".jp2", ".dpx", ".apng"
 };
 
+// ── RAW 相机原始格式白名单(#140)──
+// 独立于 IMAGE_EXTS:RAW 绝不进 Qt 解码/缩略图/预读管线(全解是数秒级重活)。
+// 预览形态 = 占位说明 + 「加载原始RAW」按钮,点击才后台全解(rawdecode.h,
+// 自带 LibRaw)。全囊括铁令(2026-09-01):不默认系统装有任何 RAW 解码器。
+inline const std::unordered_set<QString> RAW_EXTS = {
+    ".cr2", ".cr3", ".crw", ".nef", ".nrw", ".arw", ".srf", ".sr2",
+    ".dng", ".orf", ".rw2", ".raf", ".pef", ".erf", ".rwl",
+    ".3fr", ".fff", ".gpr", ".kdc", ".k25", ".mef", ".mrw",
+    ".x3f", ".mos", ".srw", ".iiq"
+};
+
 inline const std::unordered_set<QString> VIDEO_EXTS = {
     ".mp4", ".mov", ".avi", ".mkv", ".webm", ".wmv", ".flv",
     ".m4v", ".mpg", ".mpeg", ".3gp", ".ts", ".m2ts", ".mts",
