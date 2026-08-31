@@ -342,6 +342,9 @@ void MainWindow::toggleViewer() {
     Logger::event(QStringLiteral("toggleViewer -> %1")
                       .arg(m_viewerMode ? QStringLiteral("viewer")
                                         : QStringLiteral("browser")));   // #128② 取证
+    Logger::event(QStringLiteral("toggleViewer -> %1")
+                      .arg(m_viewerMode ? QStringLiteral("viewer")
+                                        : QStringLiteral("browser")));   // #128② 取证
     if (!m_viewerMode && m_slideshow) toggleSlideshow();   // 退出查看器停幻灯片
     applyPaneVisibility();             // 树/网格/预览标题条统一按"意图+模式"重算
     m_preview->setViewerMode(m_viewerMode);   // 让面板按 Viewer/* 还是 Fullscreen/* 取设置
