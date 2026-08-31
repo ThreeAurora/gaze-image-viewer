@@ -440,7 +440,8 @@ PrintOptions PrintDialog::options() const {
 // ─────────────────────────────────────────
 void PrintDialog::scheduleRefresh(bool geometryChanged) {
     m_geometryDirty |= geometryChanged;
-    if (!m_printing) m_debounce->start();
+    // 兜底:构造期任何新增的调用路径都不该再撞到空定时器(见 ctor 的顺序注释)
+    if (!m_printing && m_debounce) m_debounce->start();
 }
 
 void PrintDialog::goPage(int delta) {
