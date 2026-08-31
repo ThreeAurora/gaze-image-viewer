@@ -61,12 +61,9 @@ public slots:
             if (gen != m_gen) return;
             emitSnapshot(gen, false);
         });
-        // Qt 6.8 的 QAudioDecoder 保留 Qt5 信号名 error(Error),与同名 getter
-        // error() 重载 → 取地址必须 QOverload 消歧
-        connect(m_dec, QOverload<QAudioDecoder::Error>::of(&QAudioDecoder::error),
-                this, [this, gen](QAudioDecoder::Error err) {
+        connect(m_dec, &QAudioDecoder::errorOccurred, this, [this, gen](QAudioDecoder::Error) {
             if (gen != m_gen) return;
-            qWarning() << "audiowave:" << err << (m_dec ? m_dec->errorString() : QString());
+            qWarning() << "audiowave:" << (m_dec ? m_dec->errorString() : QString());
             emitSnapshot(gen, true);
         });
         m_dec->setSource(QUrl::fromLocalFile(path));
