@@ -179,6 +179,12 @@ private:
     // 地址栏单击全选(#109①③):按下前是否已整条选中 + 按下点(用来分清单击和拖选)
     QPoint  m_addrPressPt;
     bool    m_addrWasAllSelected = false;
+    // #127:一次焦点期内只自动全选一次。旧写法每次"未全选→点击"都 selectAll,
+    // 于是第三次点击又变全选,用户没法在路径中间改字 —— 第二次起就该只放光标。
+    bool    m_addrSelectedOnce = false;
+    // #128②:地址栏跳转后的一次宽限。跳完焦点落网格且自动选中第一项,
+    // 同一个 Enter 的后续事件会再被"回车=切换查看器"吃一次(用户实测)。
+    qint64  m_lastAddrJumpMs = 0;
     // 地址栏单击全选(#109①③):按下前是否已整条选中 + 按下点(用来分清单击和拖选)
     QPoint  m_addrPressPt;
     bool    m_addrWasAllSelected = false;
