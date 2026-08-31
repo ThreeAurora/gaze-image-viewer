@@ -91,7 +91,7 @@ void MainWindow::createMenubar() {
     fileMenu->addSeparator();
     fileMenu->addAction(QString::fromUtf8("刷新(&R)"), QKeySequence("F5"), this, [this](){ refresh(); });
     fileMenu->addSeparator();
-    fileMenu->addAction(QString::fromUtf8("退出(&X)"), this, &QWidget::close, QKeySequence("Alt+X"));
+    fileMenu->addAction(QString::fromUtf8("退出(&X)"), QKeySequence("Alt+X"), this, &QWidget::close);
 
     // ── 编辑(E) ──
     auto *editMenu = mb->addMenu(QString::fromUtf8("编辑(&E)"));
