@@ -379,6 +379,8 @@ void PreviewPanel::keyPressEvent(QKeyEvent* event) {
 }
 
 bool PreviewPanel::eventFilter(QObject* obj, QEvent* event) {
+    // 波形画布尺寸变化 → 重画(不消费事件;首次布局/查看器切换都靠它跟上)
+    if (obj == m_waveLabel && event->type() == QEvent::Resize) renderWave();
     // #115:文本预览的滚轮 = 上一个/下一个文件,永不滚文本。QTextEdit 的视口
     // 会自己吃掉 Wheel 并接受,冒泡不到面板 wheelEvent,只能拦在过滤器里。
     // 与图片区滚轮的 Mouse/wheel* 修饰键配置不同流:这里是硬规定(需求原话
