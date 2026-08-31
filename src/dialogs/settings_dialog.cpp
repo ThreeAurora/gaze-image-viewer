@@ -569,6 +569,19 @@ QWidget* SettingsDialog::pageThumbs() {
 
 QWidget* SettingsDialog::pageAppearance() {
     auto* form = new QFormLayout;
+    // 主题(重启生效):Theme::init 只在启动时读一次,全部样式表构造期已定,
+    // 运行中切换不会重刷 —— UI 上如实标注,不装成即时生效
+    auto* themeCombo = new QComboBox;
+    themeCombo->addItems({QString::fromUtf8("深色"), QString::fromUtf8("浅色")});
+    themeCombo->setCurrentIndex(
+        AppSettings::instance().get("Appearance/theme", QStringLiteral("dark")).toString()
+            == QLatin1String("light") ? 1 : 0);
+    themeCombo->setToolTip(QString::fromUtf8("重启 gaze 后生效"));
+    connect(themeCombo, &QComboBox::currentIndexChanged, this, [](int v) {
+        AppSettings::instance().set("Appearance/theme", v == 1 ? QStringLiteral("light")
+                                                               : QStringLiteral("dark"));
+    });
+    form->addRow(QString::fromUtf8("主题(重启后生效)"), themeCombo);
     form->addRow(QString::fromUtf8("自定义缩略图尺寸 - 宽"),
         spin("Appearance/customThumbW", THUMB_W_MIN, THUMB_W_MAX, 96));
     // 0 = 与宽同高(接线前的既有行为);>0 才按设置值固定缩略图框高
