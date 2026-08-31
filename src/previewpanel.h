@@ -123,6 +123,12 @@ private:
     void showVideo(const QString &path);
     void showAudio(const QString &path);
     void showText(const QString &path);
+    // #82:Markdown 以渲染后的 HTML 展示;PDF 走 Ghostscript 渲染 + 页导航
+    void showMarkdown(const QString& path);
+    void showPdf(const QString& path);
+    void renderPdfPage();          // 后台渲染当前页(不卡 UI)
+    void pdfGotoPage(int page);
+    void updatePdfBar();
     void showText(const QString &path);
     // #82:Markdown 以渲染后的 HTML 展示;PDF 走 Ghostscript 渲染 + 页导航
     void showMarkdown(const QString& path);
