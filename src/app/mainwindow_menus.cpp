@@ -89,7 +89,7 @@ void MainWindow::createMenubar() {
             PrintDialog::printImages(this, paths);
         });
     fileMenu->addSeparator();
-    fileMenu->addAction(QString::fromUtf8("刷新(&R)"), this, [this](){ refresh(); }, QKeySequence("F5"));
+    fileMenu->addAction(QString::fromUtf8("刷新(&R)"), QKeySequence("F5"), this, [this](){ refresh(); });
     fileMenu->addSeparator();
     fileMenu->addAction(QString::fromUtf8("退出(&X)"), this, &QWidget::close, QKeySequence("Alt+X"));
 
