@@ -606,9 +606,8 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
     });
 
     addSeparator();
-    addAction(IconLib::appIcon("cmd_batchRename"), "批量重命名...", this, []() {
-        QMessageBox::information(nullptr, "批量重命名", "批量重命名功能即将支持");
-    });
+    // #123:原「批量重命名...」占位项已删 —— 批量重命名在 TODO_ALL §9 否决清单(@153611),
+    // 菜单里挂一个"即将支持"的入口等于承诺用户永远不会来的功能。
     addAction(IconLib::appIcon("cmd_openProperties"), "属性..", this, [this]() {
         showShellProperties(m_filePath);
     });
