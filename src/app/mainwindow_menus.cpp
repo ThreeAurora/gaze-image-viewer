@@ -70,10 +70,10 @@ void MainWindow::createMenubar() {
     // ── 文件(F) ──
     auto *fileMenu = mb->addMenu("文件(&F)");
     fileMenu->addAction(IconLib::appIcon("cmd_open"), "打开",
-        this, [this]() {
+        QKeySequence("Ctrl+O"), this, [this]() {
             auto paths = m_fileGrid->selectedPaths();
             if (!paths.isEmpty()) openWithSystem(paths.first());
-        }, QKeySequence("Ctrl+O"));
+        });
     auto *recentMenu = fileMenu->addMenu(IconLib::appIcon("cmd_browse"), "最近的文件");
     connect(recentMenu, &QMenu::aboutToShow, this, [this, recentMenu]() {
         rebuildRecentMenu(recentMenu);
