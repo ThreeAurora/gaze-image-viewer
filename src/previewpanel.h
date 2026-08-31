@@ -268,6 +268,10 @@ private:
     QThread *m_waveThread = nullptr;            // 波形解码专属线程
     Audiowave::Worker *m_waveWorker = nullptr;  // 无 parent:随所属线程 finished 收尾
     Audiowave::Snapshot m_waveSnap;             // 最近快照(换文件即清空重画)
+    QLabel *m_waveLabel = nullptr;              // 波形画布(音频形态,stretch 3)
+    QThread *m_waveThread = nullptr;            // 波形解码专属线程
+    Audiowave::Worker *m_waveWorker = nullptr;  // 无 parent:随所属线程 finished 收尾
+    Audiowave::Snapshot m_waveSnap;             // 最近快照(换文件即清空重画)
     QLabel *m_placeholder = nullptr;   // 空态占位
     QTextEdit *m_textEdit = nullptr;   // txt 文本预览
     QTextEdit *m_textEdit = nullptr;   // txt 文本预览
