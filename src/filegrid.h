@@ -28,6 +28,10 @@ enum FilterMode {
     FILTER_DOCUMENTS, FILTER_EXECUTABLES, FILTER_FOLDERS,
     FILTER_RED, FILTER_ORANGE, FILTER_YELLOW, FILTER_GREEN, FILTER_BLUE,
     FILTER_UNRED,                       // 非红色标记(红标三态按钮的第 3 态)
+    // #125:自定义扩展名集合筛选。追加在末尾而不是插在中间 ——
+    // Browser/filterMode 存的是这个枚举的**数值**,插中间会把红标等档位的存档
+    // 全部错位(用户重启后筛选悄悄变成别的)。
+    FILTER_CUSTOM,
 };
 
 // 查看方式(查看菜单/工具栏)
