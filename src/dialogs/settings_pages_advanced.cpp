@@ -15,6 +15,7 @@
 #include <QPushButton>
 #include <QLabel>
 #include <QFileDialog>
+#include <QFileInfo>
 #include <QMessageBox>
 #include <QProcess>
 #include <QMessageBox>
