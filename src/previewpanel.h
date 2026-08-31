@@ -129,6 +129,12 @@ private:
     void teardownWave();
     void renderWave();
     void setAudioChrome(bool on);   // 音频形态两件套(文件名+波形)统一显隐出口
+    // 音频波形(audiowave.h):解码聚合在专属线程,主线程只画快照。
+    // 性能红线(用户令):波形可晚出,不得拖累切文件/加载音频
+    void ensureWave();
+    void teardownWave();
+    void renderWave();
+    void setAudioChrome(bool on);   // 音频形态两件套(文件名+波形)统一显隐出口
     // #82:Markdown 以渲染后的 HTML 展示;PDF 走 Ghostscript 渲染 + 页导航
     void showMarkdown(const QString& path);
     void showPdf(const QString& path);
