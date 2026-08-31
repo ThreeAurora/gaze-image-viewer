@@ -593,10 +593,13 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
     b2->addWidget(sep2);
 
     // 缩略图列数:自动 + 1-16(手动指定后缩放窗口时缩略图贴边缩放但列数不变)
+    // #134:InstantPopup 按钮的 menu-indicator 被 barQss 关掉,补 ▼ 文本承担"点开有菜单"的可见指示
     auto* colsBtn = new QToolButton;
     colsBtn->setIcon(IconLib::appIcon("cmd_paneThumbs"));
     colsBtn->setIconSize(QSize(17, 17));
-    colsBtn->setFixedSize(34, 26);
+    colsBtn->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    colsBtn->setText(QString::fromUtf8("\xe2\x96\xbc"));
+    colsBtn->setFixedSize(46, 26);
     colsBtn->setToolTip(QString::fromUtf8(
         "缩略图列数\n手动指定后,拖动边框/缩放窗口时缩略图贴边缩放但列数不变"));
     colsBtn->setPopupMode(QToolButton::InstantPopup);
