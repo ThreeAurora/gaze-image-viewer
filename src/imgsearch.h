@@ -185,14 +185,18 @@ inline void ensureRunningAsync(QObject* ctx, std::function<void(QString)> onRead
         }
         servicePid() = pid;
         const qint64 deadline = QDateTime::currentMSecsSinceEpoch() + 30000;
+        // 轮询请求存在在途并发:done 保证 onReady 只回调一次
+        auto done = QSharedPointer<bool>::create(false);
         auto* t = new QTimer(ctx);
-        QObject::connect(t, &QTimer::timeout, ctx, [ctx, deadline, onReady, t]() {
-            pingAsync(ctx, [ctx, deadline, onReady, t](bool alive) {
-                if (!ctx) return;
+        QObject::connect(t, &QTimer::timeout, ctx, [ctx, deadline, onReady, t, done]() {
+            pingAsync(ctx, [deadline, onReady, t, done](bool alive) {
+                if (*done) return;
                 if (alive) {
+                    *done = true;
                     t->stop(); t->deleteLater();
                     onReady({});
                 } else if (QDateTime::currentMSecsSinceEpoch() >= deadline) {
+                    *done = true;
                     t->stop(); t->deleteLater();
                     onReady(QString::fromUtf8(
                         "服务启动超时(30s)。可手动运行 main.py,或在 设置 → 以文搜图 检查配置"));
