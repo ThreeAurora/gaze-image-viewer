@@ -107,9 +107,9 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     m_textEdit = new QTextEdit;
     m_textEdit->setReadOnly(true);
     m_textEdit->setStyleSheet(
-        "QTextEdit{background:" C_CONTENT ";color:#E0E0E0;border:none;"
+        QString::fromUtf8("QTextEdit{background:%1;color:%2;border:none;"
         "font-family:'Consolas','Courier New',monospace;font-size:13px;"
-        "selection-background-color:" C_ACCENT ";}");
+        "selection-background-color:%3;}").arg(C_CONTENT, C_TEXT, C_ACCENT));
     m_textEdit->hide();
     layout->addWidget(m_textEdit, 1);
 
