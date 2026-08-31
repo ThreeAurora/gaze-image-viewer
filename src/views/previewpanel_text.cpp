@@ -75,7 +75,7 @@ void PreviewPanel::showPdf(const QString& path) {
     if (m_player) m_player->stop();
     m_placeholder->hide();
     m_videoWidget->hide();
-    m_audioLabel->hide();
+    setAudioChrome(false);
     m_textEdit->hide();
     m_controlBar->hide();
     if (m_imgSpace) m_imgSpace->hide();
