@@ -147,6 +147,12 @@ private:
     void showRawPlaceholder(const QString& path);
     void decodeRawAsync();
     void onRawDecoded(const QImage& img, const QString& path, quint64 gen);
+    // RAW 按需全解(#140):RAW 不进常规解码管线,预览=占位+「加载原始RAW」按钮。
+    // 点击后线程池全解(自带 LibRaw,rawdecode.h);切换文件靠 m_imgReqGen 代次
+    // 作废在途结果 —— UI 瞬间响应,绝不等待后台解码(用户红线)
+    void showRawPlaceholder(const QString& path);
+    void decodeRawAsync();
+    void onRawDecoded(const QImage& img, const QString& path, quint64 gen);
     // 音频波形(audiowave.h):解码聚合在专属线程,主线程只画快照。
     // 性能红线(用户令):波形可晚出,不得拖累切文件/加载音频
     void ensureWave();
