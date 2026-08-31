@@ -67,7 +67,7 @@ ImageSearchDialog::ImageSearchDialog(QWidget* parent) : QDialog(parent) {
         "QListWidget::item{padding:2px;}"
         "QListWidget::item:selected{background:%6;}")
         .arg(C_WIN_BG, C_TEXT, C_CONTENT, C_SEPARATOR, C_TOOLBAR, C_ACCENT,
-             C_TEXT_FAINT));
+             C_TEXT_FAINT, C_SB_ARROW));
 
     auto* root = new QVBoxLayout(this);
     root->setContentsMargins(14, 14, 14, 12);
