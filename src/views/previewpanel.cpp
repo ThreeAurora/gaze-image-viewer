@@ -1414,6 +1414,12 @@ void PreviewPanel::setupPlayer() {
     connect(m_player, &QMediaPlayer::durationChanged, this, [this](qint64 dur) {
         if (!m_player) return;
         m_progress->setRange(0, static_cast<int>(dur));
+        // 波形桶映射需要总时长:QMediaPlayer 这路毫秒→微秒补发给 worker
+        // (QAudioDecoder 的 durationChanged 缺席时这是唯一分母来源;两路谁
+        // 先到都收敛到同一值)
+        if (m_mode == "audio" && m_waveWorker)
+            QMetaObject::invokeMethod(m_waveWorker, "setTotalUs",
+                                      Q_ARG(qint64, dur * 1000));
     });
 
     // 位置更新（Qt6 signal，替换 Qt5 timer）
