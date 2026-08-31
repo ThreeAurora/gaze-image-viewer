@@ -360,7 +360,6 @@ QImage Thumbnailer::folderThumb(const QString& dirPath, int size) {
     }
     pt.restore();
 
-    paintFolderFront(pt, f, size);
     pt.end();
     return postProcess(sheet, size);
 }
