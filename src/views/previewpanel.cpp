@@ -372,6 +372,36 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     m_panThumb->setCursor(Qt::PointingHandCursor);
     m_panThumb->installEventFilter(this);
     m_panView->installEventFilter(this);
+
+    // ── #82 PDF 页导航条(仅预览 PDF 时出现,贴底居中)──
+    m_pdfBar = new QWidget(this);
+    m_pdfBar->setStyleSheet(
+        "QWidget{background:rgba(18,18,22,225);border:1px solid #3A3A42;border-radius:6px;}");
+    m_pdfBar->hide();
+    {
+        auto* pl = new QHBoxLayout(m_pdfBar);
+        pl->setContentsMargins(8, 5, 8, 5);
+        pl->setSpacing(6);
+        const char* bq =
+            "QPushButton{background:transparent;border:none;border-radius:4px;"
+            "padding:2px 4px;color:#E8E8E8;min-width:24px;}"
+            "QPushButton:hover{background:#3A3A42;}"
+            "QPushButton:disabled{color:#5A5A62;}";
+        m_pdfPrev = new QPushButton(QString::fromUtf8("◀ 上一页"));
+        m_pdfNext = new QPushButton(QString::fromUtf8("下一页 ▶"));
+        m_pdfLabel = new QLabel(QString::fromUtf8("第 1 页"));
+        m_pdfLabel->setStyleSheet(
+            "QLabel{background:transparent;color:#E0E0E0;font-size:12px;padding:0 4px;}");
+        m_pdfPrev->setStyleSheet(bq);
+        m_pdfNext->setStyleSheet(bq);
+        connect(m_pdfPrev, &QPushButton::clicked, this,
+                [this]() { pdfGotoPage(m_pdfPage - 1); });
+        connect(m_pdfNext, &QPushButton::clicked, this,
+                [this]() { pdfGotoPage(m_pdfPage + 1); });
+        pl->addWidget(m_pdfPrev);
+        pl->addWidget(m_pdfLabel);
+        pl->addWidget(m_pdfNext);
+    }
     // 拖动蓝框/缩略图 → 视口跟随(事件过滤器在 eventFilter 里处理)
     m_panThumb->setCursor(Qt::PointingHandCursor);
     m_panThumb->installEventFilter(this);
