@@ -479,6 +479,10 @@ QWidget* SettingsDialog::pageBrowser() {
                   colorPick("Browser/previewBackColor", "#000000"));
     fPrev->addRow(chk("Browser/showRating", QString::fromUtf8("显示颜色标记"), true));
     fPrev->addRow(chk("Preview/previewTxt", QString::fromUtf8("预览 txt 文本文件内容"), true));
+    // #82:MD 以渲染后的格式展示(自写渲染器,无第三方依赖);
+    // PDF 走系统 Ghostscript 渲染,没装 gswin64c 时自动回退 Shell 缩略图
+    fPrev->addRow(chk("Preview/showMd", QString::fromUtf8("以 MD 格式预览 Markdown 文件"), true));
+    fPrev->addRow(chk("Preview/showPdf", QString::fromUtf8("预览 PDF 文档"), true));
     root->addWidget(group(QString::fromUtf8("预览"), fPrev));
 
     // 分组"旋转"
