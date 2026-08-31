@@ -311,6 +311,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     Logger::boot("ctor:toolbar");
 
     m_sortHeader = new SortHeader;
+    // #107:列标题显隐落盘(此前切掉重启又回来)
+    m_sortHeader->setVisible(AppSettings::instance().get("Browser/sortHeader", true).toBool());
     cl->addWidget(m_sortHeader);
 
     m_fileGrid = new FileGrid;
