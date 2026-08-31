@@ -182,6 +182,23 @@ else()
     message(STATUS "视频缩略图:vendor/ffmpeg 不存在(分发决策未定)→ 运行时回退 PATH 上的 ffmpeg")
 endif()
 
+# ── 内置 ffmpeg 部署(视频缩略图,#112)──
+# 与 Ghostscript 同一套思路:exe 旁 ffmpeg/ 永远优先于 PATH,机器上装没装 ffmpeg
+# 不再决定缩略图长什么样。共享构建的 ffmpeg.exe 靠同目录的 av*.dll,必须整目录拷。
+# 但"把 ffmpeg.exe 随 gaze 分发出去"是许可决策(BtbN 同一版本有 LGPL 与 GPL 两种构建,
+# LGPL 那份已经带 dav1d,解码缩略图够用),2026-08-31 待用户裁决 ——
+# 所以这里只在 vendor/ffmpeg/ 真的存在时才拷:没裁决 = 目录不存在 = 不拷。
+if(EXISTS "${CMAKE_SOURCE_DIR}/vendor/ffmpeg")
+    add_custom_command(TARGET gaze POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "${CMAKE_SOURCE_DIR}/vendor/ffmpeg" "$<TARGET_FILE_DIR:gaze>/ffmpeg"
+        COMMENT "同步内置 ffmpeg vendor/ffmpeg -> 构建目录 ffmpeg/"
+        VERBATIM
+    )
+else()
+    message(STATUS "视频缩略图:vendor/ffmpeg 不存在(分发决策未定)→ 运行时回退 PATH 上的 ffmpeg")
+endif()
+
 # ── Ghostscript 自动部署(PDF 预览)──
 # 用户 2026-08-31 明令:PDF 预览用随 gaze 分发的 Ghostscript,不去搜系统目录。
 # 必须整目录拷:gs\bin\gswin64c.exe 靠相对自身exe的 ../Resource 找 gs_init.ps,
