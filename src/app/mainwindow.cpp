@@ -764,7 +764,7 @@ void MainWindow::dropEvent(QDropEvent* e) {
     navigateTo(dir);
     if (!first.isDir()) {
         for (const QString& p : paths)
-            if (QFileInfo(p).absolutePath() == dir) m_fileGrid->selectByPath(p, true);
+            if (QFileInfo(p).absolutePath() == dir) m_fileGrid->selectPathAdditive(p);
     }
 }
 
