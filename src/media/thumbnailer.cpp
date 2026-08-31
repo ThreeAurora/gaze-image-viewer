@@ -275,8 +275,8 @@ FolderFrame folderFrame(int size) {
     f.r     = qMax<qreal>(1.0, size * 0.025);
     f.tab   = QRectF(m, size * 0.09, (size - 2 * m) * 0.42, size * 0.14);
     f.back  = QRectF(m, size * 0.18, size - 2 * m, size * 0.78);
-    f.content = f.back.adjusted(size * 0.035, size * 0.045,
-                                -size * 0.035, -size * 0.135);
+    f.content = f.back.adjusted(size * 0.05, size * 0.05,
+                                -size * 0.05, -size * 0.135);
     const qreal frontTop = f.content.bottom() - size * 0.015;  // 压住图底一点
     f.front = QRectF(f.back.left(), frontTop,
                      f.back.width(), f.back.bottom() - frontTop);
