@@ -9,6 +9,7 @@
 #include <QFileInfo>
 #include <QImage>
 #include <QThread>
+#include <QElapsedTimer>
 #include <QPainter>
 #include <QPainterPath>
 #include <QSqlQuery>
