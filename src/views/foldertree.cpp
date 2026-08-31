@@ -293,11 +293,22 @@ void FolderTree::mouseDoubleClickEvent(QMouseEvent* event) {
 }
 
 // ── #117 左键按住扫过 = 切换文件夹 ──
-// 按下仍交回基类(选中/展开箭头一律照旧);按住不动划过其它行时,每划过一行
-// 就等同"点了一次那个文件夹",连续划动即可快速轮流预览各目录。
-// 划过时不调基类 mouseMove → 默认的拖动多选不会把选区连成一片。
+// #130:跳转发生在**左键按下的那一刻**,不是松开时(原来要等 itemClicked,
+// 松开才切,扫动时手感是"拖过一堆目录,松手才跳一个")。
+// 展开箭头那一列(分支槽 + 其左侧)按下只做展开/收起,不切目录 —— 否则
+// 用户点"+"想看子目录,主视图就被拽走了,这是资源管理器/浏览器都不有的行为。
 void FolderTree::mousePressEvent(QMouseEvent* event) {
     m_sweepCur = itemAt(event->pos());
+    if (m_sweepSwitch && event->button() == Qt::LeftButton && m_sweepCur) {
+        const int branchRight = visualRect(m_sweepCur).left()
+                              + (m_sweepCur->depth() + 1) * indentation();
+        const QString path = pathOf(m_sweepCur);
+        if (!path.isEmpty() && event->pos().x() >= branchRight) {
+            m_pressActivated = path;
+            setCurrentItem(m_sweepCur);
+            emit folderSelected(path);
+        }
+    }
     QTreeWidget::mousePressEvent(event);
 }
 
@@ -307,6 +318,7 @@ void FolderTree::mouseMoveEvent(QMouseEvent* event) {
             const QString path = pathOf(it);
             if (!path.isEmpty()) {          // 占位行/空白:交回基类,不瞎切
                 m_sweepCur = it;
+                m_pressActivated = path;
                 setCurrentItem(it);
                 emit folderSelected(path);
                 event->accept();
@@ -320,6 +332,7 @@ void FolderTree::mouseMoveEvent(QMouseEvent* event) {
 void FolderTree::mouseReleaseEvent(QMouseEvent* event) {
     m_sweepCur = nullptr;
     QTreeWidget::mouseReleaseEvent(event);
+    m_pressActivated.clear();   // 基类已在本次松开里发过 itemClicked(已被它消费)
 }
 
 // ── #117 左键按住扫过 = 切换文件夹 ──
