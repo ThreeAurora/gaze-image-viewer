@@ -182,6 +182,20 @@ else()
     message(STATUS "视频缩略图:vendor/ffmpeg 不存在(分发决策未定)→ 运行时回退 PATH 上的 ffmpeg")
 endif()
 
+# ── 内置 jpegtran 部署(无损旋转/镜像,#113)──
+# 与 ffmpeg 同一套 vendor 规约:exe 旁 jpegtran/ 优先于 PATH。jpegtran.exe
+# 靠同目录 jpeg8.dll(libjpeg-turbo, IJG+BSD 许可文本同目录),必须整目录拷。
+if(EXISTS "${CMAKE_SOURCE_DIR}/vendor/jpegtran")
+    add_custom_command(TARGET gaze POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "${CMAKE_SOURCE_DIR}/vendor/jpegtran" "$<TARGET_FILE_DIR:gaze>/jpegtran"
+        COMMENT "同步内置 jpegtran vendor/jpegtran -> 构建目录 jpegtran/"
+        VERBATIM
+    )
+else()
+    message(STATUS "无损旋转:vendor/jpegtran 不存在 → 运行时回退 PATH/常见安装位置上的 jpegtran")
+endif()
+
 # ── 内置 ffmpeg 部署(视频缩略图,#112)──
 # 与 Ghostscript 同一套思路:exe 旁 ffmpeg/ 永远优先于 PATH,机器上装没装 ffmpeg
 # 不再决定缩略图长什么样。共享构建的 ffmpeg.exe 靠同目录的 av*.dll,必须整目录拷。
