@@ -88,6 +88,7 @@ add_executable(gaze WIN32
     src/views/previewpanel_chrome.cpp
     src/views/previewpanel_events.cpp
     src/views/previewpanel_raw.cpp
+    src/views/previewpanel_raw.cpp
 
     # 缩略图:调度与线程池 / 缓存与数据库 / 静图 / 视频 / 文件夹外框
     src/media/thumbnailer.cpp
