@@ -33,6 +33,10 @@ public:
     // 结构变化后刷新当前行(拖入复制完成后用)
     void refreshCurrent();
 
+    // #136:键盘重命名(F2/F3)的公开出口。守卫与右键那条同源(空/盘符根/多选静默),
+    // 改名逻辑仍然只有 renameItem 一份实现,这里只是把"当前行"递给它。
+    void renameSelected();
+
 signals:
     void folderSelected(const QString& path);
     // 树内文件操作(新建/粘贴/删除/改名/复制到/移动到)造成的结构变化。
