@@ -145,6 +145,18 @@ inline QSize orientedSize(const QString& path, bool exifRotate) {
 // ⚠ exifRotate 必须由 GUI 线程 caller 快照后传入:worker 里读 AppSettings/QSettings
 //   属跨线程访问(未加锁),表现偶发但真存在崩溃/脏读。
 inline QImage decodeScaled(const QString& path, bool exifRotate, int maxSide) {
+    // ── 策略0.4: Qt 原生读不了的格式(#116)先行分流 ──
+    // AVIF/JXL → 随 gaze 的 ffmpeg 子进程;HEIF/HEIC → 系统 WIC。
+    // 失败(无 ffmpeg/无 HEIF 扩展/坏文件)不 return,落回下方 Qt 路径
+    // —— Qt 也读不了 → 空图,由上层照常显示占位。
+    const QString fSuf = QFileInfo(path).suffix().toLower();
+    if (ForeignImg::isFfmpegStill(fSuf)) {
+        QImage img = ForeignImg::decodeFfmpegStill(path, maxSide);
+        if (!img.isNull()) return img;
+    } else if (ForeignImg::isWicHeif(fSuf)) {
+        QImage img = WicDecode::decodeHeif(path, maxSide);
+        if (!img.isNull()) return img;
+    }
     if (WicDecode::isFourChannelJpeg(path)) {
         // WIC 这条路**不做 EXIF 转正**(decodeCmyk 只按 frame 原始宽高走 scaler),
         // 所以 want 必须按未转正尺寸算。CMYK JPEG 带拍摄方向是极罕见的组合,
