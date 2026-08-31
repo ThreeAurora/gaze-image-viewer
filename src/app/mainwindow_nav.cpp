@@ -105,6 +105,7 @@ bool MainWindow::navigateTo(const QString &path) {
     // 空目录时 selectionChanged({}) 自行走 clear,无需代办
     // 树跟随当前目录:地址栏/历史/双击卡片/搜索定位都汇到这一处
     if (m_folderTree) m_folderTree->focusPath(p);
+    Logger::event(QStringLiteral("navigateTo '%1'").arg(p));   // #128② 取证
     return true;
 }
 
