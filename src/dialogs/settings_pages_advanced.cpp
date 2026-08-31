@@ -6,6 +6,7 @@
 #include "dbprefix.h"
 #include "viewerhotkeys.h"
 #include "imgsearch.h"
+#include "imgsearch.h"
 
 #include <QHBoxLayout>
 #include <QVBoxLayout>
