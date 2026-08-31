@@ -365,6 +365,16 @@ void PreviewPanel::keyPressEvent(QKeyEvent* event) {
         }
         event->accept();  return;
     }
+    if (act == QString::fromUtf8("\xe5\x81\x9c\xe6\xad\xa2")) {  // 停止(回到开头,默认 T;与 m_btnStop 同逻辑)
+        if (m_isGif) {
+            setGifPaused(true);   // 先停:跳帧走暂停态,避开运行态 jumpToFrame 卡死
+            gifSeekMs(0);
+        } else if (m_player) {
+            m_player->stop();     // Qt6 stop 同时把位置归零 → 再播从头开始
+            m_progress->setValue(0);
+        }
+        event->accept();  return;
+    }
     QWidget::keyPressEvent(event);
 }
 
