@@ -226,15 +226,15 @@ void MainWindow::createMenubar() {
     // #132:顺序按"先配置工具、再用工具"排 —— 设置 在 以文搜图 上面(用户令)。
     auto *toolMenu = mb->addMenu(QString::fromUtf8("工具(&T)"));
     toolMenu->addAction(IconLib::appIcon("cmd_options"),
-        QString::fromUtf8("设置..."), this, [this]() {
+        QString::fromUtf8("设置..."), QKeySequence("F12"), this, [this]() {
             SettingsDialog dlg(this);
             dlg.exec();
-        }, QKeySequence("F12"));
+        });
     toolMenu->addAction(IconLib::appIcon("cmd_search"),
-        QString::fromUtf8("以文搜图..."), this, [this]() {
+        QString::fromUtf8("以文搜图..."), QKeySequence("Ctrl+Shift+F"), this, [this]() {
             ImageSearchDialog dlg(this);
             dlg.exec();
-        }, QKeySequence("Ctrl+Shift+F"));
+        });
     toolMenu->addAction(IconLib::appIcon("cmd_editMetadata"),
         QString::fromUtf8("缩略图数据库维护..."), this, [this]() {
             DbMaintenanceDialog dlg(this);
