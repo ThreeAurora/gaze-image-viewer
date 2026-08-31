@@ -250,7 +250,7 @@ void PreviewPanel::showAudio(const QString& path) {
 
     QFileInfo fi(path);
     m_audioLabel->setText(fi.fileName());
-    m_audioLabel->show();
+    setAudioChrome(true);
 
     setupPlayer();
     if (m_player) {
@@ -258,6 +258,95 @@ void PreviewPanel::showAudio(const QString& path) {
         m_player->play();
         m_btnPlay->setIcon(pp_impl::whiteIcon(style()->standardIcon(QStyle::SP_MediaPause)));
     }
+
+    // 波形启动:解码聚合全在专属线程,主线程在这里只花微秒级(性能红线:
+    // 波形晚出可以,切文件/加载音频的性能一毫秒不能被它吃掉)。先清快照
+    // 画中线占位,快照到货渐进成形。
+    ensureWave();
+    m_waveSnap = Audiowave::Snapshot{};
+    renderWave();
+    if (m_waveWorker)
+        QMetaObject::invokeMethod(m_waveWorker, "start",
+                                  Q_ARG(QString, path), Q_ARG(qint64, 0));
+    // 布局激活是异步的:0 尺寸画的占位要在激活后重画一次
+    QTimer::singleShot(0, this, [this]() { renderWave(); });
+}
+
+// ── 音频波形(见 audiowave.h;解码聚合全在专属线程,这里只画) ──
+
+void PreviewPanel::ensureWave() {
+    if (m_waveThread) return;
+    qRegisterMetaType<Audiowave::Snapshot>("Audiowave::Snapshot");
+    m_waveWorker = new Audiowave::Worker;
+    m_waveThread = new QThread(this);
+    m_waveThread->setObjectName(QStringLiteral("audiowave"));
+    connect(m_waveThread, &QThread::finished, m_waveWorker, &QObject::deleteLater);
+    connect(m_waveWorker, &Audiowave::Worker::snapshotReady,
+            this, &PreviewPanel::onWaveSnapshot);   // 跨线程 → 自动 queued
+    m_waveWorker->moveToThread(m_waveThread);
+    m_waveThread->start(QThread::LowPriority);   // 低优先级:解码让路于 UI/播放
+}
+
+void PreviewPanel::teardownWave() {
+    if (!m_waveThread) return;
+    if (m_waveWorker)
+        QMetaObject::invokeMethod(m_waveWorker, "cancel");
+    m_waveThread->quit();
+    m_waveThread->wait(2000);
+    m_waveThread = nullptr;
+    m_waveWorker = nullptr;   // finished→deleteLater 已随线程收尾执行
+}
+
+void PreviewPanel::onWaveSnapshot(Audiowave::Snapshot snap) {
+    if (m_mode != "audio") return;   // worker 代次闸之后的双保险:切走的文件不画
+    m_waveSnap = std::move(snap);
+    renderWave();
+}
+
+// 音频形态两件套(文件名+波形)统一显隐:此前 7 处散布 m_audioLabel->hide(),
+// 波形加入后散改必漏一处 → 收口到这一个出口(showAudio true,其余全 false)
+void PreviewPanel::setAudioChrome(bool on) {
+    m_audioLabel->setVisible(on);
+    if (m_waveLabel) m_waveLabel->setVisible(on);
+}
+
+void PreviewPanel::renderWave() {
+    if (!m_waveLabel || !m_waveLabel->isVisible()) return;
+    if (m_waveSnap.failed) {
+        m_waveLabel->setText(
+            QString::fromUtf8("\xe6\xb3\xa2\xe5\xbd\xa2\xe4\xb8\x8d\xe5\x8f\xaf\xe7\x94\xa8")); // 波形不可用
+        return;
+    }
+    const int w = qMax(64, m_waveLabel->width());
+    const int h = qMax(32, m_waveLabel->height());
+    QPixmap pm(w, h);
+    pm.fill(Qt::transparent);
+    QPainter p(&pm);
+    const QColor sep(QString(C_SEPARATOR)), acc(QString(C_ACCENT));
+    const int mid = h / 2;
+    const int n = qMin(m_waveSnap.filled, Audiowave::kBuckets);
+    if (n <= 0) {
+        p.fillRect(0, mid, w, 1, sep);   // 无数据:中线占位,等首批快照
+        p.end();
+        m_waveLabel->setPixmap(pm);
+        return;
+    }
+    const qreal bw = qreal(w) / Audiowave::kBuckets;
+    const int half = qMax(2, mid - 2);
+    for (int b = 0; b < n; ++b) {
+        const int x = int(b * bw);
+        const int wide = qMax(1, int(bw) - 1);
+        const int pk = m_waveSnap.peak[b], tr = m_waveSnap.trough[b];
+        if (pk == 0 && tr == 0) {   // 静音桶:中线上一个短点
+            p.fillRect(x, mid, wide, 1, sep);
+            continue;
+        }
+        const int top = mid - pk * half / 127;
+        const int bot = mid - tr * half / 127;
+        p.fillRect(x, top, wide, qMax(1, bot - top), acc);
+    }
+    p.end();
+    m_waveLabel->setPixmap(pm);
 }
 
 void PreviewPanel::finishLivePhoto() {
