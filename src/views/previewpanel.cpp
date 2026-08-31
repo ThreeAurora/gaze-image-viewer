@@ -277,6 +277,7 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     // 事件过滤器
     m_imgLabel->installEventFilter(this);
     m_videoWidget->installEventFilter(this);   // 视频区左键=播放/暂停(见 eventFilter)
+    m_textEdit->installEventFilter(this);      // #115:文本滚轮=切换文件(见 eventFilter)
     installEventFilter(this);
 
     // 音量按钮:弹出竖向滑条 + 0-100 数值(拖动实时刷新,按钮 tooltip 跟着走)
