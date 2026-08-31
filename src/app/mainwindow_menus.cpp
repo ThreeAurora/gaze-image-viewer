@@ -251,6 +251,7 @@ void MainWindow::createMenubar() {
             "Ctrl+0 / D — 取消颜色标记\n"
             "F — 加红色标记\n"
             "F2 / F3 — 重命名(文件树与文件页都可用,改谁看焦点;F3 可在设置→快捷键改)\n"
+            "Del / S — 删除选中  X — 新建文件夹\n"
             "Enter — 切换查看器/浏览器(设置→键盘)\n"
             "Ctrl+A — 全选  Ctrl+I — 反选\n"
             "Esc — 退出全屏\n"
