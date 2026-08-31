@@ -258,6 +258,8 @@ QImage Thumbnailer::postProcess(QImage img, int size) const {
 //   纯图标因此是同一个轮廓,只差里面那几格图。
 //   (#118 用户令删前板:浅黄横条挤占缩略图高度 —— 轮廓=tab+后板,内容吃满;
 //    folderIcon 回落图原本就没有前板,无需同步)
+//   (#118 用户令删前板:浅黄横条挤占缩略图高度 —— 轮廓=tab+后板,内容吃满;
+//    folderIcon 回落图原本就没有前板,无需同步)
 //   底不透明(颜色=列表底色):Cache/compression 选 JPEG 时 alpha 会被压成黑底,
 //   Thumbs/transparencyGrid 还会给它铺一层棋盘格,两者都会把外框毁成一坨
 // ═══════════════════════════════════════════
