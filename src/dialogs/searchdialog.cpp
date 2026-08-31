@@ -109,7 +109,7 @@ SearchDialog::SearchDialog(const QString& rootDir, QWidget* parent)
     root->addLayout(opts);
 
     m_status = new QLabel(QString::fromUtf8("范围:%1").arg(QDir::toNativeSeparators(rootDir)));
-    m_status->setStyleSheet("color:#B8B8B8;");
+    m_status->setStyleSheet(QString("color:%1;").arg(C_TEXT_FAINT));
     m_status->setTextInteractionFlags(Qt::TextSelectableByMouse);
     root->addWidget(m_status);
 
