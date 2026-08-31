@@ -125,6 +125,7 @@ private:
     void cycleMode(int spec);                 // SwitchMode/* 规格 0-4
     void applyTitle();                        // 按模板刷新窗口标题
     void toggleSlideshow();                   // Keyboard/space=快速幻灯片
+    void syncFilterIndicators(int mode);      // #107:筛选指示器总同步(格式下拉框+红标钮背景+m_redFilterMode)
     // 标题模板求值(浏览器/查看器共用;空 template 时回退默认)
     QString renderTitle(const QString& templateText, const QString& filePath) const;
 
