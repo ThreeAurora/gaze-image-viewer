@@ -132,7 +132,7 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     m_controlBar = new QWidget;
     m_controlBar->setFixedHeight(40);
     m_controlBar->setStyleSheet(
-        "background:" C_TOOLBAR ";border-top:1px solid " C_SEPARATOR ";");
+        QString::fromUtf8("background:%1;border-top:1px solid %2;").arg(C_TOOLBAR, C_SEPARATOR));
     m_controlBar->hide();
 
     auto* cl = new QHBoxLayout(m_controlBar);
