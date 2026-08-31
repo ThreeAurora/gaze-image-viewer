@@ -843,11 +843,18 @@ double PreviewPanel::stepZoom(double cur, bool up) const {
 
 // "1:1"只有一个口径:1 图像像素 = 1 屏幕像素。长按看原图、autoFit=1、
 // 右键"1:1 像素"与全屏工具条共用这一个函数,不留第二套数学。
-// 这里**不看**文件自带的 DPI:乘上 dpi/96 之后"1:1"就不再是分辨率意义上的
-// 原图,而是"按标称物理尺寸显示"。低 DPI 的截图与网络图(常见 72)因此会被画得
-// 比"适应窗口"还小 —— 用户报的"长按后直接小到看不清"就是这一乘(#95)。
-// DPI 该在的地方是打印"原始尺寸"档(printlayout)与元数据面板,不是看图缩放。
+// #95 的结论仍然作数:这条口径**默认不看**文件自带的 DPI —— 乘上 dpi/96 之后
+//   "1:1"就不再是分辨率意义上的原图,而是"按标称物理尺寸显示",低 DPI 截图会被
+//   画得比"适应窗口"还小(用户报的"长按后直接小到看不清")。
+// #122 补的是"想要物理尺寸口径"那条路:General/exifDpi 勾上才换算(默认关,
+//   与 ini 里无该键时的行为逐字一致),它只可能来自用户在设置里的一次明确勾选。
 double PreviewPanel::oneToOneScale() const {
+    // General/exifDpi:按标称物理尺寸 → 屏幕 DPI / 图像 Y DPI(图像没写 DPI 就不换算)
+    if (s_bool("General/exifDpi", false) && m_dpiY >= 24.0 && m_dpiY <= 4000.0) {
+        const QScreen* sc = screen();
+        const double sd = sc ? sc->logicalDotsPerInch() : 96.0;
+        if (sd > 1.0) return sd / m_dpiY;
+    }
     // Viewer/hidpiPixel:1 图像像素映射到 1 物理像素(HiDPI 屏下更锐利,仍不穿透 1:1)
     if (s_bool("Viewer/hidpiPixel", false)) {
         const double dpr = devicePixelRatioF();
