@@ -111,11 +111,13 @@ add_executable(gaze WIN32
     src/dialogs/settings_pages_view.cpp
     src/dialogs/settings_pages_advanced.cpp
 
-    # 其余对话框
+    # 其余对话框与打印
     src/dialogs/dbmaintenance.cpp
     src/views/contextmenu.cpp
     src/dialogs/imgsearchdialog.cpp
     src/dialogs/searchdialog.cpp
+    src/dialogs/printlayout.cpp
+    src/dialogs/printdialog.cpp
 
     src/resource.rc
     src/resources.qrc
