@@ -56,7 +56,8 @@
 #include "filegrid_internal.h"
 
 FileGrid::FileGrid(QWidget* parent) : QScrollArea(parent) {
-    setStyleSheet("QScrollArea{background:" C_CONTENT ";border:none;}");
+    setStyleSheet(QString::fromUtf8("QScrollArea{background:%1;border:none;}")
+                      .arg(C_CONTENT));
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     // 与 XnView 一致：即使内容少于一页也保留竖向滚动条，无法拖动时显示为整条长拇指
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
