@@ -17,6 +17,7 @@
 #include <QLabel>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QFileInfo>
 #include <QMessageBox>
 #include <QProcess>
 #include <QMessageBox>
