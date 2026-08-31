@@ -179,7 +179,7 @@ void PreviewPanel::showImage(const QString& path) {
     if (m_player) m_player->stop();   // 切到静态图:停媒体(播放器实例保留复用)
     m_placeholder->hide();
     m_videoWidget->hide();
-    m_audioLabel->hide();
+    setAudioChrome(false);
     m_textEdit->hide();
     m_controlBar->hide();
     m_imgSpace->hide();
