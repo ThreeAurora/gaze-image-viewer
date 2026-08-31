@@ -364,11 +364,9 @@ inline QIcon folderIcon(int size) {
     p.drawRoundedRect(tab, size * 0.02, size * 0.02);
     p.drawRoundedRect(body, size * 0.025, size * 0.025);
 
-    // 底部一条稍深的收边(极轻的立体感)
-    p.setBrush(QColor("#DFB95C"));
-    p.drawRoundedRect(QRectF(body.left(), body.bottom() - size * 0.045,
-                             body.width(), size * 0.045),
-                      size * 0.02, size * 0.02);
+    // #131:原来这里还画一条"稍深的收边"(body 底部 4.5% 高、#DFB95C)。#118 把
+    //   四合一卡片里的前板横条删掉了,但**目录里没有图片时走的是这个回落图标**,
+    //   那条带子还在 —— 用户看到的"底下那道颜色不一样的黄条"就是它。删。
     p.end();
 
     cache[size] = QIcon(pix);
