@@ -721,7 +721,7 @@ void MainWindow::dropEvent(QDropEvent* e) {
     const QPoint gpos = e->position().toPoint();
     if (QWidget* child = childAt(gpos)) {
         if (m_fileGrid && (child == m_fileGrid || m_fileGrid->isAncestorOf(child))) {
-            const int idx = m_fileGrid->indexAt(m_fileGrid->mapFrom(this, gpos));
+            const int idx = m_fileGrid->hitTest(m_fileGrid->mapFrom(this, gpos));
             const QString hit = m_fileGrid->pathAt(idx);
             if (!hit.isEmpty() && QFileInfo(hit).isDir()) dropIntoDir = hit;
         } else if (m_folderTree && (child == m_folderTree
