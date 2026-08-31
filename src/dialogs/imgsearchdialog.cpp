@@ -105,12 +105,11 @@ ImageSearchDialog::ImageSearchDialog(QWidget* parent) : QDialog(parent) {
     m_list->setContextMenuPolicy(Qt::CustomContextMenu);
     root->addWidget(m_list, 1);
 
-    // 双击/右键"在 Gaze 中定位"共用:向上找到主窗口的 revealFile
-    // (Q_INVOKABLE 而非槽,须用 indexOfMethod —— 与 searchdialog.cpp 同因)
+    // 双击/右键"在 Gaze 中定位"共用:向上找到主窗口的 revealFile 槽
     auto revealInGaze = [this](const QString& path) {
         if (path.isEmpty()) return;
         QObject* mw = this;
-        while (mw && mw->metaObject()->indexOfMethod("revealFile(QString)") < 0)
+        while (mw && mw->metaObject()->indexOfSlot("revealFile(QString)") < 0)
             mw = mw->parent();
         if (mw) {
             QMetaObject::invokeMethod(mw, "revealFile", Q_ARG(QString, path));
