@@ -13,7 +13,6 @@
 #include "fileentry.h"
 
 #include <QFileInfo>
-#include <QTextEdit>
 #include <QThreadPool>
 #include <QPointer>
 
