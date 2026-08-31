@@ -507,7 +507,7 @@ QImage Thumbnailer::generate(const QString& filePath, int size, bool isVideo) {
     // 请求尺寸=卡片缩略图盒子的实际宽度,缓存原样落库:存小了再放大必糊。
     // (旧版这里按 Cache/thumbWidth 465 上限砍请求,大卡片模式下 512→365
     //  再放大回 512,是缩略图发糊的直接根源,已移除)
-    QString ck = cacheKey(filePath, size);
+    QString ck = cacheKey(filePath, size, isVideo);
     double mtime = fi.lastModified().toSecsSinceEpoch();
     Prefs p = prefs();
 
