@@ -18,17 +18,17 @@ ImageSearchDialog::ImageSearchDialog(QWidget* parent) : QDialog(parent) {
     setWindowTitle(QString::fromUtf8("以文搜图 - 万象图搜"));
     resize(720, 560);
     setStyleSheet(
-        "QDialog{background:" C_WIN_BG ";}"
-        "QLabel{color:#FFFFFF;background:transparent;}"
-        "QLineEdit{background:" C_CONTENT ";color:#FFFFFF;border:1px solid " C_SEPARATOR ";"
+        QString::fromUtf8("QDialog{background:%1;}"
+        "QLabel{color:%2;background:transparent;}"
+        "QLineEdit{background:%3;color:%2;border:1px solid %4;"
         "border-radius:3px;padding:6px 10px;}"
-        "QPushButton{background:" C_TOOLBAR ";color:#FFFFFF;border:1px solid " C_SEPARATOR ";"
+        "QPushButton{background:%5;color:%2;border:1px solid %4;"
         "border-radius:3px;padding:6px 20px;}"
-        "QPushButton:hover{border-color:" C_ACCENT ";}"
-        "QListWidget{background:" C_CONTENT ";color:#FFFFFF;border:1px solid " C_SEPARATOR ";"
+        "QPushButton:hover{border-color:%6;}"
+        "QListWidget{background:%3;color:%2;border:1px solid %4;"
         "outline:none;}"
         "QListWidget::item{padding:4px 6px;}"
-        "QListWidget::item:selected{background:" C_ACCENT ";}");
+        "QListWidget::item:selected{background:%6;}").arg(C_WIN_BG, C_TEXT, C_CONTENT, C_SEPARATOR, C_TOOLBAR, C_ACCENT));
 
     auto* root = new QVBoxLayout(this);
     root->setContentsMargins(14, 14, 14, 12);
