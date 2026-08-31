@@ -120,8 +120,8 @@ void MainWindow::createMenubar() {
         QKeySequence("F3"));
     editMenu->addSeparator();
     editMenu->addAction(IconLib::appIcon("cmd_selectAllFile"),
-        QString::fromUtf8("全选"), this, [this](){ m_fileGrid->selectAllEntries(); }, QKeySequence("Ctrl+A"));
-    editMenu->addAction(QString::fromUtf8("反选"), this, [this](){ m_fileGrid->selectInvert(); }, QKeySequence("Ctrl+I"));
+        QString::fromUtf8("全选"), QKeySequence("Ctrl+A"), this, [this](){ m_fileGrid->selectAllEntries(); });
+    editMenu->addAction(QString::fromUtf8("反选"), QKeySequence("Ctrl+I"), this, [this](){ m_fileGrid->selectInvert(); });
     editMenu->addSeparator();
     editMenu->addAction(QString::fromUtf8("全选文件"), this, [this](){ m_fileGrid->selectByKind(FileGrid::KindFiles); });
     editMenu->addAction(QString::fromUtf8("全选文件夹"), this, [this](){ m_fileGrid->selectByKind(FileGrid::KindDirs); });
