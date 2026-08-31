@@ -419,7 +419,14 @@ void FolderTree::focusPath(const QString& dirPath) {
 }
 
 void FolderTree::onItemClicked(QTreeWidgetItem* item, int /*column*/) {
-    emit folderSelected(item->data(0, Qt::UserRole).toString());
+    const QString path = item ? item->data(0, Qt::UserRole).toString() : QString();
+    // #130:按下那一刻已经切过这个目录 → 松开时基类补发的这次 itemClicked 不能再切
+    // 一遍(两次导航会把刚铺好的滚动/选中状态打断)。消费掉这个标记即可。
+    if (!path.isEmpty() && path == m_pressActivated) {
+        m_pressActivated.clear();
+        return;
+    }
+    emit folderSelected(path);
 }
 
 // ═══════════════════════════════════════════
