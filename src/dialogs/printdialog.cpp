@@ -116,9 +116,10 @@ PrintDialog::PrintDialog(QWidget* parent, const QStringList& imagePaths)
     resize(1060, 680);
     m_exifRotate = AppSettings::instance().get("General/exifRotate", true).toBool();
     buildUi();
-    loadPrinters();
-    updateSummary();
 
+    // 去抖定时器必须先于 loadPrinters 存在:#120 闪退就是这个顺序错了 ——
+    // loadPrinters → onPrinterChanged → scheduleRefresh 会用 m_debounce->start(),
+    // 而它当时还是 nullptr(本机有打印机才走这条链,所以每次点打印必崩)。
     m_debounce = new QTimer(this);
     m_debounce->setSingleShot(true);
     m_debounce->setInterval(120);
@@ -128,6 +129,10 @@ PrintDialog::PrintDialog(QWidget* parent, const QStringList& imagePaths)
         m_previewPage = qBound(0, m_previewPage, qMax(0, pageCount() - 1));
         requestPageDecode();
     });
+
+    loadPrinters();
+    updateSummary();
+
     m_geometryDirty = true;
     m_debounce->start();   // 首次出图推到事件循环之后:那时视口尺寸才可信
 }
