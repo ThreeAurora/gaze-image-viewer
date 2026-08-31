@@ -318,7 +318,8 @@ void FileGrid::onCanvasDblClick(int index) {
     // "切换模式"设置只管 Gaze 自己能显示的内容 —— 一个 .zip/.docx 没有"模式"可切,
     // 把双击吞掉(设置成"什么都不做"时)只会让用户以为没响应。
     const QString ext = "." + fi.suffix().toLower();
-    if (!IMAGE_EXTS.count(ext) && !VIDEO_EXTS.count(ext)) {
+    // RAW(#140)也归查看器:预览面板有专门的 RAW 形态(占位+按需全解按钮)
+    if (!IMAGE_EXTS.count(ext) && !VIDEO_EXTS.count(ext) && !RAW_EXTS.count(ext)) {
         Logger::event(QStringLiteral("dblClick: system open '%1'").arg(path));
         QDesktopServices::openUrl(QUrl::fromLocalFile(path));
         return;
