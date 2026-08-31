@@ -216,12 +216,9 @@ endif()
 # (CR2/NEF/ARW/RAF/ORF/DNG 无损变体等)全覆盖;JPEG 有损压缩与 deflate DNG
 # 后续按需补库。
 if(EXISTS "${CMAKE_SOURCE_DIR}/thirdparty/LibRaw/libraw/libraw.h")
+    # 0.21.x 源码全在 src/(internal/ 只有头文件),一个 GLOB 收齐
     file(GLOB_RECURSE LIBRAW_SOURCES CONFIGURE_DEPENDS
         "${CMAKE_SOURCE_DIR}/thirdparty/LibRaw/src/*.cpp")
-    list(APPEND LIBRAW_SOURCES
-        "${CMAKE_SOURCE_DIR}/thirdparty/LibRaw/internal/dcraw_common.cpp"
-        "${CMAKE_SOURCE_DIR}/thirdparty/LibRaw/internal/dcraw_fileio.cpp"
-        "${CMAKE_SOURCE_DIR}/thirdparty/LibRaw/internal/demosaic_packs.cpp")
     add_library(rawdec STATIC ${LIBRAW_SOURCES})
     target_include_directories(rawdec PUBLIC "${CMAKE_SOURCE_DIR}/thirdparty/LibRaw")
     # dcraw 血统代码有类型双关,-fno-strict-aliasing 保优化下行为不漂
