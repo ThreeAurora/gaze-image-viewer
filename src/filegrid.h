@@ -77,6 +77,7 @@ public:
     void setViewMode(int mode);  // ViewMode
     int  viewMode() const { return m_viewMode; }
     int  cardW() const;       // 卡片宽度(按查看方式;#107 缩略图尺寸菜单重勾要用)
+    int  cardW() const;       // 卡片宽度(按查看方式;#107 缩略图尺寸菜单重勾要用)
     void sort(int column, bool ascending);
     void setNameOrder(int order);   // NameOrder;持久化到 Browser/nameOrder 并重排
     int  nameOrder() const { return m_nameOrder; }
