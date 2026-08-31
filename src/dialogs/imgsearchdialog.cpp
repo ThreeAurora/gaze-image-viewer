@@ -44,7 +44,7 @@ ImageSearchDialog::ImageSearchDialog(QWidget* parent) : QDialog(parent) {
     root->addLayout(top);
 
     m_status = new QLabel(QString::fromUtf8("首次使用请先确认服务已启动(自动拉起)"));
-    m_status->setStyleSheet("color:#B8B8B8;");
+    m_status->setStyleSheet(QString("color:%1;").arg(C_TEXT_FAINT));
     root->addWidget(m_status);
 
     m_list = new QListWidget;
