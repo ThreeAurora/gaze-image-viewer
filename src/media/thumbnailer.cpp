@@ -351,7 +351,7 @@ QImage Thumbnailer::folderThumb(const QString& dirPath, int size) {
     if (picked.isEmpty()) return {};
 
     QImage sheet(size, size, QImage::Format_RGB32);
-    sheet.fill(QColor(QStringLiteral(C_CONTENT)));
+    sheet.fill(QColor(C_CONTENT));
     QPainter pt(&sheet);
     pt.setRenderHint(QPainter::Antialiasing);
     pt.setRenderHint(QPainter::SmoothPixmapTransform);
