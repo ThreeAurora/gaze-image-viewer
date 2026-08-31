@@ -306,6 +306,10 @@ void PreviewPanel::onWaveSnapshot(Audiowave::Snapshot snap) {
 // 音频形态两件套(文件名+波形)统一显隐:此前 7 处散布 m_audioLabel->hide(),
 // 波形加入后散改必漏一处 → 收口到这一个出口(showAudio true,其余全 false)
 void PreviewPanel::setAudioChrome(bool on) {
+    // RAW 占位(#140)与其他形态互斥:所有形态切换都会经过这里(各 showX 已统一
+    // 调 setAudioChrome),raw 占位借道一并收起;showRawPlaceholder 在调用之后
+    // 才 show,次序保证 raw 形态自己不受影响
+    if (m_rawBox) m_rawBox->hide();
     m_audioLabel->setVisible(on);
     if (m_waveLabel) m_waveLabel->setVisible(on);
 }
