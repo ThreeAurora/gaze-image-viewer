@@ -233,14 +233,19 @@ inline QString sniffExtByHeader(const QString& path) {
         if (has(8, "AVI ", 4)) return ".avi";
         return {};
     }
-    // ISO-BMFF 家族(mp4/mov/heic):偏移 4 是 "ftyp"
+    // ISO-BMFF 家族(mp4/mov/heic/avif):偏移 4 是 "ftyp"
     if (has(4, "ftyp", 4)) {
         if (has(8, "heic", 4) || has(8, "heix", 4)
             || has(8, "mif1", 4) || has(8, "msf1", 4))   return ".heic";
+        // avif/avis(序列)必须排在 mp4 兜底前:裸 avif 的 ftyp 也会落到这
+        if (has(8, "avif", 4) || has(8, "avis", 4))      return ".avif";
         if (has(8, "qt  ", 4))                           return ".mov";
         if (has(8, "M4V ", 4))                           return ".m4v";
         return ".mp4";
     }
+    // JPEG XL 两种封装:裸码流 \xFF\x0A 与 ISO-BMFF 容器
+    if (has(0, "\xFF\x0A", 2))                           return ".jxl";
+    if (has(0, "\x00\x00\x00\x0C\x4A\x58\x4C\x20", 8))   return ".jxl";
     return {};
 }
 
