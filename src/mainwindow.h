@@ -63,6 +63,12 @@ protected:
     void closeEvent(QCloseEvent *event) override;
     // ── 拖放(#81)──
     // 拖入:文件→导航到所在目录并选中首个文件;目录→直接进该目录。
+    // 拖入目标若落在某个文件夹上(网格卡片或树节点)则按复制语义拷过去。
+    void dragEnterEvent(QDragEnterEvent* e) override;
+    void dragMoveEvent(QDragMoveEvent* e) override;
+    void dropEvent(QDropEvent* e) override;
+    // ── 拖放(#81)──
+    // 拖入:文件→导航到所在目录并选中首个文件;目录→直接进该目录。
     // 拖入目标若落在某个文件夹上(网格卡片或树节点)则按移动/复制语义落盘。
     // 可放置区域只有网格与树(#109):拖到别处 dragMove 被 ignore → 禁止光标,松开无动作。
     void dragEnterEvent(QDragEnterEvent* e) override;
