@@ -697,6 +697,11 @@ void FileGrid::loadDirectory(const QString& dirPath) {
 
     m_loading = false;
     updateLayout();          // 重算列数/几何/滚动范围 + 重绘
+    // 换目录必须归顶(#114):updateLayout 会保留旧滚动值,上个目录滚到中部时
+    // 新目录一进来就停在同样的偏移上,首行永远看不见。同目录重载(刷新/删除)
+    // 不动滚动,那是打断浏览。
+    if (!sameDir)
+        verticalScrollBar()->setValue(0);
     requestVisibleThumbs();
     // Thumbs/wholeFolder:开=进目录即为全部条目排缩略图(滚动到哪都有图,代价是
     // 进大目录时后台一下排满);关=只排视口内(默认,与改造前一致)
