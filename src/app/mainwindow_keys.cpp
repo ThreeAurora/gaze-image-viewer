@@ -326,8 +326,12 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
                     }
                     // Esc=退出查看器:只让文本类控件(弹窗/对话框上面已经整体放行)
                     if (ke->key() == Qt::Key_Escape) { viewerBack(); return true; }
-                    // F2 重命名:FileOps/renameDialog 开=弹对话框,关=卡片上就地改
-                    if (ke->key() == Qt::Key_F2) { renameCurrent(); return true; }
+                    // #136:重命名。F2 保留为**固定别名**(用户从没要求取消它,帮助里也写着),
+                    // 走这里而不是也挂成 QAction 的第二把 shortcut:QAction 若同时挂
+                    // {F3,F2},配置页会把默认值显示成"F3, F2",而 applyShortcuts() 是
+                    // 整串覆盖 —— 用户自定义任一键都会把另一键悄悄吃掉。
+                    // 可配的主键是 F3(编辑菜单「重命名」QAction,见 mainwindow_menus.cpp)。
+                    if (ke->key() == Qt::Key_F2) { renameFocused(); return true; }
                 }
             }
         }
