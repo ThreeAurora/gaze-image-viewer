@@ -626,24 +626,18 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
         for (auto& it : items)
             m_formatFilterCombo->addItem(QString::fromUtf8(it.label), it.mode);
     }
+    // 下拉箭头(drop-down/三角)由应用级 QSS 统一给(theme.cpp)—— 这里只留这只框
+    // 自己的尺寸与弹出列表配色,不再重复写一份箭头样式(#134 之前两份并存)
     m_formatFilterCombo->setStyleSheet(QString::fromUtf8(
         "QComboBox{background:%1;color:%2;border:1px solid %3;"
         "border-radius:4px;padding:2px 10px;font-size:12px;min-height:22px;}"
         "QComboBox:hover{border-color:#4A4A56;}"
         "QComboBox:focus{border-color:%4;}"
-        "QComboBox::drop-down{border:none;width:18px;}"
-        "QComboBox::down-arrow{"
-        "  image: none; width: 0; height: 0;"
-        "  border-left: 4px solid transparent;"
-        "  border-right: 4px solid transparent;"
-        "  border-top: 5px solid %5;"
-        "  margin-right: 7px;"
-        "}"
-        "QComboBox QAbstractItemView{background:%6;color:%7;"
-        "border:1px solid %8;selection-background-color:%9;"
+        "QComboBox QAbstractItemView{background:%5;color:%6;"
+        "border:1px solid %7;selection-background-color:%8;"
         "outline:none;}"
         "QComboBox QAbstractItemView::item{min-height:24px;padding:2px 8px;}")
-        .arg(C_TOOLBAR, C_TEXT, C_SEPARATOR, C_ACCENT, C_TEXT_SUB,
+        .arg(C_TOOLBAR, C_TEXT, C_SEPARATOR, C_ACCENT,
              C_CONTENT, C_TEXT, C_SEPARATOR, C_ACCENT));
     connect(m_formatFilterCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, [this](int idx) {
