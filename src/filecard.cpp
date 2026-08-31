@@ -179,11 +179,11 @@ void FileCard::setup(const FileEntry& entry, int size, int viewMode, int height)
             m_detailLabel = new QLabel(this);
             m_detailLabel->setStyleSheet(
                 QString("color:%1;font-size:11px;background:transparent;")
-                    .arg(m_hidden ? C_TEXT_HIDDEN : "#FFFFFF"));
+                    .arg(m_hidden ? C_TEXT_HIDDEN : C_TEXT));
         } else {
             m_detailLabel->setStyleSheet(
                 QString("color:%1;font-size:11px;background:transparent;")
-                    .arg(m_hidden ? C_TEXT_HIDDEN : "#FFFFFF"));
+                    .arg(m_hidden ? C_TEXT_HIDDEN : C_TEXT));
         }
         m_detailLabel->setGeometry(static_cast<int>(w * 0.40), 5, static_cast<int>(w * 0.58), 16);
         m_detailLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
