@@ -3,6 +3,7 @@
 #include <QCoreApplication>
 #include <QDir>
 #include "settings.h"   // #106:shellMenu 读点统一走 AppSettings,别再自己拼 ini 路径
+#include "settings.h"   // #106:shellMenu 读点统一走 AppSettings,别再自己拼 ini 路径
 
 // 系统集成:资源管理器右键菜单 / 打开方式注册(HKCU,免管理员)
 namespace Integration {
