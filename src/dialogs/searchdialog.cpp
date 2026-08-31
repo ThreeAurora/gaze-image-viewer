@@ -58,21 +58,21 @@ SearchDialog::SearchDialog(const QString& rootDir, QWidget* parent)
     setAttribute(Qt::WA_DeleteOnClose);   // 非模态:关掉就该回收
     resize(860, 560);
     setStyleSheet(
-        "QDialog{background:" C_WIN_BG ";}"
-        "QLabel{color:#FFFFFF;background:transparent;}"
-        "QLineEdit{background:" C_CONTENT ";color:#FFFFFF;border:1px solid " C_SEPARATOR ";"
+        QString::fromUtf8("QDialog{background:%1;}"
+        "QLabel{color:%2;background:transparent;}"
+        "QLineEdit{background:%3;color:%2;border:1px solid %4;"
         "border-radius:3px;padding:5px 8px;}"
-        "QPushButton{background:" C_TOOLBAR ";color:#FFFFFF;border:1px solid " C_SEPARATOR ";"
+        "QPushButton{background:%5;color:%2;border:1px solid %4;"
         "border-radius:3px;padding:6px 18px;}"
-        "QPushButton:hover{border-color:" C_ACCENT ";}"
-        "QPushButton:disabled{color:#7A7A82;}"
-        "QCheckBox{color:#FFFFFF;background:transparent;spacing:6px;}"
-        "QTreeWidget{background:" C_CONTENT ";color:#FFFFFF;border:1px solid " C_SEPARATOR ";"
+        "QPushButton:hover{border-color:%6;}"
+        "QPushButton:disabled{color:%7;}"
+        "QCheckBox{color:%2;background:transparent;spacing:6px;}"
+        "QTreeWidget{background:%3;color:%2;border:1px solid %4;"
         "outline:none;}"
         "QTreeWidget::item{padding:3px 2px;}"
-        "QTreeWidget::item:selected{background:" C_ACCENT ";}"
-        "QHeaderView::section{background:" C_TOOLBAR ";color:#FFFFFF;"
-        "border:1px solid " C_SEPARATOR ";padding:4px 6px;}");
+        "QTreeWidget::item:selected{background:%6;}"
+        "QHeaderView::section{background:%5;color:%2;"
+        "border:1px solid %4;padding:4px 6px;}").arg(C_WIN_BG, C_TEXT, C_CONTENT, C_SEPARATOR, C_TOOLBAR, C_ACCENT, C_TEXT_DIM));
 
     auto* root = new QVBoxLayout(this);
     root->setContentsMargins(14, 12, 14, 12);
