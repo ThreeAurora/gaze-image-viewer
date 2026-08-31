@@ -74,7 +74,12 @@ inline const std::unordered_set<QString> IMAGE_EXTS = {
     ".jpg", ".jpeg", ".jfif", ".png", ".gif", ".bmp", ".webp",
     ".heic", ".heif", ".hif", ".avif", ".avifs", ".jxl",
     ".tiff", ".tif", ".ico", ".svg", ".svgz",
-    ".tga", ".icns", ".wbmp", ".pbm", ".pgm", ".ppm", ".xbm", ".xpm", ".cur"
+    ".tga", ".icns", ".wbmp", ".pbm", ".pgm", ".ppm", ".xbm", ".xpm", ".cur",
+    // #103 工单②(2026-09-01 用户裁决"该支持就支持,全部支持"):六个全走
+    // ffmpeg 分流(foreignimg)。qoi/dpx/apng 样张实测解码通过(cache/tmp/
+    // verify103);exr/dds/jp2 ffmpeg native decoder 在位但无 encoder、样张
+    // 未造 —— 声称未验证。
+    ".exr", ".dds", ".qoi", ".jp2", ".dpx", ".apng"
 };
 
 inline const std::unordered_set<QString> VIDEO_EXTS = {
