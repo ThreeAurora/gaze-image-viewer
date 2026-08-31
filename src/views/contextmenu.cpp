@@ -645,8 +645,14 @@ void FileContextMenu::extractFrames(const QString& videoPath) {
     // 整个钉死那么久;而且判据是"这次等待返回 true 就算成功"、从不看退出码,
     // ffmpeg 跑起来但失败照样弹"帧提取完成"。(ffmpeg 不在 PATH 时等待返回 false,
     // 旧代码因此弹"帧提取超时" —— 原因写错了,实测见 cache/tmp/proc_async_test.cpp)
-    // 改成后台跑 + 认退出码。
-    runProcessAsync("ffmpeg",
+    // 改成后台跑 + 认退出码;工具定位走 #113 同一份 vendor/ffmpeg 优先。
+    const QString ff = locateFfmpegTool(QStringLiteral("ffmpeg"));
+    if (ff.isEmpty()) {
+        QMessageBox::warning(nullptr, QStringLiteral("帧提取失败"),
+            QStringLiteral("ffmpeg 未找到(exe旁 ffmpeg/ 与 PATH 均无)。\n") + outDir);
+        return;
+    }
+    runProcessAsync(ff,
         { "-i", videoPath, "-vsync", "0", "-q:v", "2", "-y", pattern },
         QString(), 120000,
         [outDir](bool ok, const QString& why) {
