@@ -12,6 +12,7 @@
 #include "cropdialog.h"
 #include "settings.h"
 #include "validname.h"
+#include "toolpath.h"
 #include "validname.h"
 #include "clipboardops.h"
 #include "clipboardops.h"
