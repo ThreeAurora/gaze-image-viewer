@@ -336,6 +336,9 @@ void MainWindow::createViewMenu() {
 // ── 浏览器 ↔ 查看器(单图模式:隐藏树/网格,预览占满) ──
 void MainWindow::toggleViewer() {
     m_viewerMode = !m_viewerMode;
+    Logger::event(QStringLiteral("toggleViewer -> %1")
+                      .arg(m_viewerMode ? QStringLiteral("viewer")
+                                        : QStringLiteral("browser")));   // #128② 取证
     if (!m_viewerMode && m_slideshow) toggleSlideshow();   // 退出查看器停幻灯片
     applyPaneVisibility();             // 树/网格/预览标题条统一按"意图+模式"重算
     m_preview->setViewerMode(m_viewerMode);   // 让面板按 Viewer/* 还是 Fullscreen/* 取设置
