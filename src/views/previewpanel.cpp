@@ -807,7 +807,15 @@ double PreviewPanel::pixelAspect() const {
     static const double ratios[] = {1.00, 0.91, 0.95, 1.09, 1.20,
                                     1.33, 1.46, 1.50, 1.90, 2.00};
     const int i = qBound(0, s_int("Viewer/pixelRatio", 0), 9);
-    return ratios[i];
+    double par = ratios[i];
+    // General/dpiAdjust(#122):X/Y DPI 不等时横向按各自的 DPI 换算。
+    //   纵向定标在 oneToOneScale(用 Y DPI),这里再乘 dpiY/dpiX 修横轴 ——
+    //   走的正是 Viewer/pixelRatio 这条现成的"非正方形像素"通道,不另起一套数学。
+    //   只在上一项 General/exifDpi 勾上时参与:它换算的是物理尺寸,不是像素数。
+    if (s_bool("General/exifDpi", false) && s_bool("General/dpiAdjust", false)
+        && m_dpiX >= 24.0 && m_dpiY >= 24.0 && qAbs(m_dpiX - m_dpiY) > 0.5)
+        par *= m_dpiY / m_dpiX;
+    return par;
 }
 
 // Viewer/autoPlayAudioCompanion:图片旁存在同名音频时自动播放
