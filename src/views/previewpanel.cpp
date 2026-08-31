@@ -1251,7 +1251,7 @@ void PreviewPanel::showNoPreview() {
     m_placeholder->show();
     m_imgLabel->hide();
     m_videoWidget->hide();
-    m_audioLabel->hide();
+    setAudioChrome(false);
     m_textEdit->hide();
     m_controlBar->hide();
     m_imgSpace->hide();
