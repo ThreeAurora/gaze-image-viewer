@@ -46,13 +46,15 @@ public:
         m_tree->setColumnCount(2);
         m_tree->setHeaderLabels({QString::fromUtf8("项目"), QString::fromUtf8("值")});
         m_tree->setRootIsDecorated(true);
-        m_tree->setAlternatingRowColors(true);
-        m_tree->setStyleSheet(
-            "QTreeWidget{background:#1A1A1F;color:#DCDCE2;border:none;font-size:12px;}"
+        // #119:关掉隔行换色。开交替色时 Qt 用 palette AlternateBase(白)画偶数行,
+        // 与样式表的深色底一起形成"一黑一白"斑马纹 —— 用户要的是整块统一底色。
+        m_tree->setAlternatingRowColors(false);
+        m_tree->setStyleSheet(QString::fromUtf8(
+            "QTreeWidget{background:%1;color:#DCDCE2;border:none;font-size:12px;}"
             "QTreeWidget::item{padding:2px 0;}"
             "QTreeWidget::item:selected{background:#2F65C5;color:#FFFFFF;}"
             "QHeaderView::section{background:#232329;color:#C8C8CE;"
-            "border:none;padding:4px 6px;font-size:12px;}");
+            "border:none;padding:4px 6px;font-size:12px;}").arg(C_CONTENT));
         m_tree->setColumnWidth(0, 150);
         m_tree->setIndentation(14);
         root->addWidget(m_tree, 1);
