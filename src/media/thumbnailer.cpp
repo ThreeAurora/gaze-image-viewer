@@ -330,16 +330,26 @@ QImage Thumbnailer::folderThumb(const QString& dirPath, int size) {
     paintFolderBack(pt, f);
 
     // 单格:等比铺满后**居中**裁切(旧代码注释写着居中,实际从左上裁,横图看着偏)
+    // #124 清晰度:格子只有卡片的 1/3 左右(206px 卡片 → 约 65px 格),以前是
+    //   "按格子尺寸向 Windows Shell 要 65px" —— shell 给的是它自己二次缩放出来的
+    //   小档软图,再画进格子就是糊的。现在一律**向原图**要一张"格子 2 倍、下限 256"
+    //   的清晰图(与单图缩略图同一套 imageThumb 质量口径:highQuality 自带 2x 超采样),
+    //   铺满格子后再由 painter 的 SmoothPixmapTransform 把 2x 降到 1x —— 整幅仍然
+    //   全部可见,只是细节是真的。Shell 图退回作原图解码失败时的回退。
+    //   代价:每格一次降采样解码(JPEG 走 libjpeg 的 DCT 缩放很便宜,PNG 是全解),
+    //   只在生成时付一次,入库后不再有。
     auto drawCell = [this, &pt](const QString& path, const QRectF& cell) {
         const int cw = qMax(1, qRound(cell.width()));
         const int ch = qMax(1, qRound(cell.height()));
-        QImage t = windowsShellThumb(path, qMax(cw, ch));
-        if (t.isNull()) t = imageThumb(path, qMax(cw, ch));
+        const int want = qMax(256, 2 * qMax(cw, ch));
+        QImage t = imageThumb(path, want);
+        if (t.isNull()) t = windowsShellThumb(path, want);
         if (t.isNull()) return;
-        t = t.scaled(cw, ch, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
-        pt.drawImage(cell, t, QRectF((t.width() - cell.width()) / 2,
-                                     (t.height() - cell.height()) / 2,
-                                     cell.width(), cell.height()));
+        // 2x 超采样图上做居中裁切,画进 1x 格子 → 净效果是降采样,不放大不软
+        const int sw = cw * 2, sh = ch * 2;
+        t = t.scaled(sw, sh, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
+        pt.drawImage(cell, t, QRectF((t.width() - sw) / 2.0,
+                                     (t.height() - sh) / 2.0, sw, sh));
     };
 
     // 图裁进内容区(圆角) → 不足 4 张时空格露后板
