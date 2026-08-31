@@ -1291,7 +1291,7 @@ void PreviewPanel::showText(const QString& path) {
     m_placeholder->hide();
     m_imgLabel->hide();
     m_videoWidget->hide();
-    m_audioLabel->hide();
+    setAudioChrome(false);
     m_controlBar->hide();
     m_imgSpace->hide();
     if (m_liveBadge) m_liveBadge->hide();
