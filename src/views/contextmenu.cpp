@@ -9,6 +9,8 @@
 #include "printdialog.h"
 #include "printdialog.h"
 #include "printdialog.h"
+#include "cropdialog.h"
+#include "settings.h"
 #include "validname.h"
 #include "validname.h"
 #include "clipboardops.h"
