@@ -29,6 +29,9 @@ public:
     // #122 给设置页用的"下次启动会读哪里"预测(0 便携 / 1 %APPDATA% / 2 自定义目录)。
     // 换位置的提示必须说真话:值在改动当下就复制过去,生效是下次启动。
     static QString iniPathForLocation(int loc, const QString& customDir);
+    // #122 给设置页用的"下次启动会读哪里"预测(0 便携 / 1 %APPDATA% / 2 自定义目录)。
+    // 换位置的提示必须说真话:值在改动当下就复制过去,生效是下次启动。
+    static QString iniPathForLocation(int loc, const QString& customDir);
 
 signals:
     void changed();
