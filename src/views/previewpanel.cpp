@@ -208,11 +208,14 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
         if (m_player) m_player->setPosition(pos);
     });
     cl->addWidget(m_progress, 1);
+    // 滑条与时间文本恒定 8px(4 布局间距 + 4):旧版时间标签 setFixedWidth(120)
+    // 右对齐,短串左边 ~60px 空白全摊在滑条和时间之间;去掉固定宽后标签随
+    // 文本自适应(长时长如 1000:10:23 变宽时滑条自动让位,间距不变)
+    cl->addSpacing(4);
 
     m_timeLabel = new QLabel("0:00 / 0:00");
     m_timeLabel->setStyleSheet(
         QString("color:%1;font-size:12px;background:transparent;").arg(C_TEXT));
-    m_timeLabel->setFixedWidth(120);
     m_timeLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
     m_timeLabel->setToolTip(QString::fromUtf8(
         "\xe7\x82\xb9\xe5\x87\xbb\xe5\x88\x87\xe6\x8d\xa2 \xe5\xb7\xb2\xe6\x92\xad/\xe5\x89\xa9\xe4\xbd\x99\xe6\x97\xb6\xe9\x97\xb4")); // 点击切换 已播/剩余时间
