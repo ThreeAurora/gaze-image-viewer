@@ -136,7 +136,7 @@ void PreviewPanel::showVideo(const QString& path) {
     m_mode = "video";
     m_placeholder->hide();
     m_imgLabel->hide();
-    m_audioLabel->hide();
+    setAudioChrome(false);
     m_textEdit->hide();
     m_videoWidget->show();
 
