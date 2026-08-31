@@ -33,6 +33,8 @@ public:
     void renameCurrent();            // F2:按 FileOps/renameDialog 决定对话框/就地改
     // #136:F2/F3 的统一入口 —— 焦点在文件树就改树里那一行,否则改文件页选中项
     void renameFocused();
+    // #136:F2/F3 的统一入口 —— 焦点在文件树就改树里那一行,否则改文件页选中项
+    void renameFocused();
     int  seekSeconds() const;        // Viewer/seekSeconds:快进/快退秒数(默认 3)
     // 查看器标签卡(Interface/multiViewerTabs / oneViewerTab)
     Q_INVOKABLE void openViewerTab(const QString& path);  // 右键"在新标签卡中打开"
