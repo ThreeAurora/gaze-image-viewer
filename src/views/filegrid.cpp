@@ -193,14 +193,15 @@ static QIcon whiteStdIcon(QStyle* st, QStyle::StandardPixmap sp) {
 void FileGrid::buildFindBar() {
     m_findBar = new QWidget(viewport());
     m_findBar->setObjectName("findBar");
-    m_findBar->setStyleSheet(
-        "QWidget#findBar{background:" C_TOOLBAR ";border:1px solid " C_SEPARATOR ";border-radius:4px;}"
-        "QLineEdit{background:" C_CONTENT ";color:" C_TEXT ";border:1px solid " C_SEPARATOR ";"
-        "border-radius:3px;padding:1px 6px;selection-background-color:" C_ACCENT ";}"
+    m_findBar->setStyleSheet(QString::fromUtf8(
+        "QWidget#findBar{background:%1;border:1px solid %2;border-radius:4px;}"
+        "QLineEdit{background:%3;color:%4;border:1px solid %2;"
+        "border-radius:3px;padding:1px 6px;selection-background-color:%5;}"
         "QToolButton{background:transparent;border:none;border-radius:3px;}"
-        "QToolButton:hover{background:" C_CARD_HOVER ";}"
-        "QToolButton:pressed{background:" C_SEPARATOR ";}"
-        "QToolButton:disabled{background:transparent;}");
+        "QToolButton:hover{background:%6;}"
+        "QToolButton:pressed{background:%2;}"
+        "QToolButton:disabled{background:transparent;}")
+        .arg(C_TOOLBAR, C_SEPARATOR, C_CONTENT, C_TEXT, C_ACCENT, C_CARD_HOVER));
     auto* lay = new QHBoxLayout(m_findBar);
     lay->setContentsMargins(6, 4, 6, 4);
     lay->setSpacing(4);
