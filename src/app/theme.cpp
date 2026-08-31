@@ -103,6 +103,31 @@ QString appQss() {
         "QLineEdit:focus { border-color: %5; }"
         "QSplitter::handle { background: %4; }"
         "QSplitter::handle:horizontal { width: 1px; }"
+        // ── 下拉框 / 数字框:箭头全应用统一 ─────────────────────────────
+        // 只写 ::down-arrow 是不够的:样式表一旦存在,Qt 就要自己画 drop-down 那一块,
+        // 而它**没有 background 时用的是调色板 Base**(深色主题下 = 一块白),
+        // 三角被盖在里面 = 用户看到的"一个白色实心长方形按钮,没有下箭头"。
+        // 这里显式给透明底 + 与滚动条/标签滚动按钮同款的边框三角(同一个 %11 箭头色),
+        // 所有 QComboBox / QSpinBox / QDoubleSpinBox 一次性跟着改,不再各页各写一份。
+        "QComboBox::drop-down {"
+        "  width: 18px; border: none; background: transparent;"
+        "  subcontrol-origin: padding; subcontrol-position: top right;"
+        "}"
+        "QComboBox::drop-down:hover { background: %16; }"
+        "QComboBox::down-arrow {"
+        "  image: none; width: 0; height: 0; background: none;"
+        "  border-left: 4px solid transparent; border-right: 4px solid transparent;"
+        "  border-top: 5px solid %11; margin-right: 6px;"
+        "}"
+        "QAbstractSpinBox::up-button, QAbstractSpinBox::down-button {"
+        "  width: 14px; border: none; background: transparent;"
+        "}"
+        "QAbstractSpinBox::up-arrow, QAbstractSpinBox::down-arrow {"
+        "  width: 0; height: 0; background: none;"
+        "  border-left: 3px solid transparent; border-right: 3px solid transparent;"
+        "}"
+        "QAbstractSpinBox::up-arrow { border-bottom: 4px solid %11; }"
+        "QAbstractSpinBox::down-arrow { border-top: 4px solid %11; }"
         // ── 查看器标签条 ──
         // 必须逐子控件写:上面那条 QWidget 规则只管底色+纯白文字,tabs 交给
         // windowsvista 自己画就是"浅灰 tab + 白字" = 一条读不出字的空白栏
