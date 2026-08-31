@@ -223,7 +223,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     });
     connect(m_viewerTabs, &QTabBar::customContextMenuRequested, this, [this](const QPoint& pos) {
         const int i = m_viewerTabs->tabAt(pos);
-        if (i < 0) return;
+        if (i < 0 || isBrowserTab(i)) return;   // #105:浏览器标签无可关闭
         QMenu menu(m_viewerTabs);
         menu.addAction(QString::fromUtf8("关闭此标签卡"), this, [this, i]() { closeViewerTab(i); });
         menu.addAction(QString::fromUtf8("关闭所有标签卡"), this, [this]() {
