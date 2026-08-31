@@ -28,6 +28,11 @@ public:
     // 这里只用于画 ✓,由主窗口在启动时灌入、此后跟随菜单开关同步。
     void setSubFoldersShown(bool on) { m_subFoldersShown = on; }
 
+    // 拖放(#81):落点坐标 → 该行代表的目录路径(空白/非目录返回空)
+    QString pathAt(const QPoint& pos) const;
+    // 结构变化后刷新当前行(拖入复制完成后用)
+    void refreshCurrent();
+
 signals:
     void folderSelected(const QString& path);
     // 树内文件操作(新建/粘贴/删除/改名/复制到/移动到)造成的结构变化。
