@@ -6,7 +6,8 @@
 
 SortHeader::SortHeader(QWidget* parent) : QWidget(parent) {
     setFixedHeight(26);
-    setStyleSheet("background:" C_TOOLBAR ";border-bottom:1px solid " C_SEPARATOR ";");
+    setStyleSheet(QString::fromUtf8("background:%1;border-bottom:1px solid %2;")
+                      .arg(C_TOOLBAR, C_SEPARATOR));
 
     m_layout = new QHBoxLayout(this);
     m_layout->setContentsMargins(6, 0, 6, 0);
