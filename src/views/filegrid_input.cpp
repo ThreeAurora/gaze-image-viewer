@@ -332,6 +332,16 @@ void FileGrid::onCanvasDblClick(int index) {
 
 void FileGrid::onCanvasMenu(int index, const QPoint& globalPos) {
     if (index < 0 || index >= static_cast<int>(m_entries.size())) return;
+    // 右键落在未选中条目上 = 先选中它再弹菜单(资源管理器同款:菜单作用于
+    // 右键所指);已在选中集里(含多选之一)则保持原选,批量动作按整组生效
+    if (!m_selected.contains(index)) {
+        m_selected.clear();
+        m_selected.insert(index);
+        m_lastClicked = index;
+        refreshView();
+        scrollToRow(index);
+        emit selectionChanged(m_entries[index].path);
+    }
     FileContextMenu menu(this, index, viewport());
     menu.exec(globalPos);
 }
