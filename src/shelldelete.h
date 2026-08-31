@@ -78,6 +78,7 @@ inline void showDeleteToast(QWidget* parent, const QString& text) {
         "border:1px solid rgba(0,0,0,70);}")
         .arg(C_SELECT_YELLOW, C_WIN_BG));
     toast->adjustSize();
+    toast->adjustSize();
 
     int bottomInset = 0;
     if (auto* sb = win->findChild<QStatusBar*>()) bottomInset = sb->height();
