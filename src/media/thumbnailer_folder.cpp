@@ -209,5 +209,9 @@ QImage Thumbnailer::folderThumb(const QString& dirPath, int size) {
     pt.restore();
 
     pt.end();
+    Logger::event(QStringLiteral("folderThumb: cells=%1 video=%2 subScan=%3 %4ms '%5'")
+                      .arg(picked.size()).arg(videoCount)
+                      .arg(subDirsScanned).arg(ftClock.elapsed())
+                      .arg(dirPath));
     return postProcess(sheet, size);
 }
