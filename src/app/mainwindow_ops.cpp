@@ -122,7 +122,23 @@ int MainWindow::seekSeconds() const {
     return qBound(1, AppSettings::instance().get("Viewer/seekSeconds", 3).toInt(), 3600);
 }
 
-// 重命名当前选中项:FileOps/renameDialog 决定弹对话框还是卡片上就地改
+// #136:F2/F3 的统一出口。旧写法只有 renameCurrent() 且**只读网格选区** —— 焦点在
+// 文件树上时按重命名，改的其实是网格里残留的那一项（树和网格是两套选中状态）。
+// 所以这里按"焦点落在谁家里"路由。
+// F3 走的是 QAction 快捷键(为了能进设置→快捷键配置页和 Shortcuts/ ini 覆盖)，
+// 那条路**不经过** eventFilter 的 forText/弹窗三道闸，故在此补一道同样口径的守卫：
+// 地址栏/内联搜索条/任何弹窗里按 F3 不该改名。
+void MainWindow::renameFocused() {
+    QWidget* f = QApplication::focusWidget();
+    if (f && (textInputWidget(f) || activationKeyWidget(f) || insideDialog(f))) return;
+    if (f && m_folderTree && m_folderTree->isAncestorOf(f)) {
+        m_folderTree->renameSelected();
+        return;
+    }
+    renameCurrent();
+}
+
+// ── 重命名当前选中项:FileOps/renameDialog 决定弹对话框还是卡片上就地改
 void MainWindow::renameCurrent() {
     const auto paths = m_fileGrid->selectedPaths();
     if (paths.isEmpty()) return;
