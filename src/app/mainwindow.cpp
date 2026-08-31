@@ -313,6 +313,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     cl->addWidget(m_sortHeader);
 
     m_fileGrid = new FileGrid;
+    m_fileGrid->setAcceptDrops(true);   // 网格自己接住拖入(落点判定在 MainWindow)
     cl->addWidget(m_fileGrid, 1);
     // 拖放(#81):只在 MainWindow 上 setAcceptDrops,网格/树都不开 ——
     // 子控件若 acceptDrops 却不实现 dropEvent,会把事件吞掉,主窗口反而收不到。
