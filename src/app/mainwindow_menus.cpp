@@ -78,7 +78,6 @@ void MainWindow::createMenubar() {
     connect(recentMenu, &QMenu::aboutToShow, this, [this, recentMenu]() {
         rebuildRecentMenu(recentMenu);
     });
-    fileMenu->addSeparator();
     fileMenu->addAction(IconLib::appIcon("cmd_print"), QString::fromUtf8("打印..."),
         QKeySequence("Ctrl+P"), this, [this]() {
             // 有选中打选中,没选中打当前列表全部(和右键"打印"同一口径);
