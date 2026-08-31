@@ -13,6 +13,7 @@
 #include "fileentry.h"
 #include "livephoto.h"
 #include "constants.h"
+#include "thumbnailer.h"   // #105:查看器标签名左侧的小缩略图走同一缩略图管线
 #include "validname.h"
 #include "keytarget.h"
 #include "logger.h"
