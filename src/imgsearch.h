@@ -121,15 +121,15 @@ public:
         req.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
         QNetworkReply* reply = m_nam.post(req, json);
         armTimeout(reply, timeoutMs);
-        QObject::connect(reply, &QNetworkReply::finished, this,
-            [reply, ctx, cb = std::move(cb)] {
-                const int st = reply->attribute(
-                    QNetworkRequest::HttpStatusCodeAttribute).toInt();
-                const QByteArray data = reply->readAll();
-                reply->deleteLater();
-                if (!ctx) return;
-                cb(st, data);
-            });
+        auto onDone = [reply, cb = std::move(cb)] {
+            const int st = reply->attribute(
+                QNetworkRequest::HttpStatusCodeAttribute).toInt();
+            const QByteArray data = reply->readAll();
+            reply->deleteLater();
+            cb(st, data);
+        };
+        if (ctx) QObject::connect(reply, &QNetworkReply::finished, ctx, onDone);
+        else     QObject::connect(reply, &QNetworkReply::finished, this, onDone);
     }
 
 private:
