@@ -78,10 +78,10 @@ inline bool isFourChannelJpeg(const QString& path) {
     return false;
 }
 
-// CMYK JPEG → sRGB QImage(WIC 色彩管理管线)。
+// 通用帧解码:CreateDecoderFromFilename 按容器自动选系统解码器。
 // want 非空且小于原图时经 IWICBitmapScaler 缩放输出(解码级,快),
 // 否则输出原始尺寸。结果为 Format_ARGB32_Premultiplied。
-inline QImage decodeCmyk(const QString& path, const QSize& want = QSize()) {
+inline QImage decodeFrame(const QString& path, const QSize& want = QSize()) {
     ComScope com;   // 任意线程可调;未初始化 COM 的线程在此初始化
 
     IWICImagingFactory* factory = nullptr;
