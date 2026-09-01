@@ -58,7 +58,7 @@ QWidget* SettingsDialog::pageThumbs() {
 
     // 分组"处理"
     auto* fProc = new QFormLayout;
-    fProc->setVerticalSpacing(10);
+    fProc->setVerticalSpacing(6);
     fProc->addRow(chk("Thumbs/alpha", QString::fromUtf8("使用alpha通道"), true));
     fProc->addRow(chk("Thumbs/transparencyGrid", QString::fromUtf8("使用透明网格"), true));
     fProc->addRow(chk("Thumbs/sharpen", QString::fromUtf8("锐化缩略图"), false));
