@@ -1478,8 +1478,10 @@ void PreviewPanel::setupPlayer() {
         // #104:armed 期间(等待本路首帧)不得由 PlayingState 露出画面——
         // PlayingState 比首帧早到,此刻视频面还是上一段的末帧。
         // 未布防(布防失败/太早)时这里兜底,免得藏起来的 vw 没人放出来。
-        if (state == QMediaPlayer::PlayingState && !m_coverArmed)
+        if (state == QMediaPlayer::PlayingState && !m_coverArmed
+            && (m_mode == "video" || m_isLivePhoto)) {
             revealVideo();
+        }
     });
 
     // Live Photo: 视频播完 → 切回静态图(播放器保留复用)。
