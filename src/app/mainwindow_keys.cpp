@@ -365,7 +365,7 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
                     // 回车:按 SwitchMode/enterKey 切换模式
                     if ((ke->key() == Qt::Key_Return || ke->key() == Qt::Key_Enter)
                         && !forActivation) {
-                        // #154:全屏查看里切模式会改掉"退出还原的布局",禁用
+                        // #154:全屏预览里切模式会改掉"退出还原的布局",禁用
                         if (m_fullView) return true;
                         // #128② 取证埋点:用户复报"跳转后查看器仍弹"。本分支是
                         // 全应用唯一的 Enter→查看器消费点,但成功跳转/模式切换
