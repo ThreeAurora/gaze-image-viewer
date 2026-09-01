@@ -338,7 +338,32 @@ void FileGrid::onCanvasDblClick(int index) {
 }
 
 void FileGrid::onCanvasMenu(int index, const QPoint& globalPos) {
-    if (index < 0 || index >= static_cast<int>(m_entries.size())) return;
+    if (index < 0 || index >= static_cast<int>(m_entries.size())) {
+        // 空白处右键(2026-09-01 用户令):先自动取消选中文件/夹,再弹作用于
+        // "当前文件夹"的菜单 —— 新建文件夹/在资源管理器中显示/全选/属性
+        if (!m_selected.empty()) {
+            m_selected.clear();
+            m_lastClicked = -1;
+            refreshView();
+            emit selectionChanged({});
+        }
+        QMenu menu(viewport());
+        menu.addAction(IconLib::appIcon("cmd_newFolder"), QString::fromUtf8("新建文件夹"),
+                       this, [this]() { newFolder(); });
+        menu.addAction(IconLib::appIcon("cmd_open"), QString::fromUtf8("在资源管理器中显示"),
+                       this, [this]() {
+                           if (!m_currentDir.isEmpty())
+                               QDesktopServices::openUrl(QUrl::fromLocalFile(m_currentDir));
+                       });
+        menu.addAction(QString::fromUtf8("全选"), this, [this]() { selectAllEntries(); });
+        menu.addAction(IconLib::appIcon("cmd_openProperties"), QString::fromUtf8("属性"),
+                       this, [this]() {
+                           if (!m_currentDir.isEmpty())
+                               showShellProperties(m_currentDir);
+                       });
+        menu.exec(globalPos);
+        return;
+    }
     // 右键落在未选中条目上 = 先选中它再弹菜单(资源管理器同款:菜单作用于
     // 右键所指);已在选中集里(含多选之一)则保持原选,批量动作按整组生效
     if (!m_selected.contains(index)) {
