@@ -140,7 +140,7 @@ QWidget* SettingsDialog::pageLabelColors() {
                         QString::fromUtf8("文件根据格式显示以下颜色(文件名底色)"), true));
 
     auto* body = new QHBoxLayout;
-    body->setSpacing(12);
+    body->setSpacing(8);
 
     // 左:扩展名列表(整行以对应颜色填充)
     auto* list = new QListWidget;
