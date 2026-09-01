@@ -259,7 +259,7 @@ QWidget* SettingsDialog::pageBrowser() {
 
     // 分组"预览"(对齐 XnView MP 浏览器页)
     auto* fPrev = new QFormLayout;
-    fPrev->setVerticalSpacing(10);
+    fPrev->setVerticalSpacing(6);
     fPrev->addRow(QString::fromUtf8("预览背景色"),
                   colorPick("Browser/previewBackColor", "#000000"));
     fPrev->addRow(chk("Browser/showRating", QString::fromUtf8("显示颜色标记"), true));
