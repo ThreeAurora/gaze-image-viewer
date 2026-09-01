@@ -303,6 +303,14 @@ QWidget* SettingsDialog::pageFileList() {
             QString::fromUtf8("从不")}, 0));
     form->addRow(chk("FileList/mixSort", QString::fromUtf8("混合文件/文件夹排序"), false));
     form->addRow(chk("FileList/folderAlphabetical", QString::fromUtf8("文件夹总是按字母序排列"), true));
+    // #150:启动默认排序,索引含义与 FileGrid 构造函数里的 switch 一一对应
+    form->addRow(QString::fromUtf8("启动时默认排序"),
+        combo("Browser/startupSort", {QString::fromUtf8("文件名(升序)"),
+            QString::fromUtf8("修改日期(降序)"), QString::fromUtf8("创建日期(降序)"),
+            QString::fromUtf8("EXIF 拍摄日期(降序)"), QString::fromUtf8("类型"),
+            QString::fromUtf8("大小(降序)"), QString::fromUtf8("扩展名"),
+            QString::fromUtf8("路径"), QString::fromUtf8("颜色标签"),
+            QString::fromUtf8("记住上次")}, 0));
     form->addRow(chk("FileList/newAtEnd", QString::fromUtf8("新文件添加至列表末尾"), false));
     form->addRow(chk("FileList/autoSelectNew", QString::fromUtf8("自动选择新文件"), false));
     form->addRow(chk("FileList/sizeInBytes", QString::fromUtf8("按字节显示文件大小"), false));
