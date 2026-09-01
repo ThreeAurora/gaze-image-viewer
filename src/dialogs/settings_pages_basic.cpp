@@ -66,7 +66,7 @@ QWidget* SettingsDialog::pageGeneral() {
 
 QWidget* SettingsDialog::pageStartup() {
     auto* form = new QFormLayout;
-    form->setVerticalSpacing(12);
+    form->setVerticalSpacing(6);
     form->addRow(QString::fromUtf8("带文件启动"),
         combo("Start/withFile", {QString::fromUtf8("查看器"), QString::fromUtf8("全屏 - 查看器"),
                                  QString::fromUtf8("浏览器"), QString::fromUtf8("浏览器 - 全屏")}, 0));
