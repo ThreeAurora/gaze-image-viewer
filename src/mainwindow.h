@@ -103,7 +103,7 @@ private:
     int  addViewerTab(const QString& path);                 // 追加标签,返回索引
     void setViewerTabPath(int index, const QString& path);  // 就地换某标签指向的文件
     void installTabCloseButton(int index);  // 自绘 × (主题色,系统图标在深色下看不见)
-    void pruneDeadViewerTabs();             // 丢掉指向已消失文件的标签
+    Q_INVOKABLE void pruneDeadViewerTabs();  // 丢掉指向已消失文件的标签(删除后网格也会叫)
     void updateNavEnabled();   // 按游标刷新"后退/前进"菜单项+工具栏按钮的可用性(#87)
     // 查看器标签:文件路径存在 QTabBar 的 tabData 里(唯一真源,
     // 拖拽重排/removeTab 都带着它走,不需要并行的路径数组保持同步)
