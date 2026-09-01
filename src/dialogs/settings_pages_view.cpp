@@ -48,7 +48,7 @@ QWidget* SettingsDialog::pageViewer() {
 
     // 分组"缩放"
     auto* fZoom = new QFormLayout;
-    fZoom->setVerticalSpacing(10);
+    fZoom->setVerticalSpacing(6);
     fZoom->addRow(QString::fromUtf8("自动缩放"),
         combo("Viewer/autoFit", {QString::fromUtf8("上次使用过的"), QString::fromUtf8("不缩放"),
             QString::fromUtf8("适应窗口"), QString::fromUtf8("适应窗口大小 (仅小图片)"),
