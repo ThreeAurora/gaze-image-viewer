@@ -123,8 +123,10 @@ void FileGrid::scrollToRow(int idx) {
         verticalScrollBar()->setValue(y);                                // 贴顶完整展示
     else if (bottomPartial)
         verticalScrollBar()->setValue(y + rowH - vpH);                   // 贴底完整展示
-    else if (y < vpTop || y + rowH > vpTop + vpH)
-        verticalScrollBar()->setValue(std::max(0, y - vpH / 2));         // 完全不可见→居中
+    else if (y + rowH <= vpTop)
+        verticalScrollBar()->setValue(y);                                // 完全在上方 → 贴顶
+    else if (y >= vpTop + vpH)
+        verticalScrollBar()->setValue(y + rowH - vpH);                   // 完全在下方 → 贴底
 }
 
 void FileGrid::selectIndex(int idx, bool scrollToVisible) {
