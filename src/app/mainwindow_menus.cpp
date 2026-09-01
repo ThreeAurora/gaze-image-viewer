@@ -638,6 +638,8 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
     colsBtn->setFixedSize(46, 26);
     colsBtn->setStyleSheet(QString::fromUtf8("QToolButton{color:%1;font-size:9px;}")
                                .arg(C_SB_ARROW));   // #151:同款小号箭头灰
+    colsBtn->setStyleSheet(QString::fromUtf8("QToolButton{color:%1;font-size:9px;}")
+                               .arg(C_SB_ARROW));   // #151:同款小号箭头灰
     colsBtn->setToolTip(QString::fromUtf8(
         "缩略图列数\n手动指定后,拖动边框/缩放窗口时缩略图贴边缩放但列数不变"));
     colsBtn->setPopupMode(QToolButton::InstantPopup);
