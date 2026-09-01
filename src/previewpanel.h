@@ -328,6 +328,7 @@ private:
     QVector<int> m_gifStart;           // 每帧起始时间(ms),长度 = m_gifDelay + 1
     QPoint m_gifPressPos;              // 单击=播放/暂停:按下点与松开点足够近才算单击
     bool   m_gifToggleArm = false;
+    quint32 m_lastPressTs = 0;   // 双击自管上限(#159):首次左键按下的事件时间戳
     // 游标与帧缓存(#94):Qt 6.8.3 的 QImageReader::jumpToImage/jumpToNextImage
     // 对 GIF 实测一律返回 false(见 cache/tmp/gif_seek_probe),跳帧只能"顺解"或
     // "重建后从头解"。m_gifNext = reader 下一次 read() 会产出的帧号(-1=游标不可信)。
