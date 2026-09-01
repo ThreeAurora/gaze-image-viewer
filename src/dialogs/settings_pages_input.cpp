@@ -255,7 +255,7 @@ QWidget* SettingsDialog::pageShortcuts() {
 
 QWidget* SettingsDialog::pageBrowser() {
     auto* root = new QVBoxLayout;
-    root->setSpacing(9);   // 分组框页:组间距收紧(组框自身已有边距)
+    root->setSpacing(6);   // 分组框页:组间距收紧(组框自身已有边距);#148 再收一档
 
     // 分组"预览"(对齐 XnView MP 浏览器页)
     auto* fPrev = new QFormLayout;
