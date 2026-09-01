@@ -54,7 +54,7 @@ list(REMOVE_ITEM GAZE_HEADERS "${CMAKE_SOURCE_DIR}/src/filecard.h")
 # 没编进来 → 链接期一堆 undefined reference。留着文件只为读史,别进 moc 名单。
 list(REMOVE_ITEM GAZE_HEADERS "${CMAKE_SOURCE_DIR}/src/filecard.h")
 
-add_executable(gaze WIN32
+add_executable(Gaze WIN32
     ${GAZE_HEADERS}
     src/app/main.cpp
 
