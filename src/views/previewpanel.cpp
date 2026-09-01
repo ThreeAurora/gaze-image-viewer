@@ -416,6 +416,9 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     // 事件过滤器
     m_imgLabel->installEventFilter(this);
     m_videoWidget->installEventFilter(this);   // 视频区左键=播放/暂停(见 eventFilter)
+    // m_waveLabel 的过滤器必须在这里(构造完成)挂:若在波形块里挂,addWidget 的
+    // reparent 事件会同步进 eventFilter,彼时 m_textEdit 还没建 → 空指针崩溃
+    m_waveLabel->installEventFilter(this);   // Resize → renderWave 重画
     m_textEdit->viewport()->installEventFilter(this);  // #115:滚轮落在 QTextEdit 的 viewport 上(见 eventFilter)
     installEventFilter(this);
 
