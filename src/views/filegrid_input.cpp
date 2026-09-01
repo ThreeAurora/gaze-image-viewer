@@ -40,6 +40,7 @@
 #include <QMessageBox>
 #include <QInputDialog>
 #include <QMenu>
+#include <QMenu>
 #include <QLineEdit>
 #include <QApplication>
 #include <QProcess>
