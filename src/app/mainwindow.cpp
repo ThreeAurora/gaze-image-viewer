@@ -478,13 +478,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
         m_fileGrid->navigateSelection(1);
     });
 
-    // Tooltip
-    m_tooltip = new QLabel(nullptr, Qt::ToolTip);
-    m_tooltip->setStyleSheet(
-        "background:rgba(0,0,0,240);color:#FFFFFF;font-size:11px;"
-        "padding:8px 12px;border-radius:6px;border:1px solid #444;");
-    m_tooltip->hide();
-
     // Global shortcuts via event filter
     qApp->installEventFilter(this);
 
