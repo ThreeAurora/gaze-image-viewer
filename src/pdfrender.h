@@ -1,9 +1,12 @@
 #pragma once
 // ═══════════════════════════════════════════
 // PDF 预览渲染(#82)
-//   Qt 6.8 的 Windows 二进制不带 QtPdf 模块,故走系统已装的 Ghostscript
-//   (gswin64c.exe)把指定页渲染成 PNG,再当普通图片显示。
-//   找不到 Ghostscript 时回退 Windows Shell 缩略图(Explorer 那种首页缩略图),
+//   Qt 6.8 的 Windows 二进制不带 QtPdf 模块,故用 Ghostscript 把指定页渲染成
+//   PNG,再当普通图片显示。
+//   GS 随 gaze 分发(#110,用户 2026-08-31 明令):优先用 exe 旁 gs/bin/gswin64c.exe
+//   (源 = 仓库 vendor/gs,CMake post-build 自动同步到构建目录),
+//   内置版缺失才回退 PATH / Program Files —— 不再依赖"用户装没装 GS"。
+//   都找不到时回退 Windows Shell 缩略图(Explorer 那种首页缩略图),
 //   还失败就如实返回空图,绝不假装预览成功。
 // ═══════════════════════════════════════════
 #include <QString>
@@ -18,21 +21,34 @@
 
 namespace Pdf {
 
-// Ghostscript 可执行文件:优先 PATH,再试常见安装路径(本机 gs10.07.0)
+// Ghostscript 可执行文件:内置(gs/bin,随 exe 分发)优先 → PATH → Program Files/gs*
 inline QString gsExe() {
     static QString cached;
     static bool looked = false;
     if (looked) return cached;
     looked = true;
 
-    auto probe = [](const QString& p) {
-        return !p.isEmpty() && QFileInfo::exists(p) ? p : QString();
+    QString p;
+    // 1) 随 gaze 分发的内置版。gswin64c.exe 靠相对自身的 ../Resource 找 gs_init.ps,
+    //    所以必须整目录(gs/bin + gs/Resource + gs/lib)一起拷,只拷 exe 会直接报错。
+    const QString appDir = QCoreApplication::applicationDirPath();
+    for (const QString& name : {QStringLiteral("gswin64c.exe"),
+                                QStringLiteral("gswin32c.exe"),
+                                QStringLiteral("gs.exe")}) {
+        const QString cand = appDir + QStringLiteral("/gs/bin/") + name;
+        if (QFileInfo::exists(cand)) { p = QDir::toNativeSeparators(cand); break; }
+    }
+    if (!p.isEmpty()) { cached = p; return cached; }
+
+    // 2) 回退:PATH 里的 gswin64c / gswin32c / gs
+    auto probe = [](const QString& x) {
+        return !x.isEmpty() && QFileInfo::exists(x) ? x : QString();
     };
-    QString p = probe(QStandardPaths::findExecutable(QStringLiteral("gswin64c")));
+    p = probe(QStandardPaths::findExecutable(QStringLiteral("gswin64c")));
     if (p.isEmpty()) p = probe(QStandardPaths::findExecutable(QStringLiteral("gswin32c")));
     if (p.isEmpty()) p = probe(QStandardPaths::findExecutable(QStringLiteral("gs")));
     if (p.isEmpty()) {
-        // 扫 Program Files 下的 gs* 目录(gswin64c 在 bin/ 里)
+        // 3) 回退:扫 Program Files 下的 gs* 目录
         for (const QString& root : {QStringLiteral("C:/Program Files"),
                                     QStringLiteral("C:/Program Files (x86)")}) {
             const QDir d(root);
