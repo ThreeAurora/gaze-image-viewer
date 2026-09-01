@@ -183,7 +183,11 @@ void PreviewPanel::mouseReleaseEvent(QMouseEvent* event) {
 }
 
 void PreviewPanel::mouseDoubleClickEvent(QMouseEvent* event) {
-    if (event->button() == Qt::LeftButton)
+    // #159:双击判定自管上限。Qt 默认跟系统(400ms),用户嫌松 —— 两次按下间隔
+    // 超过 300ms 的"双击"不切模式,落成两次单击各自的本职(GIF 暂停/临时 1:1)。
+    // 无符号减法:timestamp 回绕也正确
+    if (event->button() == Qt::LeftButton
+        && event->timestamp() - m_lastPressTs <= 300)
         invokeOnWindow(this, "toggleViewer()");   // 双击:浏览器 ↔ 查看器
     QWidget::mouseDoubleClickEvent(event);
 }
