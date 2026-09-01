@@ -203,9 +203,9 @@ void PreviewPanel::showVideo(const QString& path) {
             m_player->stop();
             m_player->setVideoOutput(static_cast<QVideoWidget*>(nullptr));
             m_videoOutAttached = false;
-            // 装载期用纯黑遮罩盖住视频控件:控件里残留的是上一段视频的最后一帧,
-            // attach→新视频首帧之间会"闪回上一张";遮罩露出的是纯黑底
-            m_vw->show();
+            // #104:装载期把视频控件整个藏起来(遮罩盖不住它内部的原生视频窗)。
+            // 实测断输出后视频面还会继续呈现上一路的末帧约 50~100ms——那就是
+            // 用户看到的"闪回上一张"。藏起来则屏幕上只剩父窗口的 #0A0A0C 深色底。
             raiseVideoCover();
             m_player->setSource(url);
         }
