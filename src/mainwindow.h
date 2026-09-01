@@ -227,7 +227,7 @@ private:
     QToolButton* m_btnBack = nullptr;
     QToolButton* m_btnFwd = nullptr;
     QList<int> m_savedSplitter;  // 进查看器前的分栏宽度(退回时原样恢复)
-    bool m_fullView = false;     // #154 全屏查看中(独立于查看器模式,不碰标签页)
+    bool m_fullView = false;     // #154 全屏预览中(独立于查看器模式,不碰标签页)
     QList<int> m_fullViewSplitter;  // 进全屏查看前的分栏宽度(退出时原样恢复)
     bool m_fullView = false;     // #154 全屏查看中(独立于查看器模式,不碰标签页)
     QList<int> m_fullViewSplitter;  // 进全屏查看前的分栏宽度(退出时原样恢复)
