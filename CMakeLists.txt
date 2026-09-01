@@ -161,7 +161,7 @@ target_link_options(Gaze PRIVATE -static-libgcc -static-libstdc++)
 # 这里用 post-build 无条件同步,杜绝复发。
 add_custom_command(TARGET Gaze POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${CMAKE_SOURCE_DIR}/src/assets" "$<TARGET_FILE_DIR:gaze>/assets"
+            "${CMAKE_SOURCE_DIR}/src/assets" "$<TARGET_FILE_DIR:Gaze>/assets"
     COMMENT "同步应用图标资源 assets/ 到构建目录"
     VERBATIM
 )
