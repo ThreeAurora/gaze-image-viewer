@@ -313,7 +313,7 @@ QWidget* SettingsDialog::pageIntegration() {
 
     // 分组"文件关联"(醒目大按钮)
     auto* fAssoc = new QFormLayout;
-    fAssoc->setVerticalSpacing(10);
+    fAssoc->setVerticalSpacing(6);
     auto* regBtn = new QPushButton(QString::fromUtf8("注册应用(加入\"打开方式\"列表)"));
     connect(regBtn, &QPushButton::clicked, this, []() {
         bool ok = Integration::registerOpenWith();
