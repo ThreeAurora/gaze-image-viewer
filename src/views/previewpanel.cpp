@@ -90,6 +90,7 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
         QString("color:%1;font-size:13px;background:transparent;")
             .arg(C_TEXT_DIM));
     layout->addWidget(m_placeholder, 1);
+    Logger::boot("pv-ctor:ph");
 
     // 图片标签:不进布局——缩放/拖动需要自由定位,
     // 尺寸可超面板(超出部分裁剪,拖动=移动视口),否则放大后只剩"片段"
