@@ -179,8 +179,10 @@ void PreviewPanel::showVideo(const QString& path) {
                 m_player->setVideoOutput(m_vw);
                 m_videoOutAttached = true;
             }
-            m_vw->show();
-            raiseVideoCover();   // 回零重播前盖住上一轮的末帧,本路首帧到达后收回
+            // #104:raiseVideoCover() 会把 m_vw 藏起来(遮罩盖不住原生视频窗,
+            // 只能连控件一起藏),本路首帧到达时由 revealVideo() 放出来。
+            // 回零重播前的"上一轮末帧"因此完全没有曝光窗口。
+            raiseVideoCover();
             armCoverUntilFirstFrame();
             if (!deferLoad) {
                 m_player->setPosition(0);
