@@ -44,7 +44,7 @@ using namespace sd_impl;   // colorPick
 
 QWidget* SettingsDialog::pageViewer() {
     auto* root = new QVBoxLayout;
-    root->setSpacing(9);   // 分组框页:组间距收紧(组框自身已有边距)
+    root->setSpacing(6);   // 分组框页:组间距收紧(组框自身已有边距)
 
     // 分组"缩放"
     auto* fZoom = new QFormLayout;
