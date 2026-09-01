@@ -74,7 +74,7 @@ QWidget* SettingsDialog::pageViewer() {
 
     // 分组"背景与界面元素"
     auto* fUI = new QFormLayout;
-    fUI->setVerticalSpacing(10);
+    fUI->setVerticalSpacing(6);
     fUI->addRow(QString::fromUtf8("背景色"),
                 colorPick("Viewer/backColor", "#000000"));
     fUI->addRow(chk("Viewer/checkerMode", QString::fromUtf8("背景以挡板模式显示"), false));
