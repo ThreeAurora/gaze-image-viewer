@@ -142,7 +142,7 @@ QWidget* SettingsDialog::pageFullscreen() {
 
 QWidget* SettingsDialog::pageCache() {
     auto* form = new QFormLayout;
-    form->setVerticalSpacing(12);
+    form->setVerticalSpacing(6);
     form->addRow(chk("Cache/useCatalog", QString::fromUtf8("启用缓存目录"), true));
     form->addRow(chk("Cache/thumbInDB", QString::fromUtf8("允许缓存缩略图"), true));
     form->addRow(QString::fromUtf8("压缩"),
