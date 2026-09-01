@@ -69,7 +69,7 @@ QWidget* SettingsDialog::pageKeyboardMouse() {
 
 QWidget* SettingsDialog::pageShortcuts() {
     auto* root = new QVBoxLayout;
-    root->setSpacing(10);
+    root->setSpacing(6);
 
     // ── 查看器命令表(与 previewpanel 共用 viewerhotkeys.h,不再两处维护) ──
 
