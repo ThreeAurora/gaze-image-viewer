@@ -1507,10 +1507,13 @@ void PreviewPanel::setupPlayer() {
                 const QString pending = m_pendingPlay;
                 m_pendingPlay.clear();
                 Logger::event(QStringLiteral("deferred attach+play '%1'").arg(pending));
-                m_vw->show();
+                // #104:这里**不能** m_vw->show()。装载期 raiseVideoCover() 已经把
+                // 视频控件藏起来了(唯一能挡住原生视频窗的办法),此刻放出来就等于
+                // 把上一路的末帧又露出去。露出只由 revealVideo() 在首帧到达时做。
+                // 隐藏期间媒体后端照常送帧(实测 2s 出 60 帧),不影响首帧检测。
                 m_player->setVideoOutput(m_vw);
                 m_videoOutAttached = true;
-                // #104:装载期 raiseVideoCover() 升起的遮罩,收回权交给本路首帧
+                // #104:装载期 raiseVideoCover() 的布防,收回权交给本路首帧
                 armCoverUntilFirstFrame();
                 // #104:装载期 raiseVideoCover() 升起的遮罩,收回权交给本路首帧
                 armCoverUntilFirstFrame();
