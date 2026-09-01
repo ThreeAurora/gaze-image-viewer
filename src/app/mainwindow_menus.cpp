@@ -177,7 +177,7 @@ void MainWindow::createMenubar() {
     fsAct->setCheckable(true);
     // 键位写在标题里而不挂 QAction::setShortcut:菜单裸键会连文本框里的 G 一起吞掉(#61),
     // 实际响应在 qApp 事件过滤器里(那里有"这个键是不是该给文本框"的判断)
-    auto* fullAct = viewMenu->addAction(QString::fromUtf8("全屏查看  (G)"), this, [this]() {
+    auto* fullAct = viewMenu->addAction(QString::fromUtf8("全屏预览  (G)"), this, [this]() {
         toggleFullView();
     });
     fullAct->setCheckable(true);
