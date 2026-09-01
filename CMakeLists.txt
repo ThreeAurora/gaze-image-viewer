@@ -224,7 +224,7 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/thirdparty/LibRaw/libraw/libraw.h")
     target_include_directories(rawdec PUBLIC "${CMAKE_SOURCE_DIR}/thirdparty/LibRaw")
     # dcraw 血统代码有类型双关,-fno-strict-aliasing 保优化下行为不漂
     target_compile_options(rawdec PRIVATE -O2 -fno-strict-aliasing)
-    target_link_libraries(gaze PRIVATE rawdec)
+    target_link_libraries(Gaze PRIVATE rawdec)
     target_compile_definitions(gaze PRIVATE HAS_RAWDEC=1)
 else()
     message(STATUS "RAW 全解:thirdparty/LibRaw 不存在 → RAW 按钮显示未编入提示")
