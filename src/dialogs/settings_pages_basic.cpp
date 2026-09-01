@@ -126,7 +126,7 @@ QWidget* SettingsDialog::pageFileOps() {
 
 QWidget* SettingsDialog::pageInterface() {
     auto* form = new QFormLayout;
-    form->setVerticalSpacing(12);
+    form->setVerticalSpacing(6);
     auto* multiTabs = chk("Interface/multiViewerTabs",
                           QString::fromUtf8("同一文件多个查看器标签卡"), false);
     multiTabs->setToolTip(QString::fromUtf8(
