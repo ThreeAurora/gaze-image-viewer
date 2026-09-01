@@ -49,6 +49,7 @@
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QMouseEvent>
+#include <QMouseEvent>
 #include <QApplication>
 #include <QToolButton>
 #include <QFrame>
