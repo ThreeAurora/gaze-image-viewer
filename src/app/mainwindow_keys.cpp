@@ -260,6 +260,18 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
     if (event->type() == QEvent::KeyPress) {
         auto *ke = static_cast<QKeyEvent*>(event);
         auto *tgt = qobject_cast<QWidget*>(obj);
+        // #155:地址栏里 Backspace = 删字(外部改键工具送的是 Alt+退格)。实测
+        // (cache/tmp/altbs_probe3.cpp):QLineEdit 收到 Alt+退格既不删字也不接受,
+        // 事件冒泡上去,在 gaze 里就走出"上级目录"的假动作 —— 这里替它删并消费,
+        // 放在 bypass 之前:编辑手段优先于一切(#61 原则)。backspace() 有选中先
+        // 删选中,与原生裸退格行为一致;Ctrl+退格(删词)不拦,仍归 QLineEdit。
+        if (obj == m_addrBar
+            && ke->key() == Qt::Key_Backspace
+            && (ke->modifiers() == Qt::NoModifier
+                || ke->modifiers() == Qt::AltModifier)) {
+            m_addrBar->backspace();
+            return true;
+        }
         // 路由只看"这个键送给了谁",不看 QApplication::focusWidget():焦点在别处、
         // 键却发给弹窗的情况(QMenu/下拉列表都不是 QDialog)旧写法会整段吞掉 Enter/Esc。
         // main.cpp 的对话框过滤器装得更早、先触发,这里是第二道闸。
