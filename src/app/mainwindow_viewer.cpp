@@ -249,6 +249,19 @@ void MainWindow::applyPaneVisibility() {
         statusBar()->hide();
         return;
     }
+    // #154 全屏查看:面板意图挂起,只留画面;退出经 exitFullView 走下面正常分支还原。
+    // 全屏查看期间面板开关被拨动也不破功(这里每次都会重新压回只留画面)
+    if (m_fullView) {
+        if (m_treePane)    m_treePane->hide();
+        if (m_centerPane)  m_centerPane->hide();
+        if (m_previewPane) m_previewPane->show();
+        if (m_previewHdr)  m_previewHdr->hide();
+        if (m_addrRow)     m_addrRow->hide();
+        if (m_toolRow)     m_toolRow->hide();
+        if (m_infoPane)    m_infoPane->hide();
+        statusBar()->hide();
+        return;
+    }
     if (m_treePane)    m_treePane->setVisible(paneOn("tree") && !m_viewerMode);
     if (m_centerPane)  m_centerPane->setVisible(!m_viewerMode);
     if (m_previewPane) m_previewPane->setVisible(paneOn("preview") || m_viewerMode);
