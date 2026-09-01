@@ -361,6 +361,7 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
 
     layout->addWidget(m_controlBar);
     Logger::boot("pv-ctor:ctrl");
+    Logger::boot("pv-ctor:ctrl");
 
     // LIVE 徽章(动态照片播放时的右上角标识,child of videoWidget)
     m_liveBadge = new QLabel("LIVE", m_videoWidget);
