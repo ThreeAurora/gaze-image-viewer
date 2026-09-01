@@ -72,8 +72,9 @@ protected:
 private:
     void setupPlayer();
     void ensureVideoWidget();   // 视频控件唯一创建/复用入口
-    void raiseVideoCover();     // 升起纯黑遮罩(盖住控件残帧,首帧到达后收回)
+    void raiseVideoCover();     // #104:切源期间藏起视频控件(+升起遮罩),首帧到达才露出
     void armCoverUntilFirstFrame();  // #104:改由"本路源第一帧"收回遮罩,而非 PlayingState
+    void revealVideo();         // #104:首帧到达/兜底出口 → 收遮罩 + 露出视频控件
     void syncVideoChildren();   // vw/cover 几何同步到 videoWidget(布局激活后必须重跑)
     void vidProbeAttach();      // VIDFRAME 探针:attach 后取 player 的 sink 挂帧旁听
     void vidProbeAttach();      // VIDFRAME 探针:attach 后取 player 的 sink 挂帧旁听
