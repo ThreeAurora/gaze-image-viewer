@@ -94,6 +94,7 @@ void PreviewPanel::resizeEvent(QResizeEvent* event) {
 }
 
 void PreviewPanel::mousePressEvent(QMouseEvent* event) {
+    if (event->button() == Qt::LeftButton) m_lastPressTs = event->timestamp();
     if (event->button() == Qt::LeftButton && m_mode == "image" && m_origPix) {
         // 动态照片:单击=重播动态部分(临时 1:1 放大只属于普通图片)
         if (m_liveInfo) { playLivePhoto(); event->accept(); return; }
