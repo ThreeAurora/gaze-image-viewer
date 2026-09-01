@@ -45,7 +45,7 @@ QWidget* SettingsDialog::pageThumbs() {
 
     // 分组"创建"
     auto* fCreate = new QFormLayout;
-    fCreate->setVerticalSpacing(10);
+    fCreate->setVerticalSpacing(6);
     fCreate->addRow(chk("Thumbs/folder4", QString::fromUtf8("在文件夹缩略图中显示4张缩略图(而非1张)"), true));
     fCreate->addRow(chk("Thumbs/video4", QString::fromUtf8("在视频缩略图中显示4张缩略图(替代1张)"), false));
     fCreate->addRow(chk("Thumbs/highQuality", QString::fromUtf8("创建高品质的缩略图"), true));
