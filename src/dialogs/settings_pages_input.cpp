@@ -44,7 +44,7 @@ using namespace sd_impl;   // colorPick
 
 QWidget* SettingsDialog::pageKeyboardMouse() {
     auto* form = new QFormLayout;
-    form->setVerticalSpacing(10);
+    form->setVerticalSpacing(6);
     form->addRow(QString::fromUtf8("左/右键方向键"),
         combo("Keyboard/leftRight", {QString::fromUtf8("上一个文件/下一个文件"),
             QString::fromUtf8("水平滚动")}, 0));
