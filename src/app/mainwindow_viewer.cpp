@@ -357,6 +357,36 @@ void MainWindow::createViewMenu() {
         for (int i = 0; i < kPaneCount; ++i)
             if (m_paneActs[i]) m_paneActs[i]->setChecked(m_panesOn.contains(all[i]));
     });
+
+    // 主题深/浅(#159):与 设置→外观 同一键(Appearance/theme)。Theme::init 只在
+    // 启动读一次,运行中切换不会重刷已构造的样式表 —— 这里如实只落 ini+弹窗
+    // 告知重启,不装即时生效
+    vm->addSeparator();
+    auto* themeMenu = vm->addMenu(QString::fromUtf8("主题"));
+    auto* thDark = themeMenu->addAction(QString::fromUtf8("深色"));
+    auto* thLight = themeMenu->addAction(QString::fromUtf8("浅色"));
+    thDark->setCheckable(true);
+    thLight->setCheckable(true);
+    auto switchTheme = [this](const QString& v, const QString& label) {
+        AppSettings& st = AppSettings::instance();
+        if (st.get("Appearance/theme", QStringLiteral("dark")).toString() == v) return;
+        st.set("Appearance/theme", v);
+        QMessageBox::information(this, QString::fromUtf8("主题"),
+            QString::fromUtf8("已选「%1」，重启 Gaze 后生效。").arg(label));
+    };
+    connect(thDark, &QAction::triggered, this, [switchTheme]() {
+        switchTheme(QStringLiteral("dark"), QString::fromUtf8("深色"));
+    });
+    connect(thLight, &QAction::triggered, this, [switchTheme]() {
+        switchTheme(QStringLiteral("light"), QString::fromUtf8("浅色"));
+    });
+    connect(themeMenu, &QMenu::aboutToShow, this, [thDark, thLight]() {
+        const bool light =
+            AppSettings::instance().get("Appearance/theme", QStringLiteral("dark"))
+                .toString() == QLatin1String("light");
+        thDark->setChecked(!light);
+        thLight->setChecked(light);
+    });
 }
 
 // ── 浏览器 ↔ 查看器(单图模式:隐藏树/网格,预览占满) ──
