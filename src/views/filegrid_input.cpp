@@ -98,8 +98,10 @@ void FileGrid::scrollToRow(int idx) {
             verticalScrollBar()->setValue(r.top());
         else if (bottomPartial)
             verticalScrollBar()->setValue(r.bottom() + 1 - vpH);
-        else if (r.top() < vpTop || r.bottom() + 1 > vpTop + vpH)
-            verticalScrollBar()->setValue(std::max(0, r.top() - vpH / 2));
+        else if (r.bottom() + 1 <= vpTop)        // 完全在视口上方 → 贴顶
+            verticalScrollBar()->setValue(std::max(0, r.top()));
+        else if (r.top() >= vpTop + vpH)         // 完全在视口下方 → 贴底
+            verticalScrollBar()->setValue(r.bottom() + 1 - vpH);
         return;
     }
 
