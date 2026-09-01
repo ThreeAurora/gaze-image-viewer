@@ -317,12 +317,19 @@ void PreviewPanel::updateSelectionHighlight() {
     }
 }
 
-// 纯黑遮罩升起:盖住视频控件里可能残留的上一段画面
+// #104:切源期间的"挡住上一路画面"。
+// 两件事一起做:升起黑色遮罩(第二道防线)+ **把 m_vw 整个藏起来**(真正生效的那一刀)。
+// 为什么必须藏:QVideoWidget 内部是 createWindowContainer(QVideoWindow),那是一个
+// 原生子窗口,永远压在非原生兄弟控件之上 —— 遮罩盖不到它。实测(cache/tmp/
+// vw_screen_probe.cpp,Windows 合成器下 BitBlt 截屏):断输出后视频面还会把上一路
+// 的末帧继续呈现约 50~100ms,这段正是用户看到的"闪回上一张";而 hides 掉的
+// m_vw 让屏幕上只剩父窗口的 #0A0A0C 深色底,var=0,一帧残影都没有。
 void PreviewPanel::raiseVideoCover() {
     ensureVideoWidget();
     m_videoCover->setGeometry(m_videoWidget->rect());
     m_videoCover->raise();
     m_videoCover->show();
+    if (m_vw) m_vw->hide();     // ← 真正挡住原生视频窗的那一刀
     m_coverArmed = true;
 }
 
@@ -331,7 +338,7 @@ void PreviewPanel::raiseVideoCover() {
 // 那一刻 QVideoWidget 的表面里还是上一段视频的末帧,于是露出"闪回上一张"。
 // 必须在 attach 之后调用(此前 player->videoSink() 不属于 m_vw)。
 void PreviewPanel::armCoverUntilFirstFrame() {
-    if (!m_player || !m_videoCover) return;
+    if (!m_player) return;
     QVideoSink* vs = m_player->videoSink();
     if (!vs) return;
     disconnect(m_coverConn);
@@ -339,10 +346,18 @@ void PreviewPanel::armCoverUntilFirstFrame() {
     m_coverConn = connect(vs, &QVideoSink::videoFrameChanged, this,
                           [this](const QVideoFrame& f) {
         if (!f.isValid()) return;
-        disconnect(m_coverConn);
-        m_coverArmed = false;
-        if (m_videoCover) m_videoCover->hide();
+        revealVideo();
     });
+}
+
+// #104 唯一的"露出"出口:收遮罩 + 把视频控件放出来。
+// 所有兜底路径(未布防时的 PlayingState、InvalidMedia)都走这里,
+// 避免"藏起来却没人放出来"变成永久黑屏。
+void PreviewPanel::revealVideo() {
+    disconnect(m_coverConn);
+    m_coverArmed = false;
+    if (m_videoCover) m_videoCover->hide();
+    if (m_vw) m_vw->show();
 }
 
 // Viewer/inZoomFilter / outZoomFilter:索引 0 = "无"(快速最近邻)。
