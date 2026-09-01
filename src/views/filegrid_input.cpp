@@ -6,6 +6,7 @@
 #include "settings.h"
 #include "constants.h"
 #include "shelldelete.h"
+#include "iconlib.h"
 #include "clipboardops.h"
 #include "validname.h"
 #include "exifdate.h"
