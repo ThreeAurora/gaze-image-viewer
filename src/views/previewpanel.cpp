@@ -593,6 +593,7 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
                           .arg(m_player->source().toLocalFile()));
     });
     mediaHb->start(5000);
+    Logger::boot("pv-ctor:end");
 }
 
 PreviewPanel::~PreviewPanel() {
