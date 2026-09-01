@@ -91,6 +91,7 @@ private:
     void goBack();
     void goForward();
     void goUp();
+    void goUp();
     void gotoTypedPath();   // 地址栏回车(#109②):目录进目录 / 文件定位到它 / 都不像就吭一声
     void gotoTypedPath();   // 地址栏回车(#109②):目录进目录 / 文件定位到它 / 都不像就吭一声
     void gotoTypedPath();   // 地址栏回车(#109②):目录进目录 / 文件定位到它 / 都不像就吭一声
