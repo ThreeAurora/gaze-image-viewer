@@ -143,6 +143,7 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     rawL->addLayout(rawBtnRow);
     rawL->addStretch(1);
     layout->addWidget(m_rawBox, 1);
+    Logger::boot("pv-ctor:raw");
 
     // RAW 占位(#140):说明行 + 加载按钮,其余形态一律收起(见 setAudioChrome)
     m_rawBox = new QWidget;
