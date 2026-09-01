@@ -225,6 +225,83 @@ static QLocalServer* startSingleInstanceListener(QWidget* w) {
     return server;
 }
 
+// 把命令行路径转交给已运行的实例。
+// 返回 true  = 对方已把数据接走,调用方可以直接退出;
+// 返回 false = 没有实例在听,或它忙到期限都没腾出手 —— 调用方自己开窗。
+// 实测(Qt 6.5.3 / Windows 命名管道,cache/tmp/ipc_server_test.cpp):
+//   · 事实A/B:首实例事件循环被占住时,connectToServer 照样 0ms 成功(连接由内核
+//     完成),但 waitForBytesWritten(500) 返回 false、26 字节全留在本进程待发。
+//     旧代码不看这个返回值就 return 0 —— 数据随进程一起没了,用户看到的是
+//     "双击图片毫无反应"(比开两个窗口更糟)。所以 300ms 探测超时不是软肋,
+//     "写完就走"才是。
+//   · 事实G:在本地事件循环里等 bytesToWrite() 归零,首实例一恢复就落地(实测
+//     约 980ms),路径完整送达,无需改服务端读取逻辑。
+static bool handOffToRunningInstance(const QStringList& paths) {
+    QLocalSocket probe;
+    probe.connectToServer(kSingleServer);
+    if (!probe.waitForConnected(300)) return false;
+
+    for (const QString& p : paths)
+        probe.write((p + "\n").toUtf8());
+
+    QEventLoop loop;
+    QTimer deadline;
+    deadline.setSingleShot(true);
+    QObject::connect(&deadline, &QTimer::timeout, &loop, &QEventLoop::quit);
+    QObject::connect(&probe, &QLocalSocket::bytesWritten, &probe, [&]() {
+        if (probe.bytesToWrite() == 0) loop.quit();
+    });
+    deadline.start(2000);
+    if (probe.bytesToWrite() > 0) loop.exec();
+
+    if (probe.bytesToWrite() > 0) {   // 首实例 2s 没接手:别静默消失
+        Logger::event(QStringLiteral("single-instance handoff timed out; opening own window"));
+        return false;
+    }
+    probe.disconnectFromServer();
+    return true;
+}
+
+// 开始监听"第二个实例"的转交。返回 nullptr = 监听没起来(调用方保持普通多实例行为)
+static QLocalServer* startSingleInstanceListener(QWidget* w) {
+    QLocalServer::removeServer(kSingleServer);
+    auto* server = new QLocalServer(qApp);
+    if (!server->listen(kSingleServer)) {
+        // 实测(事实E):同名第二个 listen() 在 Windows 上仍返回 true(命名管道允许多
+        // 实例),所以这里失败绝不是"已有实例在跑",而是真出错(权限等)。
+        // 不写下来就是个静默黑洞:设置勾了、看着一切正常、转交永远没人接。
+        Logger::event(QStringLiteral("single-instance listen failed: ")
+                      + server->errorString());
+        delete server;
+        return nullptr;
+    }
+    QObject::connect(server, &QLocalServer::newConnection, w, [server, w]() {
+        // 一有连接就唤起:第二个实例可能一个字节都不带(只是"再开一次"没给路径),
+        // 而 readyRead 没数据时根本不会发 —— 实测原写法这种情形 raise 次数=0,
+        // 即"打开第二个窗口没反应,第一个也不前置"。
+        w->raise();
+        w->activateWindow();
+        QLocalSocket* s = server->nextPendingConnection();
+        if (!s) return;
+        // 每条连接各发一次 newConnection(实测 5 个客户端排队 = 5 次),
+        // 所以一次一个 nextPendingConnection() 不丢东西,不必排空。
+        QObject::connect(s, &QLocalSocket::readyRead, s, [w, s]() {
+            const QList<QByteArray> lines = s->readAll().split('\n');
+            for (const QByteArray& ln : lines) {
+                const QString p = QDir::fromNativeSeparators(
+                    QString::fromUtf8(ln).trimmed());
+                if (p.isEmpty() || !QFileInfo::exists(p)) continue;
+                if (QFileInfo(p).isDir())
+                    QMetaObject::invokeMethod(w, "navigateTo", Q_ARG(QString, p));
+                else
+                    QMetaObject::invokeMethod(w, "revealFile", Q_ARG(QString, p));
+            }
+        });
+        QObject::connect(s, &QLocalSocket::disconnected, s, &QObject::deleteLater);
+    });
+    return server;
+}
+
 int main(int argc, char *argv[]) {
     // #101 AV1 黑屏:FFmpeg 原生 av1 解码器只是硬解外壳,拿不到 hwaccel 不会回退软解
     // (实测 `ffmpeg -c:v av1 -i av1.mp4` exit=69 并打印 "platform doesn't support
