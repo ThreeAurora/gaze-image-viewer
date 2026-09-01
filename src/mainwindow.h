@@ -39,6 +39,7 @@ public:
     // 查看器标签卡(Interface/multiViewerTabs / oneViewerTab)
     Q_INVOKABLE void openViewerTab(const QString& path);  // 右键"在新标签卡中打开"
     void syncViewerTab(const QString& path);
+    Q_INVOKABLE void closeViewerTab(int index);           // 关闭按钮/标签右键菜单/中键
     void closeViewerTab(int index);              // 关闭按钮/标签右键菜单/中键
     void closeViewerTab(int index);              // 关闭按钮/标签右键菜单/中键
     void closeViewerTab(int index);              // 关闭按钮/标签右键菜单/中键
