@@ -51,6 +51,7 @@
 #include <QPair>
 #include "iconlib.h"
 #include <QLabel>
+#include <QLabel>
 #include "labelstore.h"
 #include "settings_dialog.h"
 #include "dbmaintenance.h"
