@@ -97,7 +97,7 @@ QWidget* SettingsDialog::pageStartup() {
 
 QWidget* SettingsDialog::pageFileOps() {
     auto* form = new QFormLayout;
-    form->setVerticalSpacing(10);
+    form->setVerticalSpacing(6);
     form->addRow(chk("FileOps/confirmDelete", QString::fromUtf8("文件删除前确认"), true));
     form->addRow(chk("FileOps/confirmDeleteDirs",
         QString::fromUtf8("删除含文件夹时确认(不受上一项影响)"), true));
