@@ -63,6 +63,24 @@ FileGrid::FileGrid(QWidget* parent) : QScrollArea(parent) {
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
     setWidgetResizable(false);
 
+    // 启动默认排序(#150,设置→文件列表):0=文件名(升,默认) 1=修改日期(降)
+    // 2=创建日期(降) 3=EXIF 拍摄日期(降) 4=类型 5=大小(降) 6=扩展名 7=路径
+    // 8=颜色标签 9=记住上次(读 lastSortCol/lastSortAsc,由 sort() 随时落盘)
+    switch (AppSettings::instance().get("Browser/startupSort", 0).toInt()) {
+    case 1:  m_sortCol = SORT_MDATE;      m_sortAsc = false; break;
+    case 2:  m_sortCol = SORT_CDATE;      m_sortAsc = false; break;
+    case 3:  m_sortCol = SORT_EXIF;       m_sortAsc = false; break;
+    case 4:  m_sortCol = SORT_TYPE;       m_sortAsc = true;  break;
+    case 5:  m_sortCol = SORT_SIZE;       m_sortAsc = false; break;
+    case 6:  m_sortCol = SORT_EXT;        m_sortAsc = true;  break;
+    case 7:  m_sortCol = SORT_PATH;       m_sortAsc = true;  break;
+    case 8:  m_sortCol = SORT_COLORLABEL; m_sortAsc = true;  break;
+    case 9:  m_sortCol = AppSettings::instance().get("Browser/lastSortCol", SORT_NAME).toInt();
+             m_sortAsc = AppSettings::instance().get("Browser/lastSortAsc", true).toBool();
+             break;
+    default: m_sortCol = SORT_NAME;       m_sortAsc = true;  break;
+    }
+
     m_canvas = new FileCanvas(this);
     m_canvas->setStyleSheet(QString::fromUtf8("background:%1;").arg(C_CONTENT));
     setWidget(m_canvas);
