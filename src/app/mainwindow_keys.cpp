@@ -327,12 +327,16 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
                 } else if (ke->modifiers() == Qt::NoModifier) {
                     if (ke->key() == Qt::Key_F) { applyColorLabel(1); return true; }
                     if (ke->key() == Qt::Key_D) { applyColorLabel(0); return true; }
-                    // G=完全全屏(#108)。走这道过滤器而不是菜单 QAction 的 shortcut:
-                    // 上面那几层 forText/弹窗判断才是"裸键不该抢文本框"的防线(#61)
-                    if (ke->key() == Qt::Key_G) { toggleFullViewer(); return true; }
+                    // G=全屏查看(#154):直接铺满只留画面,不进查看器不碰标签;
+                    // 再按 G/ESC 完全回到按 G 前的布局。走这道过滤器而不是菜单
+                    // QAction 的 shortcut:上面那几层 forText/弹窗判断才是"裸键
+                    // 不该抢文本框"的防线(#61)
+                    if (ke->key() == Qt::Key_G) { toggleFullView(); return true; }
                     // 回车:按 SwitchMode/enterKey 切换模式
                     if ((ke->key() == Qt::Key_Return || ke->key() == Qt::Key_Enter)
                         && !forActivation) {
+                        // #154:全屏查看里切模式会改掉"退出还原的布局",禁用
+                        if (m_fullView) return true;
                         // #128② 取证埋点:用户复报"跳转后查看器仍弹"。本分支是
                         // 全应用唯一的 Enter→查看器消费点,但成功跳转/模式切换
                         // 此前零日志,复报无法定案。落盘:谁收到、距上次地址栏
