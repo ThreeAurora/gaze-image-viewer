@@ -74,6 +74,7 @@ static QIcon whiteIcon(const QIcon& base, int size = 32) {
 //  #121 HDR 三轮诊断 —— 结论都写进了 TODO_ALL。播放侧的常驻通道留 hb/mediaStatus。)
 
 PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
+    Logger::boot("pv-ctor:begin");
     // 背景由 paintEvent 自绘(样式表背景画不出挡板底纹的平铺图案)
     setMouseTracking(true);   // 悬停也要收移动事件:全屏隐藏指针后靠它恢复
     setMouseTracking(true);   // 悬停也要收移动事件:全屏隐藏指针后靠它恢复
