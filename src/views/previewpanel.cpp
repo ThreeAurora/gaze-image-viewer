@@ -1475,10 +1475,11 @@ void PreviewPanel::setupPlayer() {
         m_btnPlay->setIcon(pp_impl::whiteIcon(style()->standardIcon(
             state == QMediaPlayer::PlayingState
                 ? QStyle::SP_MediaPause : QStyle::SP_MediaPlay)));
-        // #104:armed 期间(等待本路首帧)不得由 PlayingState 收回遮罩——
-        // PlayingState 比首帧早到,此刻控件表面仍是上一段的末帧
-        if (state == QMediaPlayer::PlayingState && m_videoCover && !m_coverArmed)
-            m_videoCover->hide();   // 未布防时的兜底:真正开播才露出画面
+        // #104:armed 期间(等待本路首帧)不得由 PlayingState 露出画面——
+        // PlayingState 比首帧早到,此刻视频面还是上一段的末帧。
+        // 未布防(布防失败/太早)时这里兜底,免得藏起来的 vw 没人放出来。
+        if (state == QMediaPlayer::PlayingState && !m_coverArmed)
+            revealVideo();
     });
 
     // Live Photo: 视频播完 → 切回静态图(播放器保留复用)。
