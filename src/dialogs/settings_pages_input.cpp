@@ -294,7 +294,7 @@ QWidget* SettingsDialog::pageBrowser() {
 
 QWidget* SettingsDialog::pageFileList() {
     auto* form = new QFormLayout;
-    form->setVerticalSpacing(12);
+    form->setVerticalSpacing(6);
     form->addRow(chk("FileList/showHidden", QString::fromUtf8("显示隐藏的文件和文件夹"), true));
     form->addRow(chk("FileList/recognizeByExt", QString::fromUtf8("只按扩展名进行识别文件格式"), true));
     form->addRow(QString::fromUtf8("扫描文件头"),
