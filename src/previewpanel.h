@@ -418,6 +418,13 @@ private:
 
     QWidget *m_videoWidget;
     QVideoWidget *m_vw = nullptr;   // 复用的视频控件(切视频不重建,杜绝叠加透出窗口期)
+    // #104 真根因(2026-09-01 实测定位,非推测):QVideoWidget 内部是
+    // QWidget::createWindowContainer(new QVideoWindow, this)——一个**原生子窗口**
+    // (Qt 6 源码 qvideowidget.cpp 构造函数)。原生窗口永远压在非原生兄弟控件之上,
+    // 所以 m_videoCover 这块黑色遮罩**从一开始就没盖住过视频面**,前两轮修复
+    // (永久复用 player/vw + 遮罩收回时机改挂首帧)因此全部落空。
+    // 唯一能挡住它的办法是把 m_vw 整个藏起来(实测:隐藏期间后端照常送帧,
+    // 屏幕上就是父窗口的 #0A0A0C 深色底,var=0)。遮罩保留作第二道防线。
     QWidget *m_videoCover = nullptr;   // 纯黑遮罩:attach→新视频首帧之间盖住控件里的残帧
     QWidget *m_videoCover = nullptr;   // 纯黑遮罩:attach→新视频首帧之间盖住控件里的残帧
     QMediaPlayer *m_player = nullptr;
