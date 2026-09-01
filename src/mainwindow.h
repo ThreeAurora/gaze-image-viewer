@@ -251,6 +251,11 @@ private:
     QAction* m_actFwd = nullptr;
     QToolButton* m_btnBack = nullptr;
     QToolButton* m_btnFwd = nullptr;
+    // 历史的四个"出口"都要随游标禁用，不然到头时按下去静默无事(#87)
+    QAction* m_actBack = nullptr;
+    QAction* m_actFwd = nullptr;
+    QToolButton* m_btnBack = nullptr;
+    QToolButton* m_btnFwd = nullptr;
     QList<int> m_savedSplitter;  // 进查看器前的分栏宽度(退回时原样恢复)
     bool m_fullView = false;     // #154 全屏预览中(独立于查看器模式,不碰标签页)
     QList<int> m_fullViewSplitter;  // 进全屏查看前的分栏宽度(退出时原样恢复)
