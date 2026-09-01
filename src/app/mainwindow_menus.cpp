@@ -685,10 +685,11 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
         for (auto& it : items)
             m_formatFilterCombo->addItem(QString::fromUtf8(it.label), it.mode);
     }
-    // 下拉箭头必须写进这份局部表(#134 二次实测):控件一旦 setStyleSheet,
-    // 应用级 theme.cpp 的 ::drop-down/::down-arrow 规则就被压掉(离屏探针
-    // 真实栈 D 变体箭头 0 像素、自身表带箭头规则 E 变体 40+ 像素)——
-    // 旧注释「由应用级统一给」是误读,删掉局部箭头规则恰好回归 #30
+    // 下箭头(#151):局部表里那份 CSS 边框三角(#134 二次实测认为能画出来)
+    // 用户在真机上仍然看不到 —— 根因未明,不再赌样式表,改用与三颗按钮同款的
+    // "▼" 文本:QLabel 叠在 drop-down 区,WA_TransparentForMouseEvents 让点击
+    // 穿透回框。框尺寸固定 112x26,几何一次摆放即可,无 resize 问题。
+    // ::down-arrow 保留"置零"规则(image:none+0尺寸),防止原生箭头跟 ▼ 重影。
     m_formatFilterCombo->setStyleSheet(QString::fromUtf8(
         "QComboBox{background:%1;color:%2;border:1px solid %3;"
         "border-radius:4px;padding:2px 10px;font-size:12px;min-height:22px;}"
@@ -696,15 +697,19 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
         "QComboBox:focus{border-color:%4;}"
         "QComboBox::drop-down{width:18px;border:none;background:transparent;"
         "subcontrol-origin:padding;subcontrol-position:top right;}"
-        "QComboBox::down-arrow{image:none;width:0;height:0;background:none;"
-        "border-left:4px solid transparent;border-right:4px solid transparent;"
-        "border-top:5px solid %9;margin-right:6px;}"
+        "QComboBox::down-arrow{image:none;width:0;height:0;background:none;border:none;}"
         "QComboBox QAbstractItemView{background:%5;color:%6;"
         "border:1px solid %7;selection-background-color:%8;"
         "outline:none;}"
         "QComboBox QAbstractItemView::item{min-height:24px;padding:2px 8px;}")
         .arg(C_TOOLBAR, C_TEXT, C_SEPARATOR, C_ACCENT,
-             C_CONTENT, C_TEXT, C_SEPARATOR, C_ACCENT, C_SB_ARROW));
+             C_CONTENT, C_TEXT, C_SEPARATOR, C_ACCENT));
+    auto* comboArrow = new QLabel(QString::fromUtf8("\xe2\x96\xbc"), m_formatFilterCombo);
+    comboArrow->setStyleSheet(QString::fromUtf8(
+        "color:%1;background:transparent;font-size:9px;").arg(C_SB_ARROW));
+    comboArrow->setAlignment(Qt::AlignCenter);
+    comboArrow->setAttribute(Qt::WA_TransparentForMouseEvents);
+    comboArrow->setGeometry(112 - 18, 0, 18, 26);
     connect(m_formatFilterCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, [this](int idx) {
                 const int mode = m_formatFilterCombo->itemData(idx).toInt();
