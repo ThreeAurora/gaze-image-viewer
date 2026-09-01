@@ -402,6 +402,11 @@ void MainWindow::goBack() {
         if (cand < m_histIdx) --m_histIdx; // 删的是游标之前的项，游标要跟着左移
     }
     updateNavEnabled();   // 历史跳转在 m_histNav 下跳过 navigateTo 里那次刷新
+    // 只有"目的地 == 刚离开目录的父目录"才算退到上一级;斜着跳的历史步不定位
+    if (!leftDir.isEmpty() && m_histIdx >= 0
+        && QDir::cleanPath(QFileInfo(leftDir).absolutePath())
+           == QDir::cleanPath(m_currentDir))
+        m_fileGrid->selectByPath(leftDir);
 }
 
 void MainWindow::goForward() {
