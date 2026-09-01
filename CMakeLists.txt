@@ -172,7 +172,7 @@ add_custom_command(TARGET Gaze POST_BUILD
 # 还要同目录 gsdll64.dll 与 lib/ 的初始化文件 —— 只拷 exe 会直接报错退出。
 add_custom_command(TARGET Gaze POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${CMAKE_SOURCE_DIR}/vendor/gs" "$<TARGET_FILE_DIR:gaze>/gs"
+            "${CMAKE_SOURCE_DIR}/vendor/gs" "$<TARGET_FILE_DIR:Gaze>/gs"
     COMMENT "同步内置 Ghostscript vendor/gs -> 构建目录 gs/"
     VERBATIM
 )
