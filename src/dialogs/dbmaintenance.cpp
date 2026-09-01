@@ -79,6 +79,11 @@ DbMaintenanceDialog::DbMaintenanceDialog(QWidget* parent) : QDialog(parent) {
         if (QMessageBox::question(this, QString::fromUtf8("删除条目"),
             QString::fromUtf8("删除该目录的全部缩略图缓存条目?\n%1\n(浏览时会自动重建)").arg(dir))
             != QMessageBox::Yes) return;
+        // 与"删除全部""重建缩略图"对齐:破坏性动作一律先问一句
+        //(空格/回车误触这个按钮时,过去是静默 DELETE)
+        if (QMessageBox::question(this, QString::fromUtf8("删除条目"),
+            QString::fromUtf8("删除该目录的全部缩略图缓存条目?\n%1\n(浏览时会自动重建)").arg(dir))
+            != QMessageBox::Yes) return;
         QSqlDatabase d = maintenanceDb();
         QSqlQuery q(d);
         q.prepare("DELETE FROM thumbs WHERE key LIKE ? ESCAPE '\\'");
