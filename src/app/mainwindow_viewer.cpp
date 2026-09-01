@@ -236,7 +236,7 @@ QWidget* MainWindow::createPaneHeader(const QString& title, const char* paneId) 
 
 // 意图 + 查看器模式 → 实际可见性(唯一出口,别处不要直接 setVisible 面板)
 void MainWindow::applyPaneVisibility() {
-    // #154 全屏查看:面板意图挂起,只留画面;退出经 exitFullView 走下面正常分支还原。
+    // #154 全屏预览:面板意图挂起,只留画面;退出经 exitFullView 走下面正常分支还原。
     // 全屏查看期间面板开关被拨动也不破功(这里每次都会重新压回只留画面)
     if (m_fullView) {
         if (m_treePane)    m_treePane->hide();
