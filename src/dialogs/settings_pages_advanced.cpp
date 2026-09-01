@@ -294,7 +294,7 @@ QWidget* SettingsDialog::pageIntegration() {
 
     // 分组"右键菜单"
     auto* fMenu = new QFormLayout;
-    fMenu->setVerticalSpacing(10);
+    fMenu->setVerticalSpacing(6);
     auto* browseChk = new QCheckBox(
         QString::fromUtf8("将\"用 Gaze 浏览\"添加到系统右键菜单(HKCU,免管理员)"));
     browseChk->setChecked(Integration::isBrowseMenuInstalled());
