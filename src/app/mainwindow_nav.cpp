@@ -428,6 +428,13 @@ void MainWindow::goUp() {
         m_fileGrid->selectByPath(from);
 }
 
+void MainWindow::goUp() {
+    // 上级目录:跳成后定位刚离开的子文件夹(资源管理器"向上"同款,同 2026-09-01 用户令)
+    const QString from = m_currentDir;
+    if (navigateTo(QStringLiteral("..")))
+        m_fileGrid->selectByPath(from);
+}
+
 void MainWindow::refresh() {
     if (m_currentDir.isEmpty()) return;
     // 刷新不是新跳转:走 m_histNav 那条不入栈的通道。
