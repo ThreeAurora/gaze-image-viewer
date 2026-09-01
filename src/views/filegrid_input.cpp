@@ -69,7 +69,8 @@ bool FileGrid::selectByPath(const QString& path) {
 }
 
 // 定位规则:首排贴顶;末排贴底;视口边缘半截露出的排→对齐贴边完整显示;
-// 完全不可见→居中;完全可见→不动
+// 完全不可见→就近贴边(上方贴顶/下方贴底,最小滚动,不居中——用户令:
+// 定位时"不能单纯地把它定位到中间",小文件夹居中尤其难看);完全可见→不动
 void FileGrid::scrollToRow(int idx) {
     if (m_cols < 1 || m_entries.empty()) return;
     if (idx < 0 || idx >= static_cast<int>(m_entries.size())) return;
