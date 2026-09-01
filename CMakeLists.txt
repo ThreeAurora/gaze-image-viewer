@@ -123,7 +123,7 @@ add_executable(Gaze WIN32
     src/resources.qrc
 )
 
-target_link_libraries(target_link_libraries(gaze PRIVATE
+target_link_libraries(gaze PRIVATE
     Qt6::Widgets
     Qt6::Network
     Qt6::Multimedia
