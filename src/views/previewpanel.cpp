@@ -109,9 +109,11 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     // 音频波形画布:解码+聚合在专属线程(audiowave.h),这里只收快照画像素。
     // stretch 3:波形吃音频区大头,文件名条占 1/4
     m_waveLabel = new QLabel;
+    Logger::boot("pv-ctor:w1");
     m_waveLabel->setAlignment(Qt::AlignCenter);
     m_waveLabel->setStyleSheet(
         QString("color:%1;font-size:12px;background:transparent;").arg(C_TEXT_DIM));
+    Logger::boot("pv-ctor:w2");
     m_waveLabel->hide();
     m_waveLabel->installEventFilter(this);   // Resize → renderWave 重画
     layout->addWidget(m_waveLabel, 3);
