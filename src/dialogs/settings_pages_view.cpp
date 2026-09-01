@@ -105,7 +105,7 @@ QWidget* SettingsDialog::pageViewerOther() {
     fPlay->addRow(chk("Viewer/sharpen", QString::fromUtf8("使用锐化 50%"), false));
 
     auto* root = new QVBoxLayout;
-    root->setSpacing(9);   // 分组框页:组间距收紧(组框自身已有边距)
+    root->setSpacing(6);   // 分组框页:组间距收紧(组框自身已有边距)
     root->addWidget(group(QString::fromUtf8("播放与性能"), fPlay));
     return wrapTitled(QString::fromUtf8("其他"), root);
 }
