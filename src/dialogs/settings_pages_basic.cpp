@@ -165,7 +165,7 @@ static QWidget* titleTemplateRow(const QString& key, const QString& def);
 
 QWidget* SettingsDialog::pageTitlebar() {
     auto* root = new QVBoxLayout;
-    root->setSpacing(9);   // 分组框页:组间距收紧(组框自身已有边距)
+    root->setSpacing(6);   // 分组框页:组间距收紧(组框自身已有边距);#148 再收一档
 
     auto* fBr = new QFormLayout;
     fBr->setVerticalSpacing(6);
