@@ -67,7 +67,7 @@ public:
 protected:
     bool eventFilter(QObject *obj, QEvent *event) override;
     void closeEvent(QCloseEvent *event) override;
-    void changeEvent(QEvent *event) override;   // WindowStateChange→全屏chrome收放(#153)
+    void changeEvent(QEvent *event) override;   // WindowStateChange→全屏chrome收放(#153/#154)
     void changeEvent(QEvent *event) override;   // WindowStateChange→全屏chrome收放(#153)
     // ── 拖放(#81)──
     // 拖入:文件→导航到所在目录并选中首个文件;目录→直接进该目录。
