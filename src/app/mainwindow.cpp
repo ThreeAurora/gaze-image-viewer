@@ -429,11 +429,13 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     iv->setSpacing(0);
     iv->addWidget(createPaneHeader(QString::fromUtf8("信息"), "info"));
     Logger::boot("ctor:info-pre");
+    Logger::boot("ctor:info-pre");
     m_info = new InfoPanel;
     m_info->setMinimumHeight(140);
     iv->addWidget(m_info, 1);
     m_infoPane->setMinimumHeight(140);
     pv->addWidget(m_infoPane);
+    Logger::boot("ctor:info-post");
     Logger::boot("ctor:info-post");
     connect(m_info, &QWidget::destroyed, this, [this]() { m_info = nullptr; });
 
