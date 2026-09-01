@@ -524,6 +524,8 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
     histBtn->setFixedSize(22, 26);
     histBtn->setStyleSheet(QString::fromUtf8("QToolButton{color:%1;font-size:9px;}")
                                .arg(C_SB_ARROW));   // #151:同款小号箭头灰
+    histBtn->setStyleSheet(QString::fromUtf8("QToolButton{color:%1;font-size:9px;}")
+                               .arg(C_SB_ARROW));   // #151:同款小号箭头灰
     histBtn->setToolTip(QString::fromUtf8("\xe5\x8e\x86\xe5\x8f\xb2\xe8\xae\xbf\xe9\x97\xae\xe8\xb7\xaf\xe5\xbe\x84")); // 历史访问路径
     histBtn->setPopupMode(QToolButton::InstantPopup);
     auto* histMenu = new QMenu(histBtn);
