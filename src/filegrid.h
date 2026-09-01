@@ -103,7 +103,7 @@ public:
     void selectIndex(int idx, bool scrollToVisible = true);  // 滚动联动时传 false 防反馈回路
     void selftestFastScroll();   // 临时诊断:进程内模拟快速拖动,查完删
     void selftestFastScroll();   // 临时诊断:进程内模拟快速拖动,查完删
-    void scrollToRow(int idx);  // 首排贴顶/末排贴底/其余可见不动的定位规则
+    void scrollToRow(int idx);  // 首排贴顶/末排贴底/半截贴边/不可见就近贴边(不居中)/可见不动
     bool selectByPath(const QString& path);  // 按路径选中(最近文件定位用)
     // 拖放(#81):追加选中(不清空已有选中),用于一次拖进多个文件时全选
     void selectPathAdditive(const QString& path);
