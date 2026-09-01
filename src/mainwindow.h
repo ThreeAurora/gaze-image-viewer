@@ -102,7 +102,7 @@ private:
     int  addViewerTab(const QString& path);                 // 追加标签,返回索引
     void setViewerTabPath(int index, const QString& path);  // 就地换某标签指向的文件
     void installTabCloseButton(int index);  // 自绘 × (主题色,系统图标在深色下看不见)
-    void pruneDeadViewerTabs();             // 丢掉指向已消失文件的标签
+    Q_INVOKABLE void pruneDeadViewerTabs();  // 丢掉指向已消失文件的标签(删除后网格也会叫)
     void goUp();
     void goUp();
     void gotoTypedPath();   // 地址栏回车(#109②):目录进目录 / 文件定位到它 / 都不像就吭一声
