@@ -376,7 +376,7 @@ QWidget* SettingsDialog::pageIntegration() {
 // mainwindow closeEvent;改动即时落 ini)
 QWidget* SettingsDialog::pageImgSearch() {
     auto* root = new QVBoxLayout;
-    root->setSpacing(9);
+    root->setSpacing(6);
 
     // 分组"服务位置"
     auto* fLoc = new QFormLayout;
