@@ -240,8 +240,8 @@ private:
     int    m_waterfallColW = 220;   // 瀑布流列宽
     int    m_viewMode     = VM_THUMBS_NAME;
     int    m_waterfallColW = 220;   // 瀑布流列宽
-    int    m_sortCol      = SORT_MDATE;
-    bool   m_sortAsc      = false;
+    int    m_sortCol      = SORT_NAME;   // 构造函数会按 Browser/startupSort 重设(#150)
+    bool   m_sortAsc      = true;
     int    m_nameOrder    = NameNatural;
     int    m_nameOrder    = NameNatural;
     int    m_filterMode   = FILTER_ALL;
