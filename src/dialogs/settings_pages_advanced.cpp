@@ -290,7 +290,7 @@ QWidget* SettingsDialog::pageMaintenance() {
 
 QWidget* SettingsDialog::pageIntegration() {
     auto* root = new QVBoxLayout;
-    root->setSpacing(10);   // 分组框页:组间距收紧(组框自身已有边距)
+    root->setSpacing(6);   // 分组框页:组间距收紧(组框自身已有边距)
 
     // 分组"右键菜单"
     auto* fMenu = new QFormLayout;
