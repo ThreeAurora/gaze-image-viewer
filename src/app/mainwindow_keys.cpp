@@ -357,7 +357,7 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
                 } else if (ke->modifiers() == Qt::NoModifier) {
                     if (ke->key() == Qt::Key_F) { applyColorLabel(1); return true; }
                     if (ke->key() == Qt::Key_D) { applyColorLabel(0); return true; }
-                    // G=全屏查看(#154):直接铺满只留画面,不进查看器不碰标签;
+                    // G=全屏预览(#154):直接铺满只留画面,不进查看器不碰标签;
                     // 再按 G/ESC 完全回到按 G 前的布局。走这道过滤器而不是菜单
                     // QAction 的 shortcut:上面那几层 forText/弹窗判断才是"裸键
                     // 不该抢文本框"的防线(#61)
