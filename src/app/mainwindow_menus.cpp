@@ -171,7 +171,7 @@ void MainWindow::createMenubar() {
     auto *viewMenu = mb->addMenu(QString::fromUtf8("查看(&V)"));
     auto* fsAct = viewMenu->addAction(IconLib::appIcon("cmd_fullscreen"),
         QString::fromUtf8("全屏"), QKeySequence("F11"), this, [this]() {
-            if (m_fullView) { exitFullView(); return; }   // F11 也得把全屏查看整个退干净(#154)
+            if (m_fullView) { exitFullView(); return; }   // F11 也得把全屏预览整个退干净(#154)
             if (isFullScreen()) showNormal(); else enterFullscreen();
         });
     fsAct->setCheckable(true);
