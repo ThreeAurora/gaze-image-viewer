@@ -388,6 +388,10 @@ void MainWindow::goBack() {
     // 游标只在跳转真的发生后才动:目标目录可能已被删掉(删除就在本应用里做),
     // 旧写法先 --m_histIdx 再 navigateTo，早退时索引已提交，
     // 于是"看到的目录"和"游标指的条目"从此错位，之后每步前退都跟着错。
+    // 记下要离开的目录:目的地若是它的父目录,跳成后定位选中它(2026-09-01
+    // 用户令:后退到上一级=选中刚离开的子文件夹,不是滚回顶部)
+    const QString leftDir = (m_histIdx >= 0 && m_histIdx < m_history.size())
+                            ? m_history.at(m_histIdx) : QString();
     while (m_histIdx > 0) {
         const int cand = m_histIdx - 1;
         m_histNav = true;
