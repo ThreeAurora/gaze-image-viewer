@@ -855,6 +855,11 @@ void FileGrid::setCardSize(int size) {
     AppSettings& st = AppSettings::instance();
     if (st.get("Appearance/customThumbW", 96).toInt() != size)
         st.set("Appearance/customThumbW", size);
+    // 宽度只有一个持久化键,落盘就写在唯一的 setter 里:尺寸菜单/自定义对话框/
+    // Ctrl+= /滚轮全都汇到这条,交给各调用点自己决定存不存,漏一个就是"设了不保存"
+    AppSettings& st = AppSettings::instance();
+    if (st.get("Appearance/customThumbW", 96).toInt() != size)
+        st.set("Appearance/customThumbW", size);
     if (!m_entries.empty()) {
         m_fitCache.clear();  // 盒子变了,圆角成品图作废
         updateLayout();
