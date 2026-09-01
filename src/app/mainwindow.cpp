@@ -403,7 +403,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     Logger::boot("ctor:grid");
 
     // 预览面板:"预览"标题条 + PreviewPanel(包装后才能挂标题条,X 键关闭)
+    Logger::boot("ctor:pv-pre");
     m_preview = new PreviewPanel;
+    Logger::boot("ctor:pv-obj");
     auto* previewPane = new QWidget;
     m_previewPane = previewPane;
     previewPane->setMinimumWidth(200);
