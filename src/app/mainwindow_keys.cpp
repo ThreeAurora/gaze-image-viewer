@@ -231,6 +231,12 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
     if (m_addrBar && obj == m_addrBar) {
         if (event->type() == QEvent::FocusIn) {
             m_addrSelectedOnce = false;   // 新的一次编辑期:第一次点击才自动全选
+        } else if (event->type() == QEvent::ShortcutOverride) {
+            // #155:地址栏里任何形态的退格都是编辑键,不是「上级目录」。菜单
+            // QAction(QKeySequence("Backspace")) 的匹配发生在按键送达控件之前,
+            // 这里 accept 这一次 ShortcutOverride,快捷键系统才会收手
+            auto* ke = static_cast<QKeyEvent*>(event);
+            if (ke->key() == Qt::Key_Backspace) event->accept();
         } else if (event->type() == QEvent::MouseButtonPress) {
             auto* me = static_cast<QMouseEvent*>(event);
             m_addrPressPt = me->position().toPoint();
