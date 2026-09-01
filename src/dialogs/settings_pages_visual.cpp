@@ -41,7 +41,7 @@
 
 QWidget* SettingsDialog::pageThumbs() {
     auto* root = new QVBoxLayout;
-    root->setSpacing(9);   // 分组框页:组间距收紧(组框自身已有边距)
+    root->setSpacing(6);   // 分组框页:组间距收紧(组框自身已有边距)
 
     // 分组"创建"
     auto* fCreate = new QFormLayout;
