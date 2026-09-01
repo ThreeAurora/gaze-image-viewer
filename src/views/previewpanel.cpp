@@ -75,6 +75,7 @@ static QIcon whiteIcon(const QIcon& base, int size = 32) {
 
 PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     Logger::boot("pv-ctor:begin");
+    Logger::boot("pv-ctor:begin");
     // 背景由 paintEvent 自绘(样式表背景画不出挡板底纹的平铺图案)
     setMouseTracking(true);   // 悬停也要收移动事件:全屏隐藏指针后靠它恢复
     setMouseTracking(true);   // 悬停也要收移动事件:全屏隐藏指针后靠它恢复
