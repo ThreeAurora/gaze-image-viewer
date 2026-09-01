@@ -57,6 +57,14 @@
 #define SLIDE_MS_MAX   60000
 #define SLIDE_MS_DEF   1000
 
+// ── 快速幻灯片间隔区间(毫秒) ──
+// 设置页数值框与 mainwindow 的两处 ini 读取共用。区间只写在设置页时,读侧
+// 就形同"随便信 ini":手改/写坏的 slideInterval 能把定时器变成 14 天不响
+// 或 100ms 一跳(实测见 cache/tmp/combo_placeholder_test.cpp 事实A)。
+#define SLIDE_MS_MIN   100
+#define SLIDE_MS_MAX   60000
+#define SLIDE_MS_DEF   1000
+
 // ── 缩略图卡片宽度区间 ──
 // 所有入口共用(尺寸菜单预设 / 自定义对话框 / Ctrl+= 缩放 / 滚轮 / 外观页数值框)。
 // 各处各写一份区间就是 #68 的病根:setCardSize 收 [80,300],而菜单里摆着
