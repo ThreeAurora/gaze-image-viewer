@@ -56,7 +56,7 @@ public:
 // ── 维护页:缩略图库统计 + 四列目录表(可拖列宽/中段省略) + 操作按钮 ──
 QWidget* SettingsDialog::pageMaintenance() {
     auto* root = new QVBoxLayout;
-    root->setSpacing(9);
+    root->setSpacing(6);
 
     // 数据库统计行
     auto* summary = new QLabel;
