@@ -80,7 +80,7 @@ void FileGrid::scrollToRow(int idx) {
     int vpH = viewport()->height();
 
     // 瀑布流每卡片高度不同,不存在"行号×统一行高"的坐标模型:
-    // 直接用 m_geom[idx] 顶/底边套用同一套"半截贴边/完全不可见居中/完全可见不动"规则
+    // 直接用 m_geom[idx] 顶/底边套用同一套"半截贴边/完全不可见就近贴边/完全可见不动"规则
     if (m_viewMode == VM_WATERFALL) {
         const QRect r = m_geom[idx];
         // 顶排贴顶:任何瀑布流首列首项 top==0 → 等价贴顶
