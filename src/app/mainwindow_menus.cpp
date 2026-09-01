@@ -237,7 +237,7 @@ void MainWindow::createMenubar() {
     viewMenu->addAction(QString::fromUtf8("缩小缩略图"), QKeySequence("Ctrl+-"), this, [this](){ onThumbZoom(-1); });
     m_actBack = viewMenu->addAction(QString::fromUtf8("后退"), QKeySequence("Alt+Left"), this, [this](){ goBack(); });
     m_actFwd  = viewMenu->addAction(QString::fromUtf8("前进"), QKeySequence("Alt+Right"), this, [this](){ goForward(); });
-    viewMenu->addAction(QString::fromUtf8("上级目录"), QKeySequence("Backspace"), this, [this](){ navigateTo(".."); });
+    viewMenu->addAction(QString::fromUtf8("上级目录"), QKeySequence("Backspace"), this, [this](){ goUp(); });
 
     // ── 布局(L) → 视图 ──(依次追加,顺序即"文件 编辑 查看 布局 视图 工具 帮助")
     createLayoutMenu();
