@@ -42,7 +42,7 @@
 // ═══ 页面 ═══
 QWidget* SettingsDialog::pageGeneral() {
     auto* form = new QFormLayout;
-    form->setVerticalSpacing(10);
+    form->setVerticalSpacing(6);
     form->addRow(chk("General/singleInstance", QString::fromUtf8("仅允许运行一个 Gaze 程序实例"), false));
     form->addRow(chk("General/exifRotate", QString::fromUtf8("根据 EXIF 方向标签旋转图像"), true));
     // #122 接线完毕。默认**关**:关掉时"1:1"仍是 #95 定的"1 图像像素 = 1 屏幕像素"。
