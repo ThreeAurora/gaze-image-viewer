@@ -340,7 +340,13 @@ void PreviewPanel::raiseVideoCover() {
 void PreviewPanel::armCoverUntilFirstFrame() {
     if (!m_player) return;
     QVideoSink* vs = m_player->videoSink();
-    if (!vs) return;
+    if (!vs) {
+        // 布不了防就必须立刻放开:否则 m_vw 一直藏着、又没人等首帧 = 永久黑屏。
+        // 此时输出已断,视频面本就已经是黑的,放开不会放出残帧。
+        Logger::event(QStringLiteral("#104 arm failed: no videoSink -> reveal"));
+        revealVideo();
+        return;
+    }
     disconnect(m_coverConn);
     m_coverArmed = true;
     m_coverConn = connect(vs, &QVideoSink::videoFrameChanged, this,
