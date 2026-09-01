@@ -79,6 +79,13 @@
 #define THUMB_W_MIN   48
 #define THUMB_W_MAX   1024
 
+// ── 缩略图卡片宽度区间 ──
+// 所有入口共用(尺寸菜单预设 / 自定义对话框 / Ctrl+= 缩放 / 滚轮 / 外观页数值框)。
+// 各处各写一份区间就是 #68 的病根:setCardSize 收 [80,300],而菜单里摆着
+// 64/384/768 —— 用户点了标签写着 384x288,实际拿到的是 300,且看不出来。
+#define THUMB_W_MIN   48
+#define THUMB_W_MAX   1024
+
 // ── 扩展名白名单 ──
 // avif/avifs/jxl:Qt 无原生插件(MSVC ABI 不兼容,#116),走 ffmpeg 分流;
 // hif 是 HEIF 的 Nokia 变体扩展名,与 heic/heif 同走 WIC。
