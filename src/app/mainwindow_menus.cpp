@@ -501,7 +501,7 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
         al->addWidget(btn);
     };
     mkAddrNav("up", QString::fromUtf8("上级目录 (Backspace)"),
-          [this](){ navigateTo(".."); });
+          [this](){ goUp(); });
 
     m_addrBar = new QLineEdit;
     m_addrBar->setFixedHeight(26);
