@@ -315,6 +315,15 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
                         closeViewerTab(m_viewerTabs->currentIndex());
                         return true;
                     }
+                    // Ctrl+W = 关闭当前标签卡(2026-09-01 用户令)。落在「浏览器」
+                    // 标签或浏览器模式时没有可关的内容标签,按键落空 —— 浏览器
+                    // 标签是回标准模式的出口,不是内容;关到最后一张图片标签时
+                    // closeViewerTab 自己会退回浏览器
+                    if (ke->key() == Qt::Key_W && m_viewerMode && m_viewerTabs
+                        && !isBrowserTab(m_viewerTabs->currentIndex())) {
+                        closeViewerTab(m_viewerTabs->currentIndex());
+                        return true;
+                    }
                 } else if (ke->modifiers() == Qt::NoModifier) {
                     if (ke->key() == Qt::Key_F) { applyColorLabel(1); return true; }
                     if (ke->key() == Qt::Key_D) { applyColorLabel(0); return true; }
