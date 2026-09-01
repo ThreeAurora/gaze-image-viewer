@@ -134,7 +134,7 @@ QWidget* SettingsDialog::pageAppearance() {
 // ── 标签颜色页:扩展名列表整行底色填充,选中变蓝;右列输入/新建/移除/改色;底部默认色 ──
 QWidget* SettingsDialog::pageLabelColors() {
     auto* root = new QVBoxLayout;
-    root->setSpacing(10);
+    root->setSpacing(6);
 
     root->addWidget(chk("Appearance/formatColor",
                         QString::fromUtf8("文件根据格式显示以下颜色(文件名底色)"), true));
