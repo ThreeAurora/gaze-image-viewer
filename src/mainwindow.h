@@ -44,7 +44,7 @@ public:
     Q_INVOKABLE void revealFile(const QString &path);      // 以文搜图结果:定位到目录并选中
     void enterFullscreen();          // Fullscreen/dualMonitor:可选落到第二显示器
     Q_INVOKABLE void toggleViewer();   // 浏览器 ↔ 查看器(单图模式)
-    Q_INVOKABLE void toggleFullView();   // G(#154):全屏查看=只铺画面,不进查看器不碰标签
+    Q_INVOKABLE void toggleFullView();   // G(#154):全屏预览=只铺画面,不进查看器不碰标签
     void exitFullView();           // G/ESC/F11/浮动工具条退出:精确还原进前布局
     void applyFullViewChrome();    // 菜单栏/标签条随全屏形态收放
     Q_INVOKABLE void viewerBack();     // ESC:查看器退回浏览器(幂等)
