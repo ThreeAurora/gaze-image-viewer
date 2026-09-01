@@ -115,7 +115,9 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
         QString("color:%1;font-size:12px;background:transparent;").arg(C_TEXT_DIM));
     Logger::boot("pv-ctor:w2");
     m_waveLabel->hide();
+    Logger::boot("pv-ctor:w3");
     m_waveLabel->installEventFilter(this);   // Resize → renderWave 重画
+    Logger::boot("pv-ctor:w4");
     layout->addWidget(m_waveLabel, 3);
     Logger::boot("pv-ctor:wave");
 
