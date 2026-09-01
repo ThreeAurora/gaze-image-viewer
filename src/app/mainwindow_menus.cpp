@@ -589,6 +589,11 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
         // 底色/悬停底仍走 barQss 的 QToolButton 规则(自有表只覆盖冲突属性)
         btn->setStyleSheet(QString::fromUtf8("QToolButton{color:%1;font-size:9px;}")
                                .arg(C_SB_ARROW));
+        // #151:▼ 原样继承 barQss 的 11px/C_TEXT(近白)= 用户点名"太白太大"。
+        // 按钮自有表只压这两项:9px + 箭头灰(C_SB_ARROW,与滚动条/数字框箭头同色);
+        // 底色/悬停底仍走 barQss 的 QToolButton 规则(自有表只覆盖冲突属性)
+        btn->setStyleSheet(QString::fromUtf8("QToolButton{color:%1;font-size:9px;}")
+                               .arg(C_SB_ARROW));
         btn->setPopupMode(QToolButton::InstantPopup);
         btn->setMenu(menu);
         b2->addWidget(btn);
