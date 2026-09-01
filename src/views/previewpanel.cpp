@@ -113,6 +113,7 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     m_waveLabel->hide();
     m_waveLabel->installEventFilter(this);   // Resize → renderWave 重画
     layout->addWidget(m_waveLabel, 3);
+    Logger::boot("pv-ctor:wave");
 
     // RAW 占位(#140):说明行 + 加载按钮,其余形态一律收起(见 setAudioChrome)
     m_rawBox = new QWidget;
