@@ -311,14 +311,17 @@ void FolderTree::mouseDoubleClickEvent(QMouseEvent* event) {
     QTreeWidget::mouseDoubleClickEvent(event);
 }
 
-// ── #117 左键按住扫过 = 切换文件夹 ──
+// ── #117 左键按住扫过 = 切换文件夹(仅 leftDragSweep=0 时)──
 // #130:跳转发生在**左键按下的那一刻**,不是松开时(原来要等 itemClicked,
 // 松开才切,扫动时手感是"拖过一堆目录,松手才跳一个")。
+// 按下即切与扫过模式**解耦**(2026-09-02 用户复验仍不立刻跳,根因在此):
+// 无论 leftDragSweep 取 0/1,单击按下就切 —— 这是 #130 的基本承诺;
+// 扫过只是"按住拖动掠过其他目录"时是否也跟着切(拖动多选档禁用它)。
 // 展开箭头那一列(分支槽 + 其左侧)按下只做展开/收起,不切目录 —— 否则
 // 用户点"+"想看子目录,主视图就被拽走了,这是资源管理器/浏览器都不有的行为。
 void FolderTree::mousePressEvent(QMouseEvent* event) {
     m_sweepCur = itemAt(event->pos());
-    if (m_sweepSwitch && event->button() == Qt::LeftButton && m_sweepCur) {
+    if (event->button() == Qt::LeftButton && m_sweepCur) {
         int depth = 0;                       // 层级:QTreeWidgetItem 没有 depth(),自己数
         for (QTreeWidgetItem* p = m_sweepCur->parent(); p; p = p->parent()) ++depth;
         const int branchRight = visualRect(indexFromItem(m_sweepCur)).left()
@@ -327,7 +330,7 @@ void FolderTree::mousePressEvent(QMouseEvent* event) {
         if (!path.isEmpty() && event->pos().x() >= branchRight) {
             m_pressActivated = path;
             setCurrentItem(m_sweepCur);
-            emit folderSelected(path);
+            emit folderSelected(path);       // 按下那一刻就切,不等到松开
         }
     }
     QTreeWidget::mousePressEvent(event);
