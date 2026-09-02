@@ -437,6 +437,7 @@ void MainWindow::toggleFullView() {
     if (m_fullView) { exitFullView(); return; }
     m_fullView = true;
     m_fullViewSplitter = m_splitter->sizes();
+    m_preFullViewState = windowState();    // 2026-09-02:记下最大化/普通等原状态
     showFullScreen();
     applyFullViewChrome();
     applyPaneVisibility();
@@ -444,13 +445,13 @@ void MainWindow::toggleFullView() {
     m_splitter->setSizes(sz);
 }
 
-// 退出路径唯一:进前布局只存在 m_fullViewSplitter 一份。showNormal 会触发
-// changeEvent,那里见到 m_fullView 已 false 只做 chrome 收放,不会抢在这里
-// 前面把面板恢复掉 —— 面板恢复顺序:先按意图显隐,再还原分栏宽度。
+// 退出路径唯一:进前布局只存在 m_fullViewSplitter 一份。2026-09-02:退出
+// 用 setWindowState 恢复进前状态(最大化→回来后仍最大化),不再无条件
+// showNormal() 把用户的最大化窗口打回普通(用户实测 bug)。
 void MainWindow::exitFullView() {
     if (!m_fullView) return;
     m_fullView = false;
-    if (isFullScreen()) showNormal();
+    if (isFullScreen()) setWindowState(m_preFullViewState);
     applyPaneVisibility();
     if (m_fullViewSplitter.size() == 3)
         m_splitter->setSizes(m_fullViewSplitter);

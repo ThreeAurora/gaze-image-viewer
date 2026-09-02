@@ -157,6 +157,7 @@ private:
     QList<int> m_savedSplitter;  // 进查看器前的分栏宽度(退回时原样恢复)
     bool m_fullView = false;     // #154 全屏预览中(独立于查看器模式,不碰标签页)
     QList<int> m_fullViewSplitter;  // 进全屏预览前的分栏宽度(退出时原样恢复)
+    Qt::WindowStates m_preFullViewState = Qt::WindowNoState; // 进全屏预览前的窗口状态(2026-09-02:退出时恢复最大化,不再被 showNormal 打回普通)
     int  m_redFilterMode = 0; // 红标筛选三态:0全部 1仅红标 2仅非红标
     QToolButton* m_redBtn = nullptr; // 红标三态钮,蓝色背景指示器由 syncFilterIndicators 独家维护(#107)
     QTabBar*    m_viewerTabs = nullptr;  // 查看器标签条(仅查看器模式可见)
