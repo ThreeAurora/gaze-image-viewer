@@ -634,14 +634,15 @@ bool FileGrid::eventFilter(QObject* obj, QEvent* event) {
 }
 
 // 焦点线在 paintCard 里按 hasFocus() 画;没有这两个钩子,失焦后那条线会留在原地
-// 变成假指示器。只在"这条线有可能存在"时重绘:单选时本来就不画,不付整屏的钱。
+// 换成假指示器。底色/框色兼随焦点变化(2026-09-02:网格有焦点=亮蓝,失焦=暗蓝),
+// 所以无论单选多选都必须整版重绘 —— 不能像旧版只在多选时刷新。
 void FileGrid::focusInEvent(QFocusEvent* event) {
     QScrollArea::focusInEvent(event);
-    if (m_selected.size() > 1) refreshView();
+    refreshView();
 }
 
 void FileGrid::focusOutEvent(QFocusEvent* event) {
     QScrollArea::focusOutEvent(event);
-    if (m_selected.size() > 1) refreshView();
+    refreshView();
 }
 

@@ -98,6 +98,12 @@ void FileGrid::paintCard(QPainter& p, int idx, const QRect& r) {
     const fg_impl::CardBoxes bx = fg_impl::boxesFor(r, m_viewMode, m_labelGap);
     const QFont  base  = p.font();
     const bool   sel   = m_selected.contains(idx);
+    // 2026-09-02 用户令:选中色随焦点分流 —— 网格有焦点 = 真选中(亮蓝 rgb(0,120,215)),
+    // 焦点在文件树时网格的"选中"只是视觉残留(暗蓝 rgb(33,100,168)),让人一眼看出
+    // F2 重命名的到底是谁(改谁看焦点,文件树和文件页两套选中态)。
+    const QColor selBlue = hasFocus()
+        ? QColor(0, 120, 215)   // #0078D7 亮蓝:当前正被操作
+        : QColor(33, 100, 168); // #2164A8 暗蓝:仅视觉残留,并未被选中
     // #104:多选不再换颜色(黄框与单击蓝框不一致是用户明确否掉的)。
     // 多选时"键盘当前落点"改画一条内侧焦点细线(只在网格真有焦点时),
     // 颜色一律走单选那套蓝,否则整个选中态就没任何可见信号了
@@ -143,7 +149,7 @@ void FileGrid::paintCard(QPainter& p, int idx, const QRect& r) {
     // ── 文件名:格式标签色底块 + 居中/左对齐文字(中间省略) ──
     if (!bx.name.isNull()) {
         QColor bg;
-        if (sel)        bg = QColor(C_SELECT_BLUE);
+        if (sel)        bg = selBlue;
         else if (LabelColors::enabled()) bg = LabelColors::colorForExt(e.ext.mid(1));
         if (bg.alpha() > 0) p.fillRect(bx.name, bg);
         // 选中=蓝底白字;未选中=主题文字色(浅色档下白字在白卡上会消失)
@@ -183,7 +189,7 @@ void FileGrid::paintCard(QPainter& p, int idx, const QRect& r) {
     const QRectF hug(imgR.left() - 1.0, imgR.top() - 1.0,
                      imgR.width() + 2.0, imgR.height() + 2.0);
     if (sel) {
-        p.setPen(QPen(QColor(C_SELECT_BLUE), 2));
+        p.setPen(QPen(selBlue, 2));
         p.setBrush(Qt::NoBrush);
         p.drawRect(hug);
         // 键盘落点:多选时框颜色已与单选一致,只能靠这条内侧虚线指出"方向键在这儿"。
