@@ -109,11 +109,11 @@ QImage Thumbnailer::folderThumb(const QString& dirPath, int size) {
     QElapsedTimer ftClock;
     ftClock.start();
 
-    // #139:候选不再"只挑图片"。本级文件(图+视频)按自然序挑;
-    // folder4 且本级不足 4 格时,按自然序扫**直接子目录**补格(深度 1,不往下递归)。
+    // #139:候选只挑**本级**文件(图+视频)按自然序填格 —— 用户裁决:四合一
+    // 不扫子目录补格(哪怕本级不足 4 张,空格露后板,也不去"借"子目录的图)。
     // 视频格走进程内 libav 单帧(videoThumbFFmpeg),不 spawn 外部 ffmpeg.exe;
     // 最坏 4 格全视频也只是 4 次解码,首生成付一次,之后命中 DB/内存缓存。
-    // 单封面(folder4 关)维持原样:只取本级第一个候选,不扫子目录。
+    // 单封面(folder4 关)维持原样:只取本级第一个候选。
     const int want = p.folder4 ? 4 : 1;
     int videoCount = 0;
     QStringList picked;
@@ -135,18 +135,7 @@ QImage Thumbnailer::folderThumb(const QString& dirPath, int size) {
         }
         return false;
     };
-    int subDirsScanned = 0;
-    if (!tryPick(dirPath) && want > 1) {
-        auto rawDirs = d.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
-        QFileInfoList dirs = rawDirs;
-        std::stable_sort(dirs.begin(), dirs.end(), [](const QFileInfo& a, const QFileInfo& b) {
-            return naturalNameLess(a.fileName(), b.fileName());
-        });
-        for (const QFileInfo& di : dirs) {
-            ++subDirsScanned;
-            if (tryPick(di.absoluteFilePath())) break;
-        }
-    }
+    tryPick(dirPath);
     if (picked.isEmpty()) return {};
 
     QImage sheet(size, size, QImage::Format_RGB32);
@@ -209,9 +198,9 @@ QImage Thumbnailer::folderThumb(const QString& dirPath, int size) {
     pt.restore();
 
     pt.end();
-    Logger::event(QStringLiteral("folderThumb: cells=%1 video=%2 subScan=%3 %4ms '%5'")
+    Logger::event(QStringLiteral("folderThumb: cells=%1 video=%2 %3ms '%4'")
                       .arg(picked.size()).arg(videoCount)
-                      .arg(subDirsScanned).arg(ftClock.elapsed())
+                      .arg(ftClock.elapsed())
                       .arg(dirPath));
     return postProcess(sheet, size);
 }
