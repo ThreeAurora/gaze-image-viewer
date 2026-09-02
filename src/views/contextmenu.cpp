@@ -239,7 +239,7 @@ static bool reencodeRotate(const QString& path, const QString& tmp,
     }
     QFile f(tmp);
     // 必须显式给格式:save(device, nullptr) 会让 Qt 拿 device 的文件名
-    // 后缀猜格式,而临时文件后缀是 "gaze_rot_tmp",无任何 handler 匹配
+    // 后缀猜格式,而临时文件后缀是 "Gaze_rot_tmp",无任何 handler 匹配
     // → 保存恒失败 → 非 JPEG 的旋转/翻转成了静默空操作。
     QByteArray fmt = rotExt.toUtf8();
     if (fmt == "jpg") fmt = "jpeg";
@@ -490,7 +490,7 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
             QDateTime birth = fi.birthTime();            // 原创建时间
             // 每次变换独占一个临时名:两连点转同一文件时不再共用一个 tmp 互相踩
             static int seq = 0;
-            const QString tmp = path + QStringLiteral(".gaze_rot_tmp%1").arg(++seq);
+            const QString tmp = path + QStringLiteral(".Gaze_rot_tmp%1").arg(++seq);
 
             // ── Browser/rotateExifOnly(默认开):JPEG 先试"只改 EXIF 方向" ──
             // 只动一个元数据字节,pixel 数据完全不动,零损失且瞬时;
@@ -577,7 +577,7 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
                 if (!QFileInfo::exists(backup)) QFile::copy(m_filePath, backup);
             }
 
-            const QString tmp = m_filePath + ".gaze_crop_tmp";
+            const QString tmp = m_filePath + ".Gaze_crop_tmp";
             bool ok = false;
 
             if ((ext == "jpg" || ext == "jpeg") && !findJpegtran().isEmpty()) {

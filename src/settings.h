@@ -3,7 +3,7 @@
 #include <QSettings>
 #include <QVariant>
 
-// 单例 — 全局设置访问(默认便携 ini:exe 目录/gaze.ini;
+// 单例 — 全局设置访问(默认便携 ini:exe 目录/Gaze.ini;
 // 位置受 Integration/iniLocation + customIniDir 控制,见 settings.cpp)
 // section 划分照 XnView MP:General/Start/FileOps/Interface/Keyboard/Mouse/
 //                          SwitchMode/Browser/FileList/Thumbs/Appearance/Viewer/

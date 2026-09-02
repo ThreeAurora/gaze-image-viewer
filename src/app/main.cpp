@@ -1,6 +1,7 @@
 #include <QApplication>
 #include <QIcon>
 #include <QFileInfo>
+#include <QFile>
 #include <QDir>
 #include <QLocalServer>
 #include <QLocalSocket>
@@ -206,7 +207,16 @@ int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
     app.setApplicationName("Gaze");
     app.setApplicationDisplayName("Gaze");
-    app.setWindowIcon(QIcon(":/gaze.png"));
+    app.setWindowIcon(QIcon(":/Gaze.png"));
+
+    // 旧版配置迁移: gaze.ini -> Gaze.ini (仅当新名不存在而旧名存在时一次性改名)
+    {
+        const QString oldIni = QCoreApplication::applicationDirPath() + QStringLiteral("/gaze.ini");
+        const QString newIni = QCoreApplication::applicationDirPath() + QStringLiteral("/Gaze.ini");
+        if (QFileInfo::exists(oldIni) && !QFileInfo::exists(newIni))
+            QFile::rename(oldIni, newIni);
+    }
+
     static DialogKeyFilter s_dialogKeyFilter;
     app.installEventFilter(&s_dialogKeyFilter);
 

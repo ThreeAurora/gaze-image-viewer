@@ -145,7 +145,7 @@ inline QSize orientedSize(const QString& path, bool exifRotate) {
 //   属跨线程访问(未加锁),表现偶发但真存在崩溃/脏读。
 inline QImage decodeScaled(const QString& path, bool exifRotate, int maxSide) {
     // ── 策略0.4: Qt 原生读不了的格式(#116)先行分流 ──
-    // AVIF/JXL → 随 gaze 的 ffmpeg 子进程;HEIF/HEIC → 系统 WIC。
+    // AVIF/JXL → 随 Gaze 的 ffmpeg 子进程;HEIF/HEIC → 系统 WIC。
     // 失败(无 ffmpeg/无 HEIF 扩展/坏文件)不 return,落回下方 Qt 路径
     // —— Qt 也读不了 → 空图,由上层照常显示占位。
     const QString fSuf = QFileInfo(path).suffix().toLower();

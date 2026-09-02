@@ -361,7 +361,7 @@ inline QIcon typeIcon(const QString& ext, const QString& filePath = QString()) {
     QIcon ic;
     QFileInfo rfi(filePath);
     bool useReal = !filePath.isEmpty() && rfi.exists();
-    QString srcPath = useReal ? filePath : QStringLiteral("gaze_probe") + ext;
+    QString srcPath = useReal ? filePath : QStringLiteral("Gaze_probe") + ext;
     std::wstring w = srcPath.toStdWString();
     DWORD attrs = useReal ? 0 : FILE_ATTRIBUTE_NORMAL;
 

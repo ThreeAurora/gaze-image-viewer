@@ -262,7 +262,7 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
         auto *tgt = qobject_cast<QWidget*>(obj);
         // #155:地址栏里 Backspace = 删字(外部改键工具送的是 Alt+退格)。实测
         // (cache/tmp/altbs_probe3.cpp):QLineEdit 收到 Alt+退格既不删字也不接受,
-        // 事件冒泡上去,在 gaze 里就走出"上级目录"的假动作 —— 这里替它删并消费,
+        // 事件冒泡上去,在 Gaze 里就走出"上级目录"的假动作 —— 这里替它删并消费,
         // 放在 bypass 之前:编辑手段优先于一切(#61 原则)。backspace() 有选中先
         // 删选中,与原生裸退格行为一致;Ctrl+退格(删词)不拦,仍归 QLineEdit。
         if (obj == m_addrBar

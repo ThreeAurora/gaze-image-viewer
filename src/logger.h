@@ -1,11 +1,11 @@
 #pragma once
 // ═══════════════════════════════════════════════════════════
-// gaze.log 事件日志:诊断"卡死/崩溃"类问题(perf.log 记慢,这里记"死")
+// Gaze.log 事件日志:诊断"卡死/崩溃"类问题(perf.log 记慢,这里记"死")
 //   · event()      任意线程安全落盘,业务路径埋检查点用
 //   · 消息处理器    捕获 Qt/媒体后端的 qWarning/qCritical(WMF 报错会现形)
 //   · touch()      GUI 心跳;看门狗线程发现 >12s 无心跳 → 进程活着但 GUI 卡死
-//   · SEH 过滤器    崩溃时先写 FATAL 行,再存 gaze_crash.dmp 迷你转储
-// 判读:gaze.log 末尾是 WATCHDOG → 卡死;是 FATAL(+dmp) → 崩溃;
+//   · SEH 过滤器    崩溃时先写 FATAL 行,再存 Gaze_crash.dmp 迷你转储
+// 判读:Gaze.log 末尾是 WATCHDOG → 卡死;是 FATAL(+dmp) → 崩溃;
 //       都没有戛然而止 → 硬崩(看最后一个检查点定位到哪一步)
 // ═══════════════════════════════════════════════════════════
 
@@ -34,7 +34,7 @@ namespace Logger {
 constexpr int kRotateBytes = 2 * 1024 * 1024;
 
 inline QString path() {
-    return QCoreApplication::applicationDirPath() + QStringLiteral("/gaze.log");
+    return QCoreApplication::applicationDirPath() + QStringLiteral("/Gaze.log");
 }
 
 inline QFile& file() {
@@ -129,8 +129,8 @@ inline void startWatchdog() {
 // 崩溃路径不用 Qt/堆:纯 WinAPI 追加 FATAL 行 + 存 minidump
 inline LONG WINAPI sehFilter(EXCEPTION_POINTERS* ep) {
     const QString logDir = QCoreApplication::applicationDirPath();
-    const std::wstring logW = (logDir + QStringLiteral("/gaze.log")).toStdWString();
-    const std::wstring dmpW = (logDir + QStringLiteral("/gaze_crash.dmp")).toStdWString();
+    const std::wstring logW = (logDir + QStringLiteral("/Gaze.log")).toStdWString();
+    const std::wstring dmpW = (logDir + QStringLiteral("/Gaze_crash.dmp")).toStdWString();
 
     wchar_t buf[192];
     _snwprintf(buf, 192, L"FATAL exception code=0x%08lX addr=%p tid=%lu\r\n",
@@ -166,7 +166,7 @@ inline LONG WINAPI sehFilter(EXCEPTION_POINTERS* ep) {
 #endif
 
 inline void init() {
-    // 先轮转再打开:>2MB 的旧日志挪到 gaze.log.old(只留一代)
+    // 先轮转再打开:>2MB 的旧日志挪到 Gaze.log.old(只留一代)
     {
         QFile old(path());
         if (old.exists() && old.size() > kRotateBytes) {

@@ -12,7 +12,7 @@ class QGroupBox;
 
 // 设置对话框:左侧一级/二级分类树(一级项自身也是页面,可点进)
 // + 右侧大标题/分隔线/分组框页面(对标 XnView MP 结构)
-// 变更即时保存到 gaze.ini
+// 变更即时保存到 Gaze.ini
 class SettingsDialog : public QDialog {
     Q_OBJECT
 public:

@@ -269,7 +269,7 @@ QWidget* SettingsDialog::pageBrowser() {
                       QString::fromUtf8("预览 txt 文本文件内容(超长自动截断)"), false));
     fPrev->addRow(chk("Preview/showMd",
                       QString::fromUtf8("以 MD 格式预览 Markdown 文件(超长自动截断)"), false));
-    // PDF 用随 gaze 分发的内置 Ghostscript(gs/),不再要求系统安装(#110)
+    // PDF 用随 Gaze 分发的内置 Ghostscript(gs/),不再要求系统安装(#110)
     fPrev->addRow(chk("Preview/showPdf", QString::fromUtf8("预览 PDF 文档(内置 Ghostscript 渲染)"), false));
     root->addWidget(group(QString::fromUtf8("预览"), fPrev));
 

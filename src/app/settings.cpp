@@ -19,19 +19,19 @@ AppSettings& AppSettings::instance() {
 //   少了这一步,用户从便携切到 %APPDATA% 后看到的是"所有设置回到默认"——
 //   值其实还在旧文件里,只是没人再读它。观感等同于设置被清空。
 static QString pathForLocation(int loc, const QString& customDir) {
-    const QString portable = QCoreApplication::applicationDirPath() + "/gaze.ini";
+    const QString portable = QCoreApplication::applicationDirPath() + "/Gaze.ini";
     if (loc == 1) {
         const QString dir =
             QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-        return dir.isEmpty() ? portable : dir + "/gaze.ini";
+        return dir.isEmpty() ? portable : dir + "/Gaze.ini";
     }
     if (loc == 2 && !customDir.trimmed().isEmpty())
-        return QDir::fromNativeSeparators(customDir.trimmed()) + "/gaze.ini";
+        return QDir::fromNativeSeparators(customDir.trimmed()) + "/Gaze.ini";
     return portable;
 }
 
 static QString resolveIniPath() {
-    const QString portable = QCoreApplication::applicationDirPath() + "/gaze.ini";
+    const QString portable = QCoreApplication::applicationDirPath() + "/Gaze.ini";
     QSettings boot(portable, QSettings::IniFormat);
     const int loc = boot.value("Integration/iniLocation", 0).toInt();
     const QString target = pathForLocation(
@@ -61,7 +61,7 @@ void AppSettings::set(const QString& key, const QVariant& v) {
 // 主配置被搬到别处时,这三个键的每次写入都同步镜像回引导文件
 void AppSettings::setPersist(const QString& key, const QVariant& v) {
     m_settings.setValue(key, v);
-    const QString boot = QCoreApplication::applicationDirPath() + "/gaze.ini";
+    const QString boot = QCoreApplication::applicationDirPath() + "/Gaze.ini";
     if (key.startsWith(QStringLiteral("Integration/"))
         && m_settings.fileName() != boot) {
         QSettings b(boot, QSettings::IniFormat);

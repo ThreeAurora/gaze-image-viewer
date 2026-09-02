@@ -1,12 +1,12 @@
 #pragma once
 // ═══════════════════════════════════════════════════════════
-// RAW 全解(rawdecode):自带 LibRaw(thirdparty/LibRaw 静态编入 gaze)
+// RAW 全解(rawdecode):自带 LibRaw(thirdparty/LibRaw 静态编入 Gaze)
 //
 // 全囊括铁令(用户 2026-09-01):一切功能不默认用户电脑装有任何组件,
 // RAW 解码必须随程序自带 —— 与 vendor/gs(PDF)、vendor/ffmpeg 同一架构
 // 原则;LibRaw 是纯源码(LGPL-2.1 / CDDL 双许可),静态编进 exe,无 DLL
 // 分发决策。去马赛克/白平衡/色彩矩阵都在 LibRaw 内置(dcraw 管线 +
-// 机身色彩数据),gaze 不自造色彩科学。
+// 机身色彩数据),Gaze 不自造色彩科学。
 //
 // 只服务「加载原始RAW」按钮(#140):全解是几十 MP 数秒级的重活,绝不进
 // 缩略图/预读管线。解码失败返回空 QImage,调用方显示失败文案(绝不黑屏)。

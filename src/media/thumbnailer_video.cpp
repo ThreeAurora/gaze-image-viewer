@@ -84,7 +84,7 @@ QImage Thumbnailer::videoContactSheet(const QString& filePath, int size) {
 // 视频缩略图 — 外部 ffmpeg 定位(#112)
 //   以前直接 proc.start("ffmpeg") 走 PATH:机器上没装就静默降级成 Windows Shell
 //   缩略图,用户看不出区别也不知道为什么。定位顺序照 #110 的 Ghostscript ——
-//   随 gaze 走的那份永远优先,PATH 只是兜底,两处都没有才降级且必留一条日志痕。
+//   随 Gaze 走的那份永远优先,PATH 只是兜底,两处都没有才降级且必留一条日志痕。
 //   定位函数收口在 toolpath.h(#116 起静图解码共用同一份)。
 // ═══════════════════════════════════════════
 namespace {
@@ -280,7 +280,7 @@ QImage Thumbnailer::videoThumbFallback(const QString& filePath, int size, int pc
     // #121 HDR(PQ/HLG)源要先把高动态压回 SDR,否则色彩是错的(饱和/明度都走偏)。
     //   滤镜串是实测跑通的写法:tonemap=hable/mobius 可用,bt2390 在本仓库这份
     //   n7.1.5 构建里直接报错,hybrid 是 8.x 才有的值。zscale/tonemap 由 #113
-    //   随 gaze 分发的 ffmpeg 提供。
+    //   随 Gaze 分发的 ffmpeg 提供。
     const QString hdrFilter =
         QStringLiteral("zscale=transfer=linear:npl=100,format=gbrpf32le,"
                        "zscale=primaries=bt709,tonemap=tonemap=hable:desat=0,"

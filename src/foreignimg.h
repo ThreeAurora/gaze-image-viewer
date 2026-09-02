@@ -2,14 +2,14 @@
 // ═══════════════════════════════════════════════════════════
 // Qt 原生读不了的静图 → 外部解码回退(#116)
 //
-//   .avif/.avifs/.jxl → 随 gaze 分发的 LGPL ffmpeg 子进程(dav1d/libjxl)
+//   .avif/.avifs/.jxl → 随 Gaze 分发的 LGPL ffmpeg 子进程(dav1d/libjxl)
 //                       → PNG 管道(不经临时文件)
 //   #103 工单② 起 .exr/.dds/.qoi/.jp2/.dpx/.apng 同走上述 ffmpeg 分流
 //   .heic/.heif/.hif  → Windows WIC "Microsoft HEIF Decoder"(进程内;
 //                       系统未装 HEIF 图像扩展时解码失败 → 空图回退)
 //
 // 背景:novomesk 的 AVIF/HEIF/JXL Qt 插件 release 全是 MSVC 构建,与
-// MinGW 的 gaze ABI 不兼容(实测 LoadLibrary 直接失败),故走进程外/
+// MinGW 的 Gaze ABI 不兼容(实测 LoadLibrary 直接失败),故走进程外/
 // 系统解码,与 #110 Ghostscript、#112 视频缩略图同一模式。
 // 已知限制:动图(avifs/jxl 序列)只取第一帧;irot 旋转不做。
 // ═══════════════════════════════════════════════════════════

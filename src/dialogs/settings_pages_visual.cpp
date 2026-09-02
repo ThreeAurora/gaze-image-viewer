@@ -76,7 +76,7 @@ QWidget* SettingsDialog::pageAppearance() {
     themeCombo->setCurrentIndex(
         AppSettings::instance().get("Appearance/theme", QStringLiteral("dark")).toString()
             == QLatin1String("light") ? 1 : 0);
-    themeCombo->setToolTip(QString::fromUtf8("重启 gaze 后生效"));
+    themeCombo->setToolTip(QString::fromUtf8("重启 Gaze 后生效"));
     connect(themeCombo, &QComboBox::currentIndexChanged, this, [](int v) {
         AppSettings::instance().set("Appearance/theme", v == 1 ? QStringLiteral("light")
                                                                : QStringLiteral("dark"));

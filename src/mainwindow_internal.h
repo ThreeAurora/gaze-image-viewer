@@ -17,7 +17,7 @@
 
 namespace mw_impl {
 
-// 统一设置存储:与设置面板(AppSettings)共用便携 ini(exe 目录/gaze.ini)
+// 统一设置存储:与设置面板(AppSettings)共用便携 ini(exe 目录/Gaze.ini)
 // 此前用 QSettings 默认构造(注册表),因 main.cpp 未 setOrganizationName
 // 导致 AccessError 全部静默失效(布局/快捷键/最近文件/路径历史都不生效)
 inline QSettings appSettings() {

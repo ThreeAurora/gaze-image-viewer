@@ -3,7 +3,7 @@
 // PDF 预览渲染(#82)
 //   Qt 6.8 的 Windows 二进制不带 QtPdf 模块,故用 Ghostscript 把指定页渲染成
 //   PNG,再当普通图片显示。
-//   GS 随 gaze 分发(#110,用户 2026-08-31 明令):优先用 exe 旁 gs/bin/gswin64c.exe
+//   GS 随 Gaze 分发(#110,用户 2026-08-31 明令):优先用 exe 旁 gs/bin/gswin64c.exe
 //   (源 = 仓库 vendor/gs,CMake post-build 自动同步到构建目录),
 //   内置版缺失才回退 PATH / Program Files —— 不再依赖"用户装没装 GS"。
 //   都找不到时回退 Windows Shell 缩略图(Explorer 那种首页缩略图),
@@ -30,7 +30,7 @@ inline QString gsExe() {
     looked = true;
 
     QString p;
-    // 1) 随 gaze 分发的内置版。gswin64c.exe 靠相对自身的 ../Resource 找 gs_init.ps,
+    // 1) 随 Gaze 分发的内置版。gswin64c.exe 靠相对自身的 ../Resource 找 gs_init.ps,
     //    所以必须整目录(gs/bin + gs/Resource + gs/lib)一起拷,只拷 exe 会直接报错。
     const QString appDir = QCoreApplication::applicationDirPath();
     for (const QString& name : {QStringLiteral("gswin64c.exe"),
@@ -92,7 +92,7 @@ inline QImage renderPage(const QString& pdfPath, int page, int renderDpi = 110) 
     if (gs.isEmpty()) return {};
     if (page < 1) page = 1;
 
-    const QString outDir = QDir::tempPath() + QStringLiteral("/gaze_pdf");
+    const QString outDir = QDir::tempPath() + QStringLiteral("/Gaze_pdf");
     QDir().mkpath(outDir);
     // 文件名带页号与 dpi:同一文件的不同页/清晰度各自成缓存条目
     const QString key = QString::number(qHash(pdfPath), 16);
