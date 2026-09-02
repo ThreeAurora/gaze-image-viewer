@@ -65,6 +65,11 @@ protected:
 
 private:
     bool dropOnValidTarget(const QPoint& pos) const;   // 落点是否在网格/树内
+    // 落点是否"有意义"(2026-09-03):内部起拖(源=网格)时,落点必须是一个
+    // 真正要移动进去的文件夹 —— 网格空白/非文件夹卡片(目标=当前目录)与
+    // 树中源所在目录节点(自己移自己)都判无效 → dragMove 显示禁止光标。
+    // 外部拖入(资源管理器)保持原语义:空白=导航,文件夹=移动/复制。
+    bool dropTargetMeaningful(const QPoint& pos, const QDropEvent* e) const;
 
     void createMenubar();
     void createStatusbar();

@@ -79,16 +79,49 @@ bool MainWindow::dropOnValidTarget(const QPoint& pos) const {
     return false;
 }
 
+// 内部起拖(文件页拖出)时,落点必须是一个"能移进去的文件夹"才有意义:
+//   · 文件页空白/非文件夹卡片 → 目标=当前目录本身,移动=自己移到自己 → 禁止
+//   · 树中源文件所在目录节点    → 同上,自己移到自己 → 禁止
+// 外部拖入(资源管理器)保持原语义:空白=导航过去,文件夹=移动/复制进去。
+bool MainWindow::dropTargetMeaningful(const QPoint& pos, const QDropEvent* e) const {
+    if (e->source() != m_fileGrid) return true;   // 外部拖入不做精细化拦截
+    const QMimeData* md = e->mimeData();
+    if (!md || !md->hasUrls()) return false;
+
+    // 落点必须命中一个文件夹(网格卡片或树节点),否则没地方可挪
+    QString dropInto;
+    QWidget* child = childAt(pos);
+    if (child && m_fileGrid && (child == m_fileGrid || m_fileGrid->isAncestorOf(child))) {
+        const int idx = m_fileGrid->hitTest(m_fileGrid->mapFrom(this, pos));
+        const QString hit = m_fileGrid->pathAt(idx);
+        if (!hit.isEmpty() && QFileInfo(hit).isDir()) dropInto = hit;
+    } else if (child && m_folderTree && (child == m_folderTree || m_folderTree->isAncestorOf(child))) {
+        const QString hit = m_folderTree->pathAt(m_folderTree->mapFrom(this, pos));
+        if (!hit.isEmpty() && QFileInfo(hit).isDir()) dropInto = hit;
+    }
+    if (dropInto.isEmpty()) return false;
+
+    // 任一被拖文件就躺在目标文件夹里 → 移动回原地,无意义
+    const QString target = QDir::fromNativeSeparators(dropInto);
+    for (const QUrl& u : md->urls()) {
+        if (!u.isLocalFile()) continue;
+        if (QFileInfo(QDir::fromNativeSeparators(u.toLocalFile())).absolutePath()
+            == target)
+            return false;
+    }
+    return true;
+}
+
 void MainWindow::dragMoveEvent(QDragMoveEvent* e) {
     if (!(e->mimeData() && e->mimeData()->hasUrls())) { hideDragHint(); return; }
     const QPoint pos = e->position().toPoint();
-    const bool valid = dropOnValidTarget(pos);
+    const bool valid = dropOnValidTarget(pos) && dropTargetMeaningful(pos, e);
     if (valid) {
         e->acceptProposedAction();
         updateDragHint(pos, true);              // 2026-09-02:光标旁"复制/移动"浮标
         updateFolderDropTarget(pos, true);      // 树落点白框
     } else {
-        e->ignore();
+        e->ignore();                            // 禁止光标 + 松开无动作
         hideDragHint();
     }
 }
