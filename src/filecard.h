@@ -29,15 +29,9 @@ public:
     static void applyAppearance();
     static bool sizeBytesMode() { return s_sizeBytes; }   // FileList/sizeInBytes
 
-    // 外观设置缓存:FileGrid 启动时 + 设置变更后刷新。setup()/paintEvent() 只读
-    // 内存缓存 —— 逐条目路径读 ini 违反项目铁律。
-    static void applyAppearance();
-    static bool sizeBytesMode() { return s_sizeBytes; }   // FileList/sizeInBytes
-
 signals:
     void clicked(FileCard* card);
     void doubleClicked(FileCard* card);
-    void middleClicked(FileCard* card);
     void middleClicked(FileCard* card);
 
 protected:
@@ -78,7 +72,6 @@ private:
     static bool s_showRating;    // Browser/showRating 颜色标记圈
     static bool s_sizeBytes;     // FileList/sizeInBytes 按字节显示大小
     static bool s_shadow;        // Appearance/shadow 缩略图投影
-    static bool s_sizeBytes;     // FileList/sizeInBytes 按字节显示大小
 
     friend class FileGrid;
 };

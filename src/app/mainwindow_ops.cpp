@@ -67,8 +67,6 @@ void MainWindow::requestSwitchMode(const QString& triggerKey) {
     const QVariant defSpec = triggerKey == "SwitchMode/doubleClick" ? 1
                            : triggerKey == "SwitchMode/middleClick" ? 4 : 1;
     const int spec = AppSettings::instance().get(triggerKey, defSpec).toInt();
-    Logger::event(QStringLiteral("switchMode trigger=%1 spec=%2 viewerNow=%3")
-                      .arg(triggerKey).arg(spec).arg(m_viewerMode));   // #128② 取证
     if (spec == 4) return;
     if (spec == 5) {   // 仅"用系统程序打开"针对文件;目录仍然进入
         const auto paths = m_fileGrid->selectedPaths();

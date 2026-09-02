@@ -10,9 +10,6 @@
 #include <QTabBar>
 #include <QFileInfo>
 #include <QPoint>
-#include <QPoint>
-#include <QPoint>
-#include <QPoint>
 
 class QVBoxLayout;
 class QComboBox;
@@ -29,10 +26,9 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     Q_INVOKABLE bool navigateTo(const QString &path);  // false=目标不存在/非目录,什么都没改
     Q_INVOKABLE void openFullscreen(const QString &path);  // 右键"全屏":导航到文件并全屏
+    Q_INVOKABLE void revealFile(const QString &path);      // 以文搜图结果:定位到目录并选中
     void enterFullscreen();          // Fullscreen/dualMonitor:可选落到第二显示器
     void renameCurrent();            // F2:按 FileOps/renameDialog 决定对话框/就地改
-    // #136:F2/F3 的统一入口 —— 焦点在文件树就改树里那一行,否则改文件页选中项
-    void renameFocused();
     // #136:F2/F3 的统一入口 —— 焦点在文件树就改树里那一行,否则改文件页选中项
     void renameFocused();
     int  seekSeconds() const;        // Viewer/seekSeconds:快进/快退秒数(默认 3)
@@ -40,43 +36,22 @@ public:
     Q_INVOKABLE void openViewerTab(const QString& path);  // 右键"在新标签卡中打开"
     void syncViewerTab(const QString& path);
     void closeViewerTab(int index);              // 关闭按钮/标签右键菜单/中键
-    void closeViewerTab(int index);              // 关闭按钮/标签右键菜单/中键
-    void closeViewerTab(int index);              // 关闭按钮/标签右键菜单/中键
-    void closeViewerTab(int index);              // 关闭按钮/标签右键菜单/中键
-    Q_INVOKABLE void revealFile(const QString &path);      // 以文搜图结果:定位到目录并选中
-    void enterFullscreen();          // Fullscreen/dualMonitor:可选落到第二显示器
     Q_INVOKABLE void toggleViewer();   // 浏览器 ↔ 查看器(单图模式)
     Q_INVOKABLE void toggleFullView();   // G(#154):全屏预览=只铺画面,不进查看器不碰标签
     void exitFullView();           // G/ESC/F11/浮动工具条退出:精确还原进前布局
     void applyFullViewChrome();    // 菜单栏/标签条随全屏形态收放
     Q_INVOKABLE void viewerBack();     // ESC:查看器退回浏览器(幂等)
-    // 切换模式触发键(设置→交互→切换模式):"SwitchMode/doubleClick" 等
-    Q_INVOKABLE void requestSwitchMode(const QString& triggerKey);
     Q_INVOKABLE void refresh();        // 重载当前目录(F5/工具栏/布局菜单)
-    Q_INVOKABLE void reloadAfterDelete(const QString& deletedPath);  // 删除后重载并选中下一项
-    Q_INVOKABLE void reloadAfterDelete(const QString& deletedPath);  // 删除后重载并选中下一项
-    Q_INVOKABLE void reloadAfterDelete(const QString& deletedPath);  // 删除后重载并选中下一项
     Q_INVOKABLE void reloadAfterDelete(const QString& deletedPath);  // 删除后重载并选中下一项
     // 切换模式触发键(设置→交互→切换模式):"SwitchMode/doubleClick" 等
     Q_INVOKABLE void requestSwitchMode(const QString& triggerKey);
     void saveLayout(const QString& name);   // 布局保存/应用(查看→布局;退出自动存 _last)
     void applyLayout(const QString& name);
-    void selftestPressKey(int qtKey);       // 临时诊断:S 键闪退定位,查完删
-    void selftestFastScroll();              // 临时诊断:快速拖动滚动条 + 几何自检,查完删    void selftestPressKey(int qtKey);       // 临时诊断:S 键闪退定位,查完删
-    void selftestFastScroll();              // 临时诊断:快速拖动滚动条 + 几何自检,查完删
-
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event) override;
     void closeEvent(QCloseEvent *event) override;
     void changeEvent(QEvent *event) override;   // WindowStateChange→全屏chrome收放(#153/#154)
-    void changeEvent(QEvent *event) override;   // WindowStateChange→全屏chrome收放(#153/#154)
-    // ── 拖放(#81)──
-    // 拖入:文件→导航到所在目录并选中首个文件;目录→直接进该目录。
-    // 拖入目标若落在某个文件夹上(网格卡片或树节点)则按复制语义拷过去。
-    void dragEnterEvent(QDragEnterEvent* e) override;
-    void dragMoveEvent(QDragMoveEvent* e) override;
-    void dropEvent(QDropEvent* e) override;
     // ── 拖放(#81)──
     // 拖入:文件→导航到所在目录并选中首个文件;目录→直接进该目录。
     // 拖入目标若落在某个文件夹上(网格卡片或树节点)则按移动/复制语义落盘。
@@ -96,6 +71,8 @@ private:
     void onThumbZoom(int delta);
     void goBack();
     void goForward();
+    void goUp();   // 上级目录(Backspace/工具栏):跳成后定位刚离开的子文件夹
+    void gotoTypedPath();   // 地址栏回车(#109②):目录进目录 / 文件定位到它 / 都不像就吭一声
     void updateNavEnabled();   // 按游标刷新"后退/前进"菜单项+工具栏按钮的可用性(#87)
     // 查看器标签:文件路径存在 QTabBar 的 tabData 里(唯一真源,
     // 拖拽重排/removeTab 都带着它走,不需要并行的路径数组保持同步)
@@ -105,51 +82,6 @@ private:
     void setViewerTabPath(int index, const QString& path);  // 就地换某标签指向的文件
     void installTabCloseButton(int index);  // 自绘 × (主题色,系统图标在深色下看不见)
     Q_INVOKABLE void pruneDeadViewerTabs();  // 丢掉指向已消失文件的标签(删除后网格也会叫)
-    void updateNavEnabled();   // 按游标刷新"后退/前进"菜单项+工具栏按钮的可用性(#87)
-    // 查看器标签:文件路径存在 QTabBar 的 tabData 里(唯一真源,
-    // 拖拽重排/removeTab 都带着它走,不需要并行的路径数组保持同步)
-    QString tabPath(int index) const;
-    int  indexOfTabPath(const QString& path) const;
-    int  addViewerTab(const QString& path);                 // 追加标签,返回索引
-    void setViewerTabPath(int index, const QString& path);  // 就地换某标签指向的文件
-    void installTabCloseButton(int index);  // 自绘 × (主题色,系统图标在深色下看不见)
-    Q_INVOKABLE void pruneDeadViewerTabs();  // 丢掉指向已消失文件的标签(删除后网格也会叫)
-    void goUp();
-    void goUp();
-    void gotoTypedPath();   // 地址栏回车(#109②):目录进目录 / 文件定位到它 / 都不像就吭一声
-    void gotoTypedPath();   // 地址栏回车(#109②):目录进目录 / 文件定位到它 / 都不像就吭一声
-    void gotoTypedPath();   // 地址栏回车(#109②):目录进目录 / 文件定位到它 / 都不像就吭一声
-    void gotoTypedPath();   // 地址栏回车(#109②):目录进目录 / 文件定位到它 / 都不像就吭一声
-    void updateNavEnabled();   // 按游标刷新"后退/前进"菜单项+工具栏按钮的可用性(#87)
-    void updateNavEnabled();   // 按游标刷新"后退/前进"菜单项+工具栏按钮的可用性(#87)
-    // 查看器标签:文件路径存在 QTabBar 的 tabData 里(唯一真源,
-    // 拖拽重排/removeTab 都带着它走,不需要并行的路径数组保持同步)
-    QString tabPath(int index) const;
-    int  indexOfTabPath(const QString& path) const;
-    // 查看器标签:文件路径存在 QTabBar 的 tabData 里(唯一真源,
-    // 拖拽重排/removeTab 都带着它走,不需要并行的路径数组保持同步)
-    QString tabPath(int index) const;
-    int  indexOfTabPath(const QString& path) const;
-    int  addViewerTab(const QString& path);                 // 追加标签,返回索引
-    void setViewerTabPath(int index, const QString& path);  // 就地换某标签指向的文件
-    void installTabCloseButton(int index);  // 自绘 × (主题色,系统图标在深色下看不见)
-    Q_INVOKABLE void pruneDeadViewerTabs();  // 丢掉指向已消失文件的标签(删除后网格也会叫)
-    // #105:索引 0 常驻「浏览器」标签(tabData=哨兵),点它回标准模式
-    bool isBrowserTab(int index) const;
-    int  firstImageTab() const;             // 第一个图片标签,-1=无
-    int  imageTabCount() const;
-    void ensureBrowserTab();                // 常驻标签缺失/错位时补齐归位
-    void requestTabThumb(const QString& path);  // 标签名左侧小缩略图(异步)
-    // #105:索引 0 常驻「浏览器」标签(tabData=哨兵),点它回标准模式
-    bool isBrowserTab(int index) const;
-    int  firstImageTab() const;             // 第一个图片标签,-1=无
-    int  imageTabCount() const;
-    void ensureBrowserTab();                // 常驻标签缺失/错位时补齐归位
-    void requestTabThumb(const QString& path);  // 标签名左侧小缩略图(异步)
-    void installTabCloseButton(int index);  // 自绘 × (主题色,系统图标在深色下看不见)
-    Q_INVOKABLE void pruneDeadViewerTabs();  // 丢掉指向已消失文件的标签(删除后网格也会叫)
-    int  addViewerTab(const QString& path);                 // 追加标签,返回索引
-    void setViewerTabPath(int index, const QString& path);  // 就地换某标签指向的文件
     // #105:索引 0 常驻「浏览器」标签(tabData=哨兵),点它回标准模式
     bool isBrowserTab(int index) const;
     int  firstImageTab() const;             // 第一个图片标签,-1=无
@@ -162,7 +94,6 @@ private:
     void applyTitle();                        // 按模板刷新窗口标题
     void toggleSlideshow();                   // Keyboard/space=快速幻灯片
     void syncFilterIndicators(int mode);      // #107:筛选指示器总同步(格式下拉框+红标钮背景+m_redFilterMode)
-    void syncFilterIndicators(int mode);      // #107:筛选指示器总同步(格式下拉框+红标钮背景+m_redFilterMode)
     // 标题模板求值(浏览器/查看器共用;空 template 时回退默认)
     QString renderTitle(const QString& templateText, const QString& filePath) const;
 
@@ -170,9 +101,6 @@ private:
     // (saveLayout/applyLayout 声明见 public 区,供菜单/外部调用)
     void createLayoutMenu();                   // 菜单栏"布局"(追加到当前末尾)
     void applyLastLayout();                  // 应用上次关闭时的状态
-    QString splitterCsv() const;             // 可落盘的分栏宽度(查看器模式下取进入前的值)
-    QString splitterCsv() const;             // 可落盘的分栏宽度(查看器模式下取进入前的值)
-    QString splitterCsv() const;             // 可落盘的分栏宽度(查看器模式下取进入前的值)
     QString splitterCsv() const;             // 可落盘的分栏宽度(查看器模式下取进入前的值)
 
     // 批次 2:菜单/工具栏/标记/最近文件
@@ -216,21 +144,6 @@ private:
     // #128②:地址栏跳转后的一次宽限。跳完焦点落网格且自动选中第一项,
     // 同一个 Enter 的后续事件会再被"回车=切换查看器"吃一次(用户实测)。
     qint64  m_lastAddrJumpMs = 0;
-    // #127:一次焦点期内只自动全选一次。旧写法每次"未全选→点击"都 selectAll,
-    // 于是第三次点击又变全选,用户没法在路径中间改字 —— 第二次起就该只放光标。
-    bool    m_addrSelectedOnce = false;
-    // #128②:地址栏跳转后的一次宽限。跳完焦点落网格且自动选中第一项,
-    // 同一个 Enter 的后续事件会再被"回车=切换查看器"吃一次(用户实测)。
-    qint64  m_lastAddrJumpMs = 0;
-    // 地址栏单击全选(#109①③):按下前是否已整条选中 + 按下点(用来分清单击和拖选)
-    QPoint  m_addrPressPt;
-    bool    m_addrWasAllSelected = false;
-    // 地址栏单击全选(#109①③):按下前是否已整条选中 + 按下点(用来分清单击和拖选)
-    QPoint  m_addrPressPt;
-    bool    m_addrWasAllSelected = false;
-    // 地址栏单击全选(#109①③):按下前是否已整条选中 + 按下点(用来分清单击和拖选)
-    QPoint  m_addrPressPt;
-    bool    m_addrWasAllSelected = false;
     QLabel *m_statusLabel = nullptr;
     QLabel *m_pathLabel = nullptr;
     QStringList m_history;   // 目录导航历史
@@ -241,89 +154,18 @@ private:
     QAction* m_actFwd = nullptr;
     QToolButton* m_btnBack = nullptr;
     QToolButton* m_btnFwd = nullptr;
-    // 历史的四个"出口"都要随游标禁用，不然到头时按下去静默无事(#87)
-    QAction* m_actBack = nullptr;
-    QAction* m_actFwd = nullptr;
-    QToolButton* m_btnBack = nullptr;
-    QToolButton* m_btnFwd = nullptr;
-    // 历史的四个"出口"都要随游标禁用，不然到头时按下去静默无事(#87)
-    QAction* m_actBack = nullptr;
-    QAction* m_actFwd = nullptr;
-    QToolButton* m_btnBack = nullptr;
-    QToolButton* m_btnFwd = nullptr;
-    // 历史的四个"出口"都要随游标禁用，不然到头时按下去静默无事(#87)
-    QAction* m_actBack = nullptr;
-    QAction* m_actFwd = nullptr;
-    QToolButton* m_btnBack = nullptr;
-    QToolButton* m_btnFwd = nullptr;
     QList<int> m_savedSplitter;  // 进查看器前的分栏宽度(退回时原样恢复)
     bool m_fullView = false;     // #154 全屏预览中(独立于查看器模式,不碰标签页)
-    QList<int> m_fullViewSplitter;  // 进全屏查看前的分栏宽度(退出时原样恢复)
-    bool m_fullView = false;     // #154 全屏查看中(独立于查看器模式,不碰标签页)
-    QList<int> m_fullViewSplitter;  // 进全屏查看前的分栏宽度(退出时原样恢复)
-    bool m_fullView = false;     // #154 全屏查看中(独立于查看器模式,不碰标签页)
     QList<int> m_fullViewSplitter;  // 进全屏预览前的分栏宽度(退出时原样恢复)
     int  m_redFilterMode = 0; // 红标筛选三态:0全部 1仅红标 2仅非红标
     QToolButton* m_redBtn = nullptr; // 红标三态钮,蓝色背景指示器由 syncFilterIndicators 独家维护(#107)
-    QToolButton* m_redBtn = nullptr; // 红标三态钮,蓝色背景指示器由 syncFilterIndicators 独家维护(#107)
     QTabBar*    m_viewerTabs = nullptr;  // 查看器标签条(仅查看器模式可见)
-    bool   m_viewerNoSync = false;       // 进查看器时不要就地改标签(由"开新标签"自己追加)
     bool   m_viewerNoSync = false;       // 进查看器时不要就地改标签(由"开新标签"自己追加)
     bool m_viewerMode = false; // 查看器(单图)模式
     QWidget* m_treePane = nullptr;    // 树面板(查看器模式隐藏)
     QWidget* m_centerPane = nullptr;  // 网格面板(查看器模式隐藏)
     QWidget* m_previewPane = nullptr; // 预览面板包装(标题条 + PreviewPanel)
     QWidget* m_previewHdr = nullptr;  // 预览标题条(查看器模式下隐藏,单图不需要)
-    QWidget* m_addrRow = nullptr;     // 地址栏行(视图菜单可隐藏)
-    QWidget* m_toolRow = nullptr;     // 工具栏第二行(视图菜单可隐藏)
-    // 面板开关 action(视图菜单),与 m_panesOn 同步 ✓
-    QAction* m_paneActs[5] = {};
-    // 用户意图:当前应显示的面板 id 列表(顺序同 paneIds)。
-    // 查看器模式的临时隐藏不改这里,避免污染持久化状态
-    QStringList m_panesOn;
-    QWidget* m_previewPane = nullptr; // 预览面板包装(标题条 + PreviewPanel)
-    QWidget* m_previewHdr = nullptr;  // 预览标题条(查看器模式下隐藏,单图不需要)
-    QWidget* m_addrRow = nullptr;     // 地址栏行(视图菜单可隐藏)
-    QWidget* m_toolRow = nullptr;     // 工具栏第二行(视图菜单可隐藏)
-    // 面板开关 action(视图菜单),与 m_panesOn 同步 ✓
-    QAction* m_paneActs[5] = {};
-    // 用户意图:当前应显示的面板 id 列表(顺序同 paneIds)。
-    // 查看器模式的临时隐藏不改这里,避免污染持久化状态
-    QStringList m_panesOn;
-    QWidget* m_previewPane = nullptr; // 预览面板包装(标题条 + PreviewPanel)
-    QWidget* m_previewHdr = nullptr;  // 预览标题条(查看器模式下隐藏,单图不需要)
-    QWidget* m_addrRow = nullptr;     // 地址栏行(视图菜单可隐藏)
-    QWidget* m_toolRow = nullptr;     // 工具栏第二行(视图菜单可隐藏)
-    // 面板开关 action(视图菜单),与 m_panesOn 同步 ✓
-    QAction* m_paneActs[5] = {};
-    // 用户意图:当前应显示的面板 id 列表(顺序同 paneIds)。
-    // 查看器模式的临时隐藏不改这里,避免污染持久化状态
-    QStringList m_panesOn;
-    QWidget* m_previewPane = nullptr; // 预览面板包装(标题条 + PreviewPanel)
-    QWidget* m_previewHdr = nullptr;  // 预览标题条(查看器模式下隐藏,单图不需要)
-    QWidget* m_addrRow = nullptr;     // 地址栏行(视图菜单可隐藏)
-    QWidget* m_toolRow = nullptr;     // 工具栏第二行(视图菜单可隐藏)
-    // 面板开关 action(视图菜单),与 m_panesOn 同步 ✓
-    QAction* m_paneActs[5] = {};
-    // 用户意图:当前应显示的面板 id 列表(顺序同 paneIds)。
-    // 查看器模式的临时隐藏不改这里,避免污染持久化状态
-    QStringList m_panesOn;
-    // 最近文件:内存列表为唯一真源,定时合批写盘(连续切换不再每次同步落盘)
-    QStringList m_recentList;         // 内存副本(首次用到时从 ini 懒加载)
-    bool        m_recentLoaded = false;
-    int         m_recentMax = 20;    // 上限(懒加载时读一次,选中切换不再逐次读 ini)
-    QTimer      m_recentFlushTimer;  // 单发 500ms,超时统一写盘
-    QString     m_currentFile;       // 当前预览文件(标题模板 {文件名…} 求值用)
-    QString     m_currentDir;        // 当前目录规范形('/' 无尾斜杠);地址栏只负责显示
-    QString     m_currentDir;        // 当前目录规范形('/' 无尾斜杠);地址栏只负责显示
-    QString     m_currentDir;        // 当前目录规范形('/' 无尾斜杠);地址栏只负责显示
-    QString     m_currentDir;        // 当前目录规范形('/' 无尾斜杠);地址栏只负责显示
-    QTimer      m_slideTimer;        // 快速幻灯片(Keyboard/space=快速幻灯片)
-    bool        m_slideshow = false;
-    QString     m_currentFile;       // 当前预览文件(标题模板 {文件名…} 求值用)
-    QTimer      m_slideTimer;        // 快速幻灯片(Keyboard/space=快速幻灯片)
-    bool        m_slideshow = false;
-    QWidget* m_previewPane = nullptr; // 预览面板包装(标题条 + PreviewPanel)
     QWidget* m_infoPane  = nullptr;  // #80 信息面板容器(含标题条,挂在预览栏内)
     InfoPanel* m_info    = nullptr;  // #80 元数据表 + 直方图
     QWidget* m_addrRow = nullptr;     // 地址栏行(视图菜单可隐藏)
@@ -338,6 +180,8 @@ private:
     bool        m_recentLoaded = false;
     int         m_recentMax = 20;    // 上限(懒加载时读一次,选中切换不再逐次读 ini)
     QTimer      m_recentFlushTimer;  // 单发 500ms,超时统一写盘
-public:
-    Q_INVOKABLE void applyLayoutByName(const QString& name) { applyLayout(name); }
+    QString     m_currentFile;       // 当前预览文件(标题模板 {文件名…} 求值用)
+    QString     m_currentDir;        // 当前目录规范形('/' 无尾斜杠);地址栏只负责显示
+    QTimer      m_slideTimer;        // 快速幻灯片(Keyboard/space=快速幻灯片)
+    bool        m_slideshow = false;
 };

@@ -272,18 +272,6 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
             m_addrBar->backspace();
             return true;
         }
-        // #155:地址栏里 Backspace = 删字(外部改键工具送的是 Alt+退格)。实测
-        // (cache/tmp/altbs_probe3.cpp):QLineEdit 收到 Alt+退格既不删字也不接受,
-        // 事件冒泡上去,在 gaze 里就走出"上级目录"的假动作 —— 这里替它删并消费,
-        // 放在 bypass 之前:编辑手段优先于一切(#61 原则)。backspace() 有选中先
-        // 删选中,与原生裸退格行为一致;Ctrl+退格(删词)不拦,仍归 QLineEdit。
-        if (obj == m_addrBar
-            && ke->key() == Qt::Key_Backspace
-            && (ke->modifiers() == Qt::NoModifier
-                || ke->modifiers() == Qt::AltModifier)) {
-            m_addrBar->backspace();
-            return true;
-        }
         // 路由只看"这个键送给了谁",不看 QApplication::focusWidget():焦点在别处、
         // 键却发给弹窗的情况(QMenu/下拉列表都不是 QDialog)旧写法会整段吞掉 Enter/Esc。
         // main.cpp 的对话框过滤器装得更早、先触发,这里是第二道闸。
@@ -345,15 +333,6 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
                         closeViewerTab(m_viewerTabs->currentIndex());
                         return true;
                     }
-                    // Ctrl+W = 关闭当前标签卡(2026-09-01 用户令)。落在「浏览器」
-                    // 标签或浏览器模式时没有可关的内容标签,按键落空 —— 浏览器
-                    // 标签是回标准模式的出口,不是内容;关到最后一张图片标签时
-                    // closeViewerTab 自己会退回浏览器
-                    if (ke->key() == Qt::Key_W && m_viewerMode && m_viewerTabs
-                        && !isBrowserTab(m_viewerTabs->currentIndex())) {
-                        closeViewerTab(m_viewerTabs->currentIndex());
-                        return true;
-                    }
                 } else if (ke->modifiers() == Qt::NoModifier) {
                     if (ke->key() == Qt::Key_F) { applyColorLabel(1); return true; }
                     if (ke->key() == Qt::Key_D) { applyColorLabel(0); return true; }
@@ -367,18 +346,11 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
                         && !forActivation) {
                         // #154:全屏预览里切模式会改掉"退出还原的布局",禁用
                         if (m_fullView) return true;
-                        // #128② 取证埋点:用户复报"跳转后查看器仍弹"。本分支是
-                        // 全应用唯一的 Enter→查看器消费点,但成功跳转/模式切换
-                        // 此前零日志,复报无法定案。落盘:谁收到、距上次地址栏
-                        // 跳转多少毫秒,再看走宽限还是切换。
-                        const qint64 sinceJump =
-                            QDateTime::currentMSecsSinceEpoch() - m_lastAddrJumpMs;
-                        Logger::event(QStringLiteral(
-                            "enter: tgt=%1 sinceJump=%2ms")
-                                          .arg(QString::fromUtf8(
-                                              tgt->metaObject()->className()))
-                                          .arg(sinceJump));
-                        if (sinceJump < 500)
+                        // #128②:刚用地址栏跳过路径,这一下就不再切模式 ——
+                        // 跳转会把焦点交给网格并自动选中第一项(#35),同一个物理
+                        // 回车接着落到网格上会被再消费一次,用户看到的就是
+                        // "跳转的同时查看器又打开了那个视频"。
+                        if (QDateTime::currentMSecsSinceEpoch() - m_lastAddrJumpMs < 500)
                             return true;
                         requestSwitchMode("SwitchMode/enterKey");
                         return true;

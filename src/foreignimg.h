@@ -59,6 +59,7 @@ inline QImage decodeFfmpegStill(const QString& path, int maxSide = 0) {
          << QStringLiteral("-");
 
     QProcess p;
+    hideConsoleWindow(p);   // ffmpeg 是控制台程序,预览/缩略图要它静默解码
     p.start(exe, args);
     if (!p.waitForStarted(5000)) return {};
     if (!p.waitForFinished(30000)) {          // 大图兜底:超时杀掉,绝不悬挂

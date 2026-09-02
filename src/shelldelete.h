@@ -14,7 +14,6 @@
 #include <QPropertyAnimation>
 #include "settings.h"
 #include "constants.h"
-#include "constants.h"
 
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -77,7 +76,6 @@ inline void showDeleteToast(QWidget* parent, const QString& text) {
         "font-weight:600;padding:8px 14px;border-radius:6px;"
         "border:1px solid rgba(0,0,0,70);}")
         .arg(C_SELECT_YELLOW, C_WIN_BG));
-    toast->adjustSize();
     toast->adjustSize();
 
     int bottomInset = 0;
@@ -149,18 +147,6 @@ inline bool deleteWithSettings(const QStringList& paths, QWidget* parent) {
     QMessageBox::warning(parent, QString::fromUtf8("删除"),
         QString::fromUtf8("删除失败:\n") + paths.first());
     return false;
-}
-
-// 系统属性对话框(Shell 自带的那份,含安全/以前的版本等页)。
-// 右键菜单与文件夹树共用,原先是 contextmenu.cpp 里的 file-static,树拿不到。
-inline void showShellProperties(const QString& path) {
-    SHELLEXECUTEINFOW sei = {};
-    sei.cbSize = sizeof(sei);
-    sei.fMask = SEE_MASK_INVOKEIDLIST;
-    sei.lpVerb = L"properties";
-    sei.lpFile = reinterpret_cast<LPCWSTR>(path.utf16());
-    sei.nShow = SW_SHOWNORMAL;
-    ShellExecuteExW(&sei);
 }
 
 // 系统属性对话框(Shell 自带的那份,含安全/以前的版本等页)。

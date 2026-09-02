@@ -4,7 +4,6 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QFile>
-#include <QFile>
 
 AppSettings& AppSettings::instance() {
     static AppSettings s;
@@ -49,10 +48,18 @@ AppSettings::AppSettings()
     : m_settings(resolveIniPath(), QSettings::IniFormat)
 {}
 
+void AppSettings::set(const QString& key, const QVariant& v) {
+    setPersist(key, v);
+    emit changed();
+}
+
+// 只落值不广播:这些键的唯一读者是下次启动(MainWindow 启动块),
+// 广播会让每换一个文件都重跑外观/标题/预览重绘(实测 4.2~4.8 ms/次)
+//
 // Integration/* 是"配置文件在哪"的引导键:它们必须同时存在于 exe 目录的
 // 便携 ini 里,否则下次启动 resolveIniPath() 读不到,搬家会静默失效。
 // 主配置被搬到别处时,这三个键的每次写入都同步镜像回引导文件
-void AppSettings::set(const QString& key, const QVariant& v) {
+void AppSettings::setPersist(const QString& key, const QVariant& v) {
     m_settings.setValue(key, v);
     const QString boot = QCoreApplication::applicationDirPath() + "/gaze.ini";
     if (key.startsWith(QStringLiteral("Integration/"))
@@ -60,13 +67,20 @@ void AppSettings::set(const QString& key, const QVariant& v) {
         QSettings b(boot, QSettings::IniFormat);
         b.setValue(key, v);
     }
-    emit_changed_probe:
-    {
-        QElapsedTimer et;
-        et.start();
-        emit changed();
-        Logger::event(QString("#75PROBE broadcast key=%1 us=%2")
-                          .arg(key).arg(et.nsecsElapsed() / 1000));
+    // #122:换配置文件位置的当下就把值带过去(生效仍是下次启动,但数据不落下)。
+    // 只在这一个键上动手,且目标已存在就不覆盖 —— 不覆盖是"别吃掉已有配置"。
+    if (key == QStringLiteral("Integration/iniLocation")
+        || key == QStringLiteral("Integration/customIniDir")) {
+        QSettings b(boot, QSettings::IniFormat);
+        const int loc = b.value("Integration/iniLocation", 0).toInt();
+        const QString target = pathForLocation(
+            loc, b.value("Integration/customIniDir").toString());
+        const QString cur = m_settings.fileName();
+        if (target != cur) {
+            QDir().mkpath(QFileInfo(target).absolutePath());
+            if (!QFile::exists(target))
+                QFile::copy(cur, target);
+        }
     }
 }
 
@@ -82,10 +96,6 @@ QString AppSettings::iniPathForLocation(int loc, const QString& customDir) {
     return pathForLocation(loc, customDir);
 }
 
-QString AppSettings::iniPathForLocation(int loc, const QString& customDir) {
-    return pathForLocation(loc, customDir);
-}
-
 QString AppSettings::dataDir() const {
     return QFileInfo(m_settings.fileName()).absolutePath();
 }
@@ -95,138 +105,5 @@ void AppSettings::clearAll() {
     m_settings.sync();
     // 必须和 set() 一样广播:否则"恢复默认"之后网格/树/标题/预览/缩略图
     // 全部还挂着旧值,只有重启才恢复(五个 changed() 订阅者都收不到通知)
-    emit_changed_probe:
-    {
-        QElapsedTimer et;
-        et.start();
-        emit changed();
-        Logger::event(QString("#75PROBE broadcast key=%1 us=%2")
-                          .arg(key).arg(et.nsecsElapsed() / 1000));
-    }
-}
-
-bool AppSettings::livePhotoAutoPlay() const {
-    return m_settings.value("livephoto/autoplay", true).toBool();
-}
-void AppSettings::setLivePhotoAutoPlay(bool on) {
-    m_settings.setValue("livephoto/autoplay", on);
-}
-
-int AppSettings::thumbnailSize() const {
-    return m_settings.value("ui/thumbnail_size", 160).toInt();
-}
-void AppSettings::setThumbnailSize(int size) {
-    m_settings.setValue("ui/thumbnail_size", size);
-}
-
-int AppSettings::startupMode() const {
-    return m_settings.value("startup/mode", 0).toInt();
-}
-void AppSettings::setStartupMode(int mode) {
-    m_settings.setValue("startup/mode", mode);
-}
-
-QString AppSettings::startupPath() const {
-    return m_settings.value("startup/path", "").toString();
-}
-void AppSettings::setStartupPath(const QString& path) {
-    m_settings.setValue("startup/path", path);
-}
-
-int AppSettings::theme() const {
-    return m_settings.value("ui/theme", 0).toInt();
-}
-void AppSettings::setTheme(int t) {
-    m_settings.setValue("ui/theme", t);
-}
-
-bool AppSettings::videoAutoPlay() const {
-    return m_settings.value("video/autoplay", false).toBool();
-}
-void AppSettings::setVideoAutoPlay(bool on) {
-    m_settings.setValue("video/autoplay", on);
-}
-
-bool AppSettings::livePhotoAutoPlay() const {
-    return m_settings.value("livephoto/autoplay", true).toBool();
-}
-void AppSettings::setLivePhotoAutoPlay(bool on) {
-    m_settings.setValue("livephoto/autoplay", on);
-}
-
-int AppSettings::thumbnailSize() const {
-    return m_settings.value("ui/thumbnail_size", 160).toInt();
-}
-void AppSettings::setThumbnailSize(int size) {
-    m_settings.setValue("ui/thumbnail_size", size);
-}
-
-int AppSettings::startupMode() const {
-    return m_settings.value("startup/mode", 0).toInt();
-}
-void AppSettings::setStartupMode(int mode) {
-    m_settings.setValue("startup/mode", mode);
-}
-
-QString AppSettings::startupPath() const {
-    return m_settings.value("startup/path", "").toString();
-}
-void AppSettings::setStartupPath(const QString& path) {
-    m_settings.setValue("startup/path", path);
-}
-
-int AppSettings::theme() const {
-    return m_settings.value("ui/theme", 0).toInt();
-}
-void AppSettings::setTheme(int t) {
-    m_settings.setValue("ui/theme", t);
-}
-
-bool AppSettings::videoAutoPlay() const {
-    return m_settings.value("video/autoplay", false).toBool();
-}
-void AppSettings::setVideoAutoPlay(bool on) {
-    m_settings.setValue("video/autoplay", on);
-}
-
-bool AppSettings::livePhotoAutoPlay() const {
-    return m_settings.value("livephoto/autoplay", true).toBool();
-}
-void AppSettings::setLivePhotoAutoPlay(bool on) {
-    m_settings.setValue("livephoto/autoplay", on);
-}
-
-int AppSettings::thumbnailSize() const {
-    return m_settings.value("ui/thumbnail_size", 160).toInt();
-}
-void AppSettings::setThumbnailSize(int size) {
-    m_settings.setValue("ui/thumbnail_size", size);
-}
-
-int AppSettings::startupMode() const {
-    return m_settings.value("startup/mode", 0).toInt();
-}
-void AppSettings::setStartupMode(int mode) {
-    m_settings.setValue("startup/mode", mode);
-}
-
-QString AppSettings::startupPath() const {
-    return m_settings.value("startup/path", "").toString();
-}
-void AppSettings::setStartupPath(const QString& path) {
-    m_settings.setValue("startup/path", path);
-}
-
-int AppSettings::theme() const {
-    return m_settings.value("ui/theme", 0).toInt();
-}
-void AppSettings::setTheme(int t) {
-    m_settings.setValue("ui/theme", t);
-}
-
-bool AppSettings::videoAutoPlay() const {
-    return m_settings.value("video/autoplay", false).toBool();
-}
-void AppSettings::setVideoAutoPlay(bool on) {
-    m_settings.setValue("video/autoplay", on);
+    emit changed();
 }

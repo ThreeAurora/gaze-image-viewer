@@ -2,7 +2,6 @@
 #include "settings.h"
 #include "constants.h"
 #include "dbprefix.h"
-#include "dbprefix.h"
 
 #include <QSqlDatabase>
 #include <QSqlQuery>
@@ -24,7 +23,7 @@ QSqlDatabase LabelStore::db() {
     const QString conn = QStringLiteral("label_db");
     if (!QSqlDatabase::contains(conn)) {
         QSqlDatabase d = QSqlDatabase::addDatabase("QSQLITE", conn);
-        d.setDatabaseName(QCoreApplication::applicationDirPath() + "/thumbnails.db");
+        d.setDatabaseName(AppSettings::instance().dataDir() + "/thumbnails.db");
         d.open();
         QSqlQuery q(d);
         q.exec("CREATE TABLE IF NOT EXISTS labels "
@@ -187,18 +186,6 @@ void LabelColors::remove(const QString& extNoDot) {
 bool LabelColors::enabled() {
     ensureLoaded();
     return lc().enabled;
-}
-
-void LabelColors::setEnabled(bool on) {
-    ensureLoaded();
-    lc().enabled = on;
-    AppSettings::instance().set("Appearance/formatColor", on);
-}
-
-// 设置页改了 Appearance/formatColor / LabelColors/* 后调用,下次查询重读 ini。
-// colorForExt 是逐卡片热路径,这里只清脏标记、不做磁盘 IO,读回由下一次查询顺带完成
-void LabelColors::reload() {
-    lc().loaded = false;
 }
 
 void LabelColors::setEnabled(bool on) {

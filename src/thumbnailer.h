@@ -61,22 +61,6 @@ private:
     mutable QMutex     m_prefMutex;
     Prefs              m_prefs;
 
-    // ── 设置快照(设置→缓存 / 设置→缩略图) ──
-    // QSettings 只在主线程读:enqueue() 里刷新快照,worker 线程读副本
-    struct Prefs {
-        bool inDb        = true;   // Cache/thumbInDB:关闭=只用内存缓存
-        bool capOn       = true;   // Cache/maxCacheOn:关闭=不做容量上限淘汰
-        int  maxDbMB     = 500;    // Cache/maxCacheMB
-        int  dbCacheMB   = 64;     // Cache/dbCacheMB → SQLite page cache
-        int  blobCodec   = 4;      // Cache/compression:0/1=png 2/3=jpg 4=webp
-        bool highQuality = true;   // Thumbs/highQuality:关闭=快速缩放
-        int  framePct    = 0;      // Thumbs/videoFramePct:0=固定取第 1 秒
-    };
-    void  snapshotPrefs();
-    Prefs prefs() const;
-    mutable QMutex     m_prefMutex;
-    Prefs              m_prefs;
-
     // ── 图片缩略图（QImage直接缩放） ──
     QImage imageThumb(const QString& filePath, int size);
 

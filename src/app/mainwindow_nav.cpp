@@ -105,7 +105,6 @@ bool MainWindow::navigateTo(const QString &path) {
     // 空目录时 selectionChanged({}) 自行走 clear,无需代办
     // 树跟随当前目录:地址栏/历史/双击卡片/搜索定位都汇到这一处
     if (m_folderTree) m_folderTree->focusPath(p);
-    Logger::event(QStringLiteral("navigateTo '%1'").arg(p));   // #128② 取证
     return true;
 }
 
@@ -123,16 +122,9 @@ void MainWindow::gotoTypedPath() {
         raw = raw.mid(1, raw.size() - 2).trimmed();
     if (raw.isEmpty()) return;
     m_lastAddrJumpMs = QDateTime::currentMSecsSinceEpoch();   // #128②:见 Enter 宽限
-    if (navigateTo(raw)) {
-        Logger::event(QStringLiteral("addr: navigated '%1'").arg(raw));   // 取证
-        return;
-    }
+    if (navigateTo(raw)) return;
     const QFileInfo fi(mw_impl::canonicalPath(raw));
-    if (fi.isFile()) {
-        Logger::event(QStringLiteral("addr: reveal file '%1'").arg(raw)); // 取证
-        revealFile(fi.absoluteFilePath());
-        return;
-    }
+    if (fi.isFile()) { revealFile(fi.absoluteFilePath()); return; }
     Logger::event(QStringLiteral("addr: cannot jump to '%1'").arg(raw));
     m_statusLabel->setText(QString::fromUtf8("路径不存在: %1")
                                .arg(QDir::toNativeSeparators(raw)));
@@ -250,8 +242,6 @@ void MainWindow::openFullscreen(const QString& path) {
 void MainWindow::revealFile(const QString& path) {
     QFileInfo fi(path);
     if (!fi.exists()) return;
-    Logger::event(QStringLiteral("revealFile '%1'").arg(path));   // #128② 取证
-    Logger::event(QStringLiteral("revealFile '%1'").arg(path));   // #128② 取证
     // 目录没变就别 navigateTo:那会重扫整目录并把旧选中项再解一遍
     // (实测交接日志里 loadFile 134 紧跟着 loadFile 目标 = 两遍解码)
     if (fi.absolutePath() != m_currentDir) navigateTo(fi.absolutePath());
@@ -419,13 +409,6 @@ void MainWindow::goForward() {
         m_history.removeAt(cand);          // 删的是游标之后的项，游标不动
     }
     updateNavEnabled();
-}
-
-void MainWindow::goUp() {
-    // 上级目录:跳成后定位刚离开的子文件夹(资源管理器"向上"同款,同 2026-09-01 用户令)
-    const QString from = m_currentDir;
-    if (navigateTo(QStringLiteral("..")))
-        m_fileGrid->selectByPath(from);
 }
 
 void MainWindow::goUp() {

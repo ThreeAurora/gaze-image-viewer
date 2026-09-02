@@ -12,6 +12,7 @@
 #include <QStringList>
 #include <QRegularExpression>
 #include <QFile>
+#include "textlimit.h"
 
 namespace Md {
 
@@ -255,9 +256,16 @@ inline QString render(const QString& src) {
 inline QString renderFile(const QString& path) {
     QFile f(path);
     if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) return {};
-    // 512KB 上限:预览不是编辑器,超长文档截断开头即可
-    const QString src = QString::fromUtf8(f.read(512 * 1024));
+    // #111:与 txt 预览同一套上限(字节/行数/每行字符数)。渲染成 HTML 也逃不开
+    // QTextEdit 的排版代价 —— 围栏代码块里一个 512KB 的无空格长行同样能冻死界面。
+    bool byteCut = false;
+    qint64 total = 0;
+    const QString head = TextCut::readHead(f, &byteCut, &total);
     f.close();
+    const TextCut::Clip c = TextCut::clip(head, byteCut, total);
+    QString src = c.text;
+    const QString note = TextCut::noticeOf(c);
+    if (!note.isEmpty()) src += QStringLiteral("\n\n> ") + note + QStringLiteral("\n");
     return render(src);
 }
 

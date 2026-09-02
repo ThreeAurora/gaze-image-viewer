@@ -5,7 +5,6 @@
 #include <QPainter>
 #include <QMouseEvent>
 #include <QStringList>
-#include <QStringList>
 
 // ── 自定义展开箭头 ──
 class ArrowStyle : public QProxyStyle {
@@ -37,10 +36,6 @@ public:
     // 改名逻辑仍然只有 renameItem 一份实现,这里只是把"当前行"递给它。
     void renameSelected();
 
-    // #136:键盘重命名(F2/F3)的公开出口。守卫与右键那条同源(空/盘符根/多选静默),
-    // 改名逻辑仍然只有 renameItem 一份实现,这里只是把"当前行"递给它。
-    void renameSelected();
-
 signals:
     void folderSelected(const QString& path);
     // 树内文件操作(新建/粘贴/删除/改名/复制到/移动到)造成的结构变化。
@@ -53,11 +48,6 @@ signals:
 
 protected:
     void mouseDoubleClickEvent(QMouseEvent* event) override;
-    // #117:左键按住"扫过"文件夹 = 逐个切入(默认,FolderTree/leftDragSweep=0);
-    //      取 1 时退回原来的"拖动多选",行为一个字节都不改
-    void mousePressEvent(QMouseEvent* event) override;
-    void mouseMoveEvent(QMouseEvent* event) override;
-    void mouseReleaseEvent(QMouseEvent* event) override;
     // #117:左键按住"扫过"文件夹 = 逐个切入(默认,FolderTree/leftDragSweep=0);
     //      取 1 时退回原来的"拖动多选",行为一个字节都不改
     void mousePressEvent(QMouseEvent* event) override;
@@ -90,8 +80,4 @@ private:
     bool  m_sweepSwitch = true;   // FolderTree/leftDragSweep==0 → 扫过即切换
     QTreeWidgetItem* m_sweepCur = nullptr;  // 本次手势里最后切入的那一行
     QString m_pressActivated;     // #130:按下瞬间已切入的路径,用来吃掉松开时的那次重复信号
-    QString m_pressActivated;     // #130:按下瞬间已切入的路径,用来吃掉松开时的那次重复信号
-    bool  m_sweepSwitch = true;   // FolderTree/leftDragSweep==0 → 扫过即切换
-    QTreeWidgetItem* m_sweepCur = nullptr;  // 本次手势里最后切入的那一行
-    bool  m_showDesktop = true;   // Browser/showDesktopInTree 当前已应用值
 };

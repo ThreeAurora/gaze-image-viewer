@@ -19,6 +19,7 @@
 #include <QImage>
 #include <QImageReader>
 #include <QPainter>
+#include <QPainterPath>
 #include <QThreadPool>
 #include <QMetaObject>
 #include <QPointer>

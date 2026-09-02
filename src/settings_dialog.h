@@ -39,15 +39,11 @@ private:
     QWidget* pageMaintenance();    // 维护(缩略图库统计/筛选/删除/重建)
     QWidget* pageIntegration();    // 高级 → 系统集成
     QWidget* pageImgSearch();      // 以文搜图(万象图搜服务位置/生命周期/测试连接)
-    QWidget* pageImgSearch();      // 以文搜图(万象图搜服务位置/生命周期/测试连接)
 
     void populatePages();          // 构建/重建全部分类与页面(恢复默认后调用)
 
     QTreeWidget*    m_cats;
     QStackedWidget* m_stack;
-    // #126:「缩略图 → 标签颜色」(真正的颜色编辑器) 那一页的树节点,
-    // 外观页的"打开颜色编辑器"按钮靠它跳转
-    QTreeWidgetItem* m_labelColorsItem = nullptr;
     // #126:「缩略图 → 标签颜色」(真正的颜色编辑器) 那一页的树节点,
     // 外观页的"打开颜色编辑器"按钮靠它跳转
     QTreeWidgetItem* m_labelColorsItem = nullptr;

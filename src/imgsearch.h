@@ -38,6 +38,7 @@
 #include <QThread>
 #include <QDateTime>
 #include "settings.h"
+#include "toolpath.h"
 
 namespace ImgSearch {
 
@@ -158,7 +159,10 @@ inline void killStartedService() {
     const qint64 pid = servicePid();
     if (pid <= 0) return;
     servicePid() = 0;
-    QProcess::startDetached("taskkill", {"/PID", QString::number(pid), "/T", "/F"});
+    QProcess p;
+    hideConsoleWindow(p);   // taskkill 是控制台程序,别闪黑窗
+    p.start("taskkill", {"/PID", QString::number(pid), "/T", "/F"});
+    p.waitForFinished(3000);
 }
 
 // 服务离线时拉起(python main.py --no-browser)并异步轮询到就绪。
@@ -176,9 +180,11 @@ inline void ensureRunningAsync(QObject* ctx, std::function<void(QString)> onRead
             return;
         }
         qint64 pid = 0;
-        if (!QProcess::startDetached(py, {"main.py", "--no-browser",
-                                          "--port", QString::number(port())},
-                                     dir, &pid)) {
+        QProcess p;
+        hideConsoleWindow(p);   // python 控制台窗口一闪而过同样难看:静默起服务
+        if (!p.startDetached(py, {"main.py", "--no-browser",
+                                  "--port", QString::number(port())},
+                             dir, &pid)) {
             onReady(QString::fromUtf8(
                 "无法启动 Python 解释器:%1 —— 检查 设置 → 以文搜图").arg(py));
             return;

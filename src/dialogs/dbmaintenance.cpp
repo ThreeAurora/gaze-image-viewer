@@ -2,11 +2,6 @@
 #include "constants.h"
 #include "settings.h"
 #include "dbprefix.h"
-#include "dbprefix.h"
-#include "settings.h"
-#include "constants.h"
-#include "constants.h"
-#include "constants.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -23,7 +18,7 @@ static QSqlDatabase maintenanceDb() {
     const QString conn = QStringLiteral("maint_db");
     if (!QSqlDatabase::contains(conn)) {
         QSqlDatabase d = QSqlDatabase::addDatabase("QSQLITE", conn);
-        d.setDatabaseName(QCoreApplication::applicationDirPath() + "/thumbnails.db");
+        d.setDatabaseName(AppSettings::instance().dataDir() + "/thumbnails.db");
         d.open();
     }
     return QSqlDatabase::database(conn);
@@ -33,13 +28,13 @@ DbMaintenanceDialog::DbMaintenanceDialog(QWidget* parent) : QDialog(parent) {
     setWindowTitle(QString::fromUtf8("缩略图数据库维护"));
     resize(760, 540);
     setStyleSheet(
-        "QDialog{background:#1B1B1F;}"
-        "QLabel{color:#E0E0E4;background:transparent;}"
-        "QTableWidget{background:#17171A;color:#E0E0E4;border:1px solid #303036;}"
-        "QHeaderView::section{background:#232328;color:#9C9CA4;border:none;padding:4px;}"
-        "QPushButton{background:#2C2C32;color:#E0E0E4;border:1px solid #3A3A42;"
+        QString::fromUtf8("QDialog{background:%1;}"
+        "QLabel{color:%2;background:transparent;}"
+        "QTableWidget{background:%1;color:%2;border:1px solid %3;}"
+        "QHeaderView::section{background:%1;color:%2;border:none;padding:4px;}"
+        "QPushButton{background:%4;color:%2;border:1px solid %3;"
         "padding:5px 14px;border-radius:4px;}"
-        "QPushButton:hover{border-color:#3B82F6;}");
+        "QPushButton:hover{border-color:%5;}").arg(C_CONTENT, C_TEXT, C_SEPARATOR, C_TOOLBAR, C_ACCENT));
 
     auto* root = new QVBoxLayout(this);
 
@@ -64,21 +59,6 @@ DbMaintenanceDialog::DbMaintenanceDialog(QWidget* parent) : QDialog(parent) {
         auto sel = m_table->selectedItems();
         if (sel.isEmpty()) return;
         QString dir = m_table->item(sel.first()->row(), 0)->text();
-        // 与"删除全部""重建缩略图"对齐:破坏性动作一律先问一句
-        //(空格/回车误触这个按钮时,过去是静默 DELETE)
-        if (QMessageBox::question(this, QString::fromUtf8("删除条目"),
-            QString::fromUtf8("删除该目录的全部缩略图缓存条目?\n%1\n(浏览时会自动重建)").arg(dir))
-            != QMessageBox::Yes) return;
-        // 与"删除全部""重建缩略图"对齐:破坏性动作一律先问一句
-        //(空格/回车误触这个按钮时,过去是静默 DELETE)
-        if (QMessageBox::question(this, QString::fromUtf8("删除条目"),
-            QString::fromUtf8("删除该目录的全部缩略图缓存条目?\n%1\n(浏览时会自动重建)").arg(dir))
-            != QMessageBox::Yes) return;
-        // 与"删除全部""重建缩略图"对齐:破坏性动作一律先问一句
-        //(空格/回车误触这个按钮时,过去是静默 DELETE)
-        if (QMessageBox::question(this, QString::fromUtf8("删除条目"),
-            QString::fromUtf8("删除该目录的全部缩略图缓存条目?\n%1\n(浏览时会自动重建)").arg(dir))
-            != QMessageBox::Yes) return;
         // 与"删除全部""重建缩略图"对齐:破坏性动作一律先问一句
         //(空格/回车误触这个按钮时,过去是静默 DELETE)
         if (QMessageBox::question(this, QString::fromUtf8("删除条目"),

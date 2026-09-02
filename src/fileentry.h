@@ -38,26 +38,6 @@
 #include <shobjidl.h>
 #include <commoncontrols.h>  // IImageList 接口 + IID_IImageList(GUID 声明,uuid 库给定义)
 
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-// 系统图标/目录枚举需要 Vista+ API(SHGetImageList/SHIL_JUMBO)
-#ifndef _WIN32_WINNT
-#define _WIN32_WINNT 0x0600
-#endif
-#ifndef NTDDI_VERSION
-#define NTDDI_VERSION 0x06000000
-#endif
-#ifndef _WIN32_IE
-#define _WIN32_IE 0x0600
-#endif
-#include <windows.h>
-#include <shellapi.h>
-#include <shlobj.h>
-#include <commctrl.h>        // ILD_TRANSPARENT
-#include <shobjidl.h>
-#include <commoncontrols.h>  // IImageList 接口 + IID_IImageList(GUID 声明,uuid 库给定义)
-
 namespace fs = std::filesystem;
 
 // ═══════════════════════════════════════════
@@ -87,24 +67,6 @@ inline double fileTimeToEpoch(const FILETIME& ft) {
     if (u.QuadPart == 0) return 0.0;
     // 100ns since 1601-01-01 → 秒 since 1970-01-01
     return double(u.QuadPart / 10000000ull) - 11644473600.0;
-}
-
-// 一条 FindNextFile 记录 → FileEntry(单层扫描与递归扫描共用,避免两处口径漂移)
-inline FileEntry entryFromFindData(const WIN32_FIND_DATAW& data, const QString& dirPath) {
-    FileEntry fe;
-    fe.name = QString::fromWCharArray(data.cFileName);
-    fe.path = dirPath + QLatin1Char('/') + fe.name;
-    const int dot = fe.name.lastIndexOf(QLatin1Char('.'));
-    fe.ext = (dot > 0) ? fe.name.mid(dot).toLower() : QString();
-    // Windows 隐藏属性 / 点开头文件/夹都算隐藏,显示时用淡灰色
-    fe.hidden = (data.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN)
-                || fe.name.startsWith(QLatin1Char('.'));
-    fe.isDir = (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
-    fe.ctime = fileTimeToEpoch(data.ftCreationTime);
-    fe.mtime = fileTimeToEpoch(data.ftLastWriteTime);
-    if (!fe.isDir)
-        fe.size = (int64_t(data.nFileSizeHigh) << 32) | data.nFileSizeLow;
-    return fe;
 }
 
 // 一条 FindNextFile 记录 → FileEntry(单层扫描与递归扫描共用,避免两处口径漂移)
@@ -287,33 +249,6 @@ inline QString mimeType(const QString& ext) {
         {".kdc","Kodak RAW"},{".k25","Kodak RAW"},{".mef","Mamiya RAW"},
         {".mrw","Minolta RAW"},{".x3f","Sigma RAW"},{".mos","Leaf RAW"},
         {".srw","Samsung RAW"},{".iiq","Phase One RAW"},
-        {".cr2","Canon RAW"},{".cr3","Canon RAW"},{".crw","Canon RAW"},
-        {".nef","Nikon RAW"},{".nrw","Nikon RAW"},{".arw","Sony RAW"},
-        {".srf","Sony RAW"},{".sr2","Sony RAW"},{".dng","DNG RAW"},
-        {".orf","Olympus RAW"},{".rw2","Panasonic RAW"},{".raf","Fujifilm RAW"},
-        {".pef","Pentax RAW"},{".erf","Epson RAW"},{".rwl","Leica RAW"},
-        {".3fr","Hasselblad RAW"},{".fff","Imacon RAW"},{".gpr","GoPro RAW"},
-        {".kdc","Kodak RAW"},{".k25","Kodak RAW"},{".mef","Mamiya RAW"},
-        {".mrw","Minolta RAW"},{".x3f","Sigma RAW"},{".mos","Leaf RAW"},
-        {".srw","Samsung RAW"},{".iiq","Phase One RAW"},
-        {".cr2","Canon RAW"},{".cr3","Canon RAW"},{".crw","Canon RAW"},
-        {".nef","Nikon RAW"},{".nrw","Nikon RAW"},{".arw","Sony RAW"},
-        {".srf","Sony RAW"},{".sr2","Sony RAW"},{".dng","DNG RAW"},
-        {".orf","Olympus RAW"},{".rw2","Panasonic RAW"},{".raf","Fujifilm RAW"},
-        {".pef","Pentax RAW"},{".erf","Epson RAW"},{".rwl","Leica RAW"},
-        {".3fr","Hasselblad RAW"},{".fff","Imacon RAW"},{".gpr","GoPro RAW"},
-        {".kdc","Kodak RAW"},{".k25","Kodak RAW"},{".mef","Mamiya RAW"},
-        {".mrw","Minolta RAW"},{".x3f","Sigma RAW"},{".mos","Leaf RAW"},
-        {".srw","Samsung RAW"},{".iiq","Phase One RAW"},
-        {".cr2","Canon RAW"},{".cr3","Canon RAW"},{".crw","Canon RAW"},
-        {".nef","Nikon RAW"},{".nrw","Nikon RAW"},{".arw","Sony RAW"},
-        {".srf","Sony RAW"},{".sr2","Sony RAW"},{".dng","DNG RAW"},
-        {".orf","Olympus RAW"},{".rw2","Panasonic RAW"},{".raf","Fujifilm RAW"},
-        {".pef","Pentax RAW"},{".erf","Epson RAW"},{".rwl","Leica RAW"},
-        {".3fr","Hasselblad RAW"},{".fff","Imacon RAW"},{".gpr","GoPro RAW"},
-        {".kdc","Kodak RAW"},{".k25","Kodak RAW"},{".mef","Mamiya RAW"},
-        {".mrw","Minolta RAW"},{".x3f","Sigma RAW"},{".mos","Leaf RAW"},
-        {".srw","Samsung RAW"},{".iiq","Phase One RAW"},
         {".mp4","MP4 视频"},{".mov","MOV 视频"},{".avi","AVI 视频"},
         {".mkv","MKV 视频"},{".webm","WebM 视频"},{".wmv","WMV 视频"},
         {".flv","FLV 视频"},{".3g2","3G2 视频"},{".ogm","OGM 视频"},
@@ -321,9 +256,6 @@ inline QString mimeType(const QString& ext) {
         {".mp3","MP3 音频"},{".wav","WAV 音频"},
         {".flac","FLAC 音频"},{".aac","AAC 音频"},{".ogg","OGG 音频"},
         {".m4a","M4A 音频"},{".wma","WMA 音频"},{".opus","OPUS 音频"},
-        {".amr","AMR 音频"},{".ac3","AC3 音频"},{".wma","WMA 音频"},{".opus","OPUS 音频"},
-        {".amr","AMR 音频"},{".ac3","AC3 音频"},{".wma","WMA 音频"},{".opus","OPUS 音频"},
-        {".amr","AMR 音频"},{".ac3","AC3 音频"},{".wma","WMA 音频"},{".opus","OPUS 音频"},
         {".amr","AMR 音频"},{".ac3","AC3 音频"},{".zip","ZIP 压缩"},{".rar","RAR 压缩"},
         {".7z","7Z 压缩"},{".txt","文本文档"},{".md","Markdown"},
         {".py","Python"},{".js","JavaScript"},{".pdf","PDF 文档"},

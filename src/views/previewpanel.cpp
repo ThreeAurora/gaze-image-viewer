@@ -2,13 +2,11 @@
 #include "livephoto.h"
 #include "thumbnailer.h"
 #include "logger.h"
-#include "logger.h"
 #include "wicdecode.h"
 #include "settings.h"
 #include "labelstore.h"
 #include "markdown.h"
 #include "pdfrender.h"
-#include "textlimit.h"
 #include "textlimit.h"
 #include "imgproc.h"
 #include "constants.h"
@@ -33,7 +31,6 @@
 #include <QUrl>
 #include <QTimer>
 #include <QElapsedTimer>
-#include <QElapsedTimer>
 #include <QDesktopServices>
 #include <QMimeData>
 #include <QMediaDevices>
@@ -41,24 +38,7 @@
 #include <QThreadPool>
 #include <QTextEdit>
 #include <QFile>
-#include <QTextEdit>
-#include <QFile>
 #include <QMetaObject>
-#include <QToolTip>
-
-// 标准图标染成白色(深色主题下 QStyle 图标是深色的)
-static QIcon whiteIcon(const QIcon& base, int size = 32) {
-    QPixmap pm = base.pixmap(size, size);
-    QPixmap white(pm.size());
-    white.fill(Qt::transparent);
-    QPainter p(&white);
-    p.drawPixmap(0, 0, pm);
-    p.setCompositionMode(QPainter::CompositionMode_SourceIn);
-    p.fillRect(white.rect(), QColor("#FFFFFF"));
-    p.end();
-    return QIcon(white);
-}
-#include <QWidgetAction>
 #include <QClipboard>
 #include <QBrush>
 #include <QScrollBar>
@@ -74,10 +54,7 @@ static QIcon whiteIcon(const QIcon& base, int size = 32) {
 //  #121 HDR 三轮诊断 —— 结论都写进了 TODO_ALL。播放侧的常驻通道留 hb/mediaStatus。)
 
 PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
-    Logger::boot("pv-ctor:begin");
-    Logger::boot("pv-ctor:begin");
     // 背景由 paintEvent 自绘(样式表背景画不出挡板底纹的平铺图案)
-    setMouseTracking(true);   // 悬停也要收移动事件:全屏隐藏指针后靠它恢复
     setMouseTracking(true);   // 悬停也要收移动事件:全屏隐藏指针后靠它恢复
 
     auto* layout = new QVBoxLayout(this);
@@ -91,8 +68,6 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
         QString("color:%1;font-size:13px;background:transparent;")
             .arg(C_TEXT_DIM));
     layout->addWidget(m_placeholder, 1);
-    Logger::boot("pv-ctor:ph");
-    Logger::boot("pv-ctor:ph");
 
     // 图片标签:不进布局——缩放/拖动需要自由定位,
     // 尺寸可超面板(超出部分裁剪,拖动=移动视口),否则放大后只剩"片段"
@@ -106,112 +81,15 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     m_audioLabel->setStyleSheet(QString("color:%1;font-size:16px;background:transparent;").arg(C_TEXT_SUB));
     m_audioLabel->hide();
     layout->addWidget(m_audioLabel, 1);
-    Logger::boot("pv-ctor:aud");
-    Logger::boot("pv-ctor:aud");
 
     // 音频波形画布:解码+聚合在专属线程(audiowave.h),这里只收快照画像素。
     // stretch 3:波形吃音频区大头,文件名条占 1/4
     m_waveLabel = new QLabel;
-    Logger::boot("pv-ctor:w1");
     m_waveLabel->setAlignment(Qt::AlignCenter);
     m_waveLabel->setStyleSheet(
         QString("color:%1;font-size:12px;background:transparent;").arg(C_TEXT_DIM));
-    Logger::boot("pv-ctor:w2");
     m_waveLabel->hide();
-    Logger::boot("pv-ctor:w3");
-    m_waveLabel->installEventFilter(this);   // Resize → renderWave 重画
-    Logger::boot("pv-ctor:w4");
     layout->addWidget(m_waveLabel, 3);
-    Logger::boot("pv-ctor:wave");
-
-    // RAW 占位(#140):说明行 + 加载按钮,其余形态一律收起(见 setAudioChrome)
-    m_rawBox = new QWidget;
-    m_rawBox->hide();
-    auto* rawL = new QVBoxLayout(m_rawBox);
-    rawL->setContentsMargins(0, 0, 0, 0);
-    rawL->setSpacing(12);
-    rawL->addStretch(1);
-    m_rawCaption = new QLabel;
-    m_rawCaption->setAlignment(Qt::AlignCenter);
-    m_rawCaption->setStyleSheet(
-        QString("color:%1;font-size:13px;background:transparent;").arg(C_TEXT_DIM));
-    rawL->addWidget(m_rawCaption);
-    m_rawBtn = new QPushButton;
-    m_rawBtn->setCursor(Qt::PointingHandCursor);
-    m_rawBtn->setStyleSheet(QString::fromUtf8(
-        "QPushButton{background:%1;color:#FFFFFF;border:none;border-radius:6px;"
-        "padding:8px 24px;font-size:13px;}"
-        "QPushButton:hover{background:%2;}"
-        "QPushButton:disabled{background:%3;border:1px solid %4;color:%5;}")
-        .arg(C_ACCENT, C_ACCENT_DOWN, C_CARD_BG, C_SEPARATOR, C_TEXT_FAINT));
-    connect(m_rawBtn, &QPushButton::clicked, this, [this]() { decodeRawAsync(); });
-    auto* rawBtnRow = new QHBoxLayout;
-    rawBtnRow->addStretch(1);
-    rawBtnRow->addWidget(m_rawBtn);
-    rawBtnRow->addStretch(1);
-    rawL->addLayout(rawBtnRow);
-    rawL->addStretch(1);
-    layout->addWidget(m_rawBox, 1);
-    Logger::boot("pv-ctor:raw");
-    Logger::boot("pv-ctor:raw");
-
-    // RAW 占位(#140):说明行 + 加载按钮,其余形态一律收起(见 setAudioChrome)
-    m_rawBox = new QWidget;
-    m_rawBox->hide();
-    auto* rawL = new QVBoxLayout(m_rawBox);
-    rawL->setContentsMargins(0, 0, 0, 0);
-    rawL->setSpacing(12);
-    rawL->addStretch(1);
-    m_rawCaption = new QLabel;
-    m_rawCaption->setAlignment(Qt::AlignCenter);
-    m_rawCaption->setStyleSheet(
-        QString("color:%1;font-size:13px;background:transparent;").arg(C_TEXT_DIM));
-    rawL->addWidget(m_rawCaption);
-    m_rawBtn = new QPushButton;
-    m_rawBtn->setCursor(Qt::PointingHandCursor);
-    m_rawBtn->setStyleSheet(QString::fromUtf8(
-        "QPushButton{background:%1;color:#FFFFFF;border:none;border-radius:6px;"
-        "padding:8px 24px;font-size:13px;}"
-        "QPushButton:hover{background:%2;}"
-        "QPushButton:disabled{background:%3;border:1px solid %4;color:%5;}")
-        .arg(C_ACCENT, C_ACCENT_DOWN, C_CARD_BG, C_SEPARATOR, C_TEXT_FAINT));
-    connect(m_rawBtn, &QPushButton::clicked, this, [this]() { decodeRawAsync(); });
-    auto* rawBtnRow = new QHBoxLayout;
-    rawBtnRow->addStretch(1);
-    rawBtnRow->addWidget(m_rawBtn);
-    rawBtnRow->addStretch(1);
-    rawL->addLayout(rawBtnRow);
-    rawL->addStretch(1);
-    layout->addWidget(m_rawBox, 1);
-
-    // RAW 占位(#140):说明行 + 加载按钮,其余形态一律收起(见 setAudioChrome)
-    m_rawBox = new QWidget;
-    m_rawBox->hide();
-    auto* rawL = new QVBoxLayout(m_rawBox);
-    rawL->setContentsMargins(0, 0, 0, 0);
-    rawL->setSpacing(12);
-    rawL->addStretch(1);
-    m_rawCaption = new QLabel;
-    m_rawCaption->setAlignment(Qt::AlignCenter);
-    m_rawCaption->setStyleSheet(
-        QString("color:%1;font-size:13px;background:transparent;").arg(C_TEXT_DIM));
-    rawL->addWidget(m_rawCaption);
-    m_rawBtn = new QPushButton;
-    m_rawBtn->setCursor(Qt::PointingHandCursor);
-    m_rawBtn->setStyleSheet(QString::fromUtf8(
-        "QPushButton{background:%1;color:#FFFFFF;border:none;border-radius:6px;"
-        "padding:8px 24px;font-size:13px;}"
-        "QPushButton:hover{background:%2;}"
-        "QPushButton:disabled{background:%3;border:1px solid %4;color:%5;}")
-        .arg(C_ACCENT, C_ACCENT_DOWN, C_CARD_BG, C_SEPARATOR, C_TEXT_FAINT));
-    connect(m_rawBtn, &QPushButton::clicked, this, [this]() { decodeRawAsync(); });
-    auto* rawBtnRow = new QHBoxLayout;
-    rawBtnRow->addStretch(1);
-    rawBtnRow->addWidget(m_rawBtn);
-    rawBtnRow->addStretch(1);
-    rawL->addLayout(rawBtnRow);
-    rawL->addStretch(1);
-    layout->addWidget(m_rawBox, 1);
 
     // RAW 占位(#140):说明行 + 加载按钮,其余形态一律收起(见 setAudioChrome)
     m_rawBox = new QWidget;
@@ -362,8 +240,6 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     cl->addWidget(m_timeLabel);
 
     layout->addWidget(m_controlBar);
-    Logger::boot("pv-ctor:ctrl");
-    Logger::boot("pv-ctor:ctrl");
 
     // LIVE 徽章(动态照片播放时的右上角标识,child of videoWidget)
     m_liveBadge = new QLabel("LIVE", m_videoWidget);
@@ -373,39 +249,6 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
         "border:1px solid rgba(255,255,255,60);}");
     m_liveBadge->adjustSize();
     m_liveBadge->hide();
-
-    // GIF 时钟(#94):两条都是成员单发定时器。播放拍用 start() 取代
-    // QTimer::singleShot —— 后者每排一拍就多一个未决事件,拖动期间
-    // gifSeekMs 会反复重排,未决拍堆成"快进+忽快忽慢";start() 天然取消上一拍。
-    // 擦洗拍 0ms:把同一事件循环批次里的多个 move 并成"最后一个目标帧"再解。
-    m_gifPlayTimer = new QTimer(this);
-    m_gifPlayTimer->setSingleShot(true);
-    connect(m_gifPlayTimer, &QTimer::timeout, this, &PreviewPanel::gifPlayTick);
-    m_gifSeekTimer = new QTimer(this);
-    m_gifSeekTimer->setSingleShot(true);
-    connect(m_gifSeekTimer, &QTimer::timeout, this, &PreviewPanel::gifApplySeek);
-
-    // GIF 时钟(#94):两条都是成员单发定时器。播放拍用 start() 取代
-    // QTimer::singleShot —— 后者每排一拍就多一个未决事件,拖动期间
-    // gifSeekMs 会反复重排,未决拍堆成"快进+忽快忽慢";start() 天然取消上一拍。
-    // 擦洗拍 0ms:把同一事件循环批次里的多个 move 并成"最后一个目标帧"再解。
-    m_gifPlayTimer = new QTimer(this);
-    m_gifPlayTimer->setSingleShot(true);
-    connect(m_gifPlayTimer, &QTimer::timeout, this, &PreviewPanel::gifPlayTick);
-    m_gifSeekTimer = new QTimer(this);
-    m_gifSeekTimer->setSingleShot(true);
-    connect(m_gifSeekTimer, &QTimer::timeout, this, &PreviewPanel::gifApplySeek);
-
-    // GIF 时钟(#94):两条都是成员单发定时器。播放拍用 start() 取代
-    // QTimer::singleShot —— 后者每排一拍就多一个未决事件,拖动期间
-    // gifSeekMs 会反复重排,未决拍堆成"快进+忽快忽慢";start() 天然取消上一拍。
-    // 擦洗拍 0ms:把同一事件循环批次里的多个 move 并成"最后一个目标帧"再解。
-    m_gifPlayTimer = new QTimer(this);
-    m_gifPlayTimer->setSingleShot(true);
-    connect(m_gifPlayTimer, &QTimer::timeout, this, &PreviewPanel::gifPlayTick);
-    m_gifSeekTimer = new QTimer(this);
-    m_gifSeekTimer->setSingleShot(true);
-    connect(m_gifSeekTimer, &QTimer::timeout, this, &PreviewPanel::gifApplySeek);
 
     // GIF 时钟(#94):两条都是成员单发定时器。播放拍用 start() 取代
     // QTimer::singleShot —— 后者每排一拍就多一个未决事件,拖动期间
@@ -572,10 +415,6 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
         pl->addWidget(m_pdfLabel);
         pl->addWidget(m_pdfNext);
     }
-    // 拖动蓝框/缩略图 → 视口跟随(事件过滤器在 eventFilter 里处理)
-    m_panThumb->setCursor(Qt::PointingHandCursor);
-    m_panThumb->installEventFilter(this);
-    m_panView->installEventFilter(this);
 
     // 设置页改动 → 背景/挡板/图片边框即时重涂(无需重启)
     applyBackdrop();
@@ -607,670 +446,12 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
                           .arg(m_player->source().toLocalFile()));
     });
     mediaHb->start(5000);
-    Logger::boot("pv-ctor:end");
 }
 
 PreviewPanel::~PreviewPanel() {
     teardownWave();   // 波形线程必须走完再拆面板(wait 2s 兜底)
     teardownPlayer();
     cleanupExtractCache();
-}
-
-// ═══════════════════════════════════════════
-// 设置活接线:查看器/全屏页面的选项改动即时生效(无 need-restart)
-//   读取一律走 AppSettings,不缓存 —— 热路径(逐帧 render)不碰 ini,
-//   只在 fit/backdrop 这类低频时机取值
-// ═══════════════════════════════════════════
-static bool s_bool(const QString& k, bool def) {
-    return AppSettings::instance().get(k, def).toBool();
-}
-static int s_int(const QString& k, int def) {
-    return AppSettings::instance().get(k, def).toInt();
-}
-
-bool PreviewPanel::inFullscreen() const {
-    const QWidget* w = window();
-    return w && w->isFullScreen();
-}
-
-// 同一角色在两处各有一套设置:全屏时改用 Fullscreen/*,否则 Viewer/*
-QString PreviewPanel::modeKey(const char* suffix) const {
-    return QString::fromLatin1(inFullscreen() ? "Fullscreen/" : "Viewer/")
-         + QString::fromLatin1(suffix);
-}
-
-QColor PreviewPanel::backdropColor() const {
-    // 查看器与浏览器预览窗格用各自的背景色设置(XnView 同)
-    const QString key = (m_viewerMode || inFullscreen())
-        ? modeKey("backColor")
-        : QStringLiteral("Browser/previewBackColor");
-    QColor c(AppSettings::instance().get(key, QStringLiteral("#000000")).toString());
-    return c.isValid() ? c : QColor("#000000");
-}
-
-// 透明像素下的挡板底纹(Viewer/checkerMode):16px 两色方格
-static QImage checkerTile(const QColor& base) {
-    const int cell = 8;
-    QImage img(cell * 2, cell * 2, QImage::Format_ARGB32_Premultiplied);
-    img.fill(base);
-    QPainter p(&img);
-    QColor ink = base.lightness() > 128 ? base.darker(140) : base.lighter(160);
-    p.setPen(Qt::NoPen);
-    p.setBrush(ink);
-    p.drawRect(0, 0, cell, cell);
-    p.drawRect(cell, cell, cell, cell);
-    p.end();
-    return img;
-}
-
-void PreviewPanel::paintEvent(QPaintEvent* event) {
-    Q_UNUSED(event);
-    QPainter p(this);
-    p.fillRect(rect(), backdropColor());
-    if (s_bool("Viewer/checkerMode", false)) {
-        QBrush tile(checkerTile(backdropColor()));
-        tile.setStyle(Qt::TexturePattern);
-        p.fillRect(rect(), tile);
-    }
-
-    // Viewer/selectedOverlay:画面构图辅助线(0 正常=不画 1 三分法 2 黄金分割)
-    // 画在图片标签的几何范围内 —— 图片是自由定位的,坐标取它的当前位置
-    const int guide = s_int("Viewer/selectedOverlay", 0);
-    if (guide > 0 && m_mode == "image" && m_imgLabel->isVisible()) {
-        const QRect r = m_imgLabel->geometry();
-        if (r.width() > 40 && r.height() > 40) {
-            p.setPen(QPen(QColor(255, 255, 255, 110), 1, Qt::DotLine));
-            const double f1 = (guide == 1) ? 1.0 / 3.0 : 1.0 - 0.618;
-            const double f2 = 1.0 - f1;
-            for (double f : {f1, f2}) {
-                const int x = r.x() + int(r.width()  * f);
-                const int y = r.y() + int(r.height() * f);
-                p.drawLine(x, r.y(), x, r.bottom());
-                p.drawLine(r.x(), y, r.right(), y);
-            }
-            if (guide == 2) {   // 黄金分割再补两条对角线方向的螺旋基准线
-                p.setPen(QPen(QColor(255, 255, 255, 70), 1, Qt::DotLine));
-                p.drawLine(r.topLeft(), r.bottomRight());
-                p.drawLine(r.topRight(), r.bottomLeft());
-            }
-        }
-    }
-}
-
-// 背景色/挡板/图片边框变更时调用(构造 + AppSettings::changed)
-void PreviewPanel::applyBackdrop() {
-    update();
-    // Viewer/showBorder:图片外框(默认关)
-    const bool border = s_bool("Viewer/showBorder", false);
-    m_imgLabel->setStyleSheet(border
-        ? QStringLiteral("QLabel{border:1px solid #FFFFFF;background:transparent;}")
-        : QStringLiteral("QLabel{background:transparent;}"));
-}
-
-void PreviewPanel::setViewerMode(bool on) {
-    if (m_viewerMode == on) return;
-    m_viewerMode = on;
-    // 那张表过去收不到键，原因是全项目没有一处向本面板要过焦点 —— 不是 NoFocus
-    // "屏蔽"了焦点：实测(cache/tmp/focus_probe.cpp)显式 setFocus() 无视策略，
-    // 照样当上 focusWidget 并接到按键。所以真正生效的是下面那句 setFocus()。
-    // 策略切换要留着：它管的是"点一下/敲 Tab 能不能落到面板"。查看器里网格窗格
-    // 已被 setVisible(false)，浏览器那套键盘通路不在，必须让面板可点可 Tab；
-    // 退回浏览器时还回 NoFocus，否则点一下预览区就抢走网格的方向键。
-    setFocusPolicy(on ? Qt::StrongFocus : Qt::NoFocus);
-    if (on) setFocus();
-    applyBackdrop();
-    applyViewerChrome();
-}
-
-// ═══════════════════════════════════════════
-// 设置活接线:查看器/全屏界面元素
-// ═══════════════════════════════════════════
-void PreviewPanel::applyViewerChrome() {
-    updateOverlayScrollbars();
-    updateInfoBar();
-    updateFloatBar();
-    updatePanTool();
-    updateSelectionHighlight();
-    updateRatingBadge();
-}
-
-// Viewer|Fullscreen/showScrollbar:图比视口大时才出现,位置贴边浮在图上
-void PreviewPanel::updateOverlayScrollbars() {
-    const bool on = m_mode == "image" && m_origPix
-                    && s_bool(modeKey("showScrollbar"), false);
-    if (!on) {
-        m_hScroll->hide();
-        m_vScroll->hide();
-        return;
-    }
-    const int iw = m_imgLabel->width(), ih = m_imgLabel->height();
-    const int bw = width(), bh = height();
-    const bool needH = iw > bw, needV = ih > bh;
-    const int thick = 10;
-    if (needH) {
-        m_hScroll->setGeometry(0, bh - thick, bw - (needV ? thick : 0), thick);
-        m_hScroll->setRange(0, iw - bw);
-        m_hScroll->setPageStep(bw);
-        m_hScroll->setSingleStep(24);
-        m_hScroll->setValue(qBound(0, -m_imgLabel->x(), iw - bw));
-        m_hScroll->show();
-    } else m_hScroll->hide();
-    if (needV) {
-        m_vScroll->setGeometry(bw - thick, 0, thick, bh - (needH ? thick : 0));
-        m_vScroll->setRange(0, ih - bh);
-        m_vScroll->setPageStep(bh);
-        m_vScroll->setSingleStep(24);
-        m_vScroll->setValue(qBound(0, -m_imgLabel->y(), ih - bh));
-        m_vScroll->show();
-    } else m_vScroll->hide();
-}
-
-// Fullscreen/showInfo:全屏时左上角显示文件名/尺寸/缩放
-// 文件名/尺寸/体积按文件缓存(QFileInfo::size() 是 stat 系统调用,
-// 拖动窗口时 resize 每帧都进来,不能反复问磁盘),缩放百分比单独拼
-void PreviewPanel::updateInfoBar() {
-    const bool on = inFullscreen() && s_bool("Fullscreen/showInfo", true)
-                    && !m_filePath.isEmpty();
-    if (!on) { m_infoLabel->hide(); return; }
-    if (m_infoFileKey != m_filePath) {
-        m_infoFileKey = m_filePath;
-        QFileInfo fi(m_filePath);
-        m_infoBase = fi.fileName()
-                   + (m_origPix ? QString("  %1x%2")
-                          .arg(m_origPix->width()).arg(m_origPix->height()) : QString())
-                   + "  " + formatSize(fi.size());
-    }
-    m_infoLabel->setText(QString::fromUtf8("%1  %2%")
-        .arg(m_infoBase).arg(int(m_scale * 100)));
-    m_infoLabel->adjustSize();
-    m_infoLabel->move(12, 12);
-    m_infoLabel->raise();
-    m_infoLabel->show();
-}
-
-// Fullscreen/showToolbar(常显) + Fullscreen/floatView(鼠标移到顶侧/右侧才浮现)
-void PreviewPanel::updateFloatBar(const QPoint* cursor) {
-    if (!inFullscreen()) { m_floatBar->hide(); return; }
-    const bool always = s_bool("Fullscreen/showToolbar", false);
-    const bool floating = s_bool("Fullscreen/floatView", true);
-    bool show = always;
-    if (!show && floating && cursor) {
-        const int edge = 48;
-        show = cursor->y() <= edge || cursor->x() >= width() - edge;
-    }
-    if (!show) { m_floatBar->hide(); return; }
-    m_floatBar->adjustSize();
-    m_floatBar->move((width() - m_floatBar->width()) / 2, 10);
-    m_floatBar->raise();
-    m_floatBar->show();
-}
-
-// Viewer/showRating:查看器右上角显示当前文件的颜色标记圆点
-// (键名沿用历史 showRating;程序只有颜色标记,没有评级概念)
-void PreviewPanel::updateRatingBadge() {
-    const bool on = s_bool("Viewer/showRating", true) && !m_filePath.isEmpty();
-    if (!on) { if (m_ratingDot) m_ratingDot->hide(); return; }
-    const int color = LabelStore::instance().colorFor(m_filePath);
-    if (color <= 0) { if (m_ratingDot) m_ratingDot->hide(); return; }
-    if (!m_ratingDot) {
-        m_ratingDot = new QLabel(this);
-        m_ratingDot->setFixedSize(14, 14);
-    }
-    m_ratingDot->setStyleSheet(
-        QString("QLabel{background:%1;border:1px solid #FFFFFF;border-radius:7px;}")
-            .arg(LabelStore::colorValue(color).name()));
-    m_ratingDot->move(width() - 24, 12);
-    m_ratingDot->raise();
-    m_ratingDot->show();
-}
-
-// 缩略图 pixmap 在导航小窗里的**实际摆放矩形**,坐标系是 m_panTool(蓝框的父)。
-// QLabel 用 AlignCenter 画 pixmap,留边时图并不铺满控件;而 m_panThumb 又嵌在
-// m_panTool 的 (1,1)。蓝框与指尖映射都只走这一个函数,不在两处各算一遍偏移
-// ——分开算时一处是缩略图坐标、一处是工具条坐标,差的就是那 1px(#111)
-QRect PreviewPanel::navPixmapRect() const {
-    const QPixmap tp = m_panThumb->pixmap();
-    if (tp.isNull()) return {};
-    const QRect c = m_panThumb->contentsRect();
-    return QRect(m_panThumb->pos()
-                     + QPoint(c.x() + (c.width()  - tp.width())  / 2,
-                              c.y() + (c.height() - tp.height()) / 2),
-                 tp.size());
-}
-
-// 缩略图 pixmap 在导航小窗里的**实际摆放矩形**,坐标系是 m_panTool(蓝框的父)。
-// QLabel 用 AlignCenter 画 pixmap,留边时图并不铺满控件;而 m_panThumb 又嵌在
-// m_panTool 的 (1,1)。蓝框与指尖映射都只走这一个函数,不在两处各算一遍偏移
-// ——分开算时一处是缩略图坐标、一处是工具条坐标,差的就是那 1px(#111)
-QRect PreviewPanel::navPixmapRect() const {
-    const QPixmap tp = m_panThumb->pixmap();
-    if (tp.isNull()) return {};
-    const QRect c = m_panThumb->contentsRect();
-    return QRect(m_panThumb->pos()
-                     + QPoint(c.x() + (c.width()  - tp.width())  / 2,
-                              c.y() + (c.height() - tp.height()) / 2),
-                 tp.size());
-}
-
-// 缩略图 pixmap 在导航小窗里的**实际摆放矩形**,坐标系是 m_panTool(蓝框的父)。
-// QLabel 用 AlignCenter 画 pixmap,留边时图并不铺满控件;而 m_panThumb 又嵌在
-// m_panTool 的 (1,1)。蓝框与指尖映射都只走这一个函数,不在两处各算一遍偏移
-// ——分开算时一处是缩略图坐标、一处是工具条坐标,差的就是那 1px(#111)
-QRect PreviewPanel::navPixmapRect() const {
-    const QPixmap tp = m_panThumb->pixmap();
-    if (tp.isNull()) return {};
-    const QRect c = m_panThumb->contentsRect();
-    return QRect(m_panThumb->pos()
-                     + QPoint(c.x() + (c.width()  - tp.width())  / 2,
-                              c.y() + (c.height() - tp.height()) / 2),
-                 tp.size());
-}
-
-// 缩略图 pixmap 在导航小窗里的**实际摆放矩形**,坐标系是 m_panTool(蓝框的父)。
-// QLabel 用 AlignCenter 画 pixmap,留边时图并不铺满控件;而 m_panThumb 又嵌在
-// m_panTool 的 (1,1)。蓝框与指尖映射都只走这一个函数,不在两处各算一遍偏移
-// ——分开算时一处是缩略图坐标、一处是工具条坐标,差的就是那 1px(#111)
-QRect PreviewPanel::navPixmapRect() const {
-    const QPixmap tp = m_panThumb->pixmap();
-    if (tp.isNull()) return {};
-    const QRect c = m_panThumb->contentsRect();
-    return QRect(m_panThumb->pos()
-                     + QPoint(c.x() + (c.width()  - tp.width())  / 2,
-                              c.y() + (c.height() - tp.height()) / 2),
-                 tp.size());
-}
-
-// Viewer/panTool:右下角导航小窗(缩略图 + 当前视口框)。仅图溢出视口时出现
-void PreviewPanel::updatePanTool() {
-    const bool on = s_bool("Viewer/panTool", true) && m_mode == "image" && m_origPix
-                    && (m_imgLabel->width() > width() || m_imgLabel->height() > height());
-    if (!on) { m_panTool->hide(); return; }
-
-    const int boxW = m_panThumb->width() - 4, boxH = m_panThumb->height() - 4;
-    if (m_panKey != m_filePath) {
-        m_panThumb->setPixmap(m_origPix->scaled(boxW, boxH, Qt::KeepAspectRatio,
-                                                Qt::SmoothTransformation));
-        m_panKey = m_filePath;
-    }
-    // 蓝框=视口在整图中的位置。几何必须与拖动映射(panNavTo)完全一致:
-    // 都基于缩略图 pixmap 的实际摆放(KeepAspectRatio 居中,可能留边),
-    // 否则拖动时蓝框不落在指尖下。旧实现按整个 box 映射,留边时框会偏
-    const QRect pr = navPixmapRect();
-    if (!pr.isNull()) {
-        const double sx = double(m_imgLabel->width()) / m_origPix->width();
-        const double sy = double(m_imgLabel->height()) / m_origPix->height();
-        const double vx0 = qMax(0.0, -double(m_imgLabel->x())) / sx;   // 视口左缘的图像 x
-        const double vy0 = qMax(0.0, -double(m_imgLabel->y())) / sy;
-        const double rw = qMin<double>(1.0, width()  / sx / m_origPix->width())  * pr.width();
-        const double rh = qMin<double>(1.0, height() / sy / m_origPix->height()) * pr.height();
-        m_panView->setGeometry(pr.x() + int(vx0 / m_origPix->width() * pr.width()),
-                               pr.y() + int(vy0 / m_origPix->height() * pr.height()),
-                               qMax(4, int(rw)), qMax(4, int(rh)));
-    }
-    m_panView->show();
-    m_panView->raise();
-    m_panTool->move(width() - m_panTool->width() - 12, height() - m_panTool->height() - 12);
-    m_panTool->raise();
-    m_panTool->show();
-}
-
-// 导航小窗拖动:指尖下的缩略图点 → 映射回整图坐标 → 让视口中心对准它。
-// 按住蓝框(或缩略图任意处)拖动,蓝框始终跟指尖走,可快速甩到图片任意角落
-void PreviewPanel::panNavTo(const QPoint& thumbPos) {
-    const QRect pr = navPixmapRect();
-    if (!m_origPix || pr.isNull() || pr.width() <= 0 || pr.height() <= 0) return;
-    // 入参是缩略图(m_panThumb)坐标,而 pr 是 m_panTool 坐标 —— 同一空间才能相减
-    const QPoint p = m_panThumb->mapTo(m_panTool, thumbPos);
-    const double nx = qBound(0.0, double(p.x() - pr.x()) / pr.width(),  1.0);
-    const double ny = qBound(0.0, double(p.y() - pr.y()) / pr.height(), 1.0);
-    // label.x + nx*labelW = 视口中线  →  label.x = 中线 - nx*labelW
-    const QPoint pos(width() / 2 - int(nx * m_imgLabel->width()),
-                     height() / 2 - int(ny * m_imgLabel->height()));
-    m_imgLabel->move(clampedLabelPos(pos));
-    updateOverlayScrollbars();
-    updatePanTool();
-}
-
-// Viewer/showBorder:查看器里给当前图片加白色细框(默认关)。
-// 2026-08-30 裁决:highlightSelection 蓝框整个删除,预览区不再有选中强调框;
-// 文件列表的选中/悬停框归 filegrid 自绘,与本函数无关
-// setStyleSheet 会触发样式重算,而本函数在 resize/切文件时都会被调,
-// 所以按最终形态缓存,值没变就一个字节都不碰控件
-void PreviewPanel::updateSelectionHighlight() {
-    const int want = s_bool("Viewer/showBorder", false) ? 2 : 0;
-    if (want == m_labelStyleState) return;
-    m_labelStyleState = want;
-    switch (want) {
-    case 2:
-        m_imgLabel->setStyleSheet(
-            QStringLiteral("QLabel{border:1px solid #FFFFFF;background:transparent;}"));
-        break;
-    default:
-        m_imgLabel->setStyleSheet(QStringLiteral("QLabel{background:transparent;}"));
-        break;
-    }
-}
-
-// Viewer/pixelRatio:非正方形像素的显示宽高比
-double PreviewPanel::pixelAspect() const {
-    static const double ratios[] = {1.00, 0.91, 0.95, 1.09, 1.20,
-                                    1.33, 1.46, 1.50, 1.90, 2.00};
-    const int i = qBound(0, s_int("Viewer/pixelRatio", 0), 9);
-    double par = ratios[i];
-    // General/dpiAdjust(#122):X/Y DPI 不等时横向按各自的 DPI 换算。
-    //   纵向定标在 oneToOneScale(用 Y DPI),这里再乘 dpiY/dpiX 修横轴 ——
-    //   走的正是 Viewer/pixelRatio 这条现成的"非正方形像素"通道,不另起一套数学。
-    //   只在上一项 General/exifDpi 勾上时参与:它换算的是物理尺寸,不是像素数。
-    if (s_bool("General/exifDpi", false) && s_bool("General/dpiAdjust", false)
-        && m_dpiX >= 24.0 && m_dpiY >= 24.0 && qAbs(m_dpiX - m_dpiY) > 0.5)
-        par *= m_dpiY / m_dpiX;
-    return par;
-}
-
-// Viewer/autoPlayAudioCompanion:图片旁存在同名音频时自动播放
-void PreviewPanel::playAudioCompanion(const QString& imagePath) {
-    if (!s_bool("Viewer/autoPlayAudioCompanion", false)) return;
-    QFileInfo fi(imagePath);
-    static const char* audioExts[] = {".mp3", ".wav", ".flac", ".m4a", ".ogg", ".aac"};
-    for (const char* ext : audioExts) {
-        const QString side = fi.absolutePath() + "/" + fi.completeBaseName() + ext;
-        if (!QFileInfo::exists(side)) continue;
-        setupPlayer();
-        if (!m_player) return;
-        m_player->setSource(QUrl::fromLocalFile(side));
-        m_player->play();
-        return;
-    }
-}
-
-// Viewer/zoomMode = 0(固定):缩放在预设档位之间跳,不再连续无级变化
-double PreviewPanel::stepZoom(double cur, bool up) const {
-    static const double steps[] = {0.05, 0.10, 0.16, 0.25, 0.33, 0.50, 0.66, 0.75,
-                                   1.00, 1.50, 2.00, 3.00, 4.00, 6.00, 8.00, 10.00};
-    constexpr int n = int(sizeof(steps) / sizeof(steps[0]));
-    if (up) {
-        for (int i = 0; i < n; ++i)
-            if (steps[i] > cur + 1e-6) return steps[i];
-        return steps[n - 1];
-    }
-    for (int i = n - 1; i >= 0; --i)
-        if (steps[i] < cur - 1e-6) return steps[i];
-    return steps[0];
-}
-
-// "1:1"只有一个口径:1 图像像素 = 1 屏幕像素。长按看原图、autoFit=1、
-// 右键"1:1 像素"与全屏工具条共用这一个函数,不留第二套数学。
-// #95 的结论仍然作数:这条口径**默认不看**文件自带的 DPI —— 乘上 dpi/96 之后
-//   "1:1"就不再是分辨率意义上的原图,而是"按标称物理尺寸显示",低 DPI 截图会被
-//   画得比"适应窗口"还小(用户报的"长按后直接小到看不清")。
-// #122 补的是"想要物理尺寸口径"那条路:General/exifDpi 勾上才换算(默认关,
-//   与 ini 里无该键时的行为逐字一致),它只可能来自用户在设置里的一次明确勾选。
-double PreviewPanel::oneToOneScale() const {
-    // General/exifDpi:按标称物理尺寸 → 屏幕 DPI / 图像 Y DPI(图像没写 DPI 就不换算)
-    if (s_bool("General/exifDpi", false) && m_dpiY >= 24.0 && m_dpiY <= 4000.0) {
-        const QScreen* sc = screen();
-        const double sd = sc ? sc->logicalDotsPerInch() : 96.0;
-        if (sd > 1.0) return sd / m_dpiY;
-    }
-    // Viewer/hidpiPixel:1 图像像素映射到 1 物理像素(HiDPI 屏下更锐利,仍不穿透 1:1)
-    if (s_bool("Viewer/hidpiPixel", false)) {
-        const double dpr = devicePixelRatioF();
-        return dpr > 0.01 ? 1.0 / dpr : 1.0;
-    }
-    return 1.0;
-}
-
-// Viewer/autoFit 取值语义:
-//   0 上次使用过的   1 不缩放(1:1)      2 适应窗口(默认)
-//   3 仅放大小图     4 仅缩小大图        5 适应宽度
-//   6 适应高度       7 适应宽或高(取大)  8 适应桌面
-//   9 窗口适应图像   → 按"适应窗口"处理(需要改变窗口尺寸,查看器布局尚未支持)
-double PreviewPanel::fitScaleFor(const QSize& viewSize) const {
-    const double sw = double(viewSize.width())  / m_origPix->width();
-    const double sh = double(viewSize.height()) / m_origPix->height();
-    const double fit = std::min(sw, sh);
-    switch (s_int(modeKey("autoFit"), 2)) {
-    // Viewer/resetAutoOnNav:切文件时丢掉"上次使用过的"缩放,重新按自动模式算
-    case 0: {
-        const bool reset = s_bool("Viewer/resetAutoOnNav", false) && m_navigating;
-        return (!reset && m_lastScale > 0) ? m_lastScale : fit;
-    }
-    // Viewer/hidpiPixel:开=1 图像像素映射到 1 物理像素(HiDPI 下画面变小但最锐利)
-    case 1: return oneToOneScale();
-    case 3: return std::max(1.0, fit);   // 小图放大到适应,大图保持 1:1
-    case 4: return std::min(1.0, fit);   // 大图缩小到适应,小图保持 1:1
-    case 5: return sw;
-    case 6: return sh;
-    case 7: return std::max(sw, sh);
-    case 8: {
-        const QRect av = QApplication::primaryScreen()->availableGeometry();
-        return std::min(double(av.width())  / m_origPix->width(),
-                        double(av.height()) / m_origPix->height());
-    }
-    default: return fit;
-    }
-}
-
-// 拖拽平移约束(临时 1:1 放大与 Ctrl 缩放态通用):
-//   图片某轴 ≤ 预览框 → 该轴锁死居中(两侧黑边等宽,不能挪动)
-//   图片某轴 > 预览框 → 允许平移,但图片边缘不进入框内(平到顶即停,不露白边)
-QPoint PreviewPanel::clampedLabelPos(QPoint p) const {
-    const int imgW = m_imgLabel->width();
-    const int imgH = m_imgLabel->height();
-    const int boxW = width();
-    const int boxH = height() - barReserve();   // 栏占的那一条不算画面可站的地方
-    if (imgW <= boxW)
-        p.setX((boxW - imgW) / 2);
-    else
-        p.setX(qBound(boxW - imgW, p.x(), 0));
-    if (imgH <= boxH)
-        p.setY((boxH - imgH) / 2);
-    else
-        p.setY(qBound(boxH - imgH, p.y(), 0));
-    return p;
-}
-
-// 锚点缩放:anchor 下的那个图像点,缩放前后停在 anchor 上不动。
-// 尺寸一律取 m_imgLabel 的**当前**与**新**几何,不用 origW*scale 二次推导 ——
-// render() 还会乘 Viewer/pixelRatio 并重新居中,自己推的那份跟屏幕上的不是一张图,
-// 长按放大的落点就会跑偏(#101);滚轮同理要以光标为中心(#100)。
-void PreviewPanel::zoomAnchored(double newScale, const QPoint& anchor) {
-    m_scale = newScale;
-    if (m_mode != "image" || !m_origPix || m_origPix->isNull()) return;
-    // 缩放前:anchor 处在图像上的相对位置(0..1 之外也允许 —— 光标落在黑边上时
-    // 相当于盯住画面外的一个虚拟点,缩放后仍按同一比例对齐,不会突然跳开)
-    const QSize before = m_imgLabel->size();
-    const double fx = before.width()  > 0 ? double(anchor.x() - m_imgLabel->x()) / before.width()  : 0.5;
-    const double fy = before.height() > 0 ? double(anchor.y() - m_imgLabel->y()) / before.height() : 0.5;
-    render();                        // 先出图(render 会重新居中),再把锚点挪回去
-    const QSize after = m_imgLabel->size();
-    m_imgLabel->move(clampedLabelPos(QPoint(int(anchor.x() - fx * after.width()),
-                                           int(anchor.y() - fy * after.height()))));
-    m_dragLabelPos = m_imgLabel->pos();   // 拖动基线跟着走,否则下一次拖动图片跳位
-    updateOverlayScrollbars();
-    updatePanTool();
-}
-
-// 锚点缩放:anchor 下的那个图像点,缩放前后停在 anchor 上不动。
-// 尺寸一律取 m_imgLabel 的**当前**与**新**几何,不用 origW*scale 二次推导 ——
-// render() 还会乘 Viewer/pixelRatio 并重新居中,自己推的那份跟屏幕上的不是一张图,
-// 长按放大的落点就会跑偏(#101);滚轮同理要以光标为中心(#100)。
-void PreviewPanel::zoomAnchored(double newScale, const QPoint& anchor) {
-    m_scale = newScale;
-    if (m_mode != "image" || !m_origPix || m_origPix->isNull()) return;
-    // 缩放前:anchor 处在图像上的相对位置(0..1 之外也允许 —— 光标落在黑边上时
-    // 相当于盯住画面外的一个虚拟点,缩放后仍按同一比例对齐,不会突然跳开)
-    const QSize before = m_imgLabel->size();
-    const double fx = before.width()  > 0 ? double(anchor.x() - m_imgLabel->x()) / before.width()  : 0.5;
-    const double fy = before.height() > 0 ? double(anchor.y() - m_imgLabel->y()) / before.height() : 0.5;
-    render();                        // 先出图(render 会重新居中),再把锚点挪回去
-    const QSize after = m_imgLabel->size();
-    m_imgLabel->move(clampedLabelPos(QPoint(int(anchor.x() - fx * after.width()),
-                                           int(anchor.y() - fy * after.height()))));
-    m_dragLabelPos = m_imgLabel->pos();   // 拖动基线跟着走,否则下一次拖动图片跳位
-    updateOverlayScrollbars();
-    updatePanTool();
-}
-
-// 锚点缩放:anchor 下的那个图像点,缩放前后停在 anchor 上不动。
-// 尺寸一律取 m_imgLabel 的**当前**与**新**几何,不用 origW*scale 二次推导 ——
-// render() 还会乘 Viewer/pixelRatio 并重新居中,自己推的那份跟屏幕上的不是一张图,
-// 长按放大的落点就会跑偏(#101);滚轮同理要以光标为中心(#100)。
-void PreviewPanel::zoomAnchored(double newScale, const QPoint& anchor) {
-    m_scale = newScale;
-    if (m_mode != "image" || !m_origPix || m_origPix->isNull()) return;
-    // 缩放前:anchor 处在图像上的相对位置(0..1 之外也允许 —— 光标落在黑边上时
-    // 相当于盯住画面外的一个虚拟点,缩放后仍按同一比例对齐,不会突然跳开)
-    const QSize before = m_imgLabel->size();
-    const double fx = before.width()  > 0 ? double(anchor.x() - m_imgLabel->x()) / before.width()  : 0.5;
-    const double fy = before.height() > 0 ? double(anchor.y() - m_imgLabel->y()) / before.height() : 0.5;
-    render();                        // 先出图(render 会重新居中),再把锚点挪回去
-    const QSize after = m_imgLabel->size();
-    m_imgLabel->move(clampedLabelPos(QPoint(int(anchor.x() - fx * after.width()),
-                                           int(anchor.y() - fy * after.height()))));
-    m_dragLabelPos = m_imgLabel->pos();   // 拖动基线跟着走,否则下一次拖动图片跳位
-    updateOverlayScrollbars();
-    updatePanTool();
-}
-
-// 锚点缩放:anchor 下的那个图像点,缩放前后停在 anchor 上不动。
-// 尺寸一律取 m_imgLabel 的**当前**与**新**几何,不用 origW*scale 二次推导 ——
-// render() 还会乘 Viewer/pixelRatio 并重新居中,自己推的那份跟屏幕上的不是一张图,
-// 长按放大的落点就会跑偏(#101);滚轮同理要以光标为中心(#100)。
-void PreviewPanel::zoomAnchored(double newScale, const QPoint& anchor) {
-    m_scale = newScale;
-    if (m_mode != "image" || !m_origPix || m_origPix->isNull()) return;
-    // 缩放前:anchor 处在图像上的相对位置(0..1 之外也允许 —— 光标落在黑边上时
-    // 相当于盯住画面外的一个虚拟点,缩放后仍按同一比例对齐,不会突然跳开)
-    const QSize before = m_imgLabel->size();
-    const double fx = before.width()  > 0 ? double(anchor.x() - m_imgLabel->x()) / before.width()  : 0.5;
-    const double fy = before.height() > 0 ? double(anchor.y() - m_imgLabel->y()) / before.height() : 0.5;
-    render();                        // 先出图(render 会重新居中),再把锚点挪回去
-    const QSize after = m_imgLabel->size();
-    m_imgLabel->move(clampedLabelPos(QPoint(int(anchor.x() - fx * after.width()),
-                                           int(anchor.y() - fy * after.height()))));
-    m_dragLabelPos = m_imgLabel->pos();   // 拖动基线跟着走,否则下一次拖动图片跳位
-    updateOverlayScrollbars();
-    updatePanTool();
-}
-
-// 拖拽平移约束(临时 1:1 放大与 Ctrl 缩放态通用):
-//   图片某轴 ≤ 预览框 → 该轴锁死居中(两侧黑边等宽,不能挪动)
-//   图片某轴 > 预览框 → 允许平移,但图片边缘不进入框内(平到顶即停,不露白边)
-QPoint PreviewPanel::clampedLabelPos(QPoint p) const {
-    const int imgW = m_imgLabel->width();
-    const int imgH = m_imgLabel->height();
-    const int boxW = width();
-    const int boxH = height() - barReserve();   // 栏占的那一条不算画面可站的地方
-    if (imgW <= boxW)
-        p.setX((boxW - imgW) / 2);
-    else
-        p.setX(qBound(boxW - imgW, p.x(), 0));
-    if (imgH <= boxH)
-        p.setY((boxH - imgH) / 2);
-    else
-        p.setY(qBound(boxH - imgH, p.y(), 0));
-    return p;
-}
-
-// ═══════════════════════════════════════════
-// 设置活接线:查看器/全屏页面的选项改动即时生效(无 need-restart)
-//   读取一律走 AppSettings,不缓存 —— 热路径(逐帧 render)不碰 ini,
-//   只在 fit/backdrop 这类低频时机取值
-// ═══════════════════════════════════════════
-static bool s_bool(const QString& k, bool def) {
-    return AppSettings::instance().get(k, def).toBool();
-}
-static int s_int(const QString& k, int def) {
-    return AppSettings::instance().get(k, def).toInt();
-}
-
-bool PreviewPanel::inFullscreen() const {
-    const QWidget* w = window();
-    return w && w->isFullScreen();
-}
-
-// 同一角色在两处各有一套设置:全屏时改用 Fullscreen/*,否则 Viewer/*
-QString PreviewPanel::modeKey(const char* suffix) const {
-    return QString::fromLatin1(inFullscreen() ? "Fullscreen/" : "Viewer/")
-         + QString::fromLatin1(suffix);
-}
-
-QColor PreviewPanel::backdropColor() const {
-    // 查看器与浏览器预览窗格用各自的背景色设置(XnView 同)
-    const QString key = (m_viewerMode || inFullscreen())
-        ? modeKey("backColor")
-        : QStringLiteral("Browser/previewBackColor");
-    QColor c(AppSettings::instance().get(key, QStringLiteral("#000000")).toString());
-    return c.isValid() ? c : QColor("#000000");
-}
-
-// 透明像素下的挡板底纹(Viewer/checkerMode):16px 两色方格
-static QImage checkerTile(const QColor& base) {
-    const int cell = 8;
-    QImage img(cell * 2, cell * 2, QImage::Format_ARGB32_Premultiplied);
-    img.fill(base);
-    QPainter p(&img);
-    QColor ink = base.lightness() > 128 ? base.darker(140) : base.lighter(160);
-    p.setPen(Qt::NoPen);
-    p.setBrush(ink);
-    p.drawRect(0, 0, cell, cell);
-    p.drawRect(cell, cell, cell, cell);
-    p.end();
-    return img;
-}
-
-void PreviewPanel::paintEvent(QPaintEvent* event) {
-    Q_UNUSED(event);
-    QPainter p(this);
-    p.fillRect(rect(), backdropColor());
-    if (s_bool("Viewer/checkerMode", false)) {
-        QBrush tile(checkerTile(backdropColor()));
-        tile.setStyle(Qt::TexturePattern);
-        p.fillRect(rect(), tile);
-    }
-}
-
-// 背景色/挡板/图片边框变更时调用(构造 + AppSettings::changed)
-void PreviewPanel::applyBackdrop() {
-    update();
-    // Viewer/showBorder:图片外框(默认关)
-    const bool border = s_bool("Viewer/showBorder", false);
-    m_imgLabel->setStyleSheet(border
-        ? QStringLiteral("QLabel{border:1px solid #FFFFFF;background:transparent;}")
-        : QStringLiteral("QLabel{background:transparent;}"));
-}
-
-void PreviewPanel::setViewerMode(bool on) {
-    if (m_viewerMode == on) return;
-    m_viewerMode = on;
-    applyBackdrop();
-}
-
-// Viewer/autoFit 取值语义:
-//   0 上次使用过的   1 不缩放(1:1)      2 适应窗口(默认)
-//   3 仅放大小图     4 仅缩小大图        5 适应宽度
-//   6 适应高度       7 适应宽或高(取大)  8 适应桌面
-//   9 窗口适应图像   → 按"适应窗口"处理(需要改变窗口尺寸,查看器布局尚未支持)
-double PreviewPanel::fitScaleFor(const QSize& viewSize) const {
-    const double sw = double(viewSize.width())  / m_origPix->width();
-    const double sh = double(viewSize.height()) / m_origPix->height();
-    const double fit = std::min(sw, sh);
-    switch (s_int(modeKey("autoFit"), 2)) {
-    case 0: return m_lastScale > 0 ? m_lastScale : fit;
-    case 1: return 1.0;
-    case 3: return std::max(1.0, fit);   // 小图放大到适应,大图保持 1:1
-    case 4: return std::min(1.0, fit);   // 大图缩小到适应,小图保持 1:1
-    case 5: return sw;
-    case 6: return sh;
-    case 7: return std::max(sw, sh);
-    case 8: {
-        const QRect av = QApplication::primaryScreen()->availableGeometry();
-        return std::min(double(av.width())  / m_origPix->width(),
-                        double(av.height()) / m_origPix->height());
-    }
-    default: return fit;
-    }
 }
 
 void PreviewPanel::setViewerMode(bool on) {
@@ -1315,43 +496,27 @@ void PreviewPanel::loadFile(const QString& path) {
     // 属缩略图卡片的职责(Thumbs/folder4 已在那里出图);预览框只对
     // "选中的那一个内容"负责,文件夹没有这样一个内容。
     if (fi.isDir()) { showNoPreview(); return; }
-    stopMovie();   // 任何类型切换都先回收 GIF 动画(防泄漏/防隐藏继续解码)
 
-    // 立即清屏:杜绝上一文件(尤其图片→视频切换)残影闪帧
-    m_imgLabel->clear();
-    m_imgLabel->hide();
-    cancelHoverExtract();       // 换文件:取消进行中的 hover 抽帧并清缓存
-    m_hoverCache.clear();
+    // 不再在此处清屏:图片→图片切换保持上一张画面直到新图就绪(无缝,无黑帧);
+    // 视频/音频/GIF/未知 分支各自隐藏图片标签(视频黑底过渡属预期)
     QString ext = fi.suffix().toLower();
 
-    teardownPlayer();
+    // 注:不再 teardownPlayer —— QMediaPlayer/QVideoWidget 永久复用,
+    // 任何"销毁重建"路径都会出现无帧透明窗口期(切换瞬间闪回旧画面)
 
     // ── Live Photo 检测（在扩展名路由之前）──
+    // 只做标记 + 后台预提取,不自动播放——播放只由"单击预览窗格"触发
     if (IMAGE_EXTS.count("." + ext)) {
         auto liveInfo = LivePhoto::detect(path);
         if (liveInfo) {
-            m_liveInfo = liveInfo;   // 播完回静态图后,单击靠它重播
-            m_liveInfo = liveInfo;   // 播完回静态图后,单击靠它重播
-            QString videoPath;
-            if (liveInfo->embedded && liveInfo->videoOffset >= 0) {
-                // 内嵌型：优先复用本会话已提取的临时文件，避免反复 remux + %TEMP% 堆积
-                if (m_extractCache.contains(path)) {
-                    videoPath = m_extractCache.value(path);
-                } else {
-                    // 首次遇到:ffmpeg remux 秒级,改为后台提取——
-                    // 先显示静态图(jpg 本身完整可显),提取完成自动切播放
-                    showImage(path);
-                    startExtractAsync(path, *liveInfo);
-                    return;
-                }
-            } else if (!liveInfo->embedded) {
-                videoPath = liveInfo->videoPath; // companion 配对型
-            }
-            if (!videoPath.isEmpty() && QFileInfo::exists(videoPath)) {
-                m_livePhotoOriginalPath = path;
-                m_isLivePhoto = true;
-                showVideo(videoPath);
-                return;
+            Logger::event(QStringLiteral("live detect: type=%1 embedded=%2 video='%3'")
+                              .arg(liveInfo->type).arg(liveInfo->embedded)
+                              .arg(liveInfo->videoPath));
+            m_liveInfo = liveInfo;   // 单击预览窗格靠它找到视频
+            // 后台预提取(不涉及媒体后端,纯 remux):点预览窗格时即点即播
+            if (liveInfo->embedded && liveInfo->videoOffset >= 0
+                && !m_extractCache.contains(path)) {
+                startExtractAsync(path, *liveInfo);
             }
         }
     }
@@ -1393,62 +558,6 @@ void PreviewPanel::showNoPreview() {
     m_textEdit->hide();
     m_controlBar->hide();
     m_imgSpace->hide();
-}
-
-void PreviewPanel::showText(const QString& path) {
-    m_mode = "text";
-    if (m_player) m_player->stop();
-    m_placeholder->hide();
-    m_imgLabel->hide();
-    m_videoWidget->hide();
-    setAudioChrome(false);
-    m_controlBar->hide();
-    m_imgSpace->hide();
-    if (m_liveBadge) m_liveBadge->hide();
-
-    QFile f(path);
-    if (f.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        // #111:行数与"单行字符数"都要截。只卡字节数不够 —— 实测一个 512KB 的
-        // 无空格单行(压缩 JS/base64)setPlainText 要 62 秒,界面彻底冻死。
-        // 上限与实测依据都写在 textlimit.h 头部。
-        bool byteCut = false;
-        qint64 total = 0;
-        const QString raw = TextCut::readHead(f, &byteCut, &total);
-        f.close();
-        m_textEdit->setPlainText(TextCut::apply(raw, byteCut, total));
-        m_textEdit->show();
-    } else {
-        m_textEdit->setPlainText(QString::fromUtf8("无法读取文件"));
-        m_textEdit->show();
-    }
-}
-
-void PreviewPanel::showText(const QString& path) {
-    m_mode = "text";
-    if (m_player) m_player->stop();
-    m_placeholder->hide();
-    m_imgLabel->hide();
-    m_videoWidget->hide();
-    setAudioChrome(false);
-    m_controlBar->hide();
-    m_imgSpace->hide();
-    if (m_liveBadge) m_liveBadge->hide();
-
-    QFile f(path);
-    if (f.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        // #111:行数与"单行字符数"都要截。只卡字节数不够 —— 实测一个 512KB 的
-        // 无空格单行(压缩 JS/base64)setPlainText 要 62 秒,界面彻底冻死。
-        // 上限与实测依据都写在 textlimit.h 头部。
-        bool byteCut = false;
-        qint64 total = 0;
-        const QString raw = TextCut::readHead(f, &byteCut, &total);
-        f.close();
-        m_textEdit->setPlainText(TextCut::apply(raw, byteCut, total));
-        m_textEdit->show();
-    } else {
-        m_textEdit->setPlainText(QString::fromUtf8("无法读取文件"));
-        m_textEdit->show();
-    }
 }
 
 void PreviewPanel::setupPlayer() {
@@ -1517,14 +626,6 @@ void PreviewPanel::setupPlayer() {
                 m_videoOutAttached = true;
                 // #104:装载期 raiseVideoCover() 的布防,收回权交给本路首帧
                 armCoverUntilFirstFrame();
-                // #104:装载期 raiseVideoCover() 升起的遮罩,收回权交给本路首帧
-                armCoverUntilFirstFrame();
-                // #104:装载期 raiseVideoCover() 升起的遮罩,收回权交给本路首帧
-                armCoverUntilFirstFrame();
-                // #104:装载期 raiseVideoCover() 升起的遮罩,收回权交给本路首帧
-                armCoverUntilFirstFrame();
-                vidProbeAttach();
-                vidProbeReset();
                 if (m_isLivePhoto || (m_mode == "video" && pp_impl::s_bool("Viewer/autoPlayVideo", true))) {
                     m_player->play();
                     m_btnPlay->setIcon(pp_impl::whiteIcon(style()->standardIcon(QStyle::SP_MediaPause)));
@@ -1591,12 +692,14 @@ void PreviewPanel::setupPlayer() {
 void PreviewPanel::teardownPlayer() {
     if (!m_player) return;
     Logger::event(QStringLiteral("teardownPlayer src='%1'").arg(m_player->source().toLocalFile()));
-    Logger::event(QStringLiteral("teardownPlayer src='%1'").arg(m_player->source().toLocalFile()));
     // 立即断开视频输出:阻止播放器继续往 QVideoWidget 渲染帧
     if (m_vw) {
         m_player->setVideoOutput(static_cast<QVideoWidget*>(nullptr));
         m_videoOutAttached = false;
     }
+    // 断开全部信号槽:deleteLater 延迟销毁前已注册的 queued 回调可能稍后才投递,
+    // 必须断连以免回调读到 nullptr 成员(见 mediaStatusChanged/positionChanged/durationChanged)
+    disconnect(m_player, nullptr, this, nullptr);
     m_player->stop();
     // deleteLater：对象在事件循环末尾销毁，避免同步 delete 的 UAF 风险
     m_player->deleteLater();
@@ -1630,7 +733,7 @@ void PreviewPanel::clear() {
     m_imgLabel->clear();
     m_imgLabel->hide();
     m_videoWidget->hide();
-    m_audioLabel->hide();
+    setAudioChrome(false);
     m_controlBar->hide();
     m_imgSpace->hide();
     m_placeholder->show();

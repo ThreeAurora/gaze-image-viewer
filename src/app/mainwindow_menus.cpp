@@ -51,7 +51,6 @@
 #include <QPair>
 #include "iconlib.h"
 #include <QLabel>
-#include <QLabel>
 #include "labelstore.h"
 #include "settings_dialog.h"
 #include "dbmaintenance.h"
@@ -91,28 +90,6 @@ void MainWindow::createMenubar() {
             PrintDialog::printImages(this, paths);
         });
     fileMenu->addSeparator();
-    fileMenu->addAction(IconLib::appIcon("cmd_print"), QString::fromUtf8("打印..."),
-        QKeySequence("Ctrl+P"), this, [this]() {
-            // 有选中打选中,没选中打当前列表全部(和右键"打印"同一口径);
-            // 夹在里面的文件夹/视频由 PrintDialog 按扩展名滤掉并如实提示
-            QStringList paths = m_fileGrid->selectedPaths();
-            if (paths.isEmpty())
-                for (int i = 0; i < m_fileGrid->fileCount(); ++i)
-                    paths << m_fileGrid->pathOf(i);
-            PrintDialog::printImages(this, paths);
-        });
-    fileMenu->addSeparator();
-    fileMenu->addAction(IconLib::appIcon("cmd_print"), QString::fromUtf8("打印..."),
-        QKeySequence("Ctrl+P"), this, [this]() {
-            // 有选中打选中,没选中打当前列表全部(和右键"打印"同一口径);
-            // 夹在里面的文件夹/视频由 PrintDialog 按扩展名滤掉并如实提示
-            QStringList paths = m_fileGrid->selectedPaths();
-            if (paths.isEmpty())
-                for (int i = 0; i < m_fileGrid->fileCount(); ++i)
-                    paths << m_fileGrid->pathOf(i);
-            PrintDialog::printImages(this, paths);
-        });
-    fileMenu->addSeparator();
     fileMenu->addAction(QString::fromUtf8("刷新(&R)"), QKeySequence("F5"), this, [this](){ refresh(); });
     fileMenu->addSeparator();
     fileMenu->addAction(QString::fromUtf8("退出(&X)"), QKeySequence("Alt+X"), this, &QWidget::close);
@@ -125,14 +102,6 @@ void MainWindow::createMenubar() {
             if (!paths.isEmpty())
                 QApplication::clipboard()->setText(paths.join("\n"));
         });
-    // #136:重命名必须是一条**带 shortcut 的 QAction**，不能只在键盘过滤器里加分支 ——
-    // 设置→交互→快捷键配置页(settings_pages_input.cpp 的 fillTable)只列"带非空 shortcut
-    // 的 QAction"，而 applyShortcuts() 也只按 Shortcuts/<动作文本> 读 ini 覆盖。
-    // 挂在过滤器里的 F2 从来进不了那张表，这正是用户要求「写入快捷键配置页」的原因。
-    // 助记符用 &R(Rename)：Qt 的助记符只要求**同一菜单内**唯一，编辑菜单里没有别的 &R
-    // (「刷新(&R)」在文件菜单，不冲突)。
-    editMenu->addAction(IconLib::appIcon("cmd_rename"),
-        QString::fromUtf8("重命名(&R)"), QKeySequence("F3"), this, &MainWindow::renameFocused);
     // #136:重命名必须是一条**带 shortcut 的 QAction**，不能只在键盘过滤器里加分支 ——
     // 设置→交互→快捷键配置页(settings_pages_input.cpp 的 fillTable)只列"带非空 shortcut
     // 的 QAction"，而 applyShortcuts() 也只按 Shortcuts/<动作文本> 读 ini 覆盖。
@@ -282,7 +251,6 @@ void MainWindow::createMenubar() {
             "Ctrl+0 / D — 取消颜色标记\n"
             "F — 加红色标记\n"
             "F2 / F3 — 重命名(文件树与文件页都可用,改谁看焦点;F3 可在设置→快捷键改)\n"
-            "Del / S — 删除选中  X — 新建文件夹\n"
             "Del / S — 删除选中  X — 新建文件夹\n"
             "Enter — 切换查看器/浏览器(设置→键盘)\n"
             "Ctrl+A — 全选  Ctrl+I — 反选\n"
@@ -524,8 +492,6 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
     histBtn->setFixedSize(22, 26);
     histBtn->setStyleSheet(QString::fromUtf8("QToolButton{color:%1;font-size:9px;}")
                                .arg(C_SB_ARROW));   // #151:同款小号箭头灰
-    histBtn->setStyleSheet(QString::fromUtf8("QToolButton{color:%1;font-size:9px;}")
-                               .arg(C_SB_ARROW));   // #151:同款小号箭头灰
     histBtn->setToolTip(QString::fromUtf8("\xe5\x8e\x86\xe5\x8f\xb2\xe8\xae\xbf\xe9\x97\xae\xe8\xb7\xaf\xe5\xbe\x84")); // 历史访问路径
     histBtn->setPopupMode(QToolButton::InstantPopup);
     auto* histMenu = new QMenu(histBtn);
@@ -589,11 +555,6 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
         // 底色/悬停底仍走 barQss 的 QToolButton 规则(自有表只覆盖冲突属性)
         btn->setStyleSheet(QString::fromUtf8("QToolButton{color:%1;font-size:9px;}")
                                .arg(C_SB_ARROW));
-        // #151:▼ 原样继承 barQss 的 11px/C_TEXT(近白)= 用户点名"太白太大"。
-        // 按钮自有表只压这两项:9px + 箭头灰(C_SB_ARROW,与滚动条/数字框箭头同色);
-        // 底色/悬停底仍走 barQss 的 QToolButton 规则(自有表只覆盖冲突属性)
-        btn->setStyleSheet(QString::fromUtf8("QToolButton{color:%1;font-size:9px;}")
-                               .arg(C_SB_ARROW));
         btn->setPopupMode(QToolButton::InstantPopup);
         btn->setMenu(menu);
         b2->addWidget(btn);
@@ -636,8 +597,6 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
     colsBtn->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     colsBtn->setText(QString::fromUtf8("\xe2\x96\xbc"));
     colsBtn->setFixedSize(46, 26);
-    colsBtn->setStyleSheet(QString::fromUtf8("QToolButton{color:%1;font-size:9px;}")
-                               .arg(C_SB_ARROW));   // #151:同款小号箭头灰
     colsBtn->setStyleSheet(QString::fromUtf8("QToolButton{color:%1;font-size:9px;}")
                                .arg(C_SB_ARROW));   // #151:同款小号箭头灰
     colsBtn->setToolTip(QString::fromUtf8(

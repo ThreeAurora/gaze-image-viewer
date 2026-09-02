@@ -6,18 +6,10 @@
 #include "shelldelete.h"
 #include "clipboardops.h"
 #include "printdialog.h"
-#include "printdialog.h"
-#include "printdialog.h"
-#include "printdialog.h"
 #include "cropdialog.h"
 #include "settings.h"
 #include "validname.h"
 #include "toolpath.h"
-#include "toolpath.h"
-#include "validname.h"
-#include "clipboardops.h"
-#include "clipboardops.h"
-#include "clipboardops.h"
 
 #include <QFileInfo>
 #include <QDir>
@@ -41,33 +33,6 @@
 #include <memory>
 
 #include "logger.h"
-#include <QPointer>
-#include <QTimer>
-#include <QDateTime>
-
-#include <functional>
-#include <memory>
-
-#include "logger.h"
-#include <QPointer>
-#include <QTimer>
-#include <QDateTime>
-
-#include <functional>
-#include <memory>
-
-#include "logger.h"
-#include <QPointer>
-#include <QTimer>
-#include <QDateTime>
-
-#include <functional>
-#include <memory>
-
-#include "logger.h"
-#include <QImageWriter>
-#include <QImageWriter>
-#include <QImageWriter>
 
 #include <windows.h>
 #include <shellapi.h>
@@ -198,6 +163,7 @@ static void runProcessAsync(const QString& program, const QStringList& args,
                             const QString& outFile, int timeoutMs,
                             std::function<void(bool ok, QString why)> done) {
     auto* proc = new QProcess();
+    hideConsoleWindow(*proc);   // jpegtran/ffmpeg 异步变换静默起,不闪控制台窗
     auto* timer = new QTimer(proc);            // 子对象,跟着进程一起回收
     timer->setSingleShot(true);
     timer->setInterval(timeoutMs);
@@ -504,104 +470,165 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
         PrintDialog::printImages(grid, sel);
     });
 
-    // ── 旋转/翻转(仅图片;先备份原件,保留修改时间) ──
+    // ── 旋转/翻转(仅图片;JPEG 走 jpegtran 无损变换) ──
     // 注意:IMAGE_EXTS 存带点扩展名(".jpg"),suffix() 不带点,必须手动加点匹配
     if (IMAGE_EXTS.count("." + QFileInfo(m_filePath).suffix().toLower())) {
+        const QString rotExt = QFileInfo(m_filePath).suffix().toLower();
+        const bool allowLossless = AppSettings::instance()
+            .get("Browser/losslessRotate", true).toBool();
+        const bool lossless = allowLossless
+                              && (rotExt == "jpg" || rotExt == "jpeg")
+                              && !findJpegtran().isEmpty();
+        const QString lossTag = lossless ? QString::fromUtf8("(无损)") : QString();
         auto* rotMenu = addMenu(IconLib::appIcon("cmd_rotate"), QString::fromUtf8("旋转/翻转"));
-        auto doRot = [this, grid](int mode) {
-            QFileInfo fi(m_filePath);
+        auto doRot = [this, grid, lossless, rotExt](int mode) {
+            AppSettings& st = AppSettings::instance();
+            // 副本:无损那步改到后台跑,续命回调里不能再碰 this(菜单关掉就析构了)
+            const QString path = m_filePath;
+            QFileInfo fi(path);
             QDateTime mod  = fi.lastModified();          // 原修改时间
             QDateTime birth = fi.birthTime();            // 原创建时间
-            QString backup = fi.absolutePath() + "/" + fi.completeBaseName()
-                           + "_original." + fi.suffix();
-            if (!QFileInfo::exists(backup))
-                QFile::copy(m_filePath, backup);         // 首次生成备份原件
+            // 每次变换独占一个临时名:两连点转同一文件时不再共用一个 tmp 互相踩
+            static int seq = 0;
+            const QString tmp = path + QStringLiteral(".gaze_rot_tmp%1").arg(++seq);
 
-            QString tmp = m_filePath + ".gaze_rot_tmp";
-            bool ok = false;
+            // ── Browser/rotateExifOnly(默认开):JPEG 先试"只改 EXIF 方向" ──
+            // 只动一个元数据字节,pixel 数据完全不动,零损失且瞬时;
+            // 失败(无 Orientation 标签 / 镜像类取向)再走下面的变换链路
+            if (st.get("Browser/rotateExifOnly", true).toBool()
+                && (rotExt == "jpg" || rotExt == "jpeg")) {
+                int quarter = 0;
+                if (mode == 0) quarter = -1;        // 左旋 90°
+                else if (mode == 1) quarter = 1;    // 右旋 90°
+                if (quarter != 0 && rotateJpegOrientationOnly(path, quarter)) {
+                    // 此分支是就地改写,备份必须补上(时间戳仍按原值恢复)
+                    backupOriginal(path);
+                    restoreFileTimes(path, mod, birth);
+                    if (grid) grid->refreshCurrentDir();
+                    return;
+                }
+            }
 
-            // ── JPEG:jpegtran DCT 级无损变换,-copy all 保留全部元数据(EXIF/XMP/ICC) ──
-            if (ext == "jpg" || ext == "jpeg") {
-                QString jt = findJpegtran();
+            // 收尾两条腿,无损/兜底共用(结果已在 tmp,或干脆没结果)
+            auto commit = [path, tmp, mod, birth, g = QPointer<FileGrid>(grid)]() {
+                commitRotateResult(path, tmp, mod, birth, g);
+            };
+            auto reencodeThenCommit = [path, tmp, mod, birth, g = QPointer<FileGrid>(grid),
+                                       mode, rotExt]() {
+                QFile::remove(tmp);           // 清掉无损留下的半成品
+                if (!reencodeRotate(path, tmp, mode, rotExt)) { rotateFailedMsg(path); return; }
+                commitRotateResult(path, tmp, mod, birth, g);
+            };
+
+            // ── JPEG:jpegtran DCT 级无损变换(Browser/losslessRotate 关时直接走重编码) ──
+            // ── -copy all 保留全部元数据(EXIF/XMP/ICC);FileOps/losslessKeepMeta=关 则丢弃 ──
+            // 交后台跑:原来是 GUI 线程 waitForFinished(20s),jpegtran 一慢界面就整个钉死
+            if (lossless) {
+                const QString jt = findJpegtran();
                 if (!jt.isEmpty()) {
-                    QStringList args{"-copy", "all"};
+                    QStringList args = st.get("FileOps/losslessKeepMeta", true).toBool()
+                        ? QStringList{"-copy", "all"} : QStringList{"-copy", "none"};
                     switch (mode) {
                     case 0: args << "-rotate" << "270"; break;   // 左旋90°(逆时针)
                     case 1: args << "-rotate" << "90";  break;   // 右旋90°(顺时针)
                     case 2: args << "-flip" << "horizontal"; break;
                     case 3: args << "-flip" << "vertical"; break;
                     }
-                    args << m_filePath;
-                    QProcess proc;
-                    proc.setStandardOutputFile(tmp);     // 变换结果重定向临时文件
-                    proc.start(jt, args);
-                    ok = proc.waitForFinished(20000) && proc.exitCode() == 0
-                         && QFileInfo(tmp).size() > 0;
-                    if (!ok) QFile::remove(tmp);
+                    args << path;
+                    // tmp 由 QProcess 重定向 stdout 写;失败/超时回落重编码
+                    runProcessAsync(jt, args, tmp, 20000,
+                        [commit, reencodeThenCommit](bool ok, const QString&) {
+                            if (ok) commit(); else reencodeThenCommit();
+                        });
+                    return;
                 }
             }
 
-            // ── 非 JPEG 或 jpegtran 不可用:QImage 重编码 ──
-            // (PNG/BMP 像素无损;JPEG 回退为 95 有损 + EXIF 无法保留,仅兜底)
-            if (!ok) {
+            // ── 非 JPEG、无损开关关、或 jpegtran 找不到:当场重编码 ──
+            reencodeThenCommit();
+        };
+        rotMenu->addAction(IconLib::appIcon("cmd_rotate90"),
+            QString::fromUtf8("左旋 90°") + lossTag, this, [doRot]() { doRot(0); });
+        rotMenu->addAction(IconLib::appIcon("cmd_rotate270"),
+            QString::fromUtf8("右旋 90°") + lossTag, this, [doRot]() { doRot(1); });
+        rotMenu->addAction(IconLib::appIcon("cmd_horizontalFlip"),
+            QString::fromUtf8("水平翻转") + lossTag, this, [doRot]() { doRot(2); });
+        rotMenu->addAction(IconLib::appIcon("cmd_verticalFlip"),
+            QString::fromUtf8("垂直翻转") + lossTag, this, [doRot]() { doRot(3); });
+
+        // ── #83 无损裁剪 ──
+        // JPEG:jpegtran -crop WxH+X+Y -perfect -copy all(选区已吸附到 16px MCU,
+        //      -perfect 保证做不到无损就直接失败,不偷偷降质)
+        // 其它格式:QImage::copy 后按原格式保存(PNG 无损;其余如实说明会重编码)
+        addAction(IconLib::appIcon("cmd_crop"), QString::fromUtf8("裁剪...(无损)"),
+                  this, [this, grid]() {
+            CropDialog dlg(m_filePath, nullptr);
+            if (dlg.exec() != QDialog::Accepted) return;
+
+            const QRect r = dlg.cropRect();
+            QFileInfo fi(m_filePath);
+            const QString ext = fi.suffix().toLower();
+            QDateTime mod = fi.lastModified(), birth = fi.birthTime();
+
+            // FileOps/losslessBackup:动手前先留一份原件(与旋转同一规矩)
+            if (AppSettings::instance().get("FileOps/losslessBackup", true).toBool()) {
+                const QString backup = fi.absolutePath() + "/" + fi.completeBaseName()
+                                     + "_original." + fi.suffix();
+                if (!QFileInfo::exists(backup)) QFile::copy(m_filePath, backup);
+            }
+
+            const QString tmp = m_filePath + ".gaze_crop_tmp";
+            bool ok = false;
+
+            if ((ext == "jpg" || ext == "jpeg") && !findJpegtran().isEmpty()) {
+                const QString spec = QStringLiteral("%1x%2+%3+%4")
+                                         .arg(r.width()).arg(r.height()).arg(r.x()).arg(r.y());
+                QStringList args = AppSettings::instance()
+                        .get("FileOps/losslessKeepMeta", true).toBool()
+                    ? QStringList{"-copy", "all"} : QStringList{"-copy", "none"};
+                args << "-crop" << spec << "-perfect" << m_filePath;
+                QProcess proc;
+                proc.setStandardOutputFile(tmp);
+                proc.start(findJpegtran(), args);
+                ok = proc.waitForFinished(20000) && proc.exitCode() == 0
+                     && QFileInfo(tmp).size() > 0;
+                if (!ok) QFile::remove(tmp);
+            }
+
+            if (!ok) {   // 非 JPEG,或 jpegtran 拒绝(-perfect 失败)
                 QImage img(m_filePath);
-                QImage out;
-                QTransform t;
                 if (!img.isNull()) {
-                    switch (mode) {
-                    case 0: t.rotate(-90); out = img.transformed(t, Qt::SmoothTransformation); break;
-                    case 1: t.rotate(90);  out = img.transformed(t, Qt::SmoothTransformation); break;
-                    case 2: out = img.mirrored(true, false); break;
-                    case 3: out = img.mirrored(false, true); break;
-                    }
-                }
-                QFile f(tmp);
-                // 必须显式给格式:save(device, nullptr) 会让 Qt 拿 device 的文件名
-                // 后缀猜格式,而临时文件后缀是 "gaze_rot_tmp",无任何 handler 匹配
-                // → 保存恒失败 → 非 JPEG 的旋转/翻转成了静默空操作。
-                QByteArray fmt = rotExt.toUtf8();
-                if (fmt == "jpg") fmt = "jpeg";
-                else if (fmt == "tif") fmt = "tiff";
-                const bool canWrite = !out.isNull()
-                    && QImageWriter::supportedImageFormats().contains(fmt);
-                if (canWrite && f.open(QIODevice::WriteOnly)) {
-                    ok = out.save(&f, fmt.constData(), 95);
+                    QImage out = img.copy(r);
+                    QFile f(tmp);
+                    if (!out.isNull() && f.open(QIODevice::WriteOnly))
+                        ok = out.save(&f, ext.isEmpty() ? nullptr : ext.toLatin1().constData(),
+                                      ext == "png" ? -1 : 95);
                     f.close();
                 }
                 if (!ok) QFile::remove(tmp);
             }
 
             if (!ok) {
-                QMessageBox::warning(nullptr, QString::fromUtf8("旋转/翻转"),
-                    QString::fromUtf8("无法完成该变换(解码或写回失败):\n") + m_filePath);
+                QMessageBox::warning(nullptr, QString::fromUtf8("裁剪失败"),
+                    QString::fromUtf8("无法无损完成该裁剪:\n%1\n\n"
+                                      "可换个选区(建议选区再大一点、离边缘远一点)重试。")
+                        .arg(m_filePath));
                 return;
             }
-
-            // 原子替换 + 恢复创建/修改时间(元数据不因替换改变)
-            // 走到这里结果已经落盘成功,才允许留原件备份
-            makeBackup();
             if (!QFile::rename(tmp, m_filePath)) {
                 QFile::remove(tmp);
-                QMessageBox::warning(nullptr, QString::fromUtf8("旋转/翻转"),
-                    QString::fromUtf8("写回文件失败:\n") + m_filePath);
+                QMessageBox::warning(nullptr, QString::fromUtf8("裁剪失败"),
+                                     QString::fromUtf8("写回文件失败:\n") + m_filePath);
                 return;
             }
+            // 时间戳照旧保留,与旋转一致
             QFile tf(m_filePath);
             if (tf.open(QIODevice::ReadOnly)) {
                 tf.setFileTime(mod, QFileDevice::FileModificationTime);
-                if (birth.isValid())
-                    tf.setFileTime(birth, QFileDevice::FileBirthTime);
+                if (birth.isValid()) tf.setFileTime(birth, QFileDevice::FileBirthTime);
             }
             if (grid) grid->refreshCurrentDir();
-        };
-        rotMenu->addAction(IconLib::appIcon("cmd_rotate90"),
-            QString::fromUtf8("左旋 90°"), this, [doRot]() { doRot(0); });
-        rotMenu->addAction(IconLib::appIcon("cmd_rotate270"),
-            QString::fromUtf8("右旋 90°"), this, [doRot]() { doRot(1); });
-        rotMenu->addAction(IconLib::appIcon("cmd_horizontalFlip"),
-            QString::fromUtf8("水平翻转"), this, [doRot]() { doRot(2); });
-        rotMenu->addAction(IconLib::appIcon("cmd_verticalFlip"),
-            QString::fromUtf8("垂直翻转"), this, [doRot]() { doRot(3); });
+        });
     }
 
     // ── 颜色标记子菜单 ──

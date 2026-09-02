@@ -49,10 +49,6 @@ file(GLOB_RECURSE GAZE_HEADERS CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/src/*.h")
 # 把它交给 AUTOMOC 会生成引用 FileCard::ctor/各事件处理函数的元代码,而实现文件
 # 没编进来 → 链接期一堆 undefined reference。留着文件只为读史,别进 moc 名单。
 list(REMOVE_ITEM GAZE_HEADERS "${CMAKE_SOURCE_DIR}/src/filecard.h")
-# 例外:filecard.h 声明的 FileCard 早已不参与构建(FileGrid 改单画布自绘后留下的死类)。
-# 把它交给 AUTOMOC 会生成引用 FileCard::ctor/各事件处理函数的元代码,而实现文件
-# 没编进来 → 链接期一堆 undefined reference。留着文件只为读史,别进 moc 名单。
-list(REMOVE_ITEM GAZE_HEADERS "${CMAKE_SOURCE_DIR}/src/filecard.h")
 
 add_executable(Gaze WIN32
     ${GAZE_HEADERS}
@@ -88,9 +84,6 @@ add_executable(Gaze WIN32
     src/views/previewpanel_chrome.cpp
     src/views/previewpanel_events.cpp
     src/views/previewpanel_raw.cpp
-    src/views/previewpanel_raw.cpp
-    src/views/previewpanel_raw.cpp
-    src/views/previewpanel_raw.cpp
 
     # 缩略图:调度与线程池 / 缓存与数据库 / 静图 / 视频 / 文件夹外框
     src/media/thumbnailer.cpp
@@ -123,15 +116,12 @@ add_executable(Gaze WIN32
     src/resources.qrc
 )
 
-gaze PRIVATE
+target_link_libraries(Gaze PRIVATE
     Qt6::Widgets
     Qt6::Network
     Qt6::Multimedia
     Qt6::MultimediaWidgets
     Qt6::Sql
-    Qt6::PrintSupport
-    Qt6::PrintSupport
-    Qt6::PrintSupport
     Qt6::PrintSupport
     shell32
     ole32
@@ -184,223 +174,6 @@ add_custom_command(TARGET Gaze POST_BUILD
 # LGPL 那份已经带 dav1d,解码缩略图够用),2026-08-31 待用户裁决 ——
 # 所以这里只在 vendor/ffmpeg/ 真的存在时才拷:没裁决 = 目录不存在 = 不拷。
 if(EXISTS "${CMAKE_SOURCE_DIR}/vendor/ffmpeg")
-    add_custom_command(TARGET gaze POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-                "${CMAKE_SOURCE_DIR}/vendor/ffmpeg" "$<TARGET_FILE_DIR:gaze>/ffmpeg"
-        COMMENT "同步内置 ffmpeg vendor/ffmpeg -> 构建目录 ffmpeg/"
-        VERBATIM
-    )
-else()
-    message(STATUS "视频缩略图:vendor/ffmpeg 不存在(分发决策未定)→ 运行时回退 PATH 上的 ffmpeg")
-endif()
-
-# ── 内置 jpegtran 部署(无损旋转/镜像,#113)──
-# 与 ffmpeg 同一套 vendor 规约:exe 旁 jpegtran/ 优先于 PATH。jpegtran.exe
-# 靠同目录 jpeg8.dll(libjpeg-turbo, IJG+BSD 许可文本同目录),必须整目录拷。
-if(EXISTS "${CMAKE_SOURCE_DIR}/vendor/jpegtran")
-    add_custom_command(TARGET gaze POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-                "${CMAKE_SOURCE_DIR}/vendor/jpegtran" "$<TARGET_FILE_DIR:gaze>/jpegtran"
-        COMMENT "同步内置 jpegtran vendor/jpegtran -> 构建目录 jpegtran/"
-        VERBATIM
-    )
-else()
-    message(STATUS "无损旋转:vendor/jpegtran 不存在 → 运行时回退 PATH/常见安装位置上的 jpegtran")
-endif()
-
-# ── LibRaw 源码编译(RAW 按需全解,#140)──
-# 全囊括铁令(2026-09-01):一切功能自带依赖,不默认用户装有 WIC Raw 图像扩展
-# 等系统解码器。LibRaw(LGPL-2.1/CDDL 双许可)源码放 thirdparty/LibRaw,静态
-# 编进 gaze —— 无 DLL、无分发决策。目录不存在(未下载)时跳过:gaze 照常编译,
-# RAW 按钮点击给"未编入解码器"的诚实文案。
-# 无外部依赖构建(不开 USE_JPEG/USE_ZLIB/USE_LCMS2):无损 JPEG 系 RAW
-# (CR2/NEF/ARW/RAF/ORF/DNG 无损变体等)全覆盖;JPEG 有损压缩与 deflate DNG
-# 后续按需补库。
-if(EXISTS "${CMAKE_SOURCE_DIR}/thirdparty/LibRaw/libraw/libraw.h")
-    # 0.21.x 源码全在 src/(internal/ 只有头文件),一个 GLOB 收齐
-    file(GLOB_RECURSE LIBRAW_SOURCES CONFIGURE_DEPENDS
-        "${CMAKE_SOURCE_DIR}/thirdparty/LibRaw/src/*.cpp")
-    add_library(rawdec STATIC ${LIBRAW_SOURCES})
-    target_include_directories(rawdec PUBLIC "${CMAKE_SOURCE_DIR}/thirdparty/LibRaw")
-    # dcraw 血统代码有类型双关,-fno-strict-aliasing 保优化下行为不漂
-    target_compile_options(rawdec PRIVATE -O2 -fno-strict-aliasing)
-    target_link_libraries(Gaze PRIVATE rawdec)
-    target_compile_definitions(gaze PRIVATE HAS_RAWDEC=1)
-else()
-    message(STATUS "RAW 全解:thirdparty/LibRaw 不存在 → RAW 按钮显示未编入提示")
-endif()
-
-# ── LibRaw 源码编译(RAW 按需全解,#140)──
-# 全囊括铁令(2026-09-01):一切功能自带依赖,不默认用户装有 WIC Raw 图像扩展
-# 等系统解码器。LibRaw(LGPL-2.1/CDDL 双许可)源码放 thirdparty/LibRaw,静态
-# 编进 gaze —— 无 DLL、无分发决策。目录不存在(未下载)时跳过:gaze 照常编译,
-# RAW 按钮点击给"未编入解码器"的诚实文案。
-# 无外部依赖构建(不开 USE_JPEG/USE_ZLIB/USE_LCMS2):无损 JPEG 系 RAW
-# (CR2/NEF/ARW/RAF/ORF/DNG 无损变体等)全覆盖;JPEG 有损压缩与 deflate DNG
-# 后续按需补库。
-if(EXISTS "${CMAKE_SOURCE_DIR}/thirdparty/LibRaw/libraw/libraw.h")
-    # 0.21.x 源码全在 src/(internal/ 只有头文件),一个 GLOB 收齐
-    file(GLOB_RECURSE LIBRAW_SOURCES CONFIGURE_DEPENDS
-        "${CMAKE_SOURCE_DIR}/thirdparty/LibRaw/src/*.cpp")
-    add_library(rawdec STATIC ${LIBRAW_SOURCES})
-    target_include_directories(rawdec PUBLIC "${CMAKE_SOURCE_DIR}/thirdparty/LibRaw")
-    # dcraw 血统代码有类型双关,-fno-strict-aliasing 保优化下行为不漂
-    target_compile_options(rawdec PRIVATE -O2 -fno-strict-aliasing)
-    target_link_libraries(gaze PRIVATE rawdec)
-    target_compile_definitions(gaze PRIVATE HAS_RAWDEC=1)
-else()
-    message(STATUS "RAW 全解:thirdparty/LibRaw 不存在 → RAW 按钮显示未编入提示")
-endif()
-
-# ── LibRaw 源码编译(RAW 按需全解,#140)──
-# 全囊括铁令(2026-09-01):一切功能自带依赖,不默认用户装有 WIC Raw 图像扩展
-# 等系统解码器。LibRaw(LGPL-2.1/CDDL 双许可)源码放 thirdparty/LibRaw,静态
-# 编进 gaze —— 无 DLL、无分发决策。目录不存在(未下载)时跳过:gaze 照常编译,
-# RAW 按钮点击给"未编入解码器"的诚实文案。
-# 无外部依赖构建(不开 USE_JPEG/USE_ZLIB/USE_LCMS2):无损 JPEG 系 RAW
-# (CR2/NEF/ARW/RAF/ORF/DNG 无损变体等)全覆盖;JPEG 有损压缩与 deflate DNG
-# 后续按需补库。
-if(EXISTS "${CMAKE_SOURCE_DIR}/thirdparty/LibRaw/libraw/libraw.h")
-    # 0.21.x 源码全在 src/(internal/ 只有头文件),一个 GLOB 收齐
-    file(GLOB_RECURSE LIBRAW_SOURCES CONFIGURE_DEPENDS
-        "${CMAKE_SOURCE_DIR}/thirdparty/LibRaw/src/*.cpp")
-    add_library(rawdec STATIC ${LIBRAW_SOURCES})
-    target_include_directories(rawdec PUBLIC "${CMAKE_SOURCE_DIR}/thirdparty/LibRaw")
-    # dcraw 血统代码有类型双关,-fno-strict-aliasing 保优化下行为不漂
-    target_compile_options(rawdec PRIVATE -O2 -fno-strict-aliasing)
-    target_link_libraries(gaze PRIVATE rawdec)
-    target_compile_definitions(gaze PRIVATE HAS_RAWDEC=1)
-else()
-    message(STATUS "RAW 全解:thirdparty/LibRaw 不存在 → RAW 按钮显示未编入提示")
-endif()
-
-# ── LibRaw 源码编译(RAW 按需全解,#140)──
-# 全囊括铁令(2026-09-01):一切功能自带依赖,不默认用户装有 WIC Raw 图像扩展
-# 等系统解码器。LibRaw(LGPL-2.1/CDDL 双许可)源码放 thirdparty/LibRaw,静态
-# 编进 gaze —— 无 DLL、无分发决策。目录不存在(未下载)时跳过:gaze 照常编译,
-# RAW 按钮点击给"未编入解码器"的诚实文案。
-# 无外部依赖构建(不开 USE_JPEG/USE_ZLIB/USE_LCMS2):无损 JPEG 系 RAW
-# (CR2/NEF/ARW/RAF/ORF/DNG 无损变体等)全覆盖;JPEG 有损压缩与 deflate DNG
-# 后续按需补库。
-if(EXISTS "${CMAKE_SOURCE_DIR}/thirdparty/LibRaw/libraw/libraw.h")
-    # 0.21.x 源码全在 src/(internal/ 只有头文件),一个 GLOB 收齐
-    file(GLOB_RECURSE LIBRAW_SOURCES CONFIGURE_DEPENDS
-        "${CMAKE_SOURCE_DIR}/thirdparty/LibRaw/src/*.cpp")
-    add_library(rawdec STATIC ${LIBRAW_SOURCES})
-    target_include_directories(rawdec PUBLIC "${CMAKE_SOURCE_DIR}/thirdparty/LibRaw")
-    # dcraw 血统代码有类型双关,-fno-strict-aliasing 保优化下行为不漂
-    target_compile_options(rawdec PRIVATE -O2 -fno-strict-aliasing)
-    target_link_libraries(gaze PRIVATE rawdec)
-    target_compile_definitions(gaze PRIVATE HAS_RAWDEC=1)
-else()
-    message(STATUS "RAW 全解:thirdparty/LibRaw 不存在 → RAW 按钮显示未编入提示")
-endif()
-
-# ── 内置 jpegtran 部署(无损旋转/镜像,#113)──
-# 与 ffmpeg 同一套 vendor 规约:exe 旁 jpegtran/ 优先于 PATH。jpegtran.exe
-# 靠同目录 jpeg8.dll(libjpeg-turbo, IJG+BSD 许可文本同目录),必须整目录拷。
-if(EXISTS "${CMAKE_SOURCE_DIR}/vendor/jpegtran")
-    add_custom_command(TARGET gaze POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-                "${CMAKE_SOURCE_DIR}/vendor/jpegtran" "$<TARGET_FILE_DIR:gaze>/jpegtran"
-        COMMENT "同步内置 jpegtran vendor/jpegtran -> 构建目录 jpegtran/"
-        VERBATIM
-    )
-else()
-    message(STATUS "无损旋转:vendor/jpegtran 不存在 → 运行时回退 PATH/常见安装位置上的 jpegtran")
-endif()
-
-# ── 内置 ffmpeg 部署(视频缩略图,#112)──
-# 与 Ghostscript 同一套思路:exe 旁 ffmpeg/ 永远优先于 PATH,机器上装没装 ffmpeg
-# 不再决定缩略图长什么样。共享构建的 ffmpeg.exe 靠同目录的 av*.dll,必须整目录拷。
-# 但"把 ffmpeg.exe 随 gaze 分发出去"是许可决策(BtbN 同一版本有 LGPL 与 GPL 两种构建,
-# LGPL 那份已经带 dav1d,解码缩略图够用),2026-08-31 待用户裁决 ——
-# 所以这里只在 vendor/ffmpeg/ 真的存在时才拷:没裁决 = 目录不存在 = 不拷。
-if(EXISTS "${CMAKE_SOURCE_DIR}/vendor/ffmpeg")
-    add_custom_command(TARGET gaze POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-                "${CMAKE_SOURCE_DIR}/vendor/ffmpeg" "$<TARGET_FILE_DIR:gaze>/ffmpeg"
-        COMMENT "同步内置 ffmpeg vendor/ffmpeg -> 构建目录 ffmpeg/"
-        VERBATIM
-    )
-else()
-    message(STATUS "视频缩略图:vendor/ffmpeg 不存在(分发决策未定)→ 运行时回退 PATH 上的 ffmpeg")
-endif()
-
-# ── 内置 ffmpeg 部署(视频缩略图,#112)──
-# 与 Ghostscript 同一套思路:exe 旁 ffmpeg/ 永远优先于 PATH,机器上装没装 ffmpeg
-# 不再决定缩略图长什么样。共享构建的 ffmpeg.exe 靠同目录的 av*.dll,必须整目录拷。
-# 但"把 ffmpeg.exe 随 gaze 分发出去"是许可决策(BtbN 同一版本有 LGPL 与 GPL 两种构建,
-# LGPL 那份已经带 dav1d,解码缩略图够用),2026-08-31 待用户裁决 ——
-# 所以这里只在 vendor/ffmpeg/ 真的存在时才拷:没裁决 = 目录不存在 = 不拷。
-if(EXISTS "${CMAKE_SOURCE_DIR}/vendor/ffmpeg")
-    add_custom_command(TARGET gaze POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-                "${CMAKE_SOURCE_DIR}/vendor/ffmpeg" "$<TARGET_FILE_DIR:gaze>/ffmpeg"
-        COMMENT "同步内置 ffmpeg vendor/ffmpeg -> 构建目录 ffmpeg/"
-        VERBATIM
-    )
-else()
-    message(STATUS "视频缩略图:vendor/ffmpeg 不存在(分发决策未定)→ 运行时回退 PATH 上的 ffmpeg")
-endif()
-
-# ── Ghostscript 自动部署(PDF 预览)──
-# 用户 2026-08-31 明令:PDF 预览用随 gaze 分发的 Ghostscript,不去搜系统目录。
-# 必须整目录拷:gs\bin\gswin64c.exe 靠相对自身exe的 ../Resource 找 gs_init.ps,
-# 还要 gsdll64.dll 与 lib/ 里的 PDF 相关初始化文件 —— 只拷 exe 会直接报错。
-add_custom_command(TARGET gaze POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${CMAKE_SOURCE_DIR}/vendor/gs" "$<TARGET_FILE_DIR:gaze>/gs"
-    COMMENT "同步内置 Ghostscript vendor/gs -> 构建目录 gs/"
-    VERBATIM
-)
-
-# ── 内置 Ghostscript 部署(PDF 预览)──
-# 用户 2026-08-31 明令:PDF 预览用随 gaze 分发的 Ghostscript,而不是搜系统装没装。
-# 必须整目录拷:gs\bin\gswin64c.exe 靠"相对自身 exe 的 ../Resource"找 gs_init.ps,
-# 还要同目录 gsdll64.dll 与 lib/ 的初始化文件 —— 只拷 exe 会直接报错退出。
-add_custom_command(TARGET gaze POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${CMAKE_SOURCE_DIR}/vendor/gs" "$<TARGET_FILE_DIR:gaze>/gs"
-    COMMENT "同步内置 Ghostscript vendor/gs -> 构建目录 gs/"
-    VERBATIM
-)
-
-# ── 内置 ffmpeg 部署(视频缩略图,#112)──
-# 与 Ghostscript 同一套思路:exe 旁 ffmpeg/ 永远优先于 PATH,机器上装没装 ffmpeg
-# 不再决定缩略图长什么样。共享构建的 ffmpeg.exe 靠同目录的 av*.dll,必须整目录拷。
-# 但"把 ffmpeg.exe 随 gaze 分发出去"是许可决策(BtbN 同一版本有 LGPL 与 GPL 两种构建,
-# LGPL 那份已经带 dav1d,解码缩略图够用),2026-08-31 待用户裁决 ——
-# 所以这里只在 vendor/ffmpeg/ 真的存在时才拷:没裁决 = 目录不存在 = 不拷。
-if(EXISTS "${CMAKE_SOURCE_DIR}/vendor/ffmpeg")
-    add_custom_command(TARGET gaze POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-                "${CMAKE_SOURCE_DIR}/vendor/ffmpeg" "$<TARGET_FILE_DIR:gaze>/ffmpeg"
-        COMMENT "同步内置 ffmpeg vendor/ffmpeg -> 构建目录 ffmpeg/"
-        VERBATIM
-    )
-else()
-    message(STATUS "视频缩略图:vendor/ffmpeg 不存在(分发决策未定)→ 运行时回退 PATH 上的 ffmpeg")
-endif()
-
-# ── Ghostscript 自动部署(PDF 预览)──
-# 用户 2026-08-31 明令:PDF 预览用随 gaze 分发的 Ghostscript,不去搜系统目录。
-# 必须整目录拷:gs\bin\gswin64c.exe 靠相对自身exe的 ../Resource 找 gs_init.ps,
-# 还要 gsdll64.dll 与 lib/ 里的 PDF 相关初始化文件 —— 只拷 exe 会直接报错。
-add_custom_command(TARGET gaze POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${CMAKE_SOURCE_DIR}/vendor/gs" "$<TARGET_FILE_DIR:gaze>/gs"
-    COMMENT "同步内置 Ghostscript vendor/gs -> 构建目录 gs/"
-    VERBATIM
-)
-
-# ── 内置 ffmpeg 部署(视频缩略图,#112)──
-# 与 Ghostscript 同一套思路:exe 旁 ffmpeg/ 永远优先于 PATH,机器上装没装 ffmpeg
-# 不再决定缩略图长什么样。共享构建的 ffmpeg.exe 靠同目录的 av*.dll,必须整目录拷。
-# 但"把 ffmpeg.exe 随 gaze 分发出去"是许可决策(BtbN 同一版本有 LGPL 与 GPL 两种构建,
-# LGPL 那份已经带 dav1d,解码缩略图够用),2026-08-31 待用户裁决 ——
-# 所以这里只在 vendor/ffmpeg/ 真的存在时才拷:没裁决 = 目录不存在 = 不拷。
-if(EXISTS "${CMAKE_SOURCE_DIR}/vendor/ffmpeg")
     add_custom_command(TARGET Gaze POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
                 "${CMAKE_SOURCE_DIR}/vendor/ffmpeg" "$<TARGET_FILE_DIR:Gaze>/ffmpeg"
@@ -434,12 +207,9 @@ endif()
 # (CR2/NEF/ARW/RAF/ORF/DNG 无损变体等)全覆盖;JPEG 有损压缩与 deflate DNG
 # 后续按需补库。
 if(EXISTS "${CMAKE_SOURCE_DIR}/thirdparty/LibRaw/libraw/libraw.h")
+    # 0.21.x 源码全在 src/(internal/ 只有头文件),一个 GLOB 收齐
     file(GLOB_RECURSE LIBRAW_SOURCES CONFIGURE_DEPENDS
         "${CMAKE_SOURCE_DIR}/thirdparty/LibRaw/src/*.cpp")
-    list(APPEND LIBRAW_SOURCES
-        "${CMAKE_SOURCE_DIR}/thirdparty/LibRaw/internal/dcraw_common.cpp"
-        "${CMAKE_SOURCE_DIR}/thirdparty/LibRaw/internal/dcraw_fileio.cpp"
-        "${CMAKE_SOURCE_DIR}/thirdparty/LibRaw/internal/demosaic_packs.cpp")
     add_library(rawdec STATIC ${LIBRAW_SOURCES})
     target_include_directories(rawdec PUBLIC "${CMAKE_SOURCE_DIR}/thirdparty/LibRaw")
     # dcraw 血统代码有类型双关,-fno-strict-aliasing 保优化下行为不漂

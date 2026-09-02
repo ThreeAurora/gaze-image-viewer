@@ -9,8 +9,6 @@
 #include <QLineEdit>
 #include <QLabel>
 #include <QToolButton>
-#include <QLabel>
-#include <QToolButton>
 #include <vector>
 #include "fileentry.h"
 #include "sortheader.h"
@@ -28,9 +26,8 @@ enum FilterMode {
     FILTER_DOCUMENTS, FILTER_EXECUTABLES, FILTER_FOLDERS,
     FILTER_RED, FILTER_ORANGE, FILTER_YELLOW, FILTER_GREEN, FILTER_BLUE,
     FILTER_UNRED,                       // 非红色标记(红标三态按钮的第 3 态)
-    // #125:自定义扩展名集合筛选。追加在末尾而不是插在中间 ——
-    // Browser/filterMode 存的是这个枚举的**数值**,插中间会把红标等档位的存档
-    // 全部错位(用户重启后筛选悄悄变成别的)。
+    // #125 自定义扩展名集合筛选。**追加在末尾**,不插在中间:Browser/filterMode
+    // 存的是枚举数值,插中间会让用户已存的"红标/文件夹"等档位错位。
     FILTER_CUSTOM,
 };
 
@@ -53,13 +50,6 @@ enum NameOrder {
     NameNormal,        // 系统排序规则(区域设置 collator,不启用数字模式)
 };
 
-// 文件名排序方式(排序菜单:数字顺序/字母顺序/正常顺序)
-enum NameOrder {
-    NameNatural = 0,   // 数字感知:img2 < img10(资源管理器风格,默认)
-    NameAlpha,         // 纯字母序:img10 < img2
-    NameNormal,        // 系统排序规则(区域设置 collator,不启用数字模式)
-};
-
 class FileGrid : public QScrollArea {
     Q_OBJECT
 public:
@@ -69,22 +59,13 @@ public:
     void refreshCurrentDir();    // 重新加载当前目录(文件操作后)
     // 删除后重载:选中被删项的下一项(末项则上一项),对齐 XnView
     void reloadAfterDelete(const QStringList& deleted);
-    // 删除后重载:选中被删项的下一项(末项则上一项),对齐 XnView
-    void reloadAfterDelete(const QStringList& deleted);
-    // 删除后重载:选中被删项的下一项(末项则上一项),对齐 XnView
-    void reloadAfterDelete(const QStringList& deleted);
-    // 删除后重载:选中被删项的下一项(末项则上一项),对齐 XnView
-    void reloadAfterDelete(const QStringList& deleted);
     void setCardSize(int size);
     void setFixedCols(int n);    // n=0 自动;1-16 手动列数(缩放时缩略图贴边缩放但列数不变)
     int  fixedCols() const { return m_fixedCols; }
     void setViewMode(int mode);  // ViewMode
     int  viewMode() const { return m_viewMode; }
     int  cardW() const;       // 卡片宽度(按查看方式;#107 缩略图尺寸菜单重勾要用)
-    int  cardW() const;       // 卡片宽度(按查看方式;#107 缩略图尺寸菜单重勾要用)
     void sort(int column, bool ascending);
-    void setNameOrder(int order);   // NameOrder;持久化到 Browser/nameOrder 并重排
-    int  nameOrder() const { return m_nameOrder; }
     void setNameOrder(int order);   // NameOrder;持久化到 Browser/nameOrder 并重排
     int  nameOrder() const { return m_nameOrder; }
     void setFilterMode(int mode);            // FilterMode
@@ -93,16 +74,10 @@ public:
     // 真源在这里,FolderTree 只持有镜像用于画 ✓。持久化 FileList/showSubFolders。
     void setShowSubFolders(bool on);
     bool showSubFolders() const { return m_showSubFolders; }
-    // 文件夹树右键"显示子文件夹中的文件":目录行仍只列本层,文件向下递归展开。
-    // 真源在这里,FolderTree 只持有镜像用于画 ✓。持久化 FileList/showSubFolders。
-    void setShowSubFolders(bool on);
-    bool showSubFolders() const { return m_showSubFolders; }
     void navigateSelection(int delta);
     // #107 内联搜索条:Ctrl+F 落在文件列表上(不弹窗;输入即搜,Enter/Shift+Enter 翻页)
     void startFind();
     void selectIndex(int idx, bool scrollToVisible = true);  // 滚动联动时传 false 防反馈回路
-    void selftestFastScroll();   // 临时诊断:进程内模拟快速拖动,查完删
-    void selftestFastScroll();   // 临时诊断:进程内模拟快速拖动,查完删
     void scrollToRow(int idx);  // 首排贴顶/末排贴底/半截贴边/不可见就近贴边(不居中)/可见不动
     bool selectByPath(const QString& path);  // 按路径选中(最近文件定位用)
     // 拖放(#81):追加选中(不清空已有选中),用于一次拖进多个文件时全选
@@ -114,33 +89,13 @@ public:
     // 选择扩展(编辑菜单)
     void selectAllEntries();
     void selectInvert();
-    enum SelectKind { KindMarked, KindFiles, KindDirs, KindImages, KindVideos, KindAudio };
+    enum SelectKind { KindFiles, KindDirs, KindImages, KindVideos, KindAudio };
     void selectByKind(int kind);
-    void clearAllMarks();   // 清空 ★ 标记集(编辑菜单/Shift+M)
-    void toggleMarkOnSelection();   // ★ 标记:切换选中项(多选时以当前项为准整批加/去)
-    void clearAllMarks();   // 清空 ★ 标记集(编辑菜单/Shift+M)
-    void toggleMarkOnSelection();   // ★ 标记:切换选中项(多选时以当前项为准整批加/去)
-    void clearAllMarks();   // 清空 ★ 标记集(编辑菜单/Shift+M)
-    void toggleMarkOnSelection();   // ★ 标记:切换选中项(多选时以当前项为准整批加/去)
-    void clearAllMarks();   // 清空 ★ 标记集(编辑菜单/Shift+M)
-    void toggleMarkOnSelection();   // ★ 标记:切换选中项(多选时以当前项为准整批加/去)
 
     // 颜色标记:对当前选中(单选时该项;多选时全部)设置
     void applyColorLabelToSelection(int color);
     int  firstSelectedIndex() const;
 
-    QString pathOf(int index) const {   // 按序号取当前列表条目路径(越界返回空)
-        return (index >= 0 && index < static_cast<int>(m_entries.size()))
-            ? m_entries[index].path : QString();
-    }
-    QString pathOf(int index) const {   // 按序号取当前列表条目路径(越界返回空)
-        return (index >= 0 && index < static_cast<int>(m_entries.size()))
-            ? m_entries[index].path : QString();
-    }
-    QString pathOf(int index) const {   // 按序号取当前列表条目路径(越界返回空)
-        return (index >= 0 && index < static_cast<int>(m_entries.size()))
-            ? m_entries[index].path : QString();
-    }
     QString pathOf(int index) const {   // 按序号取当前列表条目路径(越界返回空)
         return (index >= 0 && index < static_cast<int>(m_entries.size()))
             ? m_entries[index].path : QString();
@@ -164,12 +119,10 @@ public:
     // FileOps/renameDialog=关:在卡片上就地改名(F2 / 右键"重命名"入口)
     void beginInlineRename();
     void endInlineRename(bool commit);
-    int  colorLabelOf(const QString& path) const;   // 标题模板 {颜色标签}
 
 signals:
     void fileCountChanged();
     void selectionChanged(const QString& currentPath);
-    void filterModeChanged(int mode);
     void filterModeChanged(int mode);
 
 protected:
@@ -179,42 +132,39 @@ protected:
     // 焦点变化必须重绘:多选落点的焦点线按 hasFocus() 画,不重绘就会留过期指示器
     void focusInEvent(QFocusEvent* event) override;
     void focusOutEvent(QFocusEvent* event) override;
-    // 焦点变化必须重绘:多选落点的焦点线按 hasFocus() 画,不重绘就会留过期指示器
-    void focusInEvent(QFocusEvent* event) override;
-    void focusOutEvent(QFocusEvent* event) override;
-    // 焦点变化必须重绘:多选落点的焦点线按 hasFocus() 画,不重绘就会留过期指示器
-    void focusInEvent(QFocusEvent* event) override;
-    void focusOutEvent(QFocusEvent* event) override;
-    // 焦点变化必须重绘:多选落点的焦点线按 hasFocus() 画,不重绘就会留过期指示器
-    void focusInEvent(QFocusEvent* event) override;
-    void focusOutEvent(QFocusEvent* event) override;
     bool eventFilter(QObject* obj, QEvent* event) override;
+
+    friend class FileCanvas;
 
 private:
     // 布局
     void updateLayout();
-    void layoutCards();
-    void layoutRows();        // 列表/详细信息:单列全宽行
-    void layoutWaterfall();   // 瀑布流:按宽高比放最短列
+    void rebuildGeometry();   // 全量算好每张卡片的矩形(仅结构变化时,滚动不再碰它)
+    void ensureGeometry();    // m_geomDirty 时补一次重建(绘制/命中前兜底)
+    bool m_geomDirty = false;
     void applyFilter();     // 按 m_filterMode 从 m_allEntries 生成 m_entries
     int  colsForWidth(int w) const;
     int  cardH(int idx) const;// 卡片高度(瀑布流按宽高比)
 
-    // 卡片管理
-    FileCard* acquireCard();
-    void      recycleCards();
-    void      recycleInvisible(const QSet<int>& needed);
-    QWidget*  m_canvas = nullptr;
+    // 自绘:整个列表只有 FileCanvas 一个控件
+    void  paintCanvas(QPainter& p, const QRect& clip);
+    void  paintCard(QPainter& p, int idx, const QRect& rect);
+    void  refreshView();                    // 数据/外观变化后重绘(取代"重排卡片")
+    int   indexAt(const QPoint& canvasPos);         // 画布坐标 → 条目序号;-1=空白(命中前补建几何)
+    QRect cardRect(int idx) const;
+    QString tipFor(int idx) const;          // 悬停提示(按需生成,不再逐卡片预建)
 
-    // 事件处理
-    void onCardClicked(FileCard* card);
-    void onCardDoubleClicked(FileCard* card);
-    void onCardMiddleClicked(FileCard* card);
-    void onCardMiddleClicked(FileCard* card);
+    // 画布事件转发
+    void onCanvasPressStart(const QPoint& pos);   // 拖出起点(#81)
+    bool maybeStartDrag(const QPoint& pos);       // 移动够距离才起拖;已起拖返回 true
+    void onCanvasRelease(int idx);
+    void onCanvasDblClick(int idx);
+    void onCanvasMiddle(int idx);
+    void onCanvasMenu(int idx, const QPoint& globalPos);
+    void setHovered(int idx);
     void onThumbReady(const QString& filePath, const QImage& img);
-    void enqueueVisibleThumbs();  // 滚动停止后批量补齐可见卡片缩略图(防抖配套)
-    void beginInlineRename();     // FileOps/renameDialog=关:就地改名
-    void endInlineRename(bool commit);
+    void requestVisibleThumbs();  // 可见行缩略图入队(滚动停止/尺寸稳定后)
+    void requestAllThumbs();      // Thumbs/wholeFolder:整目录缩略图入队(不限视口)
 
     // 键盘操作
     void deleteSelection();   // 删除整个选中集(无选中时删当前项),与右键菜单同一作用域
@@ -237,16 +187,12 @@ private:
     int    m_cardSize     = 160;
     int    m_cardSizeAuto = 160;   // 自动模式的卡片尺寸(slider 值;固定列数时按宽度重算)
     int    m_lastCustomW  = 96;    // 上次看到的 Appearance/customThumbW(仅值变化才改尺寸)
-    int    m_lastCustomW  = 96;    // 上次看到的 Appearance/customThumbW(仅值变化才改尺寸)
     int    m_cols         = 0;
     int    m_fixedCols    = 0;
-    int    m_viewMode     = VIEW_THUMBS_NAME;
-    int    m_waterfallColW = 220;   // 瀑布流列宽
     int    m_viewMode     = VM_THUMBS_NAME;
     int    m_waterfallColW = 220;   // 瀑布流列宽
     int    m_sortCol      = SORT_NAME;   // 构造函数会按 Browser/startupSort 重设(#150)
     bool   m_sortAsc      = true;
-    int    m_nameOrder    = NameNatural;
     int    m_nameOrder    = NameNatural;
     int    m_filterMode   = FILTER_ALL;
     QHash<QString, int> m_colorLabels;  // path → 颜色标记(目录加载时批量读入)
@@ -255,11 +201,6 @@ private:
     bool m_mixSort     = false;   // 混合文件/文件夹排序(关=目录恒在最前)
     bool m_folderAlpha = true;    // 文件夹总是按字母序排列
     bool m_showSubFolders = false;// FileList/showSubFolders 递归展开子文件夹文件
-    bool m_showSubFolders = false;// FileList/showSubFolders 递归展开子文件夹文件
-    // 文件列表规则(FileList/*;设置改动时刷新,逐条目路径不再读 ini)
-    bool m_showHidden  = true;
-    bool m_mixSort     = false;   // 混合文件/文件夹排序(关=目录恒在最前)
-    bool m_folderAlpha = true;    // 文件夹总是按字母序排列
 
     // 选择状态
     QSet<int>            m_selected;
@@ -279,23 +220,6 @@ private:
     void findRefresh();                // 重算命中数/序号/按钮置灰(轻量,O(n) 只在交互时跑)
     void findStep(int delta);          // +1 下一个 / -1 上一个;到边界不动(按钮已置灰)
     void closeFind();                  // Esc/✕:收条,焦点还给列表
-
-    // 内联搜索条(#107):叠在视口右上角,不占布局;命中数与按钮置灰每次按键/翻页重算
-    QWidget*     m_findBar  = nullptr;
-    QLineEdit*   m_findEdit = nullptr;
-    QLabel*      m_findInfo = nullptr;
-    QToolButton* m_findPrev = nullptr;
-    QToolButton* m_findNext = nullptr;
-    int          m_findHitCount = 0;   // 当前查询的命中总数
-    int          m_findOrdinal  = -1;  // 当前选中项是第几个命中(0 基;-1=当前项不命中)
-    void buildFindBar();
-    void placeFindBar();               // 视口尺寸变化后重新贴角
-    void findRefresh();                // 重算命中数/序号/按钮置灰(轻量,O(n) 只在交互时跑)
-    void findStep(int delta);          // +1 下一个 / -1 上一个;到边界不动(按钮已置灰)
-    void closeFind();                  // Esc/✕:收条,焦点还给列表
-    QString              m_preferPath;  // 一次性:本次 loadDirectory 完成后要选中的路径
-    QString              m_preferPath;  // 一次性:本次 loadDirectory 完成后要选中的路径
-    QString              m_preferPath;  // 一次性:本次 loadDirectory 完成后要选中的路径
 
     // 画布(唯一子控件)+ 几何缓存:结构变化时一次算完,滚动/绘制只查表
     FileCanvas* m_canvas = nullptr;

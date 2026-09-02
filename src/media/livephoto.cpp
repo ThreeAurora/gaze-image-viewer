@@ -10,7 +10,8 @@
 #include <QTemporaryFile>
 #include <QProcess>
 #include <QElapsedTimer>
-#include <logger.h>
+#include "logger.h"
+#include "toolpath.h"
 #include <set>
 
 namespace LivePhoto {

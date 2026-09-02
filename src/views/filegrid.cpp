@@ -8,19 +8,16 @@
 #include "shelldelete.h"
 #include "clipboardops.h"
 #include "validname.h"
-#include "validname.h"
 #include "exifdate.h"
 #include "namesort.h"
 #include "perflog.h"
-#include "logger.h"
 #include "logger.h"
 
 #include <set>
 #include <algorithm>
 #include <numeric>
-#include <algorithm>
-#include <numeric>
 #include <memory>
+#include <array>
 
 #include <QDrag>
 #include <QMimeData>
@@ -38,7 +35,6 @@
 #include <QUrl>
 #include <QFile>
 #include <QCoreApplication>
-#include <QThreadPool>
 #include <QThreadPool>
 #include <QMessageBox>
 #include <QInputDialog>
@@ -62,24 +58,6 @@ FileGrid::FileGrid(QWidget* parent) : QScrollArea(parent) {
     // 与 XnView 一致：即使内容少于一页也保留竖向滚动条，无法拖动时显示为整条长拇指
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
     setWidgetResizable(false);
-
-    // 启动默认排序(#150,设置→文件列表):0=文件名(升,默认) 1=修改日期(降)
-    // 2=创建日期(降) 3=EXIF 拍摄日期(降) 4=类型 5=大小(降) 6=扩展名 7=路径
-    // 8=颜色标签 9=记住上次(读 lastSortCol/lastSortAsc,由 sort() 随时落盘)
-    switch (AppSettings::instance().get("Browser/startupSort", 0).toInt()) {
-    case 1:  m_sortCol = SORT_MDATE;      m_sortAsc = false; break;
-    case 2:  m_sortCol = SORT_CDATE;      m_sortAsc = false; break;
-    case 3:  m_sortCol = SORT_EXIF;       m_sortAsc = false; break;
-    case 4:  m_sortCol = SORT_TYPE;       m_sortAsc = true;  break;
-    case 5:  m_sortCol = SORT_SIZE;       m_sortAsc = false; break;
-    case 6:  m_sortCol = SORT_EXT;        m_sortAsc = true;  break;
-    case 7:  m_sortCol = SORT_PATH;       m_sortAsc = true;  break;
-    case 8:  m_sortCol = SORT_COLORLABEL; m_sortAsc = true;  break;
-    case 9:  m_sortCol = AppSettings::instance().get("Browser/lastSortCol", SORT_NAME).toInt();
-             m_sortAsc = AppSettings::instance().get("Browser/lastSortAsc", true).toBool();
-             break;
-    default: m_sortCol = SORT_NAME;       m_sortAsc = true;  break;
-    }
 
     // 启动默认排序(#150,设置→文件列表):0=文件名(升,默认) 1=修改日期(降)
     // 2=创建日期(降) 3=EXIF 拍摄日期(降) 4=类型 5=大小(降) 6=扩展名 7=路径
@@ -150,37 +128,95 @@ FileGrid::FileGrid(QWidget* parent) : QScrollArea(parent) {
     m_nameOrder = qBound(0, AppSettings::instance().get("Browser/nameOrder", int(NameNatural)).toInt(), int(NameNormal));
     // #106:筛选模式同样落盘恢复(此前切"视频"重启回"全部")
     m_filterMode = qBound(int(FILTER_ALL), AppSettings::instance().get("Browser/filterMode", int(FILTER_ALL)).toInt(), int(FILTER_CUSTOM));
-    // #106:筛选模式同样落盘恢复(此前切"视频"重启回"全部")
-    m_filterMode = qBound(int(FILTER_ALL), AppSettings::instance().get("Browser/filterMode", int(FILTER_ALL)).toInt(), int(FILTER_CUSTOM));
     m_spacing   = qBound(0, AppSettings::instance().get("Appearance/spacing", 6).toInt(), 40);
+    m_showHidden  = AppSettings::instance().get("FileList/showHidden", true).toBool();
+    m_mixSort     = AppSettings::instance().get("FileList/mixSort", false).toBool();
+    m_folderAlpha = AppSettings::instance().get("FileList/folderAlphabetical", true).toBool();
+    m_showSubFolders = AppSettings::instance().get("FileList/showSubFolders", false).toBool();
+    // Appearance/customThumbH:0=与宽同高(默认),>0=按设置值定缩略图框高
+    m_thumbH      = qBound(0, AppSettings::instance()
+                        .get("Appearance/customThumbH", 0).toInt(), 512);
+    // Browser/thumbScrollPreview:滚动过程中要不要就出缩略图
+    m_scrollPreview = AppSettings::instance()
+                        .get("Browser/thumbScrollPreview", true).toBool();
+    m_lastByExt = AppSettings::instance().get("FileList/recognizeByExt", true).toBool();
+    m_lastScanHeader = AppSettings::instance().get("FileList/scanHeader", 0).toInt();
+    applyAppearance();   // 逐条目绘制路径只读缓存,这里先灌一次
+    // 自定义缩略图宽度:启动即生效(原先只记初值不应用,于是设置页/自定义对话框
+    // 里存的宽度要等下一次任意设置变更才落地,启动时总是回落到硬编码 160)。
+    // 构造期没有 viewport,不能走 setCardSize(它会 updateLayout),直接灌字段
+    m_lastCustomW = qBound(THUMB_W_MIN,
+        AppSettings::instance().get("Appearance/customThumbW", 96).toInt(), THUMB_W_MAX);
+    m_cardSize = m_cardSizeAuto = m_lastCustomW;
 
-    // 设置活应用:标签颜色(开关/配色)+ 外观间距 + 文件列表过滤/排序规则
-    // (此前 changed() 无订阅者,所有设置都要重启才生效)
+    // 设置活应用:标签颜色 + 外观间距 + 文件列表规则在设置页改动后立即生效
+    // (此前只重涂标签底色,其余设置都要重启)
     connect(&AppSettings::instance(), &AppSettings::changed, this, [this]() {
         LabelColors::reload();
-        const int sp = qBound(0,
-            AppSettings::instance().get("Appearance/spacing", 6).toInt(), 40);
+        applyAppearance();
+        AppSettings& st = AppSettings::instance();
+        const int sp = qBound(0, st.get("Appearance/spacing", 6).toInt(), 40);
         const bool spacingChanged = (sp != m_spacing);
         m_spacing = sp;
-        const bool listChanged =
-               m_showHidden != AppSettings::instance().get("FileList/showHidden", true).toBool()
-            || m_mixSort    != AppSettings::instance().get("FileList/mixSort", false).toBool()
-            || m_folderAlpha != AppSettings::instance().get("FileList/folderAlphabetical", true).toBool();
-        m_showHidden  = AppSettings::instance().get("FileList/showHidden", true).toBool();
-        m_mixSort     = AppSettings::instance().get("FileList/mixSort", false).toBool();
-        m_folderAlpha = AppSettings::instance().get("FileList/folderAlphabetical", true).toBool();
-    m_showSubFolders = AppSettings::instance().get("FileList/showSubFolders", false).toBool();
-    m_showSubFolders = AppSettings::instance().get("FileList/showSubFolders", false).toBool();
+        const bool hidden = st.get("FileList/showHidden", true).toBool();
+        const bool mix    = st.get("FileList/mixSort", false).toBool();
+        const bool alpha  = st.get("FileList/folderAlphabetical", true).toBool();
+        const bool listChanged = (hidden != m_showHidden) || (mix != m_mixSort)
+                              || (alpha != m_folderAlpha);
+        m_showHidden = hidden; m_mixSort = mix; m_folderAlpha = alpha;
+        // 外观页"自定义缩略图尺寸 - 宽":值变了才应用(setCardSize 也写这个键,
+        // 回到这里时 cw == m_cardSize,不会二次重排)
+        const int cw = qBound(THUMB_W_MIN,
+                              st.get("Appearance/customThumbW", 96).toInt(), THUMB_W_MAX);
+        if (cw != m_lastCustomW) {
+            m_lastCustomW = cw;
+            if (cw != m_cardSize) setCardSize(cw);
+        }
+        // 外观页"自定义缩略图尺寸 - 高":改了才重排(0=与宽同高)。
+        // 注意不能提前 return —— 用户一次可能连改多项,后面的键也都要应用
+        bool needRescan = false;
+        const int ch = qBound(0, st.get("Appearance/customThumbH", 0).toInt(), 512);
+        if (ch != m_thumbH) {
+            m_thumbH = ch;
+            relayoutNow();
+            requestVisibleThumbs();
+        }
+        // Browser/thumbScrollPreview:改的是滚动补图时机,重设合批间隔即可
+        const bool sp2 = st.get("Browser/thumbScrollPreview", true).toBool();
+        if (sp2 != m_scrollPreview) {
+            m_scrollPreview = sp2;
+            m_scrollCoalesce.setInterval(sp2 ? 0 : 120);
+        }
+        // FileList/recognizeByExt 或 scanHeader 变了 → 按新判定重扫当前目录
+        const bool byExt = st.get("FileList/recognizeByExt", true).toBool();
+        const int  hdr   = st.get("FileList/scanHeader", 0).toInt();
+        if (byExt != m_lastByExt || hdr != m_lastScanHeader) {
+            m_lastByExt = byExt; m_lastScanHeader = hdr;
+            needRescan = true;
+        }
+        if (needRescan) {
+            refreshCurrentDir();
+            return;
+        }
         if (listChanged) {
             applyFilter();
             sort(m_sortCol, m_sortAsc);
-            updateLayout();
         } else if (spacingChanged) {
             updateLayout();
         }
-        recycleCards();          // 卡片外观(边框/对齐/评级圈)重建
-        layoutCards();
+        refreshView();   // 外观(边框粗细/对齐/颜色标记圈)变化只影响绘制
     });
+}
+
+// 外观缓存刷入(绘制路径逐项读取,禁在逐条目路径读 ini)
+void FileGrid::applyAppearance() {
+    AppSettings& st = AppSettings::instance();
+    m_border     = qBound(0, st.get("Appearance/borderSize", 0).toInt(), 10);
+    m_imageAlign = qBound(0, st.get("Appearance/imageAlign", 1).toInt(), 2);
+    m_labelAlign = qBound(0, st.get("Appearance/labelAlign", 1).toInt(), 2);
+    m_labelGap   = st.get("Appearance/labelSpacing", true).toBool() ? 6 : 0;
+    m_showRating = st.get("Browser/showRating", true).toBool();
+    m_sizeBytes  = st.get("FileList/sizeInBytes", false).toBool();
 }
 
 // 设置改动后的重排:重算列宽 + 重算几何 + 重绘
@@ -207,398 +243,8 @@ QString FileGrid::neighborOf(const QString& path, int delta) const {
     return {};
 }
 
-// ═══════════════════════════════════════════
-// 内联搜索条(#107):Ctrl+F 在文件列表上落一个搜索框,不弹窗。
-// 树右键的"搜索..."(递归子目录、可边搜边看)保持弹窗不动,两者定位不同。
-// 匹配 = 文件名不区分大小写包含;到边界/无结果时对应按钮变灰(不回绕)。
-// ═══════════════════════════════════════════
-
-// 标准图标在深色底上是黑线,统一染成白色轮廓;QIcon 的 Disabled 模式
-// 会从这份 pixmap 自动生成置灰版本,按钮 disable 即"变灰"
-static QIcon whiteStdIcon(QStyle* st, QStyle::StandardPixmap sp) {
-    const QPixmap pm = st->standardIcon(sp).pixmap(20, 20);
-    QImage img = pm.toImage().convertToFormat(QImage::Format_ARGB32);
-    for (int y = 0; y < img.height(); ++y) {
-        auto* line = reinterpret_cast<QRgb*>(img.scanLine(y));
-        for (int x = 0; x < img.width(); ++x) {
-            const int a = qAlpha(line[x]);
-            if (a) line[x] = qRgba(255, 255, 255, a);
-        }
-    }
-    return QIcon(QPixmap::fromImage(img));
-}
-
-void FileGrid::buildFindBar() {
-    m_findBar = new QWidget(viewport());
-    m_findBar->setObjectName("findBar");
-    m_findBar->setStyleSheet(QString::fromUtf8(
-        "QWidget#findBar{background:%1;border:1px solid %2;border-radius:4px;}"
-        "QLineEdit{background:%3;color:%4;border:1px solid %2;"
-        "border-radius:3px;padding:1px 6px;selection-background-color:%5;}"
-        "QToolButton{background:transparent;border:none;border-radius:3px;}"
-        "QToolButton:hover{background:%6;}"
-        "QToolButton:pressed{background:%2;}"
-        "QToolButton:disabled{background:transparent;}")
-        .arg(C_TOOLBAR, C_SEPARATOR, C_CONTENT, C_TEXT, C_ACCENT, C_CARD_HOVER));
-    auto* lay = new QHBoxLayout(m_findBar);
-    lay->setContentsMargins(6, 4, 6, 4);
-    lay->setSpacing(4);
-
-    m_findEdit = new QLineEdit(m_findBar);
-    m_findEdit->setPlaceholderText(QString::fromUtf8("查找文件名..."));
-    m_findEdit->setClearButtonEnabled(true);
-    m_findEdit->setFixedSize(180, 24);
-    m_findEdit->installEventFilter(this);   // Enter/Shift+Enter/Up/Down/Esc
-    // 输入即搜:当前项仍命中就原地不动,否则跳到落点之后(无落点则从头)的第一个命中
-    connect(m_findEdit, &QLineEdit::textChanged, this, [this](const QString&) {
-        const QString q = m_findEdit->text().trimmed();
-        const int n = static_cast<int>(m_entries.size());
-        const int cur = m_lastClicked;
-        if (!q.isEmpty() && !(cur >= 0 && cur < n
-                && m_entries[cur].name.contains(q, Qt::CaseInsensitive))) {
-            int start = (cur >= 0 && cur < n) ? cur : -1;
-            for (int k = 1; k <= n; ++k) {
-                const int i = start + k;
-                if (i >= n) break;
-                if (m_entries[i].name.contains(q, Qt::CaseInsensitive)) { selectIndex(i); break; }
-            }
-        }
-        findRefresh();
-    });
-    lay->addWidget(m_findEdit);
-
-    m_findInfo = new QLabel(m_findBar);
-    m_findInfo->setStyleSheet(QString::fromUtf8(
-        "color:%1;font-size:12px;background:transparent;border:none;")
-        .arg(C_TEXT_SUB));
-    m_findInfo->setAlignment(Qt::AlignCenter);
-    m_findInfo->setMinimumWidth(52);
-    lay->addWidget(m_findInfo);
-
-    m_findPrev = new QToolButton(m_findBar);
-    m_findPrev->setIcon(whiteStdIcon(style(), QStyle::SP_ArrowUp));
-    m_findPrev->setToolTip(QString::fromUtf8("上一个(Shift+Enter)"));
-    m_findPrev->setFixedSize(24, 24);
-    connect(m_findPrev, &QToolButton::clicked, this, [this]() { findStep(-1); });
-    lay->addWidget(m_findPrev);
-
-    m_findNext = new QToolButton(m_findBar);
-    m_findNext->setIcon(whiteStdIcon(style(), QStyle::SP_ArrowDown));
-    m_findNext->setToolTip(QString::fromUtf8("下一个(Enter)"));
-    m_findNext->setFixedSize(24, 24);
-    connect(m_findNext, &QToolButton::clicked, this, [this]() { findStep(1); });
-    lay->addWidget(m_findNext);
-
-    auto* btnClose = new QToolButton(m_findBar);
-    btnClose->setIcon(whiteStdIcon(style(), QStyle::SP_TitleBarCloseButton));
-    btnClose->setToolTip(QString::fromUtf8("关闭(Esc)"));
-    btnClose->setFixedSize(24, 24);
-    connect(btnClose, &QToolButton::clicked, this, [this]() { closeFind(); });
-    lay->addWidget(btnClose);
-}
-
-void FileGrid::startFind() {
-    if (!m_findBar) buildFindBar();
-    placeFindBar();
-    m_findBar->show();
-    m_findBar->raise();
-    m_findEdit->setFocus(Qt::OtherFocusReason);
-    m_findEdit->selectAll();
-    findRefresh();
-}
-
-void FileGrid::closeFind() {
-    if (m_findBar) m_findBar->hide();
-    m_canvas->setFocus(Qt::OtherFocusReason);
-}
-
-void FileGrid::placeFindBar() {
-    if (!m_findBar) return;
-    const QSize sz = m_findBar->sizeHint();
-    m_findBar->resize(sz);
-    m_findBar->move(viewport()->width() - sz.width() - 12, 12);
-}
-
-// 命中数/当前序号/按钮置灰,一次 O(n) 扫完。当前项 = m_lastClicked:
-// 它本身命中 → 显示 第k/N;不命中 → 0/N 且"下一个"跳到它之后的第一个命中
-void FileGrid::findRefresh() {
-    if (!m_findBar || !m_findBar->isVisible()) return;
-    const QString q = m_findEdit->text().trimmed();
-    const int cur = (m_lastClicked >= 0 && m_lastClicked < static_cast<int>(m_entries.size()))
-                        ? m_lastClicked : -1;
-    m_findHitCount = 0;
-    m_findOrdinal  = -1;
-    bool before = false, after = false;
-    if (!q.isEmpty()) {
-        for (int i = 0; i < static_cast<int>(m_entries.size()); ++i) {
-            if (!m_entries[i].name.contains(q, Qt::CaseInsensitive)) continue;
-            if (i == cur) m_findOrdinal = m_findHitCount;
-            if (cur < 0 || i < cur) before = true;
-            if (cur < 0 || i > cur) after  = true;
-            ++m_findHitCount;
-        }
-    }
-    m_findInfo->setText(m_findHitCount == 0
-        ? QString::fromUtf8("无匹配")
-        : QString("%1/%2").arg(m_findOrdinal >= 0 ? m_findOrdinal + 1 : 0).arg(m_findHitCount));
-    m_findPrev->setEnabled(before);
-    m_findNext->setEnabled(after);
-}
-
-void FileGrid::findStep(int delta) {
-    if (!m_findBar || !m_findBar->isVisible()) return;
-    const QString q = m_findEdit->text().trimmed();
-    if (q.isEmpty() || m_entries.empty()) return;
-    const int n = static_cast<int>(m_entries.size());
-    int start = m_lastClicked;
-    if (start < 0 || start >= n) start = delta > 0 ? -1 : n;   // 无落点:从头/从尾扫
-    for (int k = 1; k <= n; ++k) {
-        const int i = start + delta * k;
-        if (i < 0 || i >= n) break;    // 到边界:不回绕(置灰按钮已表达"没有更多")
-        if (m_entries[i].name.contains(q, Qt::CaseInsensitive)) {
-            selectIndex(i);
-            findRefresh();
-            return;
-        }
-    }
-}
-
-// ═══════════════════════════════════════════
-// 内联搜索条(#107):Ctrl+F 在文件列表上落一个搜索框,不弹窗。
-// 树右键的"搜索..."(递归子目录、可边搜边看)保持弹窗不动,两者定位不同。
-// 匹配 = 文件名不区分大小写包含;到边界/无结果时对应按钮变灰(不回绕)。
-// ═══════════════════════════════════════════
-
-// 标准图标在深色底上是黑线,统一染成白色轮廓;QIcon 的 Disabled 模式
-// 会从这份 pixmap 自动生成置灰版本,按钮 disable 即"变灰"
-static QIcon whiteStdIcon(QStyle* st, QStyle::StandardPixmap sp) {
-    const QPixmap pm = st->standardIcon(sp).pixmap(20, 20);
-    QImage img = pm.toImage().convertToFormat(QImage::Format_ARGB32);
-    for (int y = 0; y < img.height(); ++y) {
-        auto* line = reinterpret_cast<QRgb*>(img.scanLine(y));
-        for (int x = 0; x < img.width(); ++x) {
-            const int a = qAlpha(line[x]);
-            if (a) line[x] = qRgba(255, 255, 255, a);
-        }
-    }
-    return QIcon(QPixmap::fromImage(img));
-}
-
-void FileGrid::buildFindBar() {
-    m_findBar = new QWidget(viewport());
-    m_findBar->setObjectName("findBar");
-    m_findBar->setStyleSheet(QString::fromUtf8(
-        "QWidget#findBar{background:%1;border:1px solid %2;border-radius:4px;}"
-        "QLineEdit{background:%3;color:%4;border:1px solid %2;"
-        "border-radius:3px;padding:1px 6px;selection-background-color:%5;}"
-        "QToolButton{background:transparent;border:none;border-radius:3px;}"
-        "QToolButton:hover{background:%6;}"
-        "QToolButton:pressed{background:%2;}"
-        "QToolButton:disabled{background:transparent;}")
-        .arg(C_TOOLBAR, C_SEPARATOR, C_CONTENT, C_TEXT, C_ACCENT, C_CARD_HOVER));
-    auto* lay = new QHBoxLayout(m_findBar);
-    lay->setContentsMargins(6, 4, 6, 4);
-    lay->setSpacing(4);
-
-    m_findEdit = new QLineEdit(m_findBar);
-    m_findEdit->setPlaceholderText(QString::fromUtf8("查找文件名..."));
-    m_findEdit->setClearButtonEnabled(true);
-    m_findEdit->setFixedSize(180, 24);
-    m_findEdit->installEventFilter(this);   // Enter/Shift+Enter/Up/Down/Esc
-    // 输入即搜:当前项仍命中就原地不动,否则跳到落点之后(无落点则从头)的第一个命中
-    connect(m_findEdit, &QLineEdit::textChanged, this, [this](const QString&) {
-        const QString q = m_findEdit->text().trimmed();
-        const int n = static_cast<int>(m_entries.size());
-        const int cur = m_lastClicked;
-        if (!q.isEmpty() && !(cur >= 0 && cur < n
-                && m_entries[cur].name.contains(q, Qt::CaseInsensitive))) {
-            int start = (cur >= 0 && cur < n) ? cur : -1;
-            for (int k = 1; k <= n; ++k) {
-                const int i = start + k;
-                if (i >= n) break;
-                if (m_entries[i].name.contains(q, Qt::CaseInsensitive)) { selectIndex(i); break; }
-            }
-        }
-        findRefresh();
-    });
-    lay->addWidget(m_findEdit);
-
-    m_findInfo = new QLabel(m_findBar);
-    m_findInfo->setStyleSheet(QString::fromUtf8(
-        "color:%1;font-size:12px;background:transparent;border:none;")
-        .arg(C_TEXT_SUB));
-    m_findInfo->setAlignment(Qt::AlignCenter);
-    m_findInfo->setMinimumWidth(52);
-    lay->addWidget(m_findInfo);
-
-    m_findPrev = new QToolButton(m_findBar);
-    m_findPrev->setIcon(whiteStdIcon(style(), QStyle::SP_ArrowUp));
-    m_findPrev->setToolTip(QString::fromUtf8("上一个(Shift+Enter)"));
-    m_findPrev->setFixedSize(24, 24);
-    connect(m_findPrev, &QToolButton::clicked, this, [this]() { findStep(-1); });
-    lay->addWidget(m_findPrev);
-
-    m_findNext = new QToolButton(m_findBar);
-    m_findNext->setIcon(whiteStdIcon(style(), QStyle::SP_ArrowDown));
-    m_findNext->setToolTip(QString::fromUtf8("下一个(Enter)"));
-    m_findNext->setFixedSize(24, 24);
-    connect(m_findNext, &QToolButton::clicked, this, [this]() { findStep(1); });
-    lay->addWidget(m_findNext);
-
-    auto* btnClose = new QToolButton(m_findBar);
-    btnClose->setIcon(whiteStdIcon(style(), QStyle::SP_TitleBarCloseButton));
-    btnClose->setToolTip(QString::fromUtf8("关闭(Esc)"));
-    btnClose->setFixedSize(24, 24);
-    connect(btnClose, &QToolButton::clicked, this, [this]() { closeFind(); });
-    lay->addWidget(btnClose);
-}
-
-void FileGrid::startFind() {
-    if (!m_findBar) buildFindBar();
-    placeFindBar();
-    m_findBar->show();
-    m_findBar->raise();
-    m_findEdit->setFocus(Qt::OtherFocusReason);
-    m_findEdit->selectAll();
-    findRefresh();
-}
-
-void FileGrid::closeFind() {
-    if (m_findBar) m_findBar->hide();
-    m_canvas->setFocus(Qt::OtherFocusReason);
-}
-
-void FileGrid::placeFindBar() {
-    if (!m_findBar) return;
-    const QSize sz = m_findBar->sizeHint();
-    m_findBar->resize(sz);
-    m_findBar->move(viewport()->width() - sz.width() - 12, 12);
-}
-
-// 命中数/当前序号/按钮置灰,一次 O(n) 扫完。当前项 = m_lastClicked:
-// 它本身命中 → 显示 第k/N;不命中 → 0/N 且"下一个"跳到它之后的第一个命中
-void FileGrid::findRefresh() {
-    if (!m_findBar || !m_findBar->isVisible()) return;
-    const QString q = m_findEdit->text().trimmed();
-    const int cur = (m_lastClicked >= 0 && m_lastClicked < static_cast<int>(m_entries.size()))
-                        ? m_lastClicked : -1;
-    m_findHitCount = 0;
-    m_findOrdinal  = -1;
-    bool before = false, after = false;
-    if (!q.isEmpty()) {
-        for (int i = 0; i < static_cast<int>(m_entries.size()); ++i) {
-            if (!m_entries[i].name.contains(q, Qt::CaseInsensitive)) continue;
-            if (i == cur) m_findOrdinal = m_findHitCount;
-            if (cur < 0 || i < cur) before = true;
-            if (cur < 0 || i > cur) after  = true;
-            ++m_findHitCount;
-        }
-    }
-    m_findInfo->setText(m_findHitCount == 0
-        ? QString::fromUtf8("无匹配")
-        : QString("%1/%2").arg(m_findOrdinal >= 0 ? m_findOrdinal + 1 : 0).arg(m_findHitCount));
-    m_findPrev->setEnabled(before);
-    m_findNext->setEnabled(after);
-}
-
-void FileGrid::findStep(int delta) {
-    if (!m_findBar || !m_findBar->isVisible()) return;
-    const QString q = m_findEdit->text().trimmed();
-    if (q.isEmpty() || m_entries.empty()) return;
-    const int n = static_cast<int>(m_entries.size());
-    int start = m_lastClicked;
-    if (start < 0 || start >= n) start = delta > 0 ? -1 : n;   // 无落点:从头/从尾扫
-    for (int k = 1; k <= n; ++k) {
-        const int i = start + delta * k;
-        if (i < 0 || i >= n) break;    // 到边界:不回绕(置灰按钮已表达"没有更多")
-        if (m_entries[i].name.contains(q, Qt::CaseInsensitive)) {
-            selectIndex(i);
-            findRefresh();
-            return;
-        }
-    }
-}
-
 void FileGrid::refreshCurrentDir() {
     if (!m_currentDir.isEmpty()) loadDirectory(m_currentDir);
-}
-
-// 删除后重载:落点 = 被删块的后一项,已在末尾则前一项(对齐 XnView)
-// 落点必须在重载前的 m_entries 上算 — 重载后索引含义已变
-void FileGrid::reloadAfterDelete(const QStringList& deleted) {
-    int first = -1, last = -1;
-    for (int i = 0; i < static_cast<int>(m_entries.size()); ++i) {
-        if (!deleted.contains(m_entries[i].path)) continue;
-        if (first < 0) first = i;
-        last = i;
-    }
-    if (last >= 0) {
-        if (last + 1 < static_cast<int>(m_entries.size()))
-            m_preferPath = m_entries[last + 1].path;
-        else if (first > 0)
-            m_preferPath = m_entries[first - 1].path;
-    }
-    const QString dir = m_currentDir;
-    if (dir.isEmpty()) { m_preferPath.clear(); return; }
-    loadDirectory(dir);
-    m_preferPath.clear();   // 重载被中止时不让落点串到下次导航
-    // 删掉的文件若还开在查看器标签里,标签就成了指向不存在路径的幽灵
-    // (以前只在"进查看器"时清)。这里是所有删除路径唯一的落点:右键/Del/S/
-    // 预览侧删都汇到这一处,所以逐标签 stat 也只跟着删除发生,不进导航热路径。
-    // pruneDeadViewerTabs 只摘死标签,当前正在看的那张若被删会一并摘掉。
-    if (auto* mw = window()) QMetaObject::invokeMethod(mw, "pruneDeadViewerTabs");
-}
-
-// 删除后重载:落点 = 被删块的后一项,已在末尾则前一项(对齐 XnView)
-// 落点必须在重载前的 m_entries 上算 — 重载后索引含义已变
-void FileGrid::reloadAfterDelete(const QStringList& deleted) {
-    int first = -1, last = -1;
-    for (int i = 0; i < static_cast<int>(m_entries.size()); ++i) {
-        if (!deleted.contains(m_entries[i].path)) continue;
-        if (first < 0) first = i;
-        last = i;
-    }
-    if (last >= 0) {
-        if (last + 1 < static_cast<int>(m_entries.size()))
-            m_preferPath = m_entries[last + 1].path;
-        else if (first > 0)
-            m_preferPath = m_entries[first - 1].path;
-    }
-    const QString dir = m_currentDir;
-    if (dir.isEmpty()) { m_preferPath.clear(); return; }
-    loadDirectory(dir);
-    m_preferPath.clear();   // 重载被中止时不让落点串到下次导航
-    // 删掉的文件若还开在查看器标签里,标签就成了指向不存在路径的幽灵
-    // (以前只在"进查看器"时清)。这里是所有删除路径唯一的落点:右键/Del/S/
-    // 预览侧删都汇到这一处,所以逐标签 stat 也只跟着删除发生,不进导航热路径。
-    // pruneDeadViewerTabs 只摘死标签,当前正在看的那张若被删会一并摘掉。
-    if (auto* mw = window()) QMetaObject::invokeMethod(mw, "pruneDeadViewerTabs");
-}
-
-// 删除后重载:落点 = 被删块的后一项,已在末尾则前一项(对齐 XnView)
-// 落点必须在重载前的 m_entries 上算 — 重载后索引含义已变
-void FileGrid::reloadAfterDelete(const QStringList& deleted) {
-    int first = -1, last = -1;
-    for (int i = 0; i < static_cast<int>(m_entries.size()); ++i) {
-        if (!deleted.contains(m_entries[i].path)) continue;
-        if (first < 0) first = i;
-        last = i;
-    }
-    if (last >= 0) {
-        if (last + 1 < static_cast<int>(m_entries.size()))
-            m_preferPath = m_entries[last + 1].path;
-        else if (first > 0)
-            m_preferPath = m_entries[first - 1].path;
-    }
-    const QString dir = m_currentDir;
-    if (dir.isEmpty()) { m_preferPath.clear(); return; }
-    loadDirectory(dir);
-    m_preferPath.clear();   // 重载被中止时不让落点串到下次导航
-    // 删掉的文件若还开在查看器标签里,标签就成了指向不存在路径的幽灵
-    // (以前只在"进查看器"时清)。这里是所有删除路径唯一的落点:右键/Del/S/
-    // 预览侧删都汇到这一处,所以逐标签 stat 也只跟着删除发生,不进导航热路径。
-    // pruneDeadViewerTabs 只摘死标签,当前正在看的那张若被删会一并摘掉。
-    if (auto* mw = window()) QMetaObject::invokeMethod(mw, "pruneDeadViewerTabs");
 }
 
 // 删除后重载:落点 = 被删块的后一项,已在末尾则前一项(对齐 XnView)
@@ -664,21 +310,6 @@ void FileGrid::loadDirectory(const QString& dirPath) {
     Thumbnailer::instance().clearQueue();
 
     m_allEntries = fastScanDir(dirPath);
-
-    // ── FileList/showSubFolders(树右键"显示子文件夹中的文件")──
-    // 目录行仍只列本层,只有文件向下递归铺开。整棵子树的枚举代价由探针记账,
-    // 逛巨型仓库时慢在哪一眼可见,不用靠猜。
-    if (m_showSubFolders) {
-        QStringList subDirs;
-        subDirs.reserve(static_cast<int>(m_allEntries.size()));
-        for (const auto& e : m_allEntries)
-            if (e.isDir) subDirs << e.path;
-        if (!subDirs.isEmpty()) {
-            PerfLog::Scope probe("loadDir.subFolders", 50);
-            for (const QString& d : subDirs)
-                fastScanSubFiles(d, m_allEntries, !m_showHidden);
-        }
-    }
 
     // ── FileList/showSubFolders(树右键"显示子文件夹中的文件")──
     // 目录行仍只列本层,只有文件向下递归铺开。整棵子树的枚举代价由探针记账,
@@ -845,21 +476,6 @@ void FileGrid::setCardSize(int size) {
     size = qBound(THUMB_W_MIN, size, THUMB_W_MAX);
     m_cardSizeAuto = size;   // 记录 slider 设定值(自动模式用;固定列数退出时抄回这里)
     m_cardSize = size;
-    // 宽度只有一个持久化键,落盘就写在唯一的 setter 里:尺寸菜单/自定义对话框/
-    // Ctrl+= /滚轮全都汇到这条,交给各调用点自己决定存不存,漏一个就是"设了不保存"
-    AppSettings& st = AppSettings::instance();
-    if (st.get("Appearance/customThumbW", 96).toInt() != size)
-        st.set("Appearance/customThumbW", size);
-    // 宽度只有一个持久化键,落盘就写在唯一的 setter 里:尺寸菜单/自定义对话框/
-    // Ctrl+= /滚轮全都汇到这条,交给各调用点自己决定存不存,漏一个就是"设了不保存"
-    AppSettings& st = AppSettings::instance();
-    if (st.get("Appearance/customThumbW", 96).toInt() != size)
-        st.set("Appearance/customThumbW", size);
-    // 宽度只有一个持久化键,落盘就写在唯一的 setter 里:尺寸菜单/自定义对话框/
-    // Ctrl+= /滚轮全都汇到这条,交给各调用点自己决定存不存,漏一个就是"设了不保存"
-    AppSettings& st = AppSettings::instance();
-    if (st.get("Appearance/customThumbW", 96).toInt() != size)
-        st.set("Appearance/customThumbW", size);
     // 宽度只有一个持久化键,落盘就写在唯一的 setter 里:尺寸菜单/自定义对话框/
     // Ctrl+= /滚轮全都汇到这条,交给各调用点自己决定存不存,漏一个就是"设了不保存"
     AppSettings& st = AppSettings::instance();

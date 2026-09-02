@@ -2,15 +2,13 @@
 #include "constants.h"
 #include "fileentry.h"
 #include "namesort.h"
-#include "namesort.h"
-#include "namesort.h"
-#include "namesort.h"
 #include "settings.h"
 #include "perflog.h"
-#include "perflog.h"
-#include "settings.h"
-#include "settings.h"
-#include "settings.h"
+#include "iconlib.h"
+#include "clipboardops.h"
+#include "shelldelete.h"
+#include "searchdialog.h"
+#include "validname.h"
 
 #include <windows.h>
 #include <shellapi.h>
@@ -23,6 +21,18 @@
 #include <QFontMetrics>
 #include <QApplication>
 #include <QImage>
+#include <QMenu>
+#include <QAction>
+#include <QInputDialog>
+#include <QFileDialog>
+#include <QMessageBox>
+#include <QLineEdit>
+#include <QDesktopServices>
+#include <QUrl>
+#include <QTreeWidgetItem>
+
+#include <algorithm>
+#include <utility>
 
 // ═══════════════════════════════════════════
 // ArrowStyle
@@ -89,9 +99,8 @@ static bool hasVisibleSubdirs(const QString& path) {
 FolderTree::FolderTree(QWidget* parent) : QTreeWidget(parent) {
     setHeaderHidden(true);
     setIndentation(16);
-    setAnimated(true);
-    // 去掉 item 上的虚线焦点框，避免“桌面”这类当前项出现与其他磁盘不一致的描边
-    setFocusPolicy(Qt::NoFocus);
+    // 与 XnView 一致：内容少于一页也保留竖向滚动条，整条长拇指表示不可拖动
+    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
     // 去掉 item 上的虚线焦点框，避免“桌面”这类当前项出现与其他磁盘不一致的描边
     setFocusPolicy(Qt::NoFocus);
     // 启用自定义展开箭头：有子文件夹才画三角，叶子目录彻底不画分支装饰
@@ -105,6 +114,8 @@ FolderTree::FolderTree(QWidget* parent) : QTreeWidget(parent) {
         "QTreeWidget::item:hover{background:%3;}"
         "QTreeWidget::item:selected{background:%4;color:#FFF;}"
     ).arg(C_SIDEBAR, C_TREE_TEXT, C_TREE_HOVER, C_TREE_SELECT));
+    // 用户确认不需要展开/收起动画：保持即时展开
+    setAnimated(false);
 
     setIconSize(QSize(16, 16));
 
@@ -133,7 +144,14 @@ FolderTree::FolderTree(QWidget* parent) : QTreeWidget(parent) {
         clear();
         loadDrives();
     });
-    Logger::boot("ft:done");
+
+    // #117:左键按住拖动的语义(0=扫过即切入,1=拖动多选)
+    m_sweepSwitch =
+        AppSettings::instance().get("FolderTree/leftDragSweep", 0).toInt() == 0;
+    connect(&AppSettings::instance(), &AppSettings::changed, this, [this]() {
+        m_sweepSwitch =
+            AppSettings::instance().get("FolderTree/leftDragSweep", 0).toInt() == 0;
+    });
 }
 
 void FolderTree::makeIcons() {
@@ -337,51 +355,6 @@ void FolderTree::mouseReleaseEvent(QMouseEvent* event) {
     m_pressActivated.clear();   // 基类已在本次松开里发过 itemClicked(已被它消费)
 }
 
-// ── #117 左键按住扫过 = 切换文件夹 ──
-// #130:跳转发生在**左键按下的那一刻**,不是松开时(原来要等 itemClicked,
-// 松开才切,扫动时手感是"拖过一堆目录,松手才跳一个")。
-// 展开箭头那一列(分支槽 + 其左侧)按下只做展开/收起,不切目录 —— 否则
-// 用户点"+"想看子目录,主视图就被拽走了,这是资源管理器/浏览器都不有的行为。
-void FolderTree::mousePressEvent(QMouseEvent* event) {
-    m_sweepCur = itemAt(event->pos());
-    if (m_sweepSwitch && event->button() == Qt::LeftButton && m_sweepCur) {
-        int depth = 0;                       // 层级:QTreeWidgetItem 没有 depth(),自己数
-        for (QTreeWidgetItem* p = m_sweepCur->parent(); p; p = p->parent()) ++depth;
-        const int branchRight = visualRect(indexFromItem(m_sweepCur)).left()
-                              + (depth + 1) * indentation();
-        const QString path = pathOf(m_sweepCur);
-        if (!path.isEmpty() && event->pos().x() >= branchRight) {
-            m_pressActivated = path;
-            setCurrentItem(m_sweepCur);
-            emit folderSelected(path);
-        }
-    }
-    QTreeWidget::mousePressEvent(event);
-}
-
-void FolderTree::mouseMoveEvent(QMouseEvent* event) {
-    if (m_sweepSwitch && (event->buttons() & Qt::LeftButton)) {
-        if (QTreeWidgetItem* it = itemAt(event->pos()); it && it != m_sweepCur) {
-            const QString path = pathOf(it);
-            if (!path.isEmpty()) {          // 占位行/空白:交回基类,不瞎切
-                m_sweepCur = it;
-                m_pressActivated = path;
-                setCurrentItem(it);
-                emit folderSelected(path);
-                event->accept();
-                return;
-            }
-        }
-    }
-    QTreeWidget::mouseMoveEvent(event);
-}
-
-void FolderTree::mouseReleaseEvent(QMouseEvent* event) {
-    m_sweepCur = nullptr;
-    QTreeWidget::mouseReleaseEvent(event);
-    m_pressActivated.clear();   // 基类已在本次松开里发过 itemClicked(已被它消费)
-}
-
 void FolderTree::focusPath(const QString& dirPath) {
     const QString want = QDir::cleanPath(dirPath);
     if (want.isEmpty()) return;
@@ -472,21 +445,6 @@ void FolderTree::refreshCurrent() {
     }
 }
 
-// 拖放(#81):落点 → 目录路径。itemAt 直接给出命中行,取 UserRole 里的路径
-QString FolderTree::pathAt(const QPoint& pos) const {
-    QTreeWidgetItem* it = itemAt(pos);
-    if (!it) return {};
-    const QString p = it->data(0, Qt::UserRole).toString();
-    return QFileInfo(p).isDir() ? p : QString();
-}
-
-void FolderTree::refreshCurrent() {
-    if (QTreeWidgetItem* it = currentItem()) {
-        const QString p = it->data(0, Qt::UserRole).toString();
-        if (!p.isEmpty()) refreshNode(p);
-    }
-}
-
 bool FolderTree::isVolumeRoot(const QString& path) {
     return !path.isEmpty() && QDir(path).isRoot();
 }
@@ -602,18 +560,6 @@ void FolderTree::renameSelected() {
     renameItem(it);
 }
 
-// #136:F2/F3 的键盘入口。守卫与右键那条**同源**：空行、盘符根、多选都静默不动
-// （右键那三项是 setEnabled(false)，键盘没有"置灰"可看，只能什么都不做）。
-// 改名逻辑仍然只有 renameItem 一份 —— 不要再抄第二份，早晚不同步。
-void FolderTree::renameSelected() {
-    QTreeWidgetItem* it = currentItem();
-    if (!it) return;
-    const QString p = pathOf(it);
-    if (p.isEmpty() || isVolumeRoot(p)) return;
-    if (selectedPaths().size() > 1) return;
-    renameItem(it);
-}
-
 void FolderTree::renameItem(QTreeWidgetItem* item) {
     const QString oldPath = pathOf(item);
     if (oldPath.isEmpty() || isVolumeRoot(oldPath)) return;
@@ -623,7 +569,7 @@ void FolderTree::renameItem(QTreeWidgetItem* item) {
         this, QString::fromUtf8("重命名"), QString::fromUtf8("新名称:"),
         QLineEdit::Normal, oldName, &ok).trimmed();
     if (!ok || name == oldName) return;
-    if (const QString why = invalidNameReason(name)) {
+    if (const QString why = invalidNameReason(name); !why.isEmpty()) {
         QMessageBox::warning(this, QString::fromUtf8("重命名"), why);
         return;
     }
@@ -750,545 +696,6 @@ void FolderTree::showContextMenu(const QPoint& pos) {
                    this, [this, base]() {
         (new SearchDialog(base, window()))->show();
     });
-    // ── 用资源管理器打开:交给 Shell,尊重第三方文件管理器的接管 ──
-    menu.addAction(IconLib::appIcon("cmd_browse"),
-                   QString::fromUtf8("用资源管理器打开文件"), this, [paths]() {
-        for (const auto& p : paths)
-            QDesktopServices::openUrl(QUrl::fromLocalFile(p));
-    });
-    menu.addAction(IconLib::appIcon("cmd_openProperties"), QString::fromUtf8("属性"),
-                   this, [base]() { showShellProperties(base); });
-
-    menu.exec(viewport()->mapToGlobal(pos));
-}
-
-// ═══════════════════════════════════════════
-// 右键菜单 —— 操作对象是"文件夹"本身(网格那份操作的是文件)
-//   新建文件夹 / 剪切 / 复制 / 粘贴 / 删除 / 重命名 / 复制到.. / 移动到...
-//   显示子文件夹中的文件 / 搜索... / 用资源管理器打开文件 / 属性
-// ═══════════════════════════════════════════
-
-QString FolderTree::pathOf(const QTreeWidgetItem* item) {
-    return item ? item->data(0, Qt::UserRole).toString() : QString();
-}
-
-bool FolderTree::isVolumeRoot(const QString& path) {
-    return !path.isEmpty() && QDir(path).isRoot();
-}
-
-// 树里只物化了"展开过的那些行",所以这里查的是已存在的节点;查不到通常意味着
-// 该目录在某条折叠分支下面 —— 那也正是不需要维护的情况(展开时会重扫)
-QTreeWidgetItem* FolderTree::itemForPath(const QString& path) {
-    if (path.isEmpty()) return nullptr;
-    const QString want = QDir::cleanPath(path);
-    for (QTreeWidgetItemIterator it(this); *it; ++it) {
-        const QString p = pathOf(*it);
-        if (p.isEmpty()) continue;           // 懒加载占位行不算命中
-        if (QDir::cleanPath(p).compare(want, Qt::CaseInsensitive) == 0) return *it;
-    }
-    return nullptr;
-}
-
-QStringList FolderTree::selectedPaths() const {
-    QStringList out;
-    const QList<QTreeWidgetItem*> items = selectedItems();
-    for (const QTreeWidgetItem* it : items) {
-        const QString p = pathOf(it);
-        if (!p.isEmpty()) out << p;
-    }
-    return out;
-}
-
-// 某一层结构变了(新建/粘贴/移入/移出/改名),让树上的这一层重新对齐磁盘。
-// 未物化或折叠着的分支一律退回"占位":展开时必然重扫,既正确又不白扫。
-void FolderTree::refreshNode(const QString& dirPath) {
-    QTreeWidgetItem* it = itemForPath(dirPath);
-    if (!it) return;
-    const bool placeholder =
-        (it->childCount() == 1 && it->child(0)->text(0).isEmpty());
-    if (placeholder || !it->isExpanded()) {
-        while (it->childCount()) delete it->takeChild(0);
-        if (hasVisibleSubdirs(dirPath)) it->addChild(new QTreeWidgetItem);
-        return;
-    }
-    while (it->childCount()) delete it->takeChild(0);
-    loadChildren(it);
-}
-
-void FolderTree::removeNodes(const QStringList& paths) {
-    for (const QString& p : paths) {
-        QTreeWidgetItem* it = itemForPath(p);
-        if (!it) continue;
-        if (QTreeWidgetItem* par = it->parent()) par->removeChild(it);
-        else takeTopLevelItem(indexOfTopLevelItem(it));
-        delete it;   // removeChild 只是摘出树,所有权仍在调用方
-    }
-}
-
-void FolderTree::reportErrors(const QStringList& errors, const QString& title) {
-    if (errors.isEmpty()) return;
-    QString text = errors.join(QLatin1Char('\n'));
-    if (errors.size() > 8)
-        text = errors.mid(0, 8).join(QLatin1Char('\n'))
-             + QString::fromUtf8("\n…另有 %1 条").arg(errors.size() - 8);
-    QMessageBox::warning(this, title, text);
-}
-
-void FolderTree::newFolderInto(QTreeWidgetItem* base) {
-    const QString dir = pathOf(base);
-    if (dir.isEmpty()) return;
-    bool ok = false;
-    const QString name = QInputDialog::getText(
-        this, QString::fromUtf8("新建文件夹"), QString::fromUtf8("名称:"),
-        QLineEdit::Normal, QString::fromUtf8("新建文件夹"), &ok).trimmed();
-    if (!ok) return;
-    if (const QString why = invalidNameReason(name); !why.isEmpty()) {
-        QMessageBox::warning(this, QString::fromUtf8("新建文件夹"), why);
-        return;
-    }
-    const QString full = QDir(dir).filePath(name);
-    if (QFileInfo::exists(full)) {
-        QMessageBox::warning(this, QString::fromUtf8("新建文件夹"),
-            QString::fromUtf8("同名文件夹已存在:\n") + full);
-        return;
-    }
-    if (!QDir().mkdir(full)) {
-        QMessageBox::warning(this, QString::fromUtf8("新建文件夹"),
-            QString::fromUtf8("创建失败:\n") + full);
-        return;
-    }
-    refreshNode(dir);
-    if (QTreeWidgetItem* it = itemForPath(dir)) it->setExpanded(true);
-    emit foldersChanged({dir}, {});
-}
-
-void FolderTree::pasteInto(QTreeWidgetItem* base) {
-    const QString dir = pathOf(base);
-    if (dir.isEmpty()) return;
-    QStringList errs;
-    const bool ok = clipboardPasteInto(QDir(dir), &errs);
-    reportErrors(errs, ok ? QString::fromUtf8("部分项目未能粘贴")
-                          : QString::fromUtf8("粘贴失败"));
-    if (!ok) return;
-    refreshNode(dir);
-    if (QTreeWidgetItem* it = itemForPath(dir)) it->setExpanded(true);
-    emit foldersChanged({dir}, {});
-}
-
-void FolderTree::renameItem(QTreeWidgetItem* item) {
-    const QString oldPath = pathOf(item);
-    if (oldPath.isEmpty() || isVolumeRoot(oldPath)) return;
-    const QString oldName = QFileInfo(oldPath).fileName();
-    bool ok = false;
-    const QString name = QInputDialog::getText(
-        this, QString::fromUtf8("重命名"), QString::fromUtf8("新名称:"),
-        QLineEdit::Normal, oldName, &ok).trimmed();
-    if (!ok || name == oldName) return;
-    if (const QString why = invalidNameReason(name)) {
-        QMessageBox::warning(this, QString::fromUtf8("重命名"), why);
-        return;
-    }
-    const QString parent = QFileInfo(oldPath).dir().absolutePath();
-    const QString newPath = QDir(parent).filePath(name);
-    if (QFileInfo::exists(newPath)) {
-        QMessageBox::warning(this, QString::fromUtf8("重命名"),
-            QString::fromUtf8("目标名已存在:\n") + newPath);
-        return;
-    }
-    if (!QFile::rename(oldPath, newPath)) {
-        QMessageBox::warning(this, QString::fromUtf8("重命名失败"), oldPath);
-        return;
-    }
-    item->setText(0, name);
-    item->setData(0, Qt::UserRole, newPath);
-    // 子孙行的 UserRole 仍拼着旧前缀,留着就是一串坏路径。清成占位,
-    // 下次展开按新前缀重新物化 —— 代价只有一次 readdir。
-    while (item->childCount()) delete item->takeChild(0);
-    if (hasVisibleSubdirs(newPath)) item->addChild(new QTreeWidgetItem);
-    // removed 的语义是"这个目录没了,请离开":重命名不该把用户甩到父目录,
-    // 路径迁移交给 folderRenamed 处理,避免先跳一次再重定向的二次加载。
-    emit foldersChanged({parent, newPath}, {});
-    emit folderRenamed(oldPath, newPath);
-}
-
-void FolderTree::showContextMenu(const QPoint& pos) {
-    QTreeWidgetItem* hit = itemAt(pos);
-    if (hit && !selectedItems().contains(hit)) {
-        // 右键落在未选中的行上:选择集收缩到该行(资源管理器语义)
-        clearSelection();
-        setCurrentItem(hit);
-        hit->setSelected(true);
-    }
-    if (!hit) hit = currentItem();   // 空白处:对当前选中项操作;没有就不弹
-    if (!hit) return;
-
-    QStringList paths = selectedPaths();
-    if (paths.isEmpty()) paths << pathOf(hit);
-    const QString base = pathOf(hit);      // 新建/粘贴的落点 = 光标下这一行
-    const bool multi = paths.size() > 1;
-    bool hasRoot = false;
-    for (const auto& p : paths) if (isVolumeRoot(p)) hasRoot = true;
-
-    QMenu menu(this);
-    // ── 新建文件夹 ──
-    menu.addAction(IconLib::appIcon("cmd_newFolder"), QString::fromUtf8("新建文件夹"),
-                   this, [this, base]() { newFolderInto(itemForPath(base)); });
-    menu.addSeparator();
-    // ── 剪贴板组:盘符根不许剪切/复制(那等于要搬走整个卷) ──
-    menu.addAction(IconLib::appIcon("cmd_cut"), QString::fromUtf8("剪切"),
-                   this, [paths]() { clipboardSetFiles(paths, true); })
-        ->setEnabled(!hasRoot);
-    menu.addAction(IconLib::appIcon("cmd_copy"), QString::fromUtf8("复制"),
-                   this, [paths]() { clipboardSetFiles(paths, false); })
-        ->setEnabled(!hasRoot);
-    menu.addAction(IconLib::appIcon("cmd_paste"), QString::fromUtf8("粘贴"),
-                   this, [this, base]() { pasteInto(itemForPath(base)); })
-        ->setEnabled(clipboardHasFiles());
-    menu.addSeparator();
-    // ── 删除:确认框/回收站/提示全部走 deleteWithSettings 这一条正门 ──
-    menu.addAction(IconLib::appIcon("cmd_delete"), QString::fromUtf8("删除"),
-                   this, [this, paths]() {
-        if (!deleteWithSettings(paths, this)) return;
-        removeNodes(paths);
-        QStringList parents;
-        for (const auto& p : paths) {
-            const QString par = QFileInfo(p).dir().absolutePath();
-            if (!par.isEmpty() && !parents.contains(par)) parents << par;
-        }
-        emit foldersChanged(parents, paths);
-    })->setEnabled(!hasRoot);
-    menu.addAction(IconLib::appIcon("cmd_rename"), QString::fromUtf8("重命名"),
-                   this, [this, base]() { renameItem(itemForPath(base)); })
-        ->setEnabled(!hasRoot && !multi);   // 多项改名语义不明,资源管理器同样禁用
-    menu.addSeparator();
-    // ── 复制到.. / 移动到...:整个选择集一起走 ──
-    menu.addAction(IconLib::appIcon("cmd_copyTo"), QString::fromUtf8("复制到.."),
-                   this, [this, paths]() {
-        const QString dst = QFileDialog::getExistingDirectory(
-            this, QString::fromUtf8("复制到.."), QString());
-        if (dst.isEmpty()) return;
-        QStringList errs;
-        const bool done = copyPathsTo(paths, dst, nullptr, &errs);
-        reportErrors(errs, done ? QString::fromUtf8("部分项目未能复制")
-                                : QString::fromUtf8("复制失败"));
-        if (!done) return;
-        refreshNode(dst);
-        emit foldersChanged({dst}, {});
-    })->setEnabled(!hasRoot);
-    menu.addAction(IconLib::appIcon("min_moveTo"), QString::fromUtf8("移动到..."),
-                   this, [this, paths]() {
-        const QString dst = QFileDialog::getExistingDirectory(
-            this, QString::fromUtf8("移动到..."), QString());
-        if (dst.isEmpty()) return;
-        QStringList errs;
-        const bool done = movePathsTo(paths, dst, nullptr, &errs);
-        reportErrors(errs, done ? QString::fromUtf8("部分项目未能移动")
-                                : QString::fromUtf8("移动失败"));
-        if (!done) return;
-        // 源那一层少了条目,目的那一层多了条目:两端都要对齐磁盘
-        QStringList changed;
-        for (const auto& p : paths) {
-            const QString par = QFileInfo(p).dir().absolutePath();
-            if (!par.isEmpty() && !changed.contains(par)) changed << par;
-        }
-        changed << dst;
-        for (const QString& d : changed) refreshNode(d);
-        emit foldersChanged(changed, {});
-    })->setEnabled(!hasRoot);
-    menu.addSeparator();
-    // ── 显示子文件夹中的文件:开关的真源在网格,这里只镜像勾状态 ──
-    QAction* sub = menu.addAction(IconLib::appIcon("cmd_showFilesInFolder"),
-                                  QString::fromUtf8("显示子文件夹中的文件"));
-    sub->setCheckable(true);
-    sub->setChecked(m_subFoldersShown);
-    connect(sub, &QAction::triggered, this, [this](bool on) {
-        m_subFoldersShown = on;
-        emit subFoldersToggled(on);
-    });
-    menu.addSeparator();
-    // ── 搜索...:以光标下这一层为根的递归名称搜索(非模态,可边搜边看主窗口) ──
-    menu.addAction(IconLib::appIcon("cmd_search"), QString::fromUtf8("搜索..."),
-                   this, [this, base]() {
-        (new SearchDialog(base, window()))->show();
-    });
-    // ── 用资源管理器打开:交给 Shell,尊重第三方文件管理器的接管 ──
-    menu.addAction(IconLib::appIcon("cmd_browse"),
-                   QString::fromUtf8("用资源管理器打开文件"), this, [paths]() {
-        for (const auto& p : paths)
-            QDesktopServices::openUrl(QUrl::fromLocalFile(p));
-    });
-    menu.addAction(IconLib::appIcon("cmd_openProperties"), QString::fromUtf8("属性"),
-                   this, [base]() { showShellProperties(base); });
-
-    menu.exec(viewport()->mapToGlobal(pos));
-}
-
-// ═══════════════════════════════════════════
-// 右键菜单 —— 操作对象是"文件夹"本身(网格那份操作的是文件)
-//   新建文件夹 / 剪切 / 复制 / 粘贴 / 删除 / 重命名 / 复制到.. / 移动到...
-//   显示子文件夹中的文件 / 用资源管理器打开文件 / 属性
-//   ("搜索..." 需要独立的搜索对话框,尚未接线,不放空项骗人)
-// ═══════════════════════════════════════════
-
-QString FolderTree::pathOf(const QTreeWidgetItem* item) {
-    return item ? item->data(0, Qt::UserRole).toString() : QString();
-}
-
-bool FolderTree::isVolumeRoot(const QString& path) {
-    return !path.isEmpty() && QDir(path).isRoot();
-}
-
-// 树里只物化了"展开过的那些行",所以这里查的是已存在的节点;查不到通常意味着
-// 该目录在某条折叠分支下面 —— 那也正是不需要维护的情况(展开时会重扫)
-QTreeWidgetItem* FolderTree::itemForPath(const QString& path) const {
-    if (path.isEmpty()) return nullptr;
-    const QString want = QDir::cleanPath(path);
-    for (QTreeWidgetItemIterator it(this); *it; ++it) {
-        const QString p = pathOf(*it);
-        if (p.isEmpty()) continue;           // 懒加载占位行不算命中
-        if (QDir::cleanPath(p).compare(want, Qt::CaseInsensitive) == 0) return *it;
-    }
-    return nullptr;
-}
-
-QStringList FolderTree::selectedPaths() const {
-    QStringList out;
-    const QList<QTreeWidgetItem*> items = selectedItems();
-    for (const QTreeWidgetItem* it : items) {
-        const QString p = pathOf(it);
-        if (!p.isEmpty()) out << p;
-    }
-    return out;
-}
-
-// 某一层结构变了(新建/粘贴/移入/移出/改名),让树上的这一层重新对齐磁盘。
-// 未物化或折叠着的分支一律退回"占位":展开时必然重扫,既正确又不白扫。
-void FolderTree::refreshNode(const QString& dirPath) {
-    QTreeWidgetItem* it = itemForPath(dirPath);
-    if (!it) return;
-    const bool placeholder =
-        (it->childCount() == 1 && it->child(0)->text(0).isEmpty());
-    if (placeholder || !it->isExpanded()) {
-        while (it->childCount()) delete it->takeChild(0);
-        if (hasVisibleSubdirs(dirPath)) it->addChild(new QTreeWidgetItem);
-        return;
-    }
-    while (it->childCount()) delete it->takeChild(0);
-    loadChildren(it);
-}
-
-void FolderTree::removeNodes(const QStringList& paths) {
-    for (const QString& p : paths) {
-        QTreeWidgetItem* it = itemForPath(p);
-        if (!it) continue;
-        if (QTreeWidgetItem* par = it->parent()) par->removeChild(it);
-        else removeTopLevelItem(it);
-        delete it;   // removeChild 只是摘出树,所有权仍在调用方
-    }
-}
-
-void FolderTree::reportErrors(const QStringList& errors, const QString& title) {
-    if (errors.isEmpty()) return;
-    QString text = errors.join(QLatin1Char('\n'));
-    if (errors.size() > 8)
-        text = errors.mid(0, 8).join(QLatin1Char('\n'))
-             + QString::fromUtf8("\n…另有 %1 条").arg(errors.size() - 8);
-    QMessageBox::warning(this, title, text);
-}
-
-// Windows 目录名禁区。不接受分隔符是硬要求:旧实现把用户输入直接拼进路径,
-// 一个 "a/b" 就能让"重命名"把整个文件夹搬到别处去(表面上什么都没发生)。
-static bool isLegalFolderName(const QString& name) {
-    if (name.isEmpty() || name == QLatin1String(".") || name == QLatin1String(".."))
-        return false;
-    static const QString bad = QStringLiteral("/\\:*?\"<>|");
-    for (const QChar c : name)
-        if (bad.contains(c) || c.unicode() < 0x20) return false;
-    return true;
-}
-
-// Windows 目录名禁区。不接受分隔符是硬要求:旧实现把用户输入直接拼进路径,
-// 一个 "a/b" 就能让"重命名"把整个文件夹搬到别处去(表面上什么都没发生)。
-static bool isLegalFolderName(const QString& name) {
-    if (name.isEmpty() || name == QLatin1String(".") || name == QLatin1String(".."))
-        return false;
-    static const QString bad = QStringLiteral("/\\:*?\"<>|");
-    for (const QChar c : name)
-        if (bad.contains(c) || c.unicode() < 0x20) return false;
-    return true;
-}
-
-void FolderTree::newFolderInto(QTreeWidgetItem* base) {
-    const QString dir = pathOf(base);
-    if (dir.isEmpty()) return;
-    bool ok = false;
-    const QString name = QInputDialog::getText(
-        this, QString::fromUtf8("新建文件夹"), QString::fromUtf8("名称:"),
-        QLineEdit::Normal, QString::fromUtf8("新建文件夹"), &ok).trimmed();
-    if (!ok) return;
-    if (!isLegalFolderName(name)) {
-        QMessageBox::warning(this, QString::fromUtf8("新建文件夹"),
-            QString::fromUtf8("名称不能包含 / \\ : * ? \" < > | 也不能为空"));
-        return;
-    }
-    const QString full = QDir(dir).filePath(name);
-    if (QFileInfo::exists(full)) {
-        QMessageBox::warning(this, QString::fromUtf8("新建文件夹"),
-            QString::fromUtf8("同名文件夹已存在:\n") + full);
-        return;
-    }
-    if (!QDir().mkdir(full)) {
-        QMessageBox::warning(this, QString::fromUtf8("新建文件夹"),
-            QString::fromUtf8("创建失败:\n") + full);
-        return;
-    }
-    refreshNode(dir);
-    if (QTreeWidgetItem* it = itemForPath(dir)) it->setExpanded(true);
-    emit foldersChanged({dir}, {});
-}
-
-void FolderTree::pasteInto(QTreeWidgetItem* base) {
-    const QString dir = pathOf(base);
-    if (dir.isEmpty()) return;
-    QStringList errs;
-    const bool ok = clipboardPasteInto(QDir(dir), &errs);
-    reportErrors(errs, ok ? QString::fromUtf8("部分项目未能粘贴")
-                          : QString::fromUtf8("粘贴失败"));
-    if (!ok) return;
-    refreshNode(dir);
-    if (QTreeWidgetItem* it = itemForPath(dir)) it->setExpanded(true);
-    emit foldersChanged({dir}, {});
-}
-
-void FolderTree::renameItem(QTreeWidgetItem* item) {
-    const QString oldPath = pathOf(item);
-    if (oldPath.isEmpty() || isVolumeRoot(oldPath)) return;
-    const QString oldName = QFileInfo(oldPath).fileName();
-    bool ok = false;
-    const QString name = QInputDialog::getText(
-        this, QString::fromUtf8("重命名"), QString::fromUtf8("新名称:"),
-        QLineEdit::Normal, oldName, &ok).trimmed();
-    if (!ok || name == oldName) return;
-    if (!isLegalFolderName(name)) {
-        QMessageBox::warning(this, QString::fromUtf8("重命名"),
-            QString::fromUtf8("名称不能包含 / \\ : * ? \" < > | 也不能为空"));
-        return;
-    }
-    const QString parent = QFileInfo(oldPath).dir().absolutePath();
-    const QString newPath = QDir(parent).filePath(name);
-    if (QFileInfo::exists(newPath)) {
-        QMessageBox::warning(this, QString::fromUtf8("重命名"),
-            QString::fromUtf8("目标名已存在:\n") + newPath);
-        return;
-    }
-    if (!QFile::rename(oldPath, newPath)) {
-        QMessageBox::warning(this, QString::fromUtf8("重命名失败"), oldPath);
-        return;
-    }
-    item->setText(0, name);
-    item->setData(0, Qt::UserRole, newPath);
-    // 子孙行的 UserRole 仍拼着旧前缀,留着就是一串坏路径。清成占位,
-    // 下次展开按新前缀重新物化 —— 代价只有一次 readdir。
-    while (item->childCount()) delete item->takeChild(0);
-    if (hasVisibleSubdirs(newPath)) item->addChild(new QTreeWidgetItem);
-    emit foldersChanged({parent, newPath}, {oldPath});
-}
-
-void FolderTree::showContextMenu(const QPoint& pos) {
-    QTreeWidgetItem* hit = itemAt(pos);
-    if (hit && !selectedItems().contains(hit)) {
-        // 右键落在未选中的行上:选择集收缩到该行(资源管理器语义)
-        clearSelection();
-        setCurrentItem(hit);
-        hit->setSelected(true);
-    }
-    if (!hit) hit = currentItem();   // 空白处:对当前选中项操作;没有就不弹
-    if (!hit) return;
-
-    QStringList paths = selectedPaths();
-    if (paths.isEmpty()) paths << pathOf(hit);
-    const QString base = pathOf(hit);      // 新建/粘贴的落点 = 光标下这一行
-    const bool multi = paths.size() > 1;
-    bool hasRoot = false;
-    for (const auto& p : paths) if (isVolumeRoot(p)) hasRoot = true;
-
-    QMenu menu(this);
-    // ── 新建文件夹 ──
-    menu.addAction(IconLib::appIcon("cmd_newFolder"), QString::fromUtf8("新建文件夹"),
-                   this, [this, base]() { newFolderInto(itemForPath(base)); });
-    menu.addSeparator();
-    // ── 剪贴板组:盘符根不许剪切/复制(那等于要搬走整个卷) ──
-    menu.addAction(IconLib::appIcon("cmd_cut"), QString::fromUtf8("剪切"),
-                   this, [paths]() { clipboardSetFiles(paths, true); })
-        ->setEnabled(!hasRoot);
-    menu.addAction(IconLib::appIcon("cmd_copy"), QString::fromUtf8("复制"),
-                   this, [paths]() { clipboardSetFiles(paths, false); })
-        ->setEnabled(!hasRoot);
-    menu.addAction(IconLib::appIcon("cmd_paste"), QString::fromUtf8("粘贴"),
-                   this, [this, base]() { pasteInto(itemForPath(base)); })
-        ->setEnabled(clipboardHasFiles());
-    menu.addSeparator();
-    // ── 删除:确认框/回收站/提示全部走 deleteWithSettings 这一条正门 ──
-    menu.addAction(IconLib::appIcon("cmd_delete"), QString::fromUtf8("删除"),
-                   this, [this, paths]() {
-        if (!deleteWithSettings(paths, this)) return;
-        removeNodes(paths);
-        QStringList parents;
-        for (const auto& p : paths) {
-            const QString par = QFileInfo(p).dir().absolutePath();
-            if (!par.isEmpty() && !parents.contains(par)) parents << par;
-        }
-        emit foldersChanged(parents, paths);
-    })->setEnabled(!hasRoot);
-    menu.addAction(IconLib::appIcon("cmd_rename"), QString::fromUtf8("重命名"),
-                   this, [this, base]() { renameItem(itemForPath(base)); })
-        ->setEnabled(!hasRoot && !multi);   // 多项改名语义不明,资源管理器同样禁用
-    menu.addSeparator();
-    // ── 复制到.. / 移动到...:整个选择集一起走 ──
-    menu.addAction(IconLib::appIcon("cmd_copyTo"), QString::fromUtf8("复制到.."),
-                   this, [this, paths]() {
-        const QString dst = QFileDialog::getExistingDirectory(
-            this, QString::fromUtf8("复制到.."), QString());
-        if (dst.isEmpty()) return;
-        QStringList errs;
-        const bool done = copyPathsTo(paths, dst, nullptr, &errs);
-        reportErrors(errs, done ? QString::fromUtf8("部分项目未能复制")
-                                : QString::fromUtf8("复制失败"));
-        if (!done) return;
-        refreshNode(dst);
-        emit foldersChanged({dst}, {});
-    })->setEnabled(!hasRoot);
-    menu.addAction(IconLib::appIcon("min_moveTo"), QString::fromUtf8("移动到..."),
-                   this, [this, paths]() {
-        const QString dst = QFileDialog::getExistingDirectory(
-            this, QString::fromUtf8("移动到..."), QString());
-        if (dst.isEmpty()) return;
-        QStringList errs;
-        const bool done = movePathsTo(paths, dst, nullptr, &errs);
-        reportErrors(errs, done ? QString::fromUtf8("部分项目未能移动")
-                                : QString::fromUtf8("移动失败"));
-        if (!done) return;
-        // 源那一层少了条目,目的那一层多了条目:两端都要对齐磁盘
-        QStringList changed;
-        for (const auto& p : paths) {
-            const QString par = QFileInfo(p).dir().absolutePath();
-            if (!par.isEmpty() && !changed.contains(par)) changed << par;
-        }
-        changed << dst;
-        for (const QString& d : changed) refreshNode(d);
-        emit foldersChanged(changed, {});
-    })->setEnabled(!hasRoot);
-    menu.addSeparator();
-    // ── 显示子文件夹中的文件:开关的真源在网格,这里只镜像勾状态 ──
-    QAction* sub = menu.addAction(IconLib::appIcon("cmd_showFilesInFolder"),
-                                  QString::fromUtf8("显示子文件夹中的文件"));
-    sub->setCheckable(true);
-    sub->setChecked(m_subFoldersShown);
-    connect(sub, &QAction::triggered, this, [this](bool on) {
-        m_subFoldersShown = on;
-        emit subFoldersToggled(on);
-    });
-    menu.addSeparator();
     // ── 用资源管理器打开:交给 Shell,尊重第三方文件管理器的接管 ──
     menu.addAction(IconLib::appIcon("cmd_browse"),
                    QString::fromUtf8("用资源管理器打开文件"), this, [paths]() {

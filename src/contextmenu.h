@@ -2,13 +2,13 @@
 #include <QMenu>
 #include <QVariantMap>
 
-class FileCanvas;
+class FileGrid;
 
 class FileContextMenu : public QMenu {
     Q_OBJECT
 public:
-    // 自绘画布上的第 index 个条目(选中集合取自其所属 FileGrid)
-    explicit FileContextMenu(FileCanvas* canvas, int index, QWidget* parent = nullptr);
+    // grid 当前列表里的第 index 个条目;多选集合取自同一 FileGrid
+    explicit FileContextMenu(FileGrid* grid, int index, QWidget* parent = nullptr);
 
 private:
     void extractFrames(const QString& videoPath);

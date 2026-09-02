@@ -15,9 +15,13 @@
 #include <QKeySequence>
 #include <memory>
 
-class QProcess;
-#include <QTimer>
+#include "livephoto.h"
+#include "views/audiowave.h"
 
+class QImageReader;
+class QTextEdit;
+class QScrollBar;
+class QThread;
 
 class PreviewPanel : public QWidget {
     Q_OBJECT
@@ -25,12 +29,6 @@ public:
     explicit PreviewPanel(QWidget *parent = nullptr);
     ~PreviewPanel() override;
     void loadFile(const QString &path);
-    // 预览当前显示的文件(空=没有)。调用方用它挡掉"对同一张再解一遍"
-    const QString& filePath() const { return m_filePath; }
-    // 预览当前显示的文件(空=没有)。调用方用它挡掉"对同一张再解一遍"
-    const QString& filePath() const { return m_filePath; }
-    // 预览当前显示的文件(空=没有)。调用方用它挡掉"对同一张再解一遍"
-    const QString& filePath() const { return m_filePath; }
     // 预览当前显示的文件(空=没有)。调用方用它挡掉"对同一张再解一遍"
     const QString& filePath() const { return m_filePath; }
     void clear();
@@ -43,22 +41,12 @@ public:
     // 该键事件是否命中 ViewerShortcut/* 表。主窗口的应用级过滤器用它让路:
     // 查看器里默认表和浏览器键位撞车("适应窗口"=F，浏览器 F=红标)
     bool claimsHotkey(QKeyEvent* e);
-    // 该键事件是否命中 ViewerShortcut/* 表。主窗口的应用级过滤器用它让路:
-    // 查看器里默认表和浏览器键位撞车("适应窗口"=F，浏览器 F=红标)
-    bool claimsHotkey(QKeyEvent* e);
-    // 该键事件是否命中 ViewerShortcut/* 表。主窗口的应用级过滤器用它让路:
-    // 查看器里默认表和浏览器键位撞车("适应窗口"=F，浏览器 F=红标)
-    bool claimsHotkey(QKeyEvent* e);
-    // 该键事件是否命中 ViewerShortcut/* 表。主窗口的应用级过滤器用它让路:
-    // 查看器里默认表和浏览器键位撞车("适应窗口"=F，浏览器 F=红标)
-    bool claimsHotkey(QKeyEvent* e);
 
 signals:
     void navFile(int delta);
 
 protected:
     void resizeEvent(QResizeEvent *event) override;
-    void paintEvent(QPaintEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
     void contextMenuEvent(QContextMenuEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
@@ -76,13 +64,6 @@ private:
     void armCoverUntilFirstFrame();  // #104:改由"本路源第一帧"收回遮罩,而非 PlayingState
     void revealVideo();         // #104:首帧到达/兜底出口 → 收遮罩 + 露出视频控件
     void syncVideoChildren();   // vw/cover 几何同步到 videoWidget(布局激活后必须重跑)
-    void vidProbeAttach();      // VIDFRAME 探针:attach 后取 player 的 sink 挂帧旁听
-    void vidProbeAttach();      // VIDFRAME 探针:attach 后取 player 的 sink 挂帧旁听
-    void syncVideoChildren();   // vw/cover 几何同步到 videoWidget(布局激活后必须重跑)
-    void syncVideoChildren();   // vw/cover 几何同步到 videoWidget(布局激活后必须重跑)
-    void syncVideoChildren();   // vw/cover 几何同步到 videoWidget(布局激活后必须重跑)
-    void raiseVideoCover();     // 升起纯黑遮罩(盖住控件残帧,首帧到达后收回)
-    void armCoverUntilFirstFrame();  // #104:改由"本路源第一帧"收回遮罩,而非 PlayingState
     void showImage(const QString &path);
     void showGif(const QString &path);        // GIF:第一帧定几何,动画只换像素(#103/#96)
     void blitGifFrame(const QImage& img);     // GIF 取帧唯一出口:当前帧缩到 label 尺寸
@@ -98,38 +79,8 @@ private:
     void gifPlayTick();                       // 一拍:读一帧、显示、排下一拍
     bool gifAdvance();                        // 顺序读下一帧(到尾回卷);失败返回 false
     void progressScrub(qreal x);              // 进度条擦洗公共落点(按下/拖动共用)
-    void progressScrub(qreal x);              // 进度条擦洗公共落点(按下/拖动共用)
-    void progressScrub(qreal x);              // 进度条擦洗公共落点(按下/拖动共用)
-    void progressScrub(qreal x);              // 进度条擦洗公共落点(按下/拖动共用)
     void setGifPaused(bool p);                // GIF 播放/暂停唯一出口(按钮/单击/空格)
     void applyGifChrome();                    // 控制栏显隐 + 音量键(GIF 没有音轨)
-    // ── GIF 走视频那套形态(#97):同一条控制栏 + 时间轴 + 播放暂停 ──
-    void buildGifTimeline();                  // 逐帧时长表 → 进度条范围 + 时长文本
-    void gifSyncToFrame(int f);               // 帧号 → 播放头(进度条 + 时间文本)
-    void gifSeekMs(int ms);                   // 播放头 → 帧号 → jumpToFrame + 出图
-    void setGifPaused(bool p);                // GIF 播放/暂停唯一出口(按钮/单击/空格)
-    void applyGifChrome();                    // 控制栏显隐 + 音量键(GIF 没有音轨)
-    // ── GIF 走视频那套形态(#97):同一条控制栏 + 时间轴 + 播放暂停 ──
-    void buildGifTimeline();                  // 逐帧时长表 → 进度条范围 + 时长文本
-    void gifSyncToFrame(int f);               // 帧号 → 播放头(进度条 + 时间文本)
-    void gifSeekMs(int ms);                   // 播放头 → 帧号 → jumpToFrame + 出图
-    void setGifPaused(bool p);                // GIF 播放/暂停唯一出口(按钮/单击/空格)
-    void applyGifChrome();                    // 控制栏显隐 + 音量键(GIF 没有音轨)
-    // ── GIF 走视频那套形态(#97):同一条控制栏 + 时间轴 + 播放暂停 ──
-    void buildGifTimeline();                  // 逐帧时长表 → 进度条范围 + 时长文本
-    void gifSyncToFrame(int f);               // 帧号 → 播放头(进度条 + 时间文本)
-    void gifSeekMs(int ms);                   // 播放头 → 帧号 → jumpToFrame + 出图
-    void setGifPaused(bool p);                // GIF 播放/暂停唯一出口(按钮/单击/空格)
-    void applyGifChrome();                    // 控制栏显隐 + 音量键(GIF 没有音轨)
-    void showImageHint(const QString &text);  // 无可显示位图:label 收成一格提示条,不沿用上图尺寸
-    void showGif(const QString &path);        // GIF:第一帧定几何,动画只换像素(#103/#96)
-    void blitMovieFrame();                    // GIF 取帧唯一出口:当前帧缩到 label 尺寸
-    void showImageHint(const QString &text);  // 无可显示位图:label 收成一格提示条,不沿用上图尺寸
-    void showGif(const QString &path);        // GIF:第一帧定几何,动画只换像素(#103/#96)
-    void blitMovieFrame();                    // GIF 取帧唯一出口:当前帧缩到 label 尺寸
-    void showImageHint(const QString &text);  // 无可显示位图:label 收成一格提示条,不沿用上图尺寸
-    void showGif(const QString &path);        // GIF:第一帧定几何,动画只换像素(#103/#96)
-    void blitMovieFrame();                    // GIF 取帧唯一出口:当前帧缩到 label 尺寸
     void showImageHint(const QString &text);  // 无可显示位图:label 收成一格提示条,不沿用上图尺寸
     void showVideo(const QString &path);
     void showAudio(const QString &path);
@@ -146,53 +97,16 @@ private:
     void showRawPlaceholder(const QString& path);
     void decodeRawAsync();
     void onRawDecoded(const QImage& img, const QString& path, quint64 gen);
-    // RAW 按需全解(#140):RAW 不进常规解码管线,预览=占位+「加载原始RAW」按钮。
-    // 点击后线程池全解(自带 LibRaw,rawdecode.h);切换文件靠 m_imgReqGen 代次
-    // 作废在途结果 —— UI 瞬间响应,绝不等待后台解码(用户红线)
-    void showRawPlaceholder(const QString& path);
-    void decodeRawAsync();
-    void onRawDecoded(const QImage& img, const QString& path, quint64 gen);
-    // RAW 按需全解(#140):RAW 不进常规解码管线,预览=占位+「加载原始RAW」按钮。
-    // 点击后线程池全解(自带 LibRaw,rawdecode.h);切换文件靠 m_imgReqGen 代次
-    // 作废在途结果 —— UI 瞬间响应,绝不等待后台解码(用户红线)
-    void showRawPlaceholder(const QString& path);
-    void decodeRawAsync();
-    void onRawDecoded(const QImage& img, const QString& path, quint64 gen);
-    // RAW 按需全解(#140):RAW 不进常规解码管线,预览=占位+「加载原始RAW」按钮。
-    // 点击后线程池全解(自带 LibRaw,rawdecode.h);切换文件靠 m_imgReqGen 代次
-    // 作废在途结果 —— UI 瞬间响应,绝不等待后台解码(用户红线)
-    void showRawPlaceholder(const QString& path);
-    void decodeRawAsync();
-    void onRawDecoded(const QImage& img, const QString& path, quint64 gen);
-    // 音频波形(audiowave.h):解码聚合在专属线程,主线程只画快照。
-    // 性能红线(用户令):波形可晚出,不得拖累切文件/加载音频
-    void ensureWave();
-    void teardownWave();
-    void renderWave();
-    void setAudioChrome(bool on);   // 音频形态两件套(文件名+波形)统一显隐出口
-    // #82:Markdown 以渲染后的 HTML 展示;PDF 走 Ghostscript 渲染 + 页导航
-    void showMarkdown(const QString& path);
-    void showPdf(const QString& path);
-    void renderPdfPage();          // 后台渲染当前页(不卡 UI)
-    void pdfGotoPage(int page);
-    void updatePdfBar();
-    void showText(const QString &path);
     // #82:Markdown 以渲染后的 HTML 展示;PDF 走 Ghostscript 渲染 + 页导航
     void showMarkdown(const QString& path);
     void showPdf(const QString& path);
     void renderPdfPage();          // 后台渲染当前页(不卡 UI)
     void requestPdf(bool needPageCount);  // 真正干活的后台任务;进文件时顺带问页数
-    void requestPdf(bool needPageCount);  // 后台跑 Ghostscript;进文件时顺带问页数
-    void requestPdf(bool needPageCount);  // 真正干活的后台任务;进文件时顺带问页数
-    void requestPdf(bool needPageCount);  // 后台跑 Ghostscript;进文件时顺带问页数
     void pdfGotoPage(int page);
     void updatePdfBar();
     void fitAuto();
     void render();
     int  barReserve() const;   // 控制栏可见时要从可用高度里扣掉的像素(GIF 画面不被栏压住)
-    int  barReserve() const;   // 控制栏可见时要从可用高度里扣掉的像素(GIF 画面不被栏压住)
-    int  barReserve() const;   // 控制栏可见时要从可用高度里扣掉的像素(GIF 画面不被栏压住)
-    int  barReserve() const;   // 控制栏可见时要从可用高度里扣掉的像素(GIF 画面不被栏压住)
     // 设置活应用:背景色/挡板底纹/图片边框(设置→查看→背景与界面元素)
     void applyBackdrop();
     void restoreCursor();             // Fullscreen/hideCursor:指针移动即恢复
@@ -204,21 +118,8 @@ private:
     // 拖拽平移约束:图片在某轴不超出预览框 → 该轴锁死居中(两侧黑边等宽),
     // 只允许在溢出的轴平移,且平移到图片边缘即停(不露白边)。
     QPoint clampedLabelPos(QPoint p) const;
-    // 拖拽平移约束:图片在某轴不超出预览框 → 该轴锁死居中(两侧黑边等宽),
-    // 只允许在溢出的轴平移,且平移到图片边缘即停(不露白边)。
-    QPoint clampedLabelPos(QPoint p) const;
-    // 设置活应用:背景色/挡板底纹/图片边框(设置→查看→背景与界面元素)
-    void applyBackdrop();
-    void restoreCursor();             // Fullscreen/hideCursor:指针移动即恢复
-    QColor backdropColor() const;   // 查看器/浏览器预览各用一个背景色设置
-    bool   inFullscreen() const;    // 所在窗口处于全屏 = 套用 Fullscreen/* 设置
-    QString modeKey(const char* suffix) const;  // "Viewer/xxx" ↔ "Fullscreen/xxx"
-    // Viewer/autoFit → 目标缩放系数(见 previewpanel.cpp 的取值语义表)
-    double fitScaleFor(const QSize& viewSize) const;
     // 唯一安全销毁出口：deleteLater + 置空，绝不在信号槽内同步 delete sender
     void teardownPlayer();
-    // GIF QMovie 安全回收(旧实现每次 new 从不 delete,看一次泄一个)
-    void stopMovie();
     // GIF QMovie 安全回收(旧实现每次 new 从不 delete,看一次泄一个)
     void stopMovie();
     // Live Photo 播完：安全回收播放器后切回静态图
@@ -241,15 +142,6 @@ private:
     // 导航小窗拖动:指尖下的缩略图点 → 视口中心(几何与 updatePanTool 同一套)
     void panNavTo(const QPoint& thumbPos);
     QRect navPixmapRect() const;           // 缩略图 pixmap 的实际摆放矩形(m_panTool 坐标)
-    QRect navPixmapRect() const;           // 缩略图 pixmap 的实际摆放矩形(m_panTool 坐标)
-    QRect navPixmapRect() const;           // 缩略图 pixmap 的实际摆放矩形(m_panTool 坐标)
-    QRect navPixmapRect() const;           // 缩略图 pixmap 的实际摆放矩形(m_panTool 坐标)
-    // 动态照片:单击静态预览=重播动态部分(不做临时 1:1 放大)
-    void playLivePhoto();
-    // 无预览出口:目录 + 未知类型共用(清空各视图,只留占位底)
-    void showNoPreview();
-    // 导航小窗拖动:指尖下的缩略图点 → 视口中心(几何与 updatePanTool 同一套)
-    void panNavTo(const QPoint& thumbPos);
 
     // ── 设置活接线:查看器/全屏的界面元素 ──
     void applyViewerChrome();              // 改设置/换文件后统一刷新下列元素
@@ -275,24 +167,11 @@ private:
     std::optional<LivePhoto::Info> m_liveInfo;  // 当前文件若为动态照片,单击=重播
     bool m_extractBusy = false; // 内嵌视频提取中(同一时刻最多一次,连点不叠任务)
     bool m_navDragging = false; // 导航小窗蓝框拖动中
-    std::optional<LivePhoto::Info> m_liveInfo;  // 当前文件若为动态照片,单击=重播
-    bool m_extractBusy = false; // 内嵌视频提取中(同一时刻最多一次,连点不叠任务)
-    bool m_navDragging = false; // 导航小窗蓝框拖动中
     QPixmap *m_origPix = nullptr;
     double m_scale = 1.0;
     double m_lastScale = 0.0;   // 上次实际应用的缩放(Viewer/autoFit=0"上次使用过的"用)
     double m_dpiX = 0.0;        // #122 文件自带 DPI(0=文件没写)·General/exifDpi 的输入
     double m_dpiY = 0.0;
-    double m_dpiX = 0.0;        // #122 文件自带 DPI(0=文件没写):General/exifDpi 的输入
-    double m_dpiY = 0.0;
-    double m_dpiX = 0.0;        // #122 文件自带 DPI(0=文件没写)·General/exifDpi 的输入
-    double m_dpiY = 0.0;
-    double m_dpiX = 0.0;        // #122 文件自带 DPI(0=文件没写):General/exifDpi 的输入
-    double m_dpiY = 0.0;
-    bool   m_viewerMode = false; // 独立查看器(true)/浏览器预览窗格(false)
-    double m_lastScale = 0.0;   // 上次实际应用的缩放(Viewer/autoFit=0"上次使用过的"用)
-    bool   m_viewerMode = false; // 独立查看器(true)/浏览器预览窗格(false)
-    double m_lastScale = 0.0;   // 上次实际应用的缩放(Viewer/autoFit=0"上次使用过的"用)
     bool   m_viewerMode = false; // 独立查看器(true)/浏览器预览窗格(false)
     bool m_dragging = false;
     QPointF m_dragStart, m_dragLabelPos;
@@ -307,24 +186,7 @@ private:
     QLabel *m_rawCaption = nullptr;
     QPushButton *m_rawBtn = nullptr;
     bool m_rawBusy = false;                     // RAW 全解进行中(结果可能被代次作废)
-    QWidget *m_rawBox = nullptr;                // RAW 占位容器(说明 + 加载按钮)
-    QLabel *m_rawCaption = nullptr;
-    QPushButton *m_rawBtn = nullptr;
-    bool m_rawBusy = false;                     // RAW 全解进行中(结果可能被代次作废)
-    QWidget *m_rawBox = nullptr;                // RAW 占位容器(说明 + 加载按钮)
-    QLabel *m_rawCaption = nullptr;
-    QPushButton *m_rawBtn = nullptr;
-    bool m_rawBusy = false;                     // RAW 全解进行中(结果可能被代次作废)
-    QWidget *m_rawBox = nullptr;                // RAW 占位容器(说明 + 加载按钮)
-    QLabel *m_rawCaption = nullptr;
-    QPushButton *m_rawBtn = nullptr;
-    bool m_rawBusy = false;                     // RAW 全解进行中(结果可能被代次作废)
-    QLabel *m_waveLabel = nullptr;              // 波形画布(音频形态,stretch 3)
-    QThread *m_waveThread = nullptr;            // 波形解码专属线程
-    Audiowave::Worker *m_waveWorker = nullptr;  // 无 parent:随所属线程 finished 收尾
-    Audiowave::Snapshot m_waveSnap;             // 最近快照(换文件即清空重画)
     QLabel *m_placeholder = nullptr;   // 空态占位
-    QTextEdit *m_textEdit = nullptr;   // txt 文本预览
     QTextEdit *m_textEdit = nullptr;   // txt 文本预览
     QImageReader* m_gifReader = nullptr; // GIF 解码器(2026-08-30 弃 QMovie:跳帧卡死解码器)
     QPixmap m_gifPix;                    // 当前帧原始画面(render() 重贴用)
@@ -340,7 +202,6 @@ private:
     QPoint m_gifPressPos;              // 单击=播放/暂停:按下点与松开点足够近才算单击
     bool   m_gifToggleArm = false;
     quint32 m_lastPressTs = 0;   // 双击自管上限(#159):首次左键按下的事件时间戳
-    quint32 m_lastPressTs = 0;   // 双击自管上限(#159):首次左键按下的事件时间戳
     // 游标与帧缓存(#94):Qt 6.8.3 的 QImageReader::jumpToImage/jumpToNextImage
     // 对 GIF 实测一律返回 false(见 cache/tmp/gif_seek_probe),跳帧只能"顺解"或
     // "重建后从头解"。m_gifNext = reader 下一次 read() 会产出的帧号(-1=游标不可信)。
@@ -352,69 +213,6 @@ private:
     // 会积压成"快进+卡"。start() 天然取消上一拍,同一时刻最多一拍在飞。
     QTimer* m_gifPlayTimer = nullptr;
     QTimer* m_gifSeekTimer = nullptr;
-    // 游标与帧缓存(#94):Qt 6.8.3 的 QImageReader::jumpToImage/jumpToNextImage
-    // 对 GIF 实测一律返回 false(见 cache/tmp/gif_seek_probe),跳帧只能"顺解"或
-    // "重建后从头解"。m_gifNext = reader 下一次 read() 会产出的帧号(-1=游标不可信)。
-    int m_gifNext = -1;
-    int m_gifWant = -1;                // 擦洗目标帧(-1=无待办)
-    QHash<int, QImage> m_gifCache;     // 已解码帧(围绕播放头淘汰)
-    qint64 m_gifCacheBytes = 0;
-    // 成员定时器:QTimer::singleShot 每排一拍就多一个未决事件,拖动期间
-    // 会积压成"快进+卡"。start() 天然取消上一拍,同一时刻最多一拍在飞。
-    QTimer* m_gifPlayTimer = nullptr;
-    QTimer* m_gifSeekTimer = nullptr;
-    // 游标与帧缓存(#94):Qt 6.8.3 的 QImageReader::jumpToImage/jumpToNextImage
-    // 对 GIF 实测一律返回 false(见 cache/tmp/gif_seek_probe),跳帧只能"顺解"或
-    // "重建后从头解"。m_gifNext = reader 下一次 read() 会产出的帧号(-1=游标不可信)。
-    int m_gifNext = -1;
-    int m_gifWant = -1;                // 擦洗目标帧(-1=无待办)
-    QHash<int, QImage> m_gifCache;     // 已解码帧(围绕播放头淘汰)
-    qint64 m_gifCacheBytes = 0;
-    // 成员定时器:QTimer::singleShot 每排一拍就多一个未决事件,拖动期间
-    // 会积压成"快进+卡"。start() 天然取消上一拍,同一时刻最多一拍在飞。
-    QTimer* m_gifPlayTimer = nullptr;
-    QTimer* m_gifSeekTimer = nullptr;
-    // 游标与帧缓存(#94):Qt 6.8.3 的 QImageReader::jumpToImage/jumpToNextImage
-    // 对 GIF 实测一律返回 false(见 cache/tmp/gif_seek_probe),跳帧只能"顺解"或
-    // "重建后从头解"。m_gifNext = reader 下一次 read() 会产出的帧号(-1=游标不可信)。
-    int m_gifNext = -1;
-    int m_gifWant = -1;                // 擦洗目标帧(-1=无待办)
-    QHash<int, QImage> m_gifCache;     // 已解码帧(围绕播放头淘汰)
-    qint64 m_gifCacheBytes = 0;
-    // 成员定时器:QTimer::singleShot 每排一拍就多一个未决事件,拖动期间
-    // 会积压成"快进+卡"。start() 天然取消上一拍,同一时刻最多一拍在飞。
-    QTimer* m_gifPlayTimer = nullptr;
-    QTimer* m_gifSeekTimer = nullptr;
-
-    // GIF 时间轴状态(#97)。逐帧时长自己解析文件字节:QMovie/QImageReader 在
-    // Qt 6.5.3 都不暴露 per-frame delay,而时长表与帧数必须同一次扫描得出,
-    // 否则进度条刻度会和实际播放的帧对不上
-    bool m_isGif = false;
-    bool m_gifPaused = false;
-    QVector<int> m_gifDelay;           // 每帧时长(ms)
-    QVector<int> m_gifStart;           // 每帧起始时间(ms),长度 = m_gifDelay + 1
-    QPoint m_gifPressPos;              // 单击=播放/暂停:按下点与松开点足够近才算单击
-    bool   m_gifToggleArm = false;
-
-    // GIF 时间轴状态(#97)。逐帧时长自己解析文件字节:QMovie/QImageReader 在
-    // Qt 6.5.3 都不暴露 per-frame delay,而时长表与帧数必须同一次扫描得出,
-    // 否则进度条刻度会和实际播放的帧对不上
-    bool m_isGif = false;
-    bool m_gifPaused = false;
-    QVector<int> m_gifDelay;           // 每帧时长(ms)
-    QVector<int> m_gifStart;           // 每帧起始时间(ms),长度 = m_gifDelay + 1
-    QPoint m_gifPressPos;              // 单击=播放/暂停:按下点与松开点足够近才算单击
-    bool   m_gifToggleArm = false;
-
-    // GIF 时间轴状态(#97)。逐帧时长自己解析文件字节:QMovie/QImageReader 在
-    // Qt 6.5.3 都不暴露 per-frame delay,而时长表与帧数必须同一次扫描得出,
-    // 否则进度条刻度会和实际播放的帧对不上
-    bool m_isGif = false;
-    bool m_gifPaused = false;
-    QVector<int> m_gifDelay;           // 每帧时长(ms)
-    QVector<int> m_gifStart;           // 每帧起始时间(ms),长度 = m_gifDelay + 1
-    QPoint m_gifPressPos;              // 单击=播放/暂停:按下点与松开点足够近才算单击
-    bool   m_gifToggleArm = false;
 
     QWidget *m_videoWidget;
     QVideoWidget *m_vw = nullptr;   // 复用的视频控件(切视频不重建,杜绝叠加透出窗口期)
@@ -426,7 +224,6 @@ private:
     // 唯一能挡住它的办法是把 m_vw 整个藏起来(实测:隐藏期间后端照常送帧,
     // 屏幕上就是父窗口的 #0A0A0C 深色底,var=0)。遮罩保留作第二道防线。
     QWidget *m_videoCover = nullptr;   // 纯黑遮罩:attach→新视频首帧之间盖住控件里的残帧
-    QWidget *m_videoCover = nullptr;   // 纯黑遮罩:attach→新视频首帧之间盖住控件里的残帧
     QMediaPlayer *m_player = nullptr;
     QAudioOutput *m_audioOutput = nullptr;
     // 延迟 attach:setSource 后不立刻接输出/播,等 mediaStatus 就绪再接
@@ -436,20 +233,6 @@ private:
     // #104:遮罩收回的归属权。armed 期间只有"本路源送出的第一帧"能收回遮罩
     bool m_coverArmed = false;
     QMetaObject::Connection m_coverConn;
-    // #104:遮罩收回的归属权。armed 期间只有"本路源送出的第一帧"能收回遮罩
-    bool m_coverArmed = false;
-    QMetaObject::Connection m_coverConn;
-    // #104:遮罩收回的归属权。armed 期间只有"本路源送出的第一帧"能收回遮罩
-    bool m_coverArmed = false;
-    QMetaObject::Connection m_coverConn;
-    // #104:遮罩收回的归属权。armed 期间只有"本路源送出的第一帧"能收回遮罩
-    bool m_coverArmed = false;
-    QMetaObject::Connection m_coverConn;
-    // 延迟 attach:setSource 后不立刻接输出/播,等 mediaStatus 就绪再接
-    QString m_pendingPlay;     // 已 setSource、待就绪 attach+play 的源
-    bool m_videoOutAttached = false;   // 视频输出当前是否已接到 m_vw
-                                       // (same-src 重播若输出已断必须接回,否则只出声不出画)
-    QElapsedTimer m_navClock;  // 最近一次导航时刻:浏览扫动时暂缓自动播(停稳才切视频)
     QWidget *m_controlBar;
     QWidget *m_imgSpace;   // 图片/GIF 形态的空间吸收器:没有它 40px 的控制栏会被布局垂直居中
 
@@ -463,13 +246,7 @@ private:
     QPushButton* m_pdfPrev  = nullptr;
     QPushButton* m_pdfNext  = nullptr;
     QLabel*      m_pdfLabel = nullptr;
-    QWidget *m_imgSpace;   // 图片/GIF 形态的空间吸收器:没有它 40px 的控制栏会被布局垂直居中
-    QWidget *m_imgSpace;   // 图片/GIF 形态的空间吸收器:没有它 40px 的控制栏会被布局垂直居中
-    QWidget *m_imgSpace;   // 图片/GIF 形态的空间吸收器:没有它 40px 的控制栏会被布局垂直居中
     QPushButton *m_btnPlay;
-    QPushButton *m_btnStop = nullptr;     // 停止(位置归零,再播从头开始)
-    QPushButton *m_btnStop = nullptr;     // 停止(位置归零,再播从头开始)
-    QPushButton *m_btnStop = nullptr;     // 停止(位置归零,再播从头开始)
     QPushButton *m_btnStop = nullptr;     // 停止(位置归零,再播从头开始)
     QToolButton *m_btnVolume = nullptr;   // 音量按钮(点击弹竖向滑条)
     QPushButton *m_btnPrev = nullptr;     // 上一文件按钮(播放条最左,仿 XnView)
@@ -482,11 +259,6 @@ private:
     bool m_ctrlZoomed = false;   // Ctrl+滚轮缩放过(左键变为纯拖动)
     bool m_tempZoom   = false;   // 左键临时 1:1 放大(松开还原)
     bool m_rbtnWheel  = false;   // 右键+滚轮缩放过:松开右键那次不弹上下文菜单
-    bool m_rbtnWheel  = false;   // 右键+滚轮缩放过:松开右键那次不弹上下文菜单
-    bool m_rbtnWheel  = false;   // 右键+滚轮缩放过:松开右键那次不弹上下文菜单
-    bool m_rbtnWheel  = false;   // 右键+滚轮缩放过:松开右键那次不弹上下文菜单
-    QTimer m_cursorTimer;        // Fullscreen/hideCursor:指针静止一段时间后隐藏
-    bool   m_cursorHidden = false;
     QTimer m_cursorTimer;        // Fullscreen/hideCursor:指针静止一段时间后隐藏
     bool   m_cursorHidden = false;
 
@@ -510,7 +282,6 @@ private:
     QWidget*    m_floatBar  = nullptr;     // Fullscreen/showToolbar + floatView
     QWidget*    m_panTool   = nullptr;     // Viewer/panTool
     QLabel*     m_panThumb  = nullptr;
-    QLabel*     m_ratingDot = nullptr;     // Viewer/showRating 颜色标记点
     QLabel*     m_ratingDot = nullptr;     // Viewer/showRating 颜色标记点
     QWidget*    m_panView   = nullptr;     // 导航小窗里的视口指示框
     bool  m_navigating   = false;          // Viewer/resetAutoOnNav:本次是切文件

@@ -169,11 +169,6 @@ void FileGrid::sort(int column, bool ascending) {
     // 调用无落盘代价(#75 的教训只针对同步刷盘/逐条目读)
     AppSettings::instance().setPersist("Browser/lastSortCol", column);
     AppSettings::instance().setPersist("Browser/lastSortAsc", ascending);
-    // 记住上次(#150):排序随时落盘(setPersist 不广播),启动默认排序=
-    // "记住上次"时下次启动由构造函数读回。QSettings 写的是内存缓冲,逐目录
-    // 调用无落盘代价(#75 的教训只针对同步刷盘/逐条目读)
-    AppSettings::instance().setPersist("Browser/lastSortCol", column);
-    AppSettings::instance().setPersist("Browser/lastSortAsc", ascending);
 
     QCollator collNormal;
     collNormal.setCaseSensitivity(Qt::CaseInsensitive);

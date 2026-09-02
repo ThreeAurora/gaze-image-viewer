@@ -4,10 +4,6 @@
 #include "previewpanel.h"
 #include "imgsearchdialog.h"
 #include "imgsearch.h"     // ImgSearch::servicePid/killStartedService:退出时按设置回收自启服务
-#include "imgsearch.h"     // ImgSearch::servicePid/killStartedService:退出时按设置回收自启服务
-#include "printdialog.h"
-#include "printdialog.h"
-#include "printdialog.h"
 #include "printdialog.h"
 #include "infopanel.h"
 #include "shelldelete.h"   // showDeleteToast:拖放复制成功的左下角提示
@@ -19,11 +15,6 @@
 #include "validname.h"
 #include "keytarget.h"
 #include "logger.h"
-#include "logger.h"
-#include "logger.h"
-#include "logger.h"
-#include "validname.h"
-#include "keytarget.h"
 
 #include <QMenuBar>
 #include <QStatusBar>
@@ -34,43 +25,17 @@
 #include <QMessageBox>
 #include <QDialog>
 #include <QAbstractButton>
-#include <QDialog>
-#include <QAbstractButton>
-#include <QDialog>
-#include <QAbstractButton>
-#include <QDialog>
-#include <QAbstractButton>
 #include <QFileInfo>
 #include <QDir>
-#include <QStandardPaths>
 #include <QStandardPaths>
 #include <QDateTime>
 #include <QShortcut>
 #include <QKeyEvent>
 #include <QMouseEvent>
-#include <QMouseEvent>
-#include <QMouseEvent>
-#include <QMouseEvent>
 #include <QApplication>
 #include <QToolButton>
 #include <QFrame>
 #include <QStyle>
-#include <QMenu>
-#include <QInputDialog>
-#include <QSettings>
-#include <QDesktopServices>
-#include <QUrl>
-#include <QTextEdit>
-#include <QAbstractSpinBox>
-#include <QClipboard>
-#include <QPair>
-#include <QPair>
-#include "iconlib.h"
-#include "labelstore.h"
-#include "settings_dialog.h"
-#include "dbmaintenance.h"
-#include "settings.h"
-#include "settings.h"
 #include <QMenu>
 #include <QActionGroup>
 #include <QInputDialog>
@@ -88,72 +53,10 @@
 #include "iconlib.h"
 #include "labelstore.h"
 #include "settings_dialog.h"
+#include "dbmaintenance.h"
+#include "settings.h"
 
 #include "mainwindow_internal.h"
-
-// 路径显示/内部规范形:
-//   内部一律用 '/' 且不带尾斜杠(历史栈 / lastDir / Browser/lastFile 比较都用它)
-//   地址栏按 Windows 习惯显示:反斜杠 + 末尾 "\"(XnView 同款)
-static QString canonicalPath(const QString& raw) {
-    QString p = QDir::fromNativeSeparators(raw.trimmed());
-    while (p.size() > 3 && p.endsWith('/')) p.chop(1);   // "E:/" 根保留斜杠
-    if (p.size() == 2 && p.endsWith(':')) p += '/';
-    return p;
-}
-
-static QString displayPath(const QString& canonical) {
-    QString d = QDir::toNativeSeparators(canonical);
-    if (!d.endsWith('\\')) d += '\\';
-    return d;
-}
-
-// 路径显示/内部规范形:
-//   内部一律用 '/' 且不带尾斜杠(历史栈 / lastDir / Browser/lastFile 比较都用它)
-//   地址栏按 Windows 习惯显示:反斜杠 + 末尾 "\"(XnView 同款)
-static QString canonicalPath(const QString& raw) {
-    QString p = QDir::fromNativeSeparators(raw.trimmed());
-    while (p.size() > 3 && p.endsWith('/')) p.chop(1);   // "E:/" 根保留斜杠
-    if (p.size() == 2 && p.endsWith(':')) p += '/';
-    return p;
-}
-
-static QString displayPath(const QString& canonical) {
-    QString d = QDir::toNativeSeparators(canonical);
-    if (!d.endsWith('\\')) d += '\\';
-    return d;
-}
-
-// 路径显示/内部规范形:
-//   内部一律用 '/' 且不带尾斜杠(历史栈 / lastDir / Browser/lastFile 比较都用它)
-//   地址栏按 Windows 习惯显示:反斜杠 + 末尾 "\"(XnView 同款)
-static QString canonicalPath(const QString& raw) {
-    QString p = QDir::fromNativeSeparators(raw.trimmed());
-    while (p.size() > 3 && p.endsWith('/')) p.chop(1);   // "E:/" 根保留斜杠
-    if (p.size() == 2 && p.endsWith(':')) p += '/';
-    return p;
-}
-
-static QString displayPath(const QString& canonical) {
-    QString d = QDir::toNativeSeparators(canonical);
-    if (!d.endsWith('\\')) d += '\\';
-    return d;
-}
-
-// 路径显示/内部规范形:
-//   内部一律用 '/' 且不带尾斜杠(历史栈 / lastDir / Browser/lastFile 比较都用它)
-//   地址栏按 Windows 习惯显示:反斜杠 + 末尾 "\"(XnView 同款)
-static QString canonicalPath(const QString& raw) {
-    QString p = QDir::fromNativeSeparators(raw.trimmed());
-    while (p.size() > 3 && p.endsWith('/')) p.chop(1);   // "E:/" 根保留斜杠
-    if (p.size() == 2 && p.endsWith(':')) p += '/';
-    return p;
-}
-
-static QString displayPath(const QString& canonical) {
-    QString d = QDir::toNativeSeparators(canonical);
-    if (!d.endsWith('\\')) d += '\\';
-    return d;
-}
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     setWindowTitle("Gaze");
@@ -176,9 +79,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
         m_panesOn.removeAll(QStringLiteral("info"));
 
     createMenubar();
-    Logger::boot("ctor:menubar");
-    Logger::boot("ctor:menubar");
-    Logger::boot("ctor:menubar");
     Logger::boot("ctor:menubar");
 
     // 查看器标签条(Edge 式,只在查看器模式显示):标签的文件路径存在 tabData 里,
@@ -242,41 +142,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     });
     ml->addWidget(m_viewerTabs);
     Logger::boot("ctor:tabbar");
-    Logger::boot("ctor:tabbar");
-    Logger::boot("ctor:tabbar");
-    Logger::boot("ctor:tabbar");
-
-    // 查看器标签条(Interface/multiViewerTabs / oneViewerTab,语义见 syncViewerTab 段注释):
-    // 只在查看器模式显示,浏览器模式隐藏
-    m_viewerTabs = new QTabBar;
-    m_viewerTabs->setDocumentMode(true);
-    m_viewerTabs->setExpanding(false);
-    m_viewerTabs->setTabsClosable(true);
-    m_viewerTabs->setMovable(true);
-    m_viewerTabs->hide();
-    connect(m_viewerTabs, &QTabBar::currentChanged, this, [this](int i) {
-        if (i < 0 || i >= m_tabPaths.size()) return;
-        const QString p = m_tabPaths[i];
-        m_preview->loadFile(p);
-        // Interface/syncBrowser:切标签/关视图时把浏览器选中项同步过去
-        if (AppSettings::instance().get("Interface/syncBrowser", false).toBool())
-            m_fileGrid->selectByPath(p);
-        m_currentFile = p;
-        applyTitle();
-    });
-    connect(m_viewerTabs, &QTabBar::tabCloseRequested, this, [this](int i) {
-        if (i < 0 || i >= m_tabPaths.size()) return;
-        m_tabPaths.removeAt(i);
-        m_viewerTabs->removeTab(i);
-        if (m_tabPaths.isEmpty()) { toggleViewer(); return; }   // 关掉最后一个退回浏览器
-        // removeTab 已把当前索引改指到相邻/平移后的存活标签(关非当前标签时焦点
-        // 本就不该动)。旧写法无条件 setCurrentIndex(qMin(i,...)) 会把焦点从用户
-        // 正在看的那张硬拽到被关位置 — 多标签此前不可达,这条错路一直没人走过。
-        const int cur = m_viewerTabs->currentIndex();
-        if (cur < 0 || cur >= m_tabPaths.size())
-            m_viewerTabs->setCurrentIndex(qMin(qMax(i, 0), m_tabPaths.size() - 1));
-    });
-    ml->addWidget(m_viewerTabs);
 
     m_splitter = new QSplitter(Qt::Horizontal);
     m_splitter->setStyleSheet(QString::fromUtf8(
@@ -298,9 +163,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     tv->addWidget(m_folderTree, 1);
     m_splitter->addWidget(treePane);
     Logger::boot("ctor:tree");
-    Logger::boot("ctor:tree");
-    Logger::boot("ctor:tree");
-    Logger::boot("ctor:tree");
 
     auto *centerPanel = new QWidget;
     centerPanel->setMinimumWidth(200);
@@ -311,9 +173,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 
     createToolbar2(cl);
     Logger::boot("ctor:toolbar");
-    Logger::boot("ctor:toolbar");
-    Logger::boot("ctor:toolbar");
-    Logger::boot("ctor:toolbar");
 
     m_sortHeader = new SortHeader;
     // #107:列标题显隐落盘(此前切掉重启又回来)
@@ -321,7 +180,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     cl->addWidget(m_sortHeader);
 
     m_fileGrid = new FileGrid;
-    m_fileGrid->setAcceptDrops(true);   // 网格自己接住拖入(落点判定在 MainWindow)
     cl->addWidget(m_fileGrid, 1);
     // 拖放(#81):只在 MainWindow 上 setAcceptDrops,网格/树都不开 ——
     // 子控件若 acceptDrops 却不实现 dropEvent,会把事件吞掉,主窗口反而收不到。
@@ -330,26 +188,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     connect(m_sortHeader, &SortHeader::sortChanged, m_fileGrid, &FileGrid::sort);
     connect(m_fileGrid, &FileGrid::fileCountChanged, this, &MainWindow::updateStatus);
     connect(m_fileGrid, &FileGrid::selectionChanged, this, &MainWindow::onSelectionChanged);
-    // 反向同步:任何入口(筛选菜单/红标循环/下拉框/键盘)改了 filterMode,下拉框跟着走
-    connect(m_fileGrid, &FileGrid::filterModeChanged, this, [this](int mode) {
-        if (!m_formatFilterCombo) return;
-        m_formatFilterCombo->blockSignals(true);
-        int idx = 0;
-        for (int i = 0; i < m_formatFilterCombo->count(); ++i)
-            if (m_formatFilterCombo->itemData(i).toInt() == mode) { idx = i; break; }
-        m_formatFilterCombo->setCurrentIndex(idx);
-        m_formatFilterCombo->blockSignals(false);
-    });
-    // 反向同步:任何入口(筛选菜单/红标循环/下拉框/键盘)改了 filterMode,下拉框跟着走
-    connect(m_fileGrid, &FileGrid::filterModeChanged, this, [this](int mode) {
-        if (!m_formatFilterCombo) return;
-        m_formatFilterCombo->blockSignals(true);
-        int idx = 0;
-        for (int i = 0; i < m_formatFilterCombo->count(); ++i)
-            if (m_formatFilterCombo->itemData(i).toInt() == mode) { idx = i; break; }
-        m_formatFilterCombo->setCurrentIndex(idx);
-        m_formatFilterCombo->blockSignals(false);
-    });
     // 反向同步:任何入口(筛选菜单/红标循环/键盘)改了 filterMode,下拉框跟着走。
     // 这个框只列 8 种"格式",而筛选菜单/红标三态键还会给出 图像(+目录)、
     // 红色… 框里没有对应项 —— 旧代码查不到就回落到 idx 0,于是网格只列
@@ -358,10 +196,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     // currentIndex(-1) 下会把 placeholderText 画进显示区。
     connect(m_fileGrid, &FileGrid::filterModeChanged,
             this, &MainWindow::syncFilterIndicators);
-    // #107:启动即按落盘筛选(Browser/filterMode)对齐下拉框/红钮 —— 原先恒显"全部"。
-    // 放这里而不是工具栏里:构造序是 createToolbar2 → sortHeader → FileGrid,
-    // 工具栏阶段 m_fileGrid 还是空的。
-    syncFilterIndicators(m_fileGrid->filterMode());
     // #107:启动即按落盘筛选(Browser/filterMode)对齐下拉框/红钮 —— 原先恒显"全部"。
     // 放这里而不是工具栏里:构造序是 createToolbar2 → sortHeader → FileGrid,
     // 工具栏阶段 m_fileGrid 还是空的。
@@ -400,14 +234,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 
     m_splitter->addWidget(centerPanel);
     Logger::boot("ctor:grid");
-    Logger::boot("ctor:grid");
-    Logger::boot("ctor:grid");
-    Logger::boot("ctor:grid");
 
     // 预览面板:"预览"标题条 + PreviewPanel(包装后才能挂标题条,X 键关闭)
-    Logger::boot("ctor:pv-pre");
     m_preview = new PreviewPanel;
-    Logger::boot("ctor:pv-obj");
     auto* previewPane = new QWidget;
     m_previewPane = previewPane;
     previewPane->setMinimumWidth(200);
@@ -430,15 +259,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     iv->setContentsMargins(0, 0, 0, 0);
     iv->setSpacing(0);
     iv->addWidget(createPaneHeader(QString::fromUtf8("信息"), "info"));
-    Logger::boot("ctor:info-pre");
-    Logger::boot("ctor:info-pre");
     m_info = new InfoPanel;
     m_info->setMinimumHeight(140);
     iv->addWidget(m_info, 1);
     m_infoPane->setMinimumHeight(140);
     pv->addWidget(m_infoPane);
-    Logger::boot("ctor:info-post");
-    Logger::boot("ctor:info-post");
     connect(m_info, &QWidget::destroyed, this, [this]() { m_info = nullptr; });
 
     m_splitter->addWidget(previewPane);
@@ -451,26 +276,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 
     createStatusbar();
     applyPaneVisibility();
-    applyPaneVisibility();
-    applyPaneVisibility();
-    applyPaneVisibility();
 
     // 最近文件合批写盘:连续切换只刷内存,静默 500ms 后一次落盘
     m_recentFlushTimer.setSingleShot(true);
     m_recentFlushTimer.setInterval(500);
     connect(&m_recentFlushTimer, &QTimer::timeout, this, &MainWindow::flushRecentFiles);
-
-    // 快速幻灯片(Keyboard/space=快速幻灯片):间隔可在设置→快捷键→空格调整
-    m_slideTimer.setInterval(slideIntervalMs());
-    connect(&m_slideTimer, &QTimer::timeout, this, [this]() {
-        m_fileGrid->navigateSelection(1);
-    });
-
-    // 快速幻灯片(Keyboard/space=快速幻灯片):间隔可在设置→快捷键→空格调整
-    m_slideTimer.setInterval(slideIntervalMs());
-    connect(&m_slideTimer, &QTimer::timeout, this, [this]() {
-        m_fileGrid->navigateSelection(1);
-    });
 
     // 快速幻灯片(Keyboard/space=快速幻灯片):间隔可在设置→快捷键→空格调整
     m_slideTimer.setInterval(mw_impl::slideIntervalMs());
@@ -482,9 +292,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     qApp->installEventFilter(this);
 
     m_folderTree->loadDrives();
-    Logger::boot("ctor:drives");
-    Logger::boot("ctor:drives");
-    Logger::boot("ctor:drives");
     Logger::boot("ctor:drives");
 
     // 启动目录/文件:此前 Start/withFile、Start/withoutFile、Start/rememberFilename
@@ -531,16 +338,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 
     Logger::boot("ctor:startdir");
 
-    Logger::boot("ctor:startdir");
-
-    Logger::boot("ctor:startdir");
-
-    Logger::boot("ctor:startdir");
-
     applyShortcuts();   // 应用用户自定义快捷键(ini 覆盖默认)
-    Logger::boot("ctor:shortcuts");
-    Logger::boot("ctor:shortcuts");
-    Logger::boot("ctor:shortcuts");
     Logger::boot("ctor:shortcuts");
 
     // 启动布局:"跟随上次窗口状态"开 → 用上次关闭状态;否则用最后应用的命名布局
@@ -557,33 +355,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
             applyLastLayout();
     }
     Logger::boot("ctor:layout");
-    Logger::boot("ctor:layout");
-    Logger::boot("ctor:layout");
-    Logger::boot("ctor:layout");
-
-    // 设置→界面→启动时打开文件列表和预览框:
-    //   勾选 = 无视布局状态,强制显示树与预览(未保存过布局时的默认行为)
-    //   未勾选 = 沿用上面恢复出的面板状态(关闭前被关掉的面板下次启动仍然没有)
-    if (AppSettings::instance().get("Interface/showPanesOnStart", true).toBool()) {
-        setPaneVisible("tree", true);
-        setPaneVisible("preview", true);
-    }
-
-    // 设置→界面→启动时打开文件列表和预览框:
-    //   勾选 = 无视布局状态,强制显示树与预览(未保存过布局时的默认行为)
-    //   未勾选 = 沿用上面恢复出的面板状态(关闭前被关掉的面板下次启动仍然没有)
-    if (AppSettings::instance().get("Interface/showPanesOnStart", true).toBool()) {
-        setPaneVisible("tree", true);
-        setPaneVisible("preview", true);
-    }
-
-    // 设置→界面→启动时打开文件列表和预览框:
-    //   勾选 = 无视布局状态,强制显示树与预览(未保存过布局时的默认行为)
-    //   未勾选 = 沿用上面恢复出的面板状态(关闭前被关掉的面板下次启动仍然没有)
-    if (AppSettings::instance().get("Interface/showPanesOnStart", true).toBool()) {
-        setPaneVisible("tree", true);
-        setPaneVisible("preview", true);
-    }
 
     // 设置→界面→启动时打开文件列表和预览框:
     //   勾选 = 无视布局状态,强制显示树与预览(未保存过布局时的默认行为)
@@ -602,198 +373,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
         m_slideTimer.setInterval(mw_impl::slideIntervalMs());
     });
     Logger::boot("ctor:done");
-}
-
-// ═══════════════════════════════════════════
-// 拖放(#81)
-//   拖入文件  → 导航到它的目录并选中它(多个则全选同目录的那几个)
-//   拖入目录  → 直接进入
-//   拖到某个文件夹上(网格卡片或树节点)→ 复制进去(与"拖出=复制"对称)
-// ═══════════════════════════════════════════
-void MainWindow::dragEnterEvent(QDragEnterEvent* e) {
-    if (e->mimeData()->hasUrls()) e->acceptProposedAction();
-}
-void MainWindow::dragMoveEvent(QDragMoveEvent* e) {
-    if (e->mimeData()->hasUrls()) e->acceptProposedAction();
-}
-
-void MainWindow::dropEvent(QDropEvent* e) {
-    const QMimeData* md = e->mimeData();
-    if (!md || !md->hasUrls()) return;
-
-    QStringList paths;
-    for (const QUrl& u : md->urls()) {
-        if (!u.isLocalFile()) continue;
-        const QString p = QDir::fromNativeSeparators(u.toLocalFile());
-        if (QFileInfo::exists(p)) paths << p;
-    }
-    if (paths.isEmpty()) return;
-    e->acceptProposedAction();
-
-    // 落点是不是某个文件夹:先看网格(索引→条目),再看树(节点)
-    QString dropIntoDir;
-    if (m_fileGrid) {
-        QWidget* child = childAt(e->position().toPoint());
-        if (child) {
-            const QPoint gp = child->mapFrom(this, e->position().toPoint());
-            if (child == m_fileGrid || m_fileGrid->isAncestorOf(child)) {
-                const int idx = m_fileGrid->indexAt(m_fileGrid->mapFrom(this, e->position().toPoint()));
-                const QString hit = m_fileGrid->pathAt(idx);
-                if (!hit.isEmpty() && QFileInfo(hit).isDir()) dropIntoDir = hit;
-            } else if (child == m_folderTree || m_folderTree->isAncestorOf(child)) {
-                const QString hit = m_folderTree->pathAt(m_folderTree->mapFrom(this, e->position().toPoint()));
-                if (!hit.isEmpty() && QFileInfo(hit).isDir()) dropIntoDir = hit;
-            }
-            Q_UNUSED(gp);
-        }
-    }
-
-    // 拖到文件夹上 = 复制进去(不动原件,与拖出语义一致;用户没要"移动")
-    if (!dropIntoDir.isEmpty()) {
-        QStringList errs;
-        int copied = 0;
-        for (const QString& p : paths) {
-            const QFileInfo fi(p);
-            const QString dst = dropIntoDir + "/" + fi.fileName();
-            if (QFileInfo(dst).exists()) { errs << dst; continue; }
-            if (fi.isDir()) {
-                if (!QDir().rename(p, dst) && !QDir(p).mkdir) { errs << dst; continue; }
-                ++copied;
-            } else {
-                if (!QFile::copy(p, dst)) { errs << dst; continue; }
-                ++copied;
-            }
-        }
-        if (copied) {
-            m_fileGrid->refreshCurrentDir();
-            if (m_folderTree) m_folderTree->refreshCurrent();
-        }
-        if (!errs.isEmpty())
-            QMessageBox::warning(this, QString::fromUtf8("部分项目未能复制"),
-                                 errs.join(QLatin1Char('\n')));
-        return;
-    }
-
-    // 拖到窗口空白处 = 导航/选中
-    const QFileInfo first(paths.first());
-    const QString targetDir = first.isDir() ? first.absoluteFilePath()
-                                            : first.absolutePath();
-    if (!first.isDir()) m_pendingDropSelect = paths;
-    else                m_pendingDropSelect.clear();
-    navigateTo(targetDir);
-    m_pendingDropSelect.clear();
-}
-
-// ═══════════════════════════════════════════
-// 拖放(#81)
-//   拖入文件 → 导航到所在目录并选中(同目录的多个一起选中)
-//   拖入目录 → 直接进入
-//   拖到文件夹上(网格卡片或树节点)→ 复制进去(与"拖出=复制"对称)
-// ═══════════════════════════════════════════
-void MainWindow::dragEnterEvent(QDragEnterEvent* e) {
-    if (e->mimeData() && e->mimeData()->hasUrls()) e->acceptProposedAction();
-}
-void MainWindow::dragMoveEvent(QDragMoveEvent* e) {
-    if (e->mimeData() && e->mimeData()->hasUrls()) e->acceptProposedAction();
-}
-
-void MainWindow::dropEvent(QDropEvent* e) {
-    const QMimeData* md = e->mimeData();
-    if (!md || !md->hasUrls()) return;
-
-    QStringList paths;
-    for (const QUrl& u : md->urls()) {
-        if (!u.isLocalFile()) continue;
-        const QString p = QDir::fromNativeSeparators(u.toLocalFile());
-        if (QFileInfo::exists(p)) paths << p;
-    }
-    if (paths.isEmpty()) return;
-    e->acceptProposedAction();
-
-    // 落点是否压在某个文件夹上:先看网格,再看树
-    QString dropIntoDir;
-    const QPoint gpos = e->position().toPoint();
-    if (QWidget* child = childAt(gpos)) {
-        if (m_fileGrid && (child == m_fileGrid || m_fileGrid->isAncestorOf(child))) {
-            const int idx = m_fileGrid->hitTest(m_fileGrid->mapFrom(this, gpos));
-            const QString hit = m_fileGrid->pathAt(idx);
-            if (!hit.isEmpty() && QFileInfo(hit).isDir()) dropIntoDir = hit;
-        } else if (m_folderTree && (child == m_folderTree
-                                    || m_folderTree->isAncestorOf(child))) {
-            const QString hit = m_folderTree->pathAt(m_folderTree->mapFrom(this, gpos));
-            if (!hit.isEmpty() && QFileInfo(hit).isDir()) dropIntoDir = hit;
-        }
-    }
-
-    // 拖放语义(用户 2026-08-31 明令):拖放=移动,Ctrl+拖放=复制。
-    // 落点压在文件夹上会改动文件;是否弹窗由 FileOps/dropConfirm 控制,
-    // 弹窗文案按实际动作区分,并把"Ctrl+拖放=复制"写进提示里。
-    // 拖到空白处只是导航,不改任何文件,不弹。
-    if (!dropIntoDir.isEmpty()) {
-        const bool copy = (QApplication::keyboardModifiers() & Qt::ControlModifier) != 0;
-        const QString verb = copy ? QString::fromUtf8("复制") : QString::fromUtf8("移动");
-        const QString what = paths.size() == 1
-            ? QFileInfo(paths.first()).fileName()
-            : QString::fromUtf8("%1 个项目").arg(paths.size());
-
-        // 同一个文件已是目的地(拖到自己/拖进自己所在目录)没有意义,提前拦下
-        QStringList actionable;
-        for (const QString& p : paths) {
-            const QFileInfo fi(p);
-            if (fi.absolutePath() == QDir::fromNativeSeparators(dropIntoDir)) continue;
-            actionable << p;
-        }
-        if (actionable.isEmpty()) return;
-
-        if (AppSettings::instance().get("FileOps/dropConfirm", true).toBool()) {
-            const QString tip = copy
-                ? QString::fromUtf8("(松开 Ctrl 再拖即为移动)")
-                : QString::fromUtf8("(按住 Ctrl 拖放即为复制)");
-            if (QMessageBox::question(this, QString::fromUtf8("拖放%1").arg(verb),
-                    QString::fromUtf8("将 %1 %2到\n%3 ?\n\n%4")
-                        .arg(what, verb, dropIntoDir, tip),
-                    QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
-                return;   // 用户取消:什么都不做
-            }
-        }
-
-        QStringList errs;
-        int done = 0;
-        for (const QString& p : actionable) {
-            const QFileInfo fi(p);
-            const QString dst = dropIntoDir + "/" + fi.fileName();
-            if (QFileInfo::exists(dst)) { errs << dst; continue; }
-            // 移动 = QFile::rename(Windows MoveFileEx 跨盘也能走,失败才报错);
-            // 复制 = 文件用 copy,目录用 rename(目录改名即整棵搬移)
-            const bool ok = copy ? (fi.isDir() ? QDir().rename(p, dst)
-                                               : QFile::copy(p, dst))
-                                 : QDir().rename(p, dst) || QFile::rename(p, dst);
-            if (!ok) { errs << dst; continue; }
-            ++done;
-        }
-        if (done) {
-            m_fileGrid->refreshCurrentDir();
-            if (m_folderTree) m_folderTree->refreshCurrent();
-            // 与删除提示同一套左下角 toast,反馈简短明确
-            showDeleteToast(this, QString::fromUtf8("已%1 %2 项到目标文件夹").arg(verb).arg(done));
-        }
-        if (!errs.isEmpty())
-            QMessageBox::warning(this,
-                QString::fromUtf8("部分项目未能%1").arg(verb),
-                errs.join(QLatin1Char('\n')));
-        return;
-    }
-
-    // 拖到空白 = 导航到目标目录并选中拖进来的文件
-    const QFileInfo first(paths.first());
-    const QString dir = first.isDir() ? first.absoluteFilePath() : first.absolutePath();
-    // 目录加载完成后按 m_preferPath 选中首项;同目录的其余项随后补选
-    if (!first.isDir()) m_fileGrid->setPreferPath(first.absoluteFilePath());
-    navigateTo(dir);
-    if (!first.isDir()) {
-        for (const QString& p : paths)
-            if (QFileInfo(p).absolutePath() == dir) m_fileGrid->selectPathAdditive(p);
-    }
 }
 
 void MainWindow::closeEvent(QCloseEvent* event) {
