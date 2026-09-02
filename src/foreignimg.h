@@ -5,8 +5,11 @@
 //   .avif/.avifs/.jxl → 随 Gaze 分发的 LGPL ffmpeg 子进程(dav1d/libjxl)
 //                       → PNG 管道(不经临时文件)
 //   #103 工单② 起 .exr/.dds/.qoi/.jp2/.dpx/.apng 同走上述 ffmpeg 分流
-//   .heic/.heif/.hif  → Windows WIC "Microsoft HEIF Decoder"(进程内;
-//                       系统未装 HEIF 图像扩展时解码失败 → 空图回退)
+//   .heic/.heif/.hif  → 优先同一条 ffmpeg 子进程管线(#8 自带化:不再依赖
+//                       系统"HEIF 图像扩展";ffmpeg 即带 HEVC 解码器,HEIC
+//                       容器内就是 HEVC)。ffmpeg 空图(旧构建无 hevc / 坏
+//                       文件)才回退 Windows WIC "Microsoft HEIF Decoder",再
+//                       失败 → 空图。
 //
 // 背景:novomesk 的 AVIF/HEIF/JXL Qt 插件 release 全是 MSVC 构建,与
 // MinGW 的 Gaze ABI 不兼容(实测 LoadLibrary 直接失败),故走进程外/
@@ -28,7 +31,11 @@ inline bool isFfmpegStill(const QString& suffix) {
         // #103 工单②:Qt 无原生插件的补充格式,同走 ffmpeg 管线
         || suffix == QLatin1String("exr") || suffix == QLatin1String("dds")
         || suffix == QLatin1String("qoi") || suffix == QLatin1String("jp2")
-        || suffix == QLatin1String("dpx") || suffix == QLatin1String("apng");
+        || suffix == QLatin1String("dpx") || suffix == QLatin1String("apng")
+        // #8 HEIF 自带化:.heic/.heif/.hif 同走 ffmpeg 管线(ffmpeg 自带 HEVC
+        // 解码器),摆脱对系统"HEIF 图像扩展"的依赖;空图才回退 WIC。
+        || suffix == QLatin1String("heic") || suffix == QLatin1String("heif")
+        || suffix == QLatin1String("hif");
 }
 
 inline bool isWicHeif(const QString& suffix) {

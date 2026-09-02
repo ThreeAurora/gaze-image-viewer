@@ -102,13 +102,13 @@ QImage Thumbnailer::imageThumb(const QString& filePath, int size) {
 #endif
 
     // ── 策略0.4: Qt 原生读不了的静图(#116) → 外部解码 ──
-    // AVIF/JXL 走 ffmpeg(libdav1d/libjxl),HEIC/HEIF 走 WIC;解码器已在
-    // decodeScaled 分流过一次,这里对缩略图管线重复同样的裁决。
+    // AVIF/JXL/HEIF 走 ffmpeg 自带解码(#8 起 HEIC/HEIF/HIF 不再依赖系统
+    // "HEIF 图像扩展");ffmpeg 空图才回退 WIC。decodeScaled 分流口径一致。
     const QString tSuf = fi.suffix().toLower();
     if (ForeignImg::isFfmpegStill(tSuf) || ForeignImg::isWicHeif(tSuf)) {
-        QImage img = ForeignImg::isFfmpegStill(tSuf)
-            ? ForeignImg::decodeFfmpegStill(filePath, size * sample)
-            : WicDecode::decodeHeif(filePath, size * sample);
+        QImage img = ForeignImg::decodeFfmpegStill(filePath, size * sample);
+        if (img.isNull() && ForeignImg::isWicHeif(tSuf))
+            img = WicDecode::decodeHeif(filePath, size * sample);   // 降级:系统扩展兜底
         if (!img.isNull()) return scaleTo(img);
         return {};   // 原生 reader 对这些格式必然失败,不再空跑策略1-3
     }

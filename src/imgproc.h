@@ -145,16 +145,18 @@ inline QSize orientedSize(const QString& path, bool exifRotate) {
 //   属跨线程访问(未加锁),表现偶发但真存在崩溃/脏读。
 inline QImage decodeScaled(const QString& path, bool exifRotate, int maxSide) {
     // ── 策略0.4: Qt 原生读不了的格式(#116)先行分流 ──
-    // AVIF/JXL → 随 Gaze 的 ffmpeg 子进程;HEIF/HEIC → 系统 WIC。
-    // 失败(无 ffmpeg/无 HEIF 扩展/坏文件)不 return,落回下方 Qt 路径
+    // AVIF/JXL/HEIF 等 → 随 Gaze 的 ffmpeg 子进程;#8 起 HEIC/HEIF/HIF 也由
+    // ffmpeg 自带解码(不依赖系统"HEIF 图像扩展"),ffmpeg 空图才回退 WIC。
+    // 失败(无 ffmpeg/坏文件)不 return,落回下方 Qt 路径
     // —— Qt 也读不了 → 空图,由上层照常显示占位。
     const QString fSuf = QFileInfo(path).suffix().toLower();
     if (ForeignImg::isFfmpegStill(fSuf)) {
         QImage img = ForeignImg::decodeFfmpegStill(path, maxSide);
         if (!img.isNull()) return img;
-    } else if (ForeignImg::isWicHeif(fSuf)) {
-        QImage img = WicDecode::decodeHeif(path, maxSide);
-        if (!img.isNull()) return img;
+        if (ForeignImg::isWicHeif(fSuf)) {
+            QImage wic = WicDecode::decodeHeif(path, maxSide);   // 降级:系统扩展兜底
+            if (!wic.isNull()) return wic;
+        }
     }
     if (WicDecode::isFourChannelJpeg(path)) {
         // WIC 这条路**不做 EXIF 转正**(decodeCmyk 只按 frame 原始宽高走 scaler),

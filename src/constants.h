@@ -70,7 +70,8 @@
 
 // ── 扩展名白名单 ──
 // avif/avifs/jxl:Qt 无原生插件(MSVC ABI 不兼容,#116),走 ffmpeg 分流;
-// hif 是 HEIF 的 Nokia 变体扩展名,与 heic/heif 同走 WIC。
+// hif 是 HEIF 的 Nokia 变体扩展名;heic/heif/hif 均走 ffmpeg 自带解码(#8,
+// 空图回退 WIC)。
 // tga/icns/wbmp/pbm/pgm/ppm/xbm/xpm/svgz/cur/jfif:#103 §3.1a 矩阵盘点(2026-09-01)
 // 发现 Qt 6.8.3 部署插件已能解(探针 21 格式实测)但白名单漏收 —— 纯白名单补收,
 // 走原生策略 1-3,无需分流。
