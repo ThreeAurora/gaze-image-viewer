@@ -5,6 +5,7 @@
 #include "constants.h"
 #include "dbprefix.h"
 #include "viewerhotkeys.h"
+#include "theme.h"
 
 #include <QHBoxLayout>
 #include <QVBoxLayout>
@@ -13,6 +14,7 @@
 #include <QGroupBox>
 #include <QPushButton>
 #include <QLabel>
+#include <QApplication>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QProcess>
@@ -69,19 +71,29 @@ QWidget* SettingsDialog::pageThumbs() {
 
 QWidget* SettingsDialog::pageAppearance() {
     auto* form = new QFormLayout;
-    // 主题(重启生效):Theme::init 只在启动时读一次,全部样式表构造期已定,
-    // 运行中切换不会重刷 —— UI 上如实标注,不装成即时生效
+    // 主题(立即生效,2026-09-02 用户令):切换时重读 Theme::init + 全局重刷 QSS。
+    // C_* 宏在 paintEvent 里也是 T() 双档即时求值,所以换主题只需重设样式表
+    // 并让各控件重绘 —— 不再需要重启。
     auto* themeCombo = new QComboBox;
     themeCombo->addItems({QString::fromUtf8("深色"), QString::fromUtf8("浅色")});
     themeCombo->setCurrentIndex(
         AppSettings::instance().get("Appearance/theme", QStringLiteral("dark")).toString()
             == QLatin1String("light") ? 1 : 0);
-    themeCombo->setToolTip(QString::fromUtf8("重启 Gaze 后生效"));
+    themeCombo->setToolTip(QString::fromUtf8("立即生效"));
     connect(themeCombo, &QComboBox::currentIndexChanged, this, [](int v) {
         AppSettings::instance().set("Appearance/theme", v == 1 ? QStringLiteral("light")
                                                                : QStringLiteral("dark"));
+        Theme::init();                                   // 重读双档标志
+        if (QApplication* app = qobject_cast<QApplication*>(QApplication::instance()))
+            app->setStyleSheet(Theme::appQss());         // 全局样式表即时切换
+#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
+        for (QWidget* w : QApplication::topLevelWidgets())
+            w->update();                                 // 触发全窗口重绘刷新 T() 取色
+#else
+        Q_UNUSED(app)
+#endif
     });
-    form->addRow(QString::fromUtf8("主题(重启后生效)"), themeCombo);
+    form->addRow(QString::fromUtf8("主题(立即生效)"), themeCombo);
     form->addRow(QString::fromUtf8("自定义缩略图尺寸 - 宽"),
         spin("Appearance/customThumbW", THUMB_W_MIN, THUMB_W_MAX, 96));
     // 0 = 与宽同高(接线前的既有行为);>0 才按设置值固定缩略图框高
