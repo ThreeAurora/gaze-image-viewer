@@ -18,7 +18,6 @@
 #include <QImage>
 #include <QSettings>
 #include <QCoreApplication>
-#include "toolpath.h"
 
 namespace Pdf {
 
@@ -71,7 +70,6 @@ inline int pageCount(const QString& pdfPath) {
     const QString gs = gsExe();
     if (gs.isEmpty()) return 0;
     QProcess proc;
-    hideConsoleWindow(proc);   // gswin* 是控制台程序,页数探测不闪黑窗
     proc.setProcessChannelMode(QProcess::MergedChannels);
     proc.start(gs, {
         QStringLiteral("-q"), QStringLiteral("-dNODISPLAY"), QStringLiteral("-dNOSAFER"),
@@ -103,7 +101,6 @@ inline QImage renderPage(const QString& pdfPath, int page, int renderDpi = 110) 
     QFileInfo src(pdfPath), cached(out);
     if (!cached.exists() || cached.lastModified() < src.lastModified()) {
         QProcess proc;
-        hideConsoleWindow(proc);   // PDF 渲页的 gswin* 同样静默起
         proc.setProcessChannelMode(QProcess::MergedChannels);
         proc.start(gs, {
             QStringLiteral("-q"), QStringLiteral("-dNOPAUSE"), QStringLiteral("-dBATCH"),
