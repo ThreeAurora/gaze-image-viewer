@@ -108,8 +108,11 @@ void MainWindow::createMenubar() {
     // 挂在过滤器里的 F2 从来进不了那张表，这正是用户要求「写入快捷键配置页」的原因。
     // 助记符用 &R(Rename)：Qt 的助记符只要求**同一菜单内**唯一，编辑菜单里没有别的 &R
     // (「刷新(&R)」在文件菜单，不冲突)。
+    // 2026-09-02 用户定版：F2=重命名(F3 让给预览开关)，与资源管理器惯例一致。
+    // F2 仍保留 eventFilter 里的带守卫硬编码(见 mainwindow_keys.cpp)，可配主键
+    // 由此 QAction 承担 —— 改键后 ini 覆盖，F2 仍作固定别名可用。
     editMenu->addAction(IconLib::appIcon("cmd_rename"),
-        QString::fromUtf8("重命名(&R)"), QKeySequence("F3"), this, &MainWindow::renameFocused);
+        QString::fromUtf8("重命名(&R)"), QKeySequence("F2"), this, &MainWindow::renameFocused);
     editMenu->addSeparator();
     editMenu->addAction(IconLib::appIcon("cmd_selectAllFile"),
         QString::fromUtf8("全选"), QKeySequence("Ctrl+A"), this, [this](){ m_fileGrid->selectAllEntries(); });
@@ -250,7 +253,8 @@ void MainWindow::createMenubar() {
             "Ctrl+1~5 — 设置颜色标记(红橙黄绿蓝)\n"
             "Ctrl+0 / D — 取消颜色标记\n"
             "F — 加红色标记\n"
-            "F2 / F3 — 重命名(文件树与文件页都可用,改谁看焦点;F3 可在设置→快捷键改)\n"
+            "F2 — 重命名(文件树与文件页都可用,改谁看焦点;可在设置→快捷键改)\n"
+            "F3 — 预览面板开关\n"
             "Del / S — 删除选中  X — 新建文件夹\n"
             "Enter — 切换查看器/浏览器(设置→键盘)\n"
             "Ctrl+A — 全选  Ctrl+I — 反选\n"

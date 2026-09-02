@@ -357,12 +357,17 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
                     }
                     // Esc=退出查看器:只让文本类控件(弹窗/对话框上面已经整体放行)
                     if (ke->key() == Qt::Key_Escape) { viewerBack(); return true; }
-                    // #136:重命名。F2 保留为**固定别名**(用户从没要求取消它,帮助里也写着),
-                    // 走这里而不是也挂成 QAction 的第二把 shortcut:QAction 若同时挂
-                    // {F3,F2},配置页会把默认值显示成"F3, F2",而 applyShortcuts() 是
-                    // 整串覆盖 —— 用户自定义任一键都会把另一键悄悄吃掉。
-                    // 可配的主键是 F3(编辑菜单「重命名」QAction,见 mainwindow_menus.cpp)。
+                    // #136:重命名。F2=重命名(与资源管理器惯例一致;2026-09-02 用户定版)。
+                    // 可配主键在编辑菜单「重命名」QAction(见 mainwindow_menus.cpp,Shortcuts/重命名)。
+                    // 这里保留带守卫的硬编码,好让 F2 在文本框/弹窗里不抢键 —— Qt 的
+                    // QAction shortcut 不经过 forText 三道闸,菜单裸键会吞文本框的照删键。
                     if (ke->key() == Qt::Key_F2) { renameFocused(); return true; }
+                    // F3 = 预览面板开关(2026-09-02 用户定版):浏览器形态下切"预览"面板显隐;
+                    // 查看器/全屏形态预览面板本就隐藏,不响应。
+                    if (ke->key() == Qt::Key_F3 && !m_viewerMode && !m_fullView) {
+                        setPaneVisible("preview", !paneVisible("preview"));
+                        return true;
+                    }
                 }
             }
         }
