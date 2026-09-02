@@ -147,7 +147,7 @@ private:
     // ── 设置活接线:查看器/全屏的界面元素 ──
     void applyViewerChrome();              // 改设置/换文件后统一刷新下列元素
     void updateOverlayScrollbars();        // Viewer|Fullscreen/showScrollbar
-    void updateInfoBar();                  // Fullscreen/showInfo
+    void updateInfoBar(const QPoint* cursor = nullptr);  // Fullscreen/showInfo;2026-09-02:光标到顶才浮现
     void updateFloatBar(const QPoint* cursor = nullptr); // Fullscreen/showToolbar + floatView
     void updatePanTool();                  // Viewer/panTool 平移导航小窗
     void updateSelectionHighlight();       // Viewer/showBorder 白框;蓝框已删(2026-08-30)

@@ -172,13 +172,17 @@ void PreviewPanel::updateOverlayScrollbars() {
     } else m_vScroll->hide();
 }
 
-// Fullscreen/showInfo:全屏时左上角显示文件名/尺寸/缩放。
+// Fullscreen/showInfo:全屏时左上角显示文件名/尺寸/缩放 —— **仅光标移到
+// 窗口顶端时才浮现**(2026-09-02 用户令:全屏默认零装饰,信息不该常驻)。
 // 文件名/尺寸/体积按文件缓存(QFileInfo::size() 是 stat 系统调用,拖动窗口时
 // resize 每帧都进来,不能反复问磁盘),缩放百分比单独拼
-void PreviewPanel::updateInfoBar() {
+void PreviewPanel::updateInfoBar(const QPoint* cursor) {
     const bool on = inFullscreen() && pp_impl::s_bool("Fullscreen/showInfo", true)
                     && !m_filePath.isEmpty();
     if (!on) { m_infoLabel->hide(); return; }
+    const int edge = 48;
+    const bool nearTop = cursor && cursor->y() <= edge;
+    if (!nearTop) { m_infoLabel->hide(); return; }
     if (m_infoFileKey != m_filePath) {
         m_infoFileKey = m_filePath;
         QFileInfo fi(m_filePath);

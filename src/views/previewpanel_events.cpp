@@ -154,6 +154,7 @@ void PreviewPanel::mouseMoveEvent(QMouseEvent* event) {
     }
     const QPoint cur = event->position().toPoint();
     updateFloatBar(&cur);            // Fullscreen/floatView:靠近顶/右边缘浮现
+    updateInfoBar(&cur);             // 2026-09-02:全屏信息仅在光标到顶时浮现
     QWidget::mouseMoveEvent(event);
 }
 
