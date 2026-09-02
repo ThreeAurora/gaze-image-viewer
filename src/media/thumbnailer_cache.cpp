@@ -150,6 +150,13 @@ QString Thumbnailer::cacheKey(const QString& filePath, int size, bool isVideo) c
     const Prefs p = prefs();
     QString src = filePath + '|' + QString::number(size)
                 + "|v2s" + (p.sharpen ? '1' : '0');
+    // c1 = CMYK JPG 换代(#57):旧条目烤着 Qt/libjpeg 简单反演(偏亮)的图;
+    // 换 key 使已有缓存整体弃用,重生成走 WIC 色彩管理。只探测 jpg/jpeg,
+    // 其它后缀免一次文件头读取(非 JPG 会因魔数不符在 isFourChannelJpeg 内快速失败)
+    const QString suf = QFileInfo(filePath).suffix().toLower();
+    if (suf == "jpg" || suf == "jpeg") {
+        if (WicDecode::isFourChannelJpeg(filePath)) src += "|c1";
+    }
     // f2 = 文件夹外框代际:旧条目是全幅 2x2 拼图,不改 key 就永远读不到新样式。
     // f3 = #118 那一代:删掉前板浅黄横条、内容区吃满文件夹体。
     // f4 = #124 那一代:四格改成"向原图要 2 倍/≥256px 再降采样",旧条目烤着
