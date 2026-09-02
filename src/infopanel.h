@@ -29,6 +29,7 @@
 #include "fileentry.h"
 #include "exifmeta.h"
 #include "settings.h"
+#include "wicdecode.h"
 
 class InfoPanel : public QWidget {
 public:
@@ -79,12 +80,21 @@ public:
             const QList<ExifMeta::Field> fields = ExifMeta::read(path);
             QImage thumb;
             if (wantHist) {
-                QImageReader r(path);
-                const QSize orig = r.size();
-                if (orig.isValid() && orig.width() > 0) {
-                    // 取样尺寸封顶 512:直方图只要分布,不要细节
-                    r.setScaledSize(orig.scaled(512, 512, Qt::KeepAspectRatio));
-                    thumb = r.read();
+                // CMYK JPG(#57):直方图与预览/缩略图共用同一份"WIC 色彩管理"口径,
+                // 否则反演图把 B 通道顶高,直方图形状就被一股偏蓝假象带歪
+                if (WicDecode::isFourChannelJpeg(path)) {
+                    QSize o = QImageReader(path).size();
+                    QSize want = o.isValid()
+                        ? o.scaled(512, 512, Qt::KeepAspectRatio) : QSize(512, 512);
+                    thumb = WicDecode::decodeCmyk(path, want);
+                } else {
+                    QImageReader r(path);
+                    const QSize orig = r.size();
+                    if (orig.isValid() && orig.width() > 0) {
+                        // 取样尺寸封顶 512:直方图只要分布,不要细节
+                        r.setScaledSize(orig.scaled(512, 512, Qt::KeepAspectRatio));
+                        thumb = r.read();
+                    }
                 }
             }
             QMetaObject::invokeMethod(this, [this, self, path, gen, fields, thumb]() {
