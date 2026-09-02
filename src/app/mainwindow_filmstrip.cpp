@@ -121,3 +121,47 @@ void MainWindow::jumpToFilmItem(int idx) {
     if (m_fileGrid) m_fileGrid->selectByPath(path);
     refreshFilmStrip();          // 当前文件变了,蓝框跟过去
 }
+
+// ═══════════════════════════════════════════════════════════
+// 拖放提示(2026-09-02):光标旁"复制/移动"浮标 + 树落点白框
+// ═══════════════════════════════════════════════════════════
+void MainWindow::updateDragHint(const QPoint& pos, bool valid) {
+    if (!m_dragHint) {
+        m_dragHint = new QLabel(this);
+        m_dragHint->setStyleSheet(QString::fromUtf8(
+            "QLabel{background:rgba(24,24,30,235);color:#FFFFFF;border:1px solid #3A3A42;"
+            "border-radius:4px;padding:3px 8px;font-size:12px;}"));
+    }
+    const bool copy = (QApplication::keyboardModifiers() & Qt::ControlModifier) != 0;
+    const QString verb = copy ? QString::fromUtf8("复制") : QString::fromUtf8("移动");
+    m_dragHint->setText(valid ? verb : QString());
+    if (!valid) { m_dragHint->hide(); return; }
+    m_dragHint->adjustSize();
+    // 位置:光标右下偏移 16px,避免盖住正在拖的项目
+    m_dragHint->move(pos + QPoint(16, 16));
+    m_dragHint->raise();
+    m_dragHint->show();
+}
+
+void MainWindow::hideDragHint() {
+    if (m_dragHint) m_dragHint->hide();
+    updateFolderDropTarget(QPoint(), false);
+}
+
+// 树落点白框:把当前悬停的目录行临时画一层白描边。QTreeWidget 的 item 无法
+// 单独 setStyleSheet,这里用"临时选中态"(白框)并在离开时还原 —— 只影响视觉,
+// 不改选中集。QTreeWidget 的 selected 样式是白字蓝底,不是白框;改用
+// 给当前 item 的 foreground 亮白 + 一个"即将放入"的观感,靠树的高亮 bolder。
+// 落空/非目录:不画
+void MainWindow::updateFolderDropTarget(const QPoint& pos, bool highlight) {
+    if (!m_folderTree) return;
+    if (!highlight) {
+        m_folderTree->setProperty("_dropItem", QVariant());   // 清标记
+        m_folderTree->viewport()->update();
+        return;
+    }
+    QTreeWidgetItem* it = m_folderTree->itemAt(m_folderTree->mapFrom(this, pos));
+    if (!it) return;
+    m_folderTree->setProperty("_dropItem", QVariant::fromValue(it));
+    m_folderTree->viewport()->update();
+}

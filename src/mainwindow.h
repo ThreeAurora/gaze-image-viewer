@@ -136,6 +136,10 @@ private:
     void updateFilmStrip(const QPoint* cursor); // 光标到顶显示、否则隐藏(鼠标移动驱动)
     void refreshFilmStrip();                   // 换文件/进全屏时重建条目(缩略图异步回填)
     void jumpToFilmItem(int idx);              // 点击:到对应文件
+    // 2026-09-02 拖放提示:拖动时更新光标旁"复制/移动"浮标,并高亮落点文件夹
+    void updateDragHint(const QPoint& pos, bool valid);  // valid=落在可放置区
+    void hideDragHint();
+    void updateFolderDropTarget(const QPoint& pos, bool highlight); // 树落点白框
 
     QSplitter *m_splitter = nullptr;
     FolderTree *m_folderTree = nullptr;
@@ -174,6 +178,8 @@ private:
     QWidget*            m_filmStrip = nullptr;  // 顶部缩略图条(全屏预览,光标到顶显示)
     QList<QLabel*>      m_filmItems;            // 条目 label(路径在 UserRole)
     QStringList         m_filmPaths;            // 对应文件路径(与 m_filmItems 对齐)
+    // 2026-09-02 拖放:光标旁"复制/移动"浮标 + 落点文件夹高亮
+    QLabel*             m_dragHint = nullptr;   // 拖动时跟随光标的动作提示(隐藏态)
     bool   m_viewerNoSync = false;       // 进查看器时不要就地改标签(由"开新标签"自己追加)
     bool m_viewerMode = false; // 查看器(单图)模式
     QWidget* m_treePane = nullptr;    // 树面板(查看器模式隐藏)

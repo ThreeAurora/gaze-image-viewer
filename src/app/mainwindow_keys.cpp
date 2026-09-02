@@ -80,12 +80,21 @@ bool MainWindow::dropOnValidTarget(const QPoint& pos) const {
 }
 
 void MainWindow::dragMoveEvent(QDragMoveEvent* e) {
-    if (!(e->mimeData() && e->mimeData()->hasUrls())) return;
-    if (dropOnValidTarget(e->position().toPoint())) e->acceptProposedAction();
-    else e->ignore();
+    if (!(e->mimeData() && e->mimeData()->hasUrls())) { hideDragHint(); return; }
+    const QPoint pos = e->position().toPoint();
+    const bool valid = dropOnValidTarget(pos);
+    if (valid) {
+        e->acceptProposedAction();
+        updateDragHint(pos, true);              // 2026-09-02:光标旁"复制/移动"浮标
+        updateFolderDropTarget(pos, true);      // 树落点白框
+    } else {
+        e->ignore();
+        hideDragHint();
+    }
 }
 
 void MainWindow::dropEvent(QDropEvent* e) {
+    hideDragHint();
     const QMimeData* md = e->mimeData();
     if (!md || !md->hasUrls()) return;
     const QPoint gpos = e->position().toPoint();
