@@ -15,14 +15,16 @@
 
 ## ✨ Features
 
+> **The complete feature list (~250 items) lives in [FEATURES.en-US.md](FEATURES.en-US.md)**; all 166 settings keys are tracked per-key in [SETTINGS_MATRIX.md](SETTINGS_MATRIX.md). Below is the curated facade.
+
 ### Browser
 - **Three-pane layout**: directory tree / file grid / preview panel, each independently toggleable, with layouts remembered
 - **8 view modes**: thumbnails, thumbnails + file names, + labels, details, icons, list, details table, and waterfall; column counts fixed at 1–16, zoom snaps to the edges without reflowing columns
 - **Four-in-one folder thumbnails**: a folder icon aggregates 4 preview images from inside it, fetched at high resolution from the originals and then downsampled
 - **Multi-tab**: persistent browser tabs, closed with Ctrl+W; click the address bar to select all, press Enter to jump, or paste a file path to locate it
-- **Sort & filter**: 7 sortable columns (including EXIF date and creation date), natural sort (1, 2, … 10), filtering by format or custom extensions
+- **Sort & filter**: 16 sortable columns (both EXIF dates, creation date, dimensions/ratio/print size), natural sort (1, 2, … 10), and 18 filter modes (format / color labels / custom extensions)
 - **Color labels**: stored in SQLite, quick labeling via Ctrl+1~5, preserved across sessions
-- **Inline search**: press Ctrl+F and type to search instantly, with previous/next/highlight
+- **Inline search**: press Ctrl+F and type to search instantly, with previous/next/highlight; plus a folder-wide search dialog with include/exclude regexes
 
 ### Viewer
 - **Enter to view, ESC to return**: the tree and grid hide, and the image fills the window
@@ -37,11 +39,11 @@
 ### Format support
 | Category | Coverage |
 |---|---|
-| Images | JPEG / PNG / GIF / WebP / BMP / TGA / PCX / TIFF… |
+| Images | 33 extensions: JPEG / PNG / GIF / WebP / BMP / TGA / TIFF / SVG / ICO / DDS / EXR / QOI / JPEG 2000 … |
 | Modern formats | AVIF, HEIF, JPEG XL (JXL), animated WebP |
-| Professional formats | RAW (Cr2/Cr3 and other vendors, with built-in LibRaw), PSD, CMYK JPEG, EXR/HDR |
-| Video | MP4/MKV/WebM…, H.264/H.265/AV1 (built-in libdav1d, rejecting faulty hardware-decode devices), VP9 10-bit HDR10 |
-| Audio | Waveform preview (decoded on a background thread, never blocking browsing) |
+| Professional formats | RAW (26 vendor extensions, LibRaw statically linked), CMYK JPEG |
+| Video | 28 containers (MP4/MKV/WebM/FLV/RMVB/MXF…), H.264/H.265/AV1 (built-in libdav1d, rejecting faulty hardware-decode devices), VP9 10-bit HDR10 |
+| Audio | 10 extensions, waveform preview (decoded on a background thread, never blocking browsing) |
 
 ### Tools & integration
 - **Lossless operations**: lossless JPEG rotation / cropping (jpegtran)
@@ -100,9 +102,9 @@ thirdparty/    Third-party source compiled in (LibRaw, etc.)
 
 ## 🧭 Roadmap
 
-- [ ] Polish the light theme and runtime theme hot-switching
+- [ ] Runtime theme hot-switching (the light theme is live; switching currently needs a restart)
 - [ ] Fully built-in HEIF / CMYK decoding (removing the dependency on system WIC extensions)
-- [ ] Field-tested coverage of more RAW vendor formats
+- [ ] Field-tested coverage of more RAW vendor formats (EXR/DDS/JP2 decoders are in place; sample verification pending)
 - [ ] Deep integration of text-based image search (directory management and model management UIs)
 
 ## 🙏 Acknowledgements
