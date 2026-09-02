@@ -359,6 +359,25 @@ void FolderTree::mouseReleaseEvent(QMouseEvent* event) {
     m_pressActivated.clear();   // 基类已在本次松开里发过 itemClicked(已被它消费)
 }
 
+// #81 拖放落点白框:先让设定好的样式走完常规整棵树的绘制,再在"即将放入"
+// 的那一行外面画一道白描边,让用户对落点一目了然。落点由 MainWindow::
+// updateFolderDropTarget 在 dragMove 时以 `_dropItem` 动态属性写入(离开时清空),
+// 这里只读不写 —— QTreeWidget 没有 item 级独立样式,这是画白框最直接的口子。
+void FolderTree::paintEvent(QPaintEvent* event) {
+    QTreeWidget::paintEvent(event);
+    const QVariant v = property("_dropItem");
+    if (!v.isValid()) return;
+    auto* item = qvariant_cast<QTreeWidgetItem*>(v);
+    if (!item) return;
+    const QRect r = visualRect(indexFromItem(item));
+    if (!r.isValid()) return;
+    QPainter p(viewport());
+    p.setRenderHint(QPainter::Antialiasing, false);
+    p.setPen(QPen(QColor("#FFFFFF"), 1.5));
+    p.setBrush(Qt::NoBrush);
+    p.drawRect(r.adjusted(1, 1, -1, -1));
+}
+
 void FolderTree::focusPath(const QString& dirPath) {
     const QString want = QDir::cleanPath(dirPath);
     if (want.isEmpty()) return;

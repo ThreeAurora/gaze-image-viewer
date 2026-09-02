@@ -3,6 +3,7 @@
 #include <QProxyStyle>
 #include <QIcon>
 #include <QPainter>
+#include <QPaintEvent>
 #include <QMouseEvent>
 #include <QStringList>
 
@@ -53,6 +54,9 @@ protected:
     void mousePressEvent(QMouseEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
     void mouseReleaseEvent(QMouseEvent* event) override;
+    // #81 拖放落点白框:画完树后在"即将放入"的那一行外面加白描边
+    //(落点标记由 MainWindow::updateFolderDropTarget 以 _dropItem 动态属性写入)
+    void paintEvent(QPaintEvent* event) override;
 
 private:
     void onItemClicked(QTreeWidgetItem* item, int column);
