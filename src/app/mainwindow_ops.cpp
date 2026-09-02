@@ -116,6 +116,14 @@ void MainWindow::toggleSlideshow() {
 
 void MainWindow::reloadAfterDelete(const QString& deletedPath) {
     if (m_fileGrid) m_fileGrid->reloadAfterDelete({ deletedPath });
+    // 2026-09-02 用户令:删/移动影像时,打开它的标签页必须自动解除占用
+    // (含正在播放的视频:后台握着句柄会让删除静默失败/占用残留)。
+    if (m_viewerTabs) {
+        const int i = indexOfTabPath(deletedPath);
+        if (i >= 0) closeViewerTab(i);
+    }
+    if (m_preview && m_preview->filePath() == deletedPath)
+        m_preview->clear();   // 预览正在播它:弃掉,交给 FileGrid 的下一项载入
 }
 
 // Viewer/seekSeconds(设置→键盘):快进/快退一次跳多少秒,默认 3
