@@ -112,9 +112,20 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     // 线程出 QImage);这里按路径回查标签索引,只给还开着的标签落图标。
     connect(&Thumbnailer::instance(), &Thumbnailer::thumbnailReady, this,
             [this](const QString& path, const QImage& img) {
-        if (!m_viewerTabs || img.isNull()) return;
-        const int i = indexOfTabPath(path);
-        if (i >= 0) m_viewerTabs->setTabIcon(i, QIcon(QPixmap::fromImage(img)));
+        if (img.isNull()) return;
+        // ① 标签缩略图
+        if (m_viewerTabs) {
+            const int i = indexOfTabPath(path);
+            if (i >= 0) m_viewerTabs->setTabIcon(i, QIcon(QPixmap::fromImage(img)));
+        }
+        // ② 全屏胶片条回填
+        if (m_filmStrip && m_filmStrip->isVisible()) {
+            const int f = m_filmPaths.indexOf(path);
+            if (f >= 0 && f < m_filmItems.size())
+                m_filmItems[f]->setPixmap(QPixmap::fromImage(
+                    img.scaled(QSize(68, 64), Qt::KeepAspectRatio,
+                               Qt::SmoothTransformation)));
+        }
     });
     // #105:「浏览器」标签钉死在索引 0 —— 拖拽重排只允许发生在图片标签之间
     connect(m_viewerTabs, &QTabBar::tabMoved, this, [this](int, int) {
@@ -290,6 +301,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 
     // Global shortcuts via event filter
     qApp->installEventFilter(this);
+
+    createFilmStrip();   // 2026-09-02:G 全屏顶部就近图片缩略图条(隐藏,光标到顶出现)
 
     m_folderTree->loadDrives();
     Logger::boot("ctor:drives");

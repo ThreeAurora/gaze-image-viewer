@@ -62,6 +62,7 @@ add_executable(Gaze WIN32
     src/app/mainwindow_tabs.cpp
     src/app/mainwindow_keys.cpp
     src/app/mainwindow_ops.cpp
+    src/app/mainwindow_filmstrip.cpp   # 2026-09-02:G 全屏顶部就近图片缩略图条
     src/views/foldertree.cpp
 
     # 文件列表:模型与载入 / 几何布局 / 绘制 / 输入与选择 / 排序筛选 / 内联搜索

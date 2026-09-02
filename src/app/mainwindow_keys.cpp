@@ -212,6 +212,34 @@ void MainWindow::collectMenuActions(QMenu* menu, QList<QAction*>& out) {
 }
 
 bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
+    // ── 2026-09-02 全屏胶片条:光标到顶显示/离开隐藏;条上点击/滚轮切文件 ──
+    // MouseMove 落在全屏预览面板上时驱动显隐;label 的点击(释放)与滚轮单独收。
+    if (m_filmStrip) {
+        if (event->type() == QEvent::MouseMove && !m_filmStrip->underMouse()) {
+            auto* me = static_cast<QMouseEvent*>(event);
+            const QPoint mp = me->position().toPoint();
+            updateFilmStrip(&mp);
+        } else if (event->type() == QEvent::MouseButtonRelease
+                   && m_filmStrip->isVisible()
+                   && m_filmStrip->isAncestorOf(qobject_cast<QWidget*>(obj))) {
+            auto* me = static_cast<QMouseEvent*>(event);
+            if (me->button() == Qt::LeftButton && obj != m_filmStrip) {
+                QWidget* w = qobject_cast<QWidget*>(obj);
+                if (w) {
+                    const int idx = w->property("idx").toInt();
+                    if (idx >= 0) { jumpToFilmItem(idx); return true; }
+                }
+            }
+        } else if (event->type() == QEvent::Wheel
+                   && m_filmStrip->isVisible()
+                   && m_filmStrip->isAncestorOf(qobject_cast<QWidget*>(obj))) {
+            auto* we = static_cast<QWheelEvent*>(event);
+            const int delta = we->angleDelta().y();
+            if (m_fileGrid) m_fileGrid->navigateSelection(delta > 0 ? -1 : 1);
+            event->accept();
+            return true;
+        }
+    }
     // 标签条中键 = 关掉那张(浏览器习惯;QTabBar 没有对应的信号)
     if (obj == m_viewerTabs && event->type() == QEvent::MouseButtonRelease) {
         auto* me = static_cast<QMouseEvent*>(event);
