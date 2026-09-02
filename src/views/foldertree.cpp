@@ -9,6 +9,7 @@
 #include "shelldelete.h"
 #include "searchdialog.h"
 #include "validname.h"
+#include "dialogs/renamedialog.h"   // 2026-09-02:文件重命名对话框(仿 XnView 带插入日期/时间)
 
 #include <windows.h>
 #include <shellapi.h>
@@ -564,11 +565,9 @@ void FolderTree::renameItem(QTreeWidgetItem* item) {
     const QString oldPath = pathOf(item);
     if (oldPath.isEmpty() || isVolumeRoot(oldPath)) return;
     const QString oldName = QFileInfo(oldPath).fileName();
-    bool ok = false;
-    const QString name = QInputDialog::getText(
-        this, QString::fromUtf8("重命名"), QString::fromUtf8("新名称:"),
-        QLineEdit::Normal, oldName, &ok).trimmed();
-    if (!ok || name == oldName) return;
+    // 2026-09-02:与文件页共用仿 XnView 的重命名对话框(带插入日期/时间)
+    const QString name = RenameDialog::getName(this, oldName);
+    if (name.isEmpty() || name == oldName) return;
     if (const QString why = invalidNameReason(name); !why.isEmpty()) {
         QMessageBox::warning(this, QString::fromUtf8("重命名"), why);
         return;

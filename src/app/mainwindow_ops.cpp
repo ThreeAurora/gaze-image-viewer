@@ -5,6 +5,7 @@
 #include "imgsearchdialog.h"
 #include "printdialog.h"
 #include "infopanel.h"
+#include "dialogs/renamedialog.h"   // 2026-09-02:文件重命名对话框(仿 XnView 带插入日期/时间)
 #include "shelldelete.h"   // showDeleteToast:拖放复制成功的左下角提示
 #include "sortheader.h"
 #include "fileentry.h"
@@ -150,10 +151,8 @@ void MainWindow::renameCurrent() {
         return;
     }
     QFileInfo fi(paths.first());
-    bool ok = false;
-    const QString name = QInputDialog::getText(this, QString::fromUtf8("重命名"),
-        QString::fromUtf8("新名称:"), QLineEdit::Normal, fi.fileName(), &ok).trimmed();
-    if (!ok || name.isEmpty() || name == fi.fileName()) return;
+    const QString name = RenameDialog::getName(this, fi.fileName());
+    if (name.isEmpty() || name == fi.fileName()) return;
     // 校验必须先于拼路径:"a/b" 会让下面的 rename 把文件搬到别处,界面上毫无动静
     if (const QString why = invalidNameReason(name); !why.isEmpty()) {
         QMessageBox::warning(this, QString::fromUtf8("重命名"), why);
