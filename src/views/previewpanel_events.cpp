@@ -188,8 +188,13 @@ void PreviewPanel::mouseDoubleClickEvent(QMouseEvent* event) {
     // 超过 300ms 的"双击"不切模式,落成两次单击各自的本职(GIF 暂停/临时 1:1)。
     // 无符号减法:timestamp 回绕也正确
     if (event->button() == Qt::LeftButton
-        && event->timestamp() - m_lastPressTs <= 300)
-        invokeOnWindow(this, "toggleViewer()");   // 双击:浏览器 ↔ 查看器
+        && event->timestamp() - m_lastPressTs <= 300) {
+        // 2026-09-02 用户令:双击预览区 = 开一个查看器标签页(Ctrl 按住 = 后台开,
+        // 前台焦点不跳走)。已处于查看器形态时仍是浏览器↔查看器切换的既有语义。
+        const bool ctrl = (event->modifiers() & Qt::ControlModifier) != 0;
+        invokeOnWindow(this, ctrl ? "openTabBackground()" : "openTabForeground()");
+        return;
+    }
     QWidget::mouseDoubleClickEvent(event);
 }
 

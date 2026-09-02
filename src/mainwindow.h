@@ -34,6 +34,9 @@ public:
     int  seekSeconds() const;        // Viewer/seekSeconds:快进/快退秒数(默认 3)
     // 查看器标签卡(Interface/multiViewerTabs / oneViewerTab)
     Q_INVOKABLE void openViewerTab(const QString& path);  // 右键"在新标签卡中打开"
+    // 2026-09-02 用户令:双击预览区 = 开新标签并选中它;Ctrl+双击 = 后台开(焦点不跳走)
+    Q_INVOKABLE void openTabForeground();   // 双击:进查看器 + 开新标签 + 选中
+    Q_INVOKABLE void openTabBackground();   // Ctrl+双击:进查看器 + 开新标签但焦点留在浏览器
     void syncViewerTab(const QString& path);
     void closeViewerTab(int index);              // 关闭按钮/标签右键菜单/中键
     Q_INVOKABLE void toggleViewer();   // 浏览器 ↔ 查看器(单图模式)

@@ -262,7 +262,7 @@ void MainWindow::openViewerTab(const QString& path) {
     if (dup >= 0) { m_viewerTabs->setCurrentIndex(dup); return; }
     // Interface/maxViewerTabs:0=不限。超出时丢最老的一张(不当场丢新开的,
     // 用户点的是"打开这个文件",结果必须看得见它)
-    const int cap = st.get("Interface/maxViewerTabs", 20).toInt();
+    const int cap = st.get("Interface/maxViewerTabs", 99).toInt();
     m_viewerTabs->blockSignals(true);   // 摘旧标签会挪 currentIndex,同一张图没必要再解一遍
     while (cap > 0 && imageTabCount() >= cap) {
         int victim = firstImageTab();   // #105:只摘图片标签,浏览器标签和正看着的这张除外
@@ -273,4 +273,47 @@ void MainWindow::openViewerTab(const QString& path) {
     }
     m_viewerTabs->blockSignals(false);
     m_viewerTabs->setCurrentIndex(addViewerTab(path));
+}
+
+// ── 2026-09-02 用户令:双击预览区 / Ctrl+双击 ──
+// openViewerTab 的"从浏览器进入"段把当前文件切过去并选中新标签 —— 双击正好
+// 要这个效果。后台开(Ctrl)则是"进查看器但不把焦点切到新标签":标签仍在手,
+// 只是浏览器焦点不丢,滚轮/方向键不受影响。
+Q_INVOKABLE void MainWindow::openTabForeground() {
+    if (m_currentFile.isEmpty()) return;
+    openViewerTab(m_currentFile);
+}
+
+Q_INVOKABLE void MainWindow::openTabBackground() {
+    if (m_currentFile.isEmpty() || !m_viewerTabs) return;
+    if (!m_viewerMode) {
+        // 进查看器(标签条随之可见),但不开新标签 —— 后台只负责追加,焦点不切。
+        // m_viewerNoSync 让 toggleViewer 不改任何已有标签。
+        m_viewerNoSync = true;
+        toggleViewer();
+        m_viewerNoSync = false;
+        if (!m_viewerMode) return;
+    }
+    ensureBrowserTab();
+    AppSettings& st = AppSettings::instance();
+    const bool oneTab   = st.get("Interface/oneViewerTab", false).toBool();
+    const bool multiTab = st.get("Interface/multiViewerTabs", false).toBool();
+    const int  cap       = st.get("Interface/maxViewerTabs", 99).toInt();
+    if (oneTab) { openViewerTab(m_currentFile); return; }   // 单签模式没有"后台"可言
+    const int dup = multiTab ? -1 : indexOfTabPath(m_currentFile);
+    if (dup >= 0) return;                                    // 已有该文件标签:不重复开
+    m_viewerTabs->blockSignals(true);
+    while (cap > 0 && imageTabCount() >= cap) {
+        int victim = firstImageTab();
+        if (victim == m_viewerTabs->currentIndex()) {
+            int k;
+            for (k = victim + 1; k < m_viewerTabs->count(); ++k)
+                if (!isBrowserTab(k)) { victim = k; break; }
+            if (k >= m_viewerTabs->count()) victim = -1;
+        }
+        if (victim < 0) break;
+        m_viewerTabs->removeTab(victim);
+    }
+    m_viewerTabs->blockSignals(false);
+    addViewerTab(m_currentFile);   // 追加,但不 setCurrentIndex —— 焦点留在浏览器
 }
