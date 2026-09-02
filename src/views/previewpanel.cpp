@@ -91,32 +91,33 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     m_waveLabel->hide();
     layout->addWidget(m_waveLabel, 3);
 
-    // RAW 占位(#140):说明行 + 加载按钮,其余形态一律收起(见 setAudioChrome)
+    // RAW 占位(#140):说明行居中 + 加载按钮**右上角**(2026-09-02 用户令)。
+    // 内嵌 JPEG 预览缺席/想全解时点它;有内嵌预览时 rawBox 直接隐藏走图片形态。
     m_rawBox = new QWidget;
     m_rawBox->hide();
     auto* rawL = new QVBoxLayout(m_rawBox);
     rawL->setContentsMargins(0, 0, 0, 0);
     rawL->setSpacing(12);
+    // 第一行:按钮右对齐(右上角),随容器缩放保持贴边
+    auto* rawBtnRow = new QHBoxLayout;
+    rawBtnRow->addStretch(1);
+    m_rawBtn = new QPushButton;
+    m_rawBtn->setCursor(Qt::PointingHandCursor);
+    m_rawBtn->setStyleSheet(QString::fromUtf8(
+        "QPushButton{background:%1;color:#FFFFFF;border:none;border-radius:6px;"
+        "padding:6px 14px;font-size:12px;}"
+        "QPushButton:hover{background:%2;}"
+        "QPushButton:disabled{background:%3;border:1px solid %4;color:%5;}")
+        .arg(C_ACCENT, C_ACCENT_DOWN, C_CARD_BG, C_SEPARATOR, C_TEXT_FAINT));
+    connect(m_rawBtn, &QPushButton::clicked, this, [this]() { decodeRawAsync(); });
+    rawBtnRow->addWidget(m_rawBtn);
+    rawL->addLayout(rawBtnRow);
     rawL->addStretch(1);
     m_rawCaption = new QLabel;
     m_rawCaption->setAlignment(Qt::AlignCenter);
     m_rawCaption->setStyleSheet(
         QString("color:%1;font-size:13px;background:transparent;").arg(C_TEXT_DIM));
     rawL->addWidget(m_rawCaption);
-    m_rawBtn = new QPushButton;
-    m_rawBtn->setCursor(Qt::PointingHandCursor);
-    m_rawBtn->setStyleSheet(QString::fromUtf8(
-        "QPushButton{background:%1;color:#FFFFFF;border:none;border-radius:6px;"
-        "padding:8px 24px;font-size:13px;}"
-        "QPushButton:hover{background:%2;}"
-        "QPushButton:disabled{background:%3;border:1px solid %4;color:%5;}")
-        .arg(C_ACCENT, C_ACCENT_DOWN, C_CARD_BG, C_SEPARATOR, C_TEXT_FAINT));
-    connect(m_rawBtn, &QPushButton::clicked, this, [this]() { decodeRawAsync(); });
-    auto* rawBtnRow = new QHBoxLayout;
-    rawBtnRow->addStretch(1);
-    rawBtnRow->addWidget(m_rawBtn);
-    rawBtnRow->addStretch(1);
-    rawL->addLayout(rawBtnRow);
     rawL->addStretch(1);
     layout->addWidget(m_rawBox, 1);
 

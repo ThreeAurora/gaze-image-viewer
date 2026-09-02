@@ -4,6 +4,7 @@
 #include "settings.h"
 #include "imgproc.h"
 #include "wicdecode.h"
+#include "rawdecode.h"    // #140:RAW 缩略图 = 相机内嵌 JPEG
 #include "logger.h"
 
 #include <QFileInfo>
@@ -62,6 +63,7 @@ QImage Thumbnailer::shellThumbFor(const QString& filePath, int size) {
 
 // ═══════════════════════════════════════════
 // 图片缩略图（回退策略;0.4 为 #116 外来格式分流）
+//   策略0.3: RAW → 相机内嵌 JPEG(#140,2026-09-02;零成本,与回放所见一致)
 //   策略0.4: AVIF/JXL→ffmpeg、HEIF→WIC(Qt 原生读不了)
 //   策略0.5: Windows Shell 缩略图缓存（0-5ms）← Everything 同款
 //   策略1: 小文件直接加载（免 reader）
@@ -85,6 +87,19 @@ QImage Thumbnailer::imageThumb(const QString& filePath, int size) {
         if (p.gamma) return ImgProc::linearResample(src, dst);
         return src.scaled(dst, Qt::KeepAspectRatio, mode);
     };
+
+    // ── 策略0.3: RAW → 相机内嵌 JPEG(#140)─────────────────
+    // RAW 白名单独立于 IMAGE_EXTS:绝不进 Qt 解码/Shell(它们只会读到黑漆漆的
+    // 拜耳马赛克或直接失败)。内嵌 JPEG 即机身预览,取它零成本又与相机回放一致。
+    // 失败(机型不嵌 JPEG / 内嵌位图 / 库缺失)才落入下方通用路径。
+#ifdef HAS_RAWDEC
+    const QString tSuf3 = fi.suffix().toLower();
+    if (RAW_EXTS.count("." + tSuf3)) {
+        QImage emb = RawDecode::decodeEmbeddedJpeg(filePath, size * sample);
+        if (!emb.isNull()) return scaleTo(emb);
+        return {};   // 内嵌拿不到就空,不吃 Shell/Qt 的错误图
+    }
+#endif
 
     // ── 策略0.4: Qt 原生读不了的静图(#116) → 外部解码 ──
     // AVIF/JXL 走 ffmpeg(libdav1d/libjxl),HEIC/HEIF 走 WIC;解码器已在

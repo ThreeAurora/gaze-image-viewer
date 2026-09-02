@@ -53,6 +53,42 @@ inline QImage decodeFull(const QString& path) {
     return out;
 }
 
+// 提取相机内嵌的完整 JPEG 预览(2026-09-02 用户令:RAW 默认预览图就是它)。
+// CR2/NEF/ARW 等在文件头都带一张机身生成的预览 JPG(有的还带 embeddable
+// 大图),取它 = 与相机回放所见一致,且几乎零成本 —— 不必全解几十 MP。
+// maxSide>0 时等比降采样(缩略图/预览共用)。失败返回空 QImage,调用方
+// 回退到「加载原始 RAW」按钮/占位。
+inline QImage decodeEmbeddedJpeg(const QString& path, int maxSide = 0) {
+    LibRaw r;
+#if defined(_WIN32)
+    if (r.open_file((const wchar_t*)path.utf16()) != LIBRAW_SUCCESS) return {};
+#else
+    if (r.open_file(path.toLocal8Bit().constData()) != LIBRAW_SUCCESS) return {};
+#endif
+    // unpack_thumb() 只读内嵌缩略图,不碰主图,快;返回值=缩略图类型
+    const int tret = r.unpack_thumb();
+    if (tret != LIBRAW_SUCCESS) return {};
+    const libraw_thumbnail_t& th = r.imgdata.thumbnail;
+    if (!th.thumb) return {};
+    QImage out;
+    if (th.tformat == LIBRAW_THUMBNAIL_JPEG) {
+        out.loadFromData(reinterpret_cast<const uchar*>(th.thumb),
+                         static_cast<int>(th.tlength), "JPG");
+    } else if (th.tformat == LIBRAW_THUMBNAIL_BITMAP) {
+        // 少数机型给 BMP 序列:按位图头解析出宽高直接贴
+        out = QImage::fromData(QByteArray(
+            reinterpret_cast<const char*>(th.thumb),
+            static_cast<int>(th.tlength)));
+        if (!out.isNull() && out.format() != QImage::Format_RGB32)
+            out = out.convertToFormat(QImage::Format_RGB32);
+    }
+    if (out.isNull()) return {};
+    if (maxSide > 0 && qMax(out.width(), out.height()) > maxSide)
+        out = out.scaled(maxSide, maxSide, Qt::KeepAspectRatio,
+                         Qt::SmoothTransformation);
+    return out;
+}
+
 } // namespace RawDecode
 
 #endif // HAS_RAWDEC

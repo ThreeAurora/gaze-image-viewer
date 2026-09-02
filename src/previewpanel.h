@@ -91,10 +91,11 @@ private:
     void teardownWave();
     void renderWave();
     void setAudioChrome(bool on);   // 音频形态两件套(文件名+波形)统一显隐出口
-    // RAW 按需全解(#140):RAW 不进常规解码管线,预览=占位+「加载原始RAW」按钮。
+    // RAW 按需全解(#140):RAW 不进常规解码管线,预览=内嵌 JPEG +「加载原始RAW」按钮。
     // 点击后线程池全解(自带 LibRaw,rawdecode.h);切换文件靠 m_imgReqGen 代次
     // 作废在途结果 —— UI 瞬间响应,绝不等待后台解码(用户红线)
     void showRawPlaceholder(const QString& path);
+    void onEmbeddedRawReady(const QImage& img, const QString& path, quint64 gen); // 2026-09-02:内嵌 JPEG 预览提取完成
     void decodeRawAsync();
     void onRawDecoded(const QImage& img, const QString& path, quint64 gen);
     // #82:Markdown 以渲染后的 HTML 展示;PDF 走 Ghostscript 渲染 + 页导航
