@@ -49,7 +49,9 @@
 #include <QMimeData>
 #include <QClipboard>
 #include <QPair>
+#include <QProcess>
 #include "iconlib.h"
+#include "i18n.h"
 #include <QLabel>
 #include "labelstore.h"
 #include "settings_dialog.h"
@@ -271,6 +273,50 @@ void MainWindow::createMenubar() {
             "· 图片查看器模式(Ctrl+滚轮缩放细节)\n\n"
             "版本 1.0 — C++ + Qt6");
     });
+
+    // ── 语言(2026-09-03 国际化)──
+    // 常驻菜单栏最右:老外一眼可及,不依赖"先找到设置"。三项单选,切换写入
+    // General/language 并征询重启;重启用 --restart 自启动(绕过单实例握手,
+    // 见 main.cpp)。选中项即当前生效意图;中文系统默认=跟随系统→中文照旧。
+    {
+        auto *langMenu = mb->addMenu(gazeTr("语言(&G)"));
+        langMenu->setToolTip(gazeTr("界面语言(切换后重启生效)"));
+        auto *langGroup = new QActionGroup(langMenu);
+        langGroup->setExclusive(true);
+        // 菜单项文字直接以字面量出现在 gazeTr() 里(提取器只认字面量,
+        // "间接传变量"的串扫不到);简体中文/English 两语言恒等,无需译文。
+        struct { QString key; QString label; } langs[] = {
+            {QStringLiteral("system"), gazeTr("跟随系统")},
+            {QStringLiteral("zh"),     QStringLiteral("简体中文")},
+            {QStringLiteral("en"),     QStringLiteral("English")},
+        };
+        const QString cur =
+            AppSettings::instance().get("General/language", "system").toString();
+        for (auto& it : langs) {
+            QAction* a = langMenu->addAction(it.label);
+            a->setCheckable(true);
+            a->setData(it.key);
+            a->setChecked(cur == it.key);
+            langGroup->addAction(a);
+            connect(a, &QAction::triggered, this,
+                    [this, key = it.key]() {
+                if (AppSettings::instance()
+                        .get("General/language", "system").toString() == key)
+                    return;
+                AppSettings::instance().set("General/language", key);
+                // 语言切换靠重启生效(整套 UI 串在构造期解析)。def 后带
+                // --restart 重启,老进程退出,新进程不握手直接开窗。
+                const QMessageBox::StandardButton rb = QMessageBox::question(
+                    this, gazeTr("切换界面语言"),
+                    gazeTr("界面语言将在重启后生效。立即重启吗？"),
+                    QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
+                if (rb == QMessageBox::Yes)
+                    QProcess::startDetached(
+                        QCoreApplication::applicationFilePath(),
+                        {QStringLiteral("--restart")});
+            });
+        }
+    }
 }
 
 // ═══════════════════════════════════════════
