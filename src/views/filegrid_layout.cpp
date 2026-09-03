@@ -178,6 +178,13 @@ int FileGrid::colsForWidth(int w) const {
 }
 
 void FileGrid::updateLayout() {
+    // #216:构造期视口宽是假的(splitter/窗口几何 show 后才定),提前算必错——
+    // 不可见时只标脏;首个可见态调用(30ms 合并定时器/文件夹加载先到者)放行,
+    // 此刻 splitter 分配已定,首算即贴合文件页,消除启动"先窄/先宽再调整"的跳变
+    if (!m_layoutReady) {
+        if (!isVisible()) { m_geomDirty = true; return; }
+        m_layoutReady = true;
+    }
     int vw = viewport()->width();
     // 固定列数模式:缩略图贴边缩放——尺寸 = 可用宽度 ÷ 列数(列数不变)
     if (m_fixedCols > 0 && m_viewMode != VM_WATERFALL

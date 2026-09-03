@@ -195,6 +195,7 @@ private:
     int    m_lastCustomW  = 96;    // 上次看到的 Appearance/customThumbW(仅值变化才改尺寸)
     int    m_cols         = 0;
     int    m_fixedCols    = 0;
+    bool   m_layoutReady  = false;   // #216:false=构造期,updateLayout 只标脏不真算;showEvent 放行
     int    m_viewMode     = VM_THUMBS_NAME;
     int    m_waterfallColW = 220;   // 瀑布流列宽
     int    m_sortCol      = SORT_NAME;   // 构造函数会按 Browser/startupSort 重设(#150)
