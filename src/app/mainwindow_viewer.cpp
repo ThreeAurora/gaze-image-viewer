@@ -469,6 +469,7 @@ void MainWindow::exitFullView() {
 void MainWindow::applyFullViewChrome() {
     const bool fs = isFullScreen();
     menuBar()->setVisible(!(fs && m_fullView) && !(fs && m_viewerMode));
+    if (m_preview) m_preview->setGFullView(m_fullView);   // #209:G 全屏时顶中工具条让位给胶片条
     updateTabBarVis();   // 标签条显隐只归总闸管(全屏收掉;查看器态或浏览器态有图签才显示)
 }
 

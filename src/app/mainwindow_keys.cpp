@@ -281,12 +281,14 @@ void MainWindow::collectMenuActions(QMenu* menu, QList<QAction*>& out) {
 bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
     // ── 全屏胶片条(#203):这里只驱动显隐;条上的点击/滚轮/拖动平移都由
     // FilmStrip 控件自己处理,不再走窗口级 eventFilter ──
-    if (m_filmStrip) {
-        if (event->type() == QEvent::MouseMove && !m_filmStrip->underMouse()) {
-            auto* me = static_cast<QMouseEvent*>(event);
-            const QPoint mp = me->position().toPoint();
+    if (m_filmStrip && event->type() == QEvent::MouseMove) {
+        auto* me = static_cast<QMouseEvent*>(event);
+        // #208 修正:本过滤器是应用级的,obj 可以是任何子件,position() 是
+        // **目标控件的局部坐标** —— 直接拿来判"是否在顶区"坐标系会随目标
+        // 漂移。统一换算成窗口坐标;光标已落在条上时事件归条自理,不打扰
+        const QPoint mp = mapFromGlobal(me->globalPosition().toPoint());
+        if (!m_filmStrip->isVisible() || !m_filmStrip->geometry().contains(mp))
             updateFilmStrip(&mp);
-        }
     }
     // 标签条中键 = 关掉那张(浏览器习惯;QTabBar 没有对应的信号)
     if (obj == m_viewerTabs && event->type() == QEvent::MouseButtonRelease) {

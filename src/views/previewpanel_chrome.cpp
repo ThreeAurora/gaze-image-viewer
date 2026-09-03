@@ -209,7 +209,12 @@ void PreviewPanel::updateInfoBar(const QPoint* cursor) {
 // #208:已可见且判定不变时直接早退 —— 该条几何固定(顶中),每帧 adjustSize/
 // move/raise 全是白烧的;hide 同理只在真可见时才调
 void PreviewPanel::updateFloatBar(const QPoint* cursor) {
-    if (!inFullscreen()) { if (m_floatBar->isVisible()) m_floatBar->hide(); return; }
+    // m_gFullView(G 全屏预览):工具条并入胶片条右端按钮区,这里整个让位(#209);
+    // 查看器/F11 全屏不受影响,照旧浮现
+    if (!inFullscreen() || m_gFullView) {
+        if (m_floatBar->isVisible()) m_floatBar->hide();
+        return;
+    }
     const bool always = pp_impl::s_bool("Fullscreen/showToolbar", false);
     const bool floating = pp_impl::s_bool("Fullscreen/floatView", true);
     bool show = always;

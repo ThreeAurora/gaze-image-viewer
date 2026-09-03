@@ -63,6 +63,10 @@ public:
 
 signals:
     void jumpRequested(const QString& path);
+    // 右端按钮区(#209:G 全屏的顶中浮动工具条并入条里):
+    void navRelative(int delta);   // 上一张(-1)/下一张(+1),MainWindow 接到网格导航
+    void fitRequested();           // 适应窗口
+    void exitRequested();          // 退出全屏
 
 protected:
     void wheelEvent(QWheelEvent* e) override;
@@ -78,6 +82,7 @@ private:
 
     FilmStripModel* m_model;
     QLabel* m_caption = nullptr;
+    QWidget* m_btnBar = nullptr;                 // 右端按钮区(prev/next/fit/exit)
     int     m_currentRow = -1;
     int     m_hoverRow   = -1;
     QPoint  m_pressPos;

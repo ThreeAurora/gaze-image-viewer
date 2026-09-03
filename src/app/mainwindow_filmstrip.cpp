@@ -12,6 +12,7 @@
 #include "foldertree.h"      // 拖放提示段:updateFolderDropTarget 摸树行
 #include "filegrid.h"
 #include "views/filmstrip.h"
+#include "previewpanel.h"    // #209:fitRequested → m_preview->fitAuto()
 #include "i18n.h"            // 拖放提示段:gazeTr("复制"/"移动")
 
 #include <QLabel>
@@ -20,6 +21,7 @@
 namespace {
 constexpr int kFilmEdge  = 48;    // 光标顶边触发区
 constexpr int kStripMaxW = 1600;  // 条最大宽(超宽屏上不铺满整窗)
+constexpr int kFilmGrace = 24;    // #210:条下沿的滞留带高(光标在此带内条不藏)
 }
 
 void MainWindow::createFilmStrip() {
@@ -31,20 +33,34 @@ void MainWindow::createFilmStrip() {
         if (m_fileGrid && !p.isEmpty() && p != m_currentFile)
             m_fileGrid->selectByPath(p);
     });
+    // 右端按钮区(#209):G 全屏的顶中浮动工具条已让位(PreviewPanel::setGFullView),
+    // 上一张/下一张/适应窗口/退出全屏四个功能并进条里
+    connect(m_filmStrip, &FilmStrip::navRelative, this, [this](int d) {
+        if (m_fileGrid) m_fileGrid->navigateSelection(d);
+    });
+    connect(m_filmStrip, &FilmStrip::fitRequested, this, [this]() {
+        if (m_preview) m_preview->fitAuto();
+    });
+    connect(m_filmStrip, &FilmStrip::exitRequested, this, [this]() { exitFullView(); });
     // 目录内容变了(增删/重载)才需要重建数据;平时只对账当前文件
     connect(m_fileGrid, &FileGrid::fileCountChanged, this, [this]() {
         m_filmDirty = true;
     });
 }
 
-// 光标到顶 → 显示并刷新;离开顶区 → 隐藏。条自身的事件(滚轮/拖动/点击)全部
-// 在 FilmStrip 内部自理,这里只管显隐 + 几何。条显示期间光标在条上时
-// eventFilter 不触发(事件归条),自然形成"粘滞",无需额外判断。
+// 光标到顶 → 显示并刷新;离开顶区且不在滞留区 → 隐藏。条自身的事件(滚轮/
+// 拖动/点击)全部在 FilmStrip 内部自理,这里只管显隐 + 几何。
+// #210 滞留区:条显示期间,光标在条内或条下沿一小段(kFilmGrace)不算离开 ——
+// 否则滚轮切图(光标就停在条上/条下方的画面上)时条当场消失,"当前图居中+蓝框"
+// 根本没机会演给用户看。
 void MainWindow::updateFilmStrip(const QPoint* cursor) {
     if (!m_filmStrip) return;
     if (!m_fullView) { m_filmStrip->hide(); return; }
     const bool nearTop = cursor && cursor->y() <= kFilmEdge;
-    if (!nearTop) { m_filmStrip->hide(); return; }
+    bool sticky = false;
+    if (!nearTop && m_filmStrip->isVisible() && cursor)
+        sticky = m_filmStrip->geometry().adjusted(0, 0, 0, kFilmGrace).contains(*cursor);
+    if (!nearTop && !sticky) { m_filmStrip->hide(); return; }
     refreshFilmStrip();
     if (!m_filmStrip->isVisible() && m_filmStrip->count() > 0) {
         const int w = qMin(width() - 24, kStripMaxW);

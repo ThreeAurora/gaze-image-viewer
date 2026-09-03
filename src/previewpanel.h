@@ -51,6 +51,10 @@ public:
     // 与视频渲染管线(实测 3~4 秒,全在 GUI 线程)。主窗显示后调用一次,
     // 把这笔开销挪出"点文件夹/选视频"的点击路径。
     void warmUp();
+    // G 全屏预览(MainWindow::m_fullView)置位:顶中浮动工具条整个让位给
+    // 胶片条(#209,功能已并入 FilmStrip 右端按钮区)
+    void setGFullView(bool on) { m_gFullView = on; updateFloatBar(); }
+    void fitAuto();
 
 signals:
     void navFile(int delta);
@@ -115,7 +119,6 @@ private:
     void requestPdf(bool needPageCount);  // 真正干活的后台任务;进文件时顺带问页数
     void pdfGotoPage(int page);
     void updatePdfBar();
-    void fitAuto();
     void render();
     int  barReserve() const;   // 控制栏可见时要从可用高度里扣掉的像素(GIF 画面不被栏压住)
     // 设置活应用:背景色/挡板底纹/图片边框(设置→查看→背景与界面元素)
@@ -291,6 +294,7 @@ private:
     QString     m_infoFileKey;             // 信息条文件部分缓存键
     QString     m_infoBase;                // 信息条"文件名 WxH 体积"缓存
     QWidget*    m_floatBar  = nullptr;     // Fullscreen/showToolbar + floatView
+    bool        m_gFullView = false;       // G 全屏预览时工具条让位给胶片条(#209)
     QWidget*    m_panTool   = nullptr;     // Viewer/panTool
     QLabel*     m_panThumb  = nullptr;
     QLabel*     m_ratingDot = nullptr;     // Viewer/showRating 颜色标记点

@@ -14,6 +14,10 @@
 #include <QMouseEvent>
 #include <QWheelEvent>
 #include <QStyledItemDelegate>
+#include <QToolButton>
+#include <QGridLayout>
+#include <QStyle>
+#include <QIcon>
 
 namespace {
 constexpr int kThumbW  = 72;
@@ -21,6 +25,20 @@ constexpr int kThumbH  = 64;
 constexpr int kGap     = 4;
 constexpr int kCaptionH = 20;
 constexpr int kPanThresh = 6;     // 按住位移超过这个像素才算拖
+constexpr int kBtnZone   = 60;    // #209:右端按钮区宽(2x2 网格)
+// 标准图标染白(条底是深色,原生图标是深色的看不见;与 pp_impl::whiteIcon
+// 同一套做法的本地副本 —— 那个头注明只供 previewpanel 各编译单元使用)
+QIcon whiteIcon(const QIcon& base) {
+    const QPixmap pm = base.pixmap(32, 32);
+    QPixmap white(pm.size());
+    white.fill(Qt::transparent);
+    QPainter p(&white);
+    p.drawPixmap(0, 0, pm);
+    p.setCompositionMode(QPainter::CompositionMode_SourceIn);
+    p.fillRect(white.rect(), QColor("#FFFFFF"));
+    p.end();
+    return QIcon(white);
+}
 }
 
 int FilmStrip::preferredHeight() { return 6 + kThumbH + kCaptionH; }
@@ -110,9 +128,36 @@ FilmStrip::FilmStrip(QWidget* parent)
     setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
     setMouseTracking(true);
     viewport()->setMouseTracking(true);
-    setViewportMargins(8, 6, 8, kCaptionH);   // 底部一整行留给题注,不盖缩略图
+    setViewportMargins(8, 6, kBtnZone + 10, kCaptionH);   // 底部行留给题注,右端留给按钮区
     setItemDelegate(new FilmStripDelegate(this));
     setFixedHeight(preferredHeight());
+
+    // ── 右端按钮区(#209):G 全屏顶中的浮动工具条并入条里 ──
+    m_btnBar = new QWidget(this);
+    m_btnBar->setStyleSheet(QString::fromUtf8(
+        "QToolButton{background:transparent;border:none;border-radius:4px;padding:0;}"
+        "QToolButton:hover{background:#3A3A42;}"));
+    auto* grid = new QGridLayout(m_btnBar);
+    grid->setContentsMargins(0, 0, 0, 0);
+    grid->setSpacing(0);
+    auto mkBtn = [&](QStyle::StandardPixmap sp, const QString& tip, int r, int c,
+                     auto&& fn) {
+        auto* b = new QToolButton(m_btnBar);
+        b->setIcon(whiteIcon(style()->standardIcon(sp)));
+        b->setIconSize(QSize(14, 14));
+        b->setFixedSize(30, 32);
+        b->setToolTip(tip);
+        connect(b, &QToolButton::clicked, this, fn);
+        grid->addWidget(b, r, c);
+    };
+    mkBtn(QStyle::SP_MediaSkipBackward, gazeTr("上一个文件"), 0, 0,
+          [this] { emit navRelative(-1); });
+    mkBtn(QStyle::SP_MediaSkipForward,  gazeTr("下一个文件"), 0, 1,
+          [this] { emit navRelative(1); });
+    mkBtn(QStyle::SP_DialogResetButton, gazeTr("适应窗口"),   1, 0,
+          [this] { emit fitRequested(); });
+    mkBtn(QStyle::SP_DialogCloseButton, gazeTr("退出全屏"),   1, 1,
+          [this] { emit exitRequested(); });
 
     m_caption = new QLabel(this);
     m_caption->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
@@ -248,5 +293,6 @@ void FilmStrip::mouseReleaseEvent(QMouseEvent* e) {
 void FilmStrip::resizeEvent(QResizeEvent* e) {
     QListView::resizeEvent(e);
     m_caption->setGeometry(8, height() - kCaptionH + 3, width() - 16, 14);
+    m_btnBar->setGeometry(width() - kBtnZone - 6, 6, kBtnZone, kThumbH);
     requestVisibleThumbs();
 }
