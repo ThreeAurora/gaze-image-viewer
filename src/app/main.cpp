@@ -275,7 +275,14 @@ int main(int argc, char *argv[]) {
     QObject::connect(&AppSettings::instance(), &AppSettings::changed,
                      &w, [applySingleInstance]() { applySingleInstance(); });
 
+    // 启动防闪:Windows 上 Qt 会为顶层窗口建一个 160x28 的"图标拥有者"小窗
+    // (class=Qt683QWindowIcon,平时藏在屏幕外 -32000,-32000,伺候任务栏/Alt-Tab
+    // 图标)。首次 show 时它会在落位前先映射一帧 —— 表现为"一闪而过的、只有
+    // 标题栏的空白小窗"。该行为 Qt 无公开开关,故用"首帧整体透明,事件循环
+    // 下一跳再亮出"把所有首帧瞬态(含图标小窗)一次性盖掉,不影响感知速度。
+    w.setWindowOpacity(0.0);
     w.show();
+    QTimer::singleShot(0, &w, [&w]() { w.setWindowOpacity(1.0); });
     Logger::boot("show");
 
     // Cache/checkOnStartup:启动后延后一会儿再校验缓存完整性 ——
