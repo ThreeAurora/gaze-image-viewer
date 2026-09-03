@@ -53,8 +53,10 @@ QWidget* wrapTitled(const QString& title, QLayout* lay) {
     page->setPalette(pal);
     auto* v = new QVBoxLayout(page);
     // #148:全局紧凑(2026-09-01 用户令,此前 #108 只收紧异常空隔不够)
-    v->setContentsMargins(14, 10, 14, 10);
-    v->setSpacing(8);
+    // 2026-09-03 夜再收:大标题与分隔线、分隔线与内容的 8px 间距在内容少的
+    // 分组页(标题栏/缩略图/查看/其他/全屏/系统集成/以文搜图)上显得"上下间距过大"
+    v->setContentsMargins(14, 8, 14, 8);
+    v->setSpacing(5);
     auto* h = new QLabel(title);
     h->setStyleSheet(QString::fromUtf8("font-size:15px;font-weight:700;color:%1;"
                      "background:transparent;").arg(C_TEXT));
