@@ -132,6 +132,11 @@ void MainWindow::dropEvent(QDropEvent* e) {
     if (!md || !md->hasUrls()) return;
     const QPoint gpos = e->position().toPoint();
     if (!dropOnValidTarget(gpos)) { e->ignore(); return; }
+    // 2026-09-03 双保险:dragMove 阶段无效落点已 ignore 出禁止光标,dropEvent
+    // 再兜一道 —— 网格空白/非文件夹卡片/树中源所在目录节点(自己移自己)一律
+    // 不执行任何动作(不导航、不弹窗、不移动),彻底封死。外部拖入不受影响
+    // (dropTargetMeaningful 对 source!=网格 直接放行)。
+    if (!dropTargetMeaningful(gpos, e)) { e->ignore(); return; }
 
     QStringList paths;
     for (const QUrl& u : md->urls()) {
