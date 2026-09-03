@@ -16,5 +16,8 @@
 // lupdate 识别不了本包装函数,译文清单由 translations/i18n_build.py 正则提取、
 // 合并翻译字典(translations/*.json)生成 gaze_en.ts → lrelease → gaze_en.qm。
 inline QString gazeTr(const char* src) {
-    return QCoreApplication::translate("Gaze", src);
+    // 空实例保险:静态初始化期( translator 尚未可得 )回退原文,不崩
+    return QCoreApplication::instance()
+        ? QCoreApplication::translate("Gaze", src)
+        : QString::fromUtf8(src);
 }

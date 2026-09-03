@@ -120,55 +120,14 @@ protected:
     }
 };
 
-// ── 启动防闪 #2(2026-09-03 复盘两轮后的最终修法)──
-// 两轮旧解法的错都在**识别口径**上:
-//   · 第一版只把主窗口整体透明 —— 透明盖得住主窗自身的第一帧,盖不住
-//     Qt 为顶层窗口自动建的 160x28「图标拥有者」小窗:它是个独立顶层
-//     HWND,与预览的是图片还是视频无关,首次 show 落位前会在原位(-32000
-//     之前)短暂映射一帧 —— 就是用户看到的"一闪而过的、只有空标题栏的
-//     小窗",不分图片/视频都能复现。
-//   · 第二版在原生消息层按**类名**全钳 —— Qt6 所有顶层窗口(MainWindow/
-//     QDialog/QVideoWindow)共用 Win32 类名 "Qt683QWindowIcon",于是视频
-//     输出窗、设置等弹出框一起被送出屏幕(弹窗不可见但模态照常拦鼠标,
-//     只能强杀进程)。只能整版回退。
-// 可靠区分点其实在**尺寸**:图标小窗固定 160x28(专伺候任务栏/Alt-Tab);
-// 视频窗/对话框是实物内容尺寸(几百 x 几百起)。第三版只钳"小尺寸"的
-// Qt683QWindowIcon,大窗一概放行 —— 同类名不再彼此误伤。
-class StartupWindowGuard : public QAbstractNativeEventFilter {
-public:
-    bool nativeEventFilter(const QByteArray&, void* message, qintptr*) override {
-        auto* msg = static_cast<MSG*>(message);
-        // 2026-09-03 夜补漏:只在启动头 3 秒内钳(防启动闪现),此后语言切换
-        // 等模态对话框弹出时不再误伤其图标小窗 —— 此前全程钳制导致"隐形
-        // 模态窗盖住点击、任务栏关不掉"。
-        if (!msg || msg->message != WM_WINDOWPOSCHANGING || !msg->hwnd)
-            return false;
-        static const qint64 startMs
-            = QDateTime::currentMSecsSinceEpoch();
-        if (QDateTime::currentMSecsSinceEpoch() - startMs > 3000)
-            return false;
-        wchar_t cls[64];
-        const int n = GetClassNameW(msg->hwnd, cls, 64);
-        if (n <= 0) return false;
-        const QString clsName = QString::fromWCharArray(cls, n);
-        auto* wp = reinterpret_cast<WINDOWPOS*>(msg->lParam);
-        // 闪窗根因已定案(2026-09-03 夜,QWidget::find 实证):396x65 黑条是
-        // MainWindow 构造期"无父 SortHeader 先 setVisible(true) 再 addWidget"
-        // 被当顶层窗口 show 的一帧,已按"先挂布局后设可见"根治(mainwindow.cpp)。
-        // 本守卫只负责另一路:Qt 为顶层窗口自动建的 160x28「图标拥有者」小窗。
-        // 只拦 Qt683QWindowIcon 且尺寸像"图标拥有者小窗"的:窗口照建照活
-        //(任务栏/Alt-Tab 图标由它托管),只是落位一律压到屏外,闪现从根上消失。
-        if (clsName == QStringLiteral("Qt683QWindowIcon")
-            && wp->cx <= 200 && wp->cy <= 80) {
-            if (wp->x > -1000 || wp->y > -1000) {
-                wp->x = -32000;
-                wp->y = -32000;
-            }
-            return false;   // 只改位置:尺寸/显示标志不动,继续走默认流程
-        }
-        return false;
-    }
-};
+// ── 启动防闪史(2026-09-03 深夜末段5 定案,StartupWindowGuard 已删除)──
+// 三代守卫(主窗透明→按类名钳→按尺寸钳)针对的"160x28 图标拥有者小窗闪现"
+// 经 probe_flash 外挂钩子实测(闪窗事件全录,flash_noguard.log)并不存在:
+// 无守卫启动全程唯一可见窗口就是主窗自己,其余全是 vis=0 的内部窗。
+// 守卫反而在 3 秒钳制窗内两次把弹窗压出屏(隐形模态:点击全死、任务栏
+// 关不掉,2026-09-03 夜用户亲历)。396x65 黑条闪窗的真正根因是无父
+// SortHeader 先 setVisible 再 addWidget,已按"先挂布局后设可见"根治
+// (mainwindow.cpp)。防闪手段保留:主窗首帧透明 + show 后恢复(下方)。
 
 // "仅允许运行一个实例":第二个进程把命令行路径转交给已运行实例后退出
 static const QString kSingleServer = QStringLiteral("GazeSingleInstance");
@@ -264,12 +223,6 @@ int main(int argc, char *argv[]) {
     app.setApplicationName("Gaze");
     app.setApplicationDisplayName("Gaze");
     app.setWindowIcon(QIcon(":/Gaze.png"));
-
-    // [2026-09-03 夜取证结论]StartupWindowGuard 必须在 MainWindow 构造之前安装:
-    // 闪窗(396x65 黑条,title=Gaze)在 FileGrid 构造期间就创建了,装晚了根本拦不到。
-    // static 定义提前到 main 里(原来在 w 构造之后,那一版连闪窗的边都摸不着)。
-    static StartupWindowGuard s_startupGuard;
-    app.installNativeEventFilter(&s_startupGuard);
 
     // 旧版配置迁移: gaze.ini -> Gaze.ini (仅当新名不存在而旧名存在时一次性改名)
     {
