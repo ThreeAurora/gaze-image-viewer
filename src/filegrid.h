@@ -123,6 +123,8 @@ public:
 signals:
     void fileCountChanged();
     void selectionChanged(const QString& currentPath);
+    // 2026-09-03:鼠标单选目录卡 → 文件树镜像选中(仅鼠标单选目录时发出)
+    void dirSelected(const QString& dirPath);
     void filterModeChanged(int mode);
 
 protected:

@@ -75,6 +75,8 @@ private:
     void createStatusbar();
     void updateStatus();
     void onSelectionChanged(const QString &path);
+    // 2026-09-03:文件页鼠标单选目录卡 → 文件树镜像选中(网格→树这支反向联动)
+    void onGridDirSelected(const QString& path);
     void onSizeChanged(int value);
     void onThumbZoom(int delta);
     void goBack();
@@ -167,6 +169,10 @@ private:
     QStringList m_history;   // 目录导航历史
     int m_histIdx = -1;
     bool m_histNav = false;  // 历史跳转中,不再入栈
+    // 树点击引起的导航:from tree 的 navigateTo 不再把焦点抢回网格 —— 否则
+    // 用户刚点完树,文件页又"自认为正被操作",两边的选中亮/暗色全跟着错位
+    bool m_navFromTree = false;
+    void onTreeFolderSelected(const QString& path);   // folderSelected 包装:标记来源再导航
     // 历史的四个"出口"都要随游标禁用，不然到头时按下去静默无事(#87)
     QAction* m_actBack = nullptr;
     QAction* m_actFwd = nullptr;

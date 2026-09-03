@@ -5,6 +5,7 @@
 #include <QPainter>
 #include <QPaintEvent>
 #include <QMouseEvent>
+#include <QFocusEvent>
 #include <QStringList>
 
 // ── 自定义展开箭头 ──
@@ -57,9 +58,14 @@ protected:
     // #81 拖放落点白框:画完树后在"即将放入"的那一行外面加白描边
     //(落点标记由 MainWindow::updateFolderDropTarget 以 _dropItem 动态属性写入)
     void paintEvent(QPaintEvent* event) override;
+    // 选中色随焦点分流:树持焦点=亮蓝,失焦=暗蓝(与文件页同口径,
+    // "F2 改谁看焦点"。QSS 的 :focus 对 item 不生效,故在焦点事件里重设样式表)
+    void focusInEvent(QFocusEvent* event) override;
+    void focusOutEvent(QFocusEvent* event) override;
 
 private:
     void onItemClicked(QTreeWidgetItem* item, int column);
+    void applySelectionStyle();   // 按当前焦点态重设选中背景色(亮/暗两档)
     void makeIcons();
 
     // ── 右键菜单 ──

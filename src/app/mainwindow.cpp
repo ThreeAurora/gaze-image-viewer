@@ -170,7 +170,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 
     m_folderTree = new FolderTree;
     m_folderTree->setMinimumWidth(160);
-    connect(m_folderTree, &FolderTree::folderSelected, this, &MainWindow::navigateTo);
+    // 树点击导航经包装函数:标记来源,让 navigateTo 不把焦点从树抢回网格
+    connect(m_folderTree, &FolderTree::folderSelected, this, &MainWindow::onTreeFolderSelected);
     tv->addWidget(m_folderTree, 1);
     m_splitter->addWidget(treePane);
     Logger::boot("ctor:tree");
@@ -192,6 +193,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 
     m_fileGrid = new FileGrid;
     cl->addWidget(m_fileGrid, 1);
+    // 反向联动:文件页鼠标单选目录卡 → 树镜像选中同一条目(2026-09-03)
+    connect(m_fileGrid, &FileGrid::dirSelected, this, &MainWindow::onGridDirSelected);
     // 拖放(#81):只在 MainWindow 上 setAcceptDrops,网格/树都不开 ——
     // 子控件若 acceptDrops 却不实现 dropEvent,会把事件吞掉,主窗口反而收不到。
     // 事件沿父链上浮到这里,落点判定在 dropEvent 里用 childAt 做

@@ -57,6 +57,22 @@
 
 #include "mainwindow_internal.h"
 
+// 树点击导航的入口包装:先把"来源=文件树"记下来再进 navigateTo,之后复位。
+// navigateTo 底部的 setFocus 就不再加到网格头上 —— 焦点留在树上,树亮蓝、
+// 网格暗蓝,正是"选中色随焦点分流"想要的两套状态。
+void MainWindow::onTreeFolderSelected(const QString& path) {
+    m_navFromTree = true;
+    navigateTo(path);
+    m_navFromTree = false;
+}
+
+// 2026-09-03:文件页鼠标单选目录卡 → 文件树镜像。树里若已有该节点,focusPath
+// 直接选中+滚动;不在树里(折叠分支/未物化)则顺着路径展开过去。焦点不抢:
+// 网格握着焦点亮蓝,树镜像显示暗蓝,正是"选中色随焦点分流"的两档语义。
+void MainWindow::onGridDirSelected(const QString& path) {
+    if (m_folderTree) m_folderTree->focusPath(path);
+}
+
 bool MainWindow::navigateTo(const QString &path) {
     QString p = mw_impl::canonicalPath(path);
     if (p == "..") {
@@ -96,10 +112,12 @@ bool MainWindow::navigateTo(const QString &path) {
 
     m_fileGrid->loadDirectory(p);
     // 焦点必须跟着落到网格:loadDirectory 只做了"自动选中第一项",不碰焦点。
-    // 从左侧树/双击卡片以外进门(尤其点过地址栏↑按钮)时,焦点会留在
+    // 从地址栏/历史/双击卡片以外进门(尤其点过地址栏↑按钮)时,焦点会留在
     // QAbstractButton 上,而空格对按钮的本职就是点击它 —— 表现成
     // "进文件夹后按空格回到了上一级"。模态对话框在场时不抢它的焦点。
-    if (!QApplication::activeModalWidget()) m_fileGrid->setFocus();
+    // 例外:本人就是文件树点击触发(树自己会取焦点,网格不该自认为是操作对象),
+    // 否则焦点被抢回后,网格一直亮蓝、树永远暗蓝,两边分流失效。
+    if (!m_navFromTree && !QApplication::activeModalWidget()) m_fileGrid->setFocus();
     // 不 clear():loadDirectory 内部已默认选中第一项并触发预览加载,
     // 这里再 clear 会把刚发起的预览抹掉(进文件夹预览空白的原因)。
     // 空目录时 selectionChanged({}) 自行走 clear,无需代办

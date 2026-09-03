@@ -27,11 +27,14 @@
 #define C_SEPARATOR     Theme::T("#3A3A44", "#C9C9D1")   // 分隔线/描边(灰阶层,比旧值提亮)
 #define C_ACCENT        Theme::T("#3B82F6", "#3B82F6")   // 强调蓝:选中/焦点/进度
 #define C_ACCENT_DOWN   Theme::T("#2F6FE0", "#2F6FE0")   // 主按钮悬停/按下(比 C_ACCENT 暗一档)
-#define C_SELECT_BLUE   Theme::T("#3B82F6", "#3B82F6")
+// 选中蓝两档(2026-09-02 用户定版):亮蓝=正被操作(树/网格持有焦点),暗蓝=失焦残留
+#define C_SELECT_BLUE   Theme::T("#0078D7", "#0078D7")   // rgb(0,120,215) 亮蓝
+#define C_SELECT_DIM    Theme::T("#2164A8", "#2164A8")   // rgb(33,100,168) 暗蓝
 #define C_SELECT_YELLOW Theme::T("#E8B339", "#E8B339")
 #define C_TREE_TEXT     Theme::T("#FFFFFF", "#1F1F26")
 #define C_TREE_HOVER    Theme::T("#2E2E35", "#E4E7EE")
-#define C_TREE_SELECT   Theme::T("#3B82F6", "#3B82F6")
+#define C_TREE_SELECT     C_SELECT_BLUE   // 树有焦点:亮蓝(当前操作对象)
+#define C_TREE_SELECT_DIM C_SELECT_DIM    // 树失焦:暗蓝(视觉残留)
 #define C_TEXT_HIDDEN   Theme::T("#8F8F8F", "#9C9CA6")   // 隐藏文件/文件夹：淡灰（Windows 风格弱化显示）
 #define C_CANVAS_BG     0x000000    // 视频缩略图画布(数值型,thumbnailer 用;入库不可回改,双主题恒黑)
 #define C_TEXT          Theme::T("#FFFFFF", "#1F1F26")   // 主文字

@@ -102,19 +102,16 @@ FolderTree::FolderTree(QWidget* parent) : QTreeWidget(parent) {
     setIndentation(16);
     // 与 XnView 一致：内容少于一页也保留竖向滚动条，整条长拇指表示不可拖动
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
-    // 去掉 item 上的虚线焦点框，避免“桌面”这类当前项出现与其他磁盘不一致的描边
-    setFocusPolicy(Qt::NoFocus);
+    // 树要能"得焦"才有选中色分流:网格有焦点=树选中暗蓝(视觉残留),树有焦点=亮蓝
+    // (当前正被操作,F2 重命名的就是它)。虚线焦点框由下方 QSS 的 outline:0 全灭,
+    // 不会因为可聚焦冒出旧版那种虚线框。Tab 仍跳过它(ClickFocus 不含 TabFocus)。
+    setFocusPolicy(Qt::ClickFocus);
     // 启用自定义展开箭头：有子文件夹才画三角，叶子目录彻底不画分支装饰
     // QWidget::setStyle 不接管所有权,显式 setParent(this) 让树销毁时一并释放
     auto* arrowStyle = new ArrowStyle;
     arrowStyle->setParent(this);
     setStyle(arrowStyle);
-    setStyleSheet(QString(
-        "QTreeWidget{background:%1;color:%2;border:none;font-size:11px;outline:0;}"
-        "QTreeWidget::item{padding:2px 0;outline:0;}"
-        "QTreeWidget::item:hover{background:%3;}"
-        "QTreeWidget::item:selected{background:%4;color:#FFF;}"
-    ).arg(C_SIDEBAR, C_TREE_TEXT, C_TREE_HOVER, C_TREE_SELECT));
+    applySelectionStyle();
     // 用户确认不需要展开/收起动画：保持即时展开
     setAnimated(false);
 
@@ -334,6 +331,10 @@ void FolderTree::mousePressEvent(QMouseEvent* event) {
         }
     }
     QTreeWidget::mousePressEvent(event);
+    // 焦点必须落到树上:网格的选中色按 hasFocus() 分流,树不"得焦"就永远是亮蓝,
+    // 用户看到的"点了树,文件页底色没变"根因在此。分支箭头那一下也算操作树,
+    // 一并收焦点;右键留给菜单,不抢。
+    if (event->button() == Qt::LeftButton && m_sweepCur) setFocus();
 }
 
 void FolderTree::mouseMoveEvent(QMouseEvent* event) {
@@ -376,6 +377,31 @@ void FolderTree::paintEvent(QPaintEvent* event) {
     p.setPen(QPen(QColor("#FFFFFF"), 1.5));
     p.setBrush(Qt::NoBrush);
     p.drawRect(r.adjusted(1, 1, -1, -1));
+}
+
+// ── 选中色随焦点分流(2026-09-02 用户令,与文件页同口径两档蓝)──
+// QSS 的 :focus 对 QTreeView::item 不生效(伪态表不支持),视图得没得焦
+// 都画成同一行 :selected。所以焦点事件里重设整张样式表:树有焦点=亮蓝
+// rgb(0,120,215)(当前正被操作,F2 重命名的就是它),失焦=暗蓝 rgb(33,100,168)
+// (视觉残留)。样式表只有几行,重建开销可忽略。
+void FolderTree::applySelectionStyle() {
+    setStyleSheet(QString(
+        "QTreeWidget{background:%1;color:%2;border:none;font-size:11px;outline:0;}"
+        "QTreeWidget::item{padding:2px 0;outline:0;}"
+        "QTreeWidget::item:hover{background:%3;}"
+        "QTreeWidget::item:selected{background:%4;color:#FFF;}"
+    ).arg(C_SIDEBAR, C_TREE_TEXT, C_TREE_HOVER,
+          hasFocus() ? C_TREE_SELECT : C_TREE_SELECT_DIM));
+}
+
+void FolderTree::focusInEvent(QFocusEvent* event) {
+    QTreeWidget::focusInEvent(event);
+    applySelectionStyle();
+}
+
+void FolderTree::focusOutEvent(QFocusEvent* event) {
+    QTreeWidget::focusOutEvent(event);
+    applySelectionStyle();
 }
 
 void FolderTree::focusPath(const QString& dirPath) {

@@ -278,6 +278,11 @@ void FileGrid::onCanvasRelease(int index) {
     // 普通单击选中首排/末排文件时,自动贴边完整展示那一排
     if (!ctrl) scrollToRow(index);
 
+    // 2026-09-03:鼠标单选**目录**卡 → 通知主窗口,让文件树镜像选中同一条目
+    // (只在这里发:loadDirectory 自动选中首项/方向键盘选都不触发,避免树瞎跳)
+    if (QFileInfo(m_entries[index].path).isDir())
+        emit dirSelected(m_entries[index].path);
+
     emit selectionChanged(m_entries[index].path);
 }
 
