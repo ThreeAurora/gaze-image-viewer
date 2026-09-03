@@ -183,7 +183,8 @@ QString FileGrid::tipFor(int idx) const {
     const QDateTime mod = e.mtime > 0
         ? QDateTime::fromSecsSinceEpoch(static_cast<qint64>(e.mtime)) : QDateTime();
     const QString dash = QString::fromUtf8("\xe2\x80\x94");
-    return e.name
+    // 2026-09-03 夜修:文件名与"创建:"之间丢过换行,两者挤同一行
+    return e.name + "\n"
         + QString::fromUtf8("\xe5\x88\x9b\xe5\xbb\xba: ")   // 创建:
         + (birth.isValid() ? birth.toString("yyyy/MM/dd - HH:mm:ss") : dash) + "\n"
         + QString::fromUtf8("\xe4\xbf\xae\xe6\x94\xb9: ")   // 修改:
