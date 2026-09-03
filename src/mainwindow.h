@@ -46,6 +46,9 @@ public:
     Q_INVOKABLE void viewerBack();     // ESC:查看器退回浏览器(幂等)
     Q_INVOKABLE void refresh();        // 重载当前目录(F5/工具栏/布局菜单)
     Q_INVOKABLE void reloadAfterDelete(const QString& deletedPath);  // 删除后重载并选中下一项
+    // 启动收尾:主窗口首帧显示后恢复上次选中文件(防 QVideoWindow 独立闪框,
+    // 由 main.cpp 在 opacity 恢复同拍调用;构造期只记 m_startupRestoreFile)
+    void restoreStartupPreview();
     // 切换模式触发键(设置→交互→切换模式):"SwitchMode/doubleClick" 等
     Q_INVOKABLE void requestSwitchMode(const QString& triggerKey);
     void saveLayout(const QString& name);   // 布局保存/应用(查看→布局;退出自动存 _last)
@@ -219,6 +222,9 @@ private:
     QTimer      m_recentFlushTimer;  // 单发 500ms,超时统一写盘
     QString     m_currentFile;       // 当前预览文件(标题模板 {文件名…} 求值用)
     QString     m_currentDir;        // 当前目录规范形('/' 无尾斜杠);地址栏只负责显示
+    // Start/rememberFilename 的延迟恢复:构造期只记路径,主窗首帧后由
+    // restoreStartupPreview() 选中(避免视频窗先于主窗显示造成启动闪框)
+    QString     m_startupRestoreFile;
     QTimer      m_slideTimer;        // 快速幻灯片(Keyboard/space=快速幻灯片)
     bool        m_slideshow = false;
 };

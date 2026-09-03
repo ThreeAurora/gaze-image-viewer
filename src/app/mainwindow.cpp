@@ -346,9 +346,13 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
             }
             if (dir.isEmpty() || !QFileInfo(dir).isDir()) dir = fallbackDir;
             navigateTo(dir);
+            // Start/rememberFilename:上次选中文件**不在构造期恢复**——
+            // 预览 loadFile 会触发 QVideoWindow(FFmpeg 后端的顶层视频输出窗)
+            // 先于主窗口落位,屏幕上孤立映射一帧"启动闪框"。主窗 show 完成后
+            // 由 main.cpp 调 restoreStartupPreview() 再选,见 mainwindow.h。
             if (st.get("Start/rememberFilename", true).toBool()) {
                 const QString last = st.get("Browser/lastFile", QString()).toString();
-                if (!last.isEmpty()) m_fileGrid->selectByPath(last);
+                if (!last.isEmpty()) m_startupRestoreFile = last;
             }
         }
     }
@@ -394,6 +398,18 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     // applyThemeSurfaces() 重灌。设置页切主题 → Theme::notifyChanged() 触发。
     Theme::addChangeHandler([this]() { applyThemeSurfaces(); });
     Logger::boot("ctor:done");
+}
+
+// 启动收尾:主窗口首帧显示后恢复上次选中文件(Start/rememberFilename)。
+// 构造期做这件事会闪框:预览 loadFile → QVideoWindow(独立顶层 HWND)在主窗
+// show 之前落位,屏幕上孤立映射视频第一帧、随即消失 —— 就是用户看到的
+// "启动先弹一个框再出现 Gaze"。这里由 main.cpp 在 opacity 恢复同拍调用。
+void MainWindow::restoreStartupPreview() {
+    if (m_startupRestoreFile.isEmpty()) return;
+    const QString last = m_startupRestoreFile;
+    m_startupRestoreFile.clear();   // 只恢复一次:后续 grid 信号不再走这条路径
+    if (m_fileGrid->fileCount() > 0)
+        m_fileGrid->selectByPath(last);
 }
 
 // ── 主题切换:重灌"构造期内联样式表 + 填充期缓存色"──
