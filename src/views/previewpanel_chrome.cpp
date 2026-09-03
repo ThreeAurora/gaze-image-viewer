@@ -180,10 +180,10 @@ void PreviewPanel::updateOverlayScrollbars() {
 void PreviewPanel::updateInfoBar(const QPoint* cursor) {
     const bool on = inFullscreen() && pp_impl::s_bool("Fullscreen/showInfo", true)
                     && !m_filePath.isEmpty();
-    if (!on) { m_infoLabel->hide(); return; }
+    if (!on) { if (m_infoLabel->isVisible()) m_infoLabel->hide(); return; }
     const int edge = 48;
     const bool nearTop = cursor && cursor->y() <= edge;
-    if (!nearTop) { m_infoLabel->hide(); return; }
+    if (!nearTop) { if (m_infoLabel->isVisible()) m_infoLabel->hide(); return; }
     if (m_infoFileKey != m_filePath) {
         m_infoFileKey = m_filePath;
         QFileInfo fi(m_filePath);
@@ -193,8 +193,12 @@ void PreviewPanel::updateInfoBar(const QPoint* cursor) {
                                 : QString())
                    + "  " + formatSize(fi.size());
     }
-    m_infoLabel->setText(gazeTr("%1  %2%")
-        .arg(m_infoBase).arg(int(m_scale * 100)));
+    // #208:鼠标移动事件现在全屏都到得齐(子件开了 tracking),这里必须按
+    // "状态没变就一个字节不碰控件"收口 —— 旧实现每帧 setText+adjustSize+
+    // move+raise,raise 是对全屏顶层窗口的置顶操作,连续 move 时就是"有点卡"
+    const QString txt = gazeTr("%1  %2%").arg(m_infoBase).arg(int(m_scale * 100));
+    if (m_infoLabel->isVisible() && m_infoLabel->text() == txt) return;
+    m_infoLabel->setText(txt);
     m_infoLabel->adjustSize();
     m_infoLabel->move(12, 12);
     m_infoLabel->raise();
@@ -202,8 +206,10 @@ void PreviewPanel::updateInfoBar(const QPoint* cursor) {
 }
 
 // Fullscreen/showToolbar(常显) + Fullscreen/floatView(鼠标移到顶侧/右侧才浮现)
+// #208:已可见且判定不变时直接早退 —— 该条几何固定(顶中),每帧 adjustSize/
+// move/raise 全是白烧的;hide 同理只在真可见时才调
 void PreviewPanel::updateFloatBar(const QPoint* cursor) {
-    if (!inFullscreen()) { m_floatBar->hide(); return; }
+    if (!inFullscreen()) { if (m_floatBar->isVisible()) m_floatBar->hide(); return; }
     const bool always = pp_impl::s_bool("Fullscreen/showToolbar", false);
     const bool floating = pp_impl::s_bool("Fullscreen/floatView", true);
     bool show = always;
@@ -211,7 +217,8 @@ void PreviewPanel::updateFloatBar(const QPoint* cursor) {
         const int edge = 48;
         show = cursor->y() <= edge || cursor->x() >= width() - edge;
     }
-    if (!show) { m_floatBar->hide(); return; }
+    if (!show) { if (m_floatBar->isVisible()) m_floatBar->hide(); return; }
+    if (m_floatBar->isVisible()) return;
     m_floatBar->adjustSize();
     m_floatBar->move((width() - m_floatBar->width()) / 2, 10);
     m_floatBar->raise();

@@ -231,6 +231,7 @@ void PreviewPanel::ensureVideoWidget() {
     m_vw->setGeometry(m_videoWidget->rect());
     m_vw->setAutoFillBackground(true);
     m_vw->setPalette(QPalette(QColor("#000000")));
+    m_vw->setMouseTracking(true);   // #208:视频面悬停也要把 move 冒泡给面板(光标恢复/信息条)
     m_vw->installEventFilter(this);   // 它盖满 m_videoWidget,点击先到它
     m_vw->show();
     if (!m_videoCover) {

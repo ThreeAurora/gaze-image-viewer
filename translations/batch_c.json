@@ -3,7 +3,7 @@
  "查看": "View",
  "查看(&V)": "&View",
  "查看器": "Viewer",
- "查看器标签卡上限(0=不限,默认99)": "Viewer tab limit (0 = unlimited, default 99)",
+ "查看器标签卡上限(2-99,默认99)": "Viewer tab limit (2-99, default 99)",
  "查看方式": "View mode",
  "标签排列": "Tab arrangement",
  "标签间的间距": "Spacing between tabs",

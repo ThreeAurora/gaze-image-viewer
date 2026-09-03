@@ -74,6 +74,10 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     // 尺寸可超面板(超出部分裁剪,拖动=移动视口),否则放大后只剩"片段"
     m_imgLabel = new QLabel(this);
     m_imgLabel->setAlignment(Qt::AlignCenter);
+    // #208:必须开跟踪。全屏画面 95% 面积被它盖住,没跟踪 QLabel 就收不到
+    // 悬停 MouseMove、也不会冒泡 → 面板的 move 处理(显隐信息条/恢复光标)
+    // 在死区里根本不执行:信息条移开不消失、隐藏后的光标永不恢复
+    m_imgLabel->setMouseTracking(true);
     m_imgLabel->hide();
 
     // 音频标签
@@ -135,6 +139,7 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     // 视频区
     m_videoWidget = new QWidget;
     m_videoWidget->setStyleSheet("background:#0A0A0C;");
+    m_videoWidget->setMouseTracking(true);   // #208 同图片标签:全屏悬停事件死区
     m_videoWidget->hide();
     layout->addWidget(m_videoWidget, 1);
 
