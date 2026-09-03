@@ -220,3 +220,13 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/thirdparty/LibRaw/libraw/libraw.h")
 else()
     message(STATUS "RAW 全解:thirdparty/LibRaw 不存在 → RAW 按钮显示未编入提示")
 endif()
+
+# ── 英文语言包自动编译部署(2026-09-03 国际化)──
+# 1) 扫描 src/ 里 gazeTr("...") 提取源串;2) 合并 translations/ 下的翻译字典
+# 生成 translations/gaze_en.ts(git 跟踪);3) lrelease 编出 gaze_en.qm 复制到
+# exe 目录 —— Gaze 运行时从这里加载英文译文(见 main.cpp 语言初始化块)。
+add_custom_command(TARGET Gaze POST_BUILD
+    COMMAND python "${CMAKE_SOURCE_DIR}/translations/i18n_build.py" "$<TARGET_FILE_DIR:Gaze>"
+    COMMENT "编译英文语言包 gaze_en.qm"
+    VERBATIM
+)

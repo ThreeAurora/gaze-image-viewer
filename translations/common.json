@@ -1,0 +1,7 @@
+{
+  "语言(&G)": "&Language",
+  "界面语言(切换后重启生效)": "UI language (applies after restart)",
+  "跟随系统": "Follow system",
+  "切换界面语言": "Switch UI language",
+  "界面语言将在重启后生效。立即重启吗？": "The UI language will be applied after a restart. Restart now?"
+}
