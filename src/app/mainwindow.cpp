@@ -188,9 +188,13 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     Logger::boot("ctor:toolbar");
 
     m_sortHeader = new SortHeader;
+    // 2026-09-03 夜根治启动闪窗:必须先 addWidget(收编为子控件)再 setVisible ——
+    // 无父的 QWidget 被 setVisible(true) 会按独立顶层窗口 show 一帧
+    //(native 396x65 黑条,title=Gaze,即用户反复报告的"启动闪过的窗口";
+    // QWidget::find 实证 who=class=SortHeader)。先挂布局后设可见,帧都不闪。
+    cl->addWidget(m_sortHeader);
     // #107:列标题显隐落盘(此前切掉重启又回来)
     m_sortHeader->setVisible(AppSettings::instance().get("Browser/sortHeader", true).toBool());
-    cl->addWidget(m_sortHeader);
 
     m_fileGrid = new FileGrid;
     cl->addWidget(m_fileGrid, 1);

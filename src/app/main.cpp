@@ -152,6 +152,10 @@ public:
         if (n <= 0) return false;
         const QString clsName = QString::fromWCharArray(cls, n);
         auto* wp = reinterpret_cast<WINDOWPOS*>(msg->lParam);
+        // 闪窗根因已定案(2026-09-03 夜,QWidget::find 实证):396x65 黑条是
+        // MainWindow 构造期"无父 SortHeader 先 setVisible(true) 再 addWidget"
+        // 被当顶层窗口 show 的一帧,已按"先挂布局后设可见"根治(mainwindow.cpp)。
+        // 本守卫只负责另一路:Qt 为顶层窗口自动建的 160x28「图标拥有者」小窗。
         // 只拦 Qt683QWindowIcon 且尺寸像"图标拥有者小窗"的:窗口照建照活
         //(任务栏/Alt-Tab 图标由它托管),只是落位一律压到屏外,闪现从根上消失。
         if (clsName == QStringLiteral("Qt683QWindowIcon")
@@ -260,6 +264,12 @@ int main(int argc, char *argv[]) {
     app.setApplicationName("Gaze");
     app.setApplicationDisplayName("Gaze");
     app.setWindowIcon(QIcon(":/Gaze.png"));
+
+    // [2026-09-03 夜取证结论]StartupWindowGuard 必须在 MainWindow 构造之前安装:
+    // 闪窗(396x65 黑条,title=Gaze)在 FileGrid 构造期间就创建了,装晚了根本拦不到。
+    // static 定义提前到 main 里(原来在 w 构造之后,那一版连闪窗的边都摸不着)。
+    static StartupWindowGuard s_startupGuard;
+    app.installNativeEventFilter(&s_startupGuard);
 
     // 旧版配置迁移: gaze.ini -> Gaze.ini (仅当新名不存在而旧名存在时一次性改名)
     {
@@ -372,10 +382,7 @@ int main(int argc, char *argv[]) {
     // 同一拍里恢复上次选中文件的预览 —— QVideoWindow(FFmpeg 后端的顶层
     // 视频输出窗)若在主窗显示前装载,会在屏幕上孤立映射一帧"闪框",
     // 必须等主窗口就位后再触发 loadFile(见 MainWindow::restoreStartupPreview)。
-    // 另装 StartupWindowGuard:把 Qt 的 160x28「图标拥有者」小窗钳在屏外,
-    // 该窗是独立顶层 HWND,透明度管不着它(定义处注释了识别口径)。
-    static StartupWindowGuard s_startupGuard;
-    app.installNativeEventFilter(&s_startupGuard);
+    // StartupWindowGuard 已提前到 QApplication 之后安装(见 main 开头注释)。
     w.setWindowOpacity(0.0);
     w.show();
     QTimer::singleShot(0, &w, [&w]() {
