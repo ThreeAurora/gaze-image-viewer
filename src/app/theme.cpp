@@ -219,7 +219,7 @@ QString appQss() {
         .arg(C_SIDEBAR)
         .arg(C_PREVIEW_BG)
         .arg(C_CARD_HOVER)
-        .arg(C_PANE_HDR)
+        .arg(C_SEPARATOR)      // %17:消息框按钮悬停(#215 起 C_PANE_HDR=#191919 不再作 hover,换描边灰=比按钮底亮一档)
         .arg(C_ACCENT_DOWN);   // %18:默认(确定)按钮悬停/按下,比 C_ACCENT 暗一档
 }
 

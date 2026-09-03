@@ -14,13 +14,13 @@
 //   内容区纯白。切换走 Appearance/theme,即时生效(Theme::applyLive)。
 #define C_WIN_BG        Theme::T("#212126", "#F3F3F5")   // 窗体底
 #define C_MENUBAR       Theme::T("#191919", "#F9F9FB")   // 菜单栏(2026-09-03 用户定版 rgb(25,25,25),原 #31313A=rgb(49,49,58))
-#define C_TOOLBAR       Theme::T("#2A2A31", "#ECECEF")   // 工具条/地址栏/列表表头
+#define C_TOOLBAR       Theme::T("#191919", "#ECECEF")   // 工具条/地址栏/列表表头(#215:2026-09-04 用户令 rgb(25,25,25),原 #2A2A31=rgb(42,42,49))
 #define C_STATUSBAR     Theme::T("#25252B", "#F0F0F3")   // 状态栏
-#define C_SIDEBAR       Theme::T("#212126", "#F3F3F5")   // 文件夹树
-#define C_CONTENT       Theme::T("#1A1A1F", "#FFFFFF")   // 内容区(文件列表底)
+#define C_SIDEBAR       Theme::T("#000000", "#F3F3F5")   // 文件夹树(#215:2026-09-04 用户令纯黑,原 #212126=rgb(33,33,38))
+#define C_CONTENT       Theme::T("#000000", "#FFFFFF")   // 内容区(文件列表底,含地址栏输入框)(#215:2026-09-04 用户令纯黑,原 #1A1A1F=rgb(26,26,31))
 #define C_PREVIEW_BG    Theme::T("#141418", "#E9E9ED")   // 预览面板(近黑)
-#define C_PANE_HDR      Theme::T("#35353E", "#E3E3E9")   // 面板标题条("文件夹"/"预览")
-#define C_CARD_BG       Theme::T("#232328", "#FFFFFF")   // 卡片常态
+#define C_PANE_HDR      Theme::T("#191919", "#E3E3E9")   // 面板标题条("文件夹"/"预览")(#215:2026-09-04 用户令 rgb(25,25,25),原 #35353E=rgb(53,53,62);故不再作 hover 色,hover 一律 C_CARD_HOVER)
+#define C_CARD_BG       Theme::T("#191919", "#FFFFFF")   // 卡片常态=文件名底色(#215:2026-09-04 用户定版 rgb(25,25,25),原 #232328=rgb(35,35,40);选中变蓝不变)
 #define C_CARD_HOVER    Theme::T("#2E2E35", "#EDF2FB")   // 卡片悬停
 #define C_THUMB_BG      Theme::T("#141418", "#E9E9ED")   // 卡片缩略图衬底
 #define C_CARD_BORDER   Theme::T("#30303A", "#D9D9E0")   // 卡片边框
@@ -33,7 +33,7 @@
 #define C_SELECT_YELLOW Theme::T("#E8B339", "#E8B339")
 #define C_TREE_TEXT     Theme::T("#FFFFFF", "#1F1F26")
 #define C_TREE_HOVER    Theme::T("#2E2E35", "#E4E7EE")
-#define C_TREE_SELECT     C_SELECT_BLUE   // 树有焦点:亮蓝(当前操作对象)
+#define C_TREE_SELECT     Theme::T("#1082DC", "#0078D7")   // 树有焦点:选中蓝(#215:2026-09-04 用户令深色档 rgb(16,130,220),原与网格同用 #0078D7;网格不动)
 #define C_TREE_SELECT_DIM C_SELECT_DIM    // 树失焦:暗蓝(视觉残留)
 #define C_TEXT_HIDDEN   Theme::T("#8F8F8F", "#9C9CA6")   // 隐藏文件/文件夹：淡灰（Windows 风格弱化显示）
 #define C_CANVAS_BG     0x000000    // 视频缩略图画布(数值型,thumbnailer 用;入库不可回改,双主题恒黑)

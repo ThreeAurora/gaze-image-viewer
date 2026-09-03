@@ -216,7 +216,7 @@ QWidget* MainWindow::createPaneHeader(const QString& title, const char* paneId) 
         "QToolButton{background:transparent;border:none;border-radius:4px;"
         "color:%3;font-size:13px;}"
         "QToolButton:hover{background:%4;}")
-        .arg(C_PANE_HDR, C_SEPARATOR, C_TEXT, C_MENUBAR));
+        .arg(C_PANE_HDR, C_SEPARATOR, C_TEXT, C_CARD_HOVER));
     auto* hl = new QHBoxLayout(h);
     hl->setContentsMargins(8, 0, 3, 0);
     hl->setSpacing(0);

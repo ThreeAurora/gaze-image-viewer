@@ -230,7 +230,7 @@ inline QString render(const QString& src) {
     return QStringLiteral(
         "<html><head><meta charset=\"utf-8\"><style>"
         "body{font-family:'Microsoft YaHei','Segoe UI',sans-serif;font-size:13px;"
-        "background:#1A1A1F;color:#E0E0E0;line-height:1.7;margin:0;padding:0;}"
+        "background:#000000;color:#E0E0E0;line-height:1.7;margin:0;padding:0;}"
         "h1,h2,h3,h4,h5,h6{color:#FFFFFF;margin:18px 0 8px;line-height:1.35;}"
         "h1{font-size:22px;border-bottom:1px solid #3A3A42;padding-bottom:6px;}"
         "h2{font-size:19px;border-bottom:1px solid #3A3A42;padding-bottom:5px;}"

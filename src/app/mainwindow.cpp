@@ -447,7 +447,7 @@ void MainWindow::applyThemeSurfaces() {
         "QToolButton{background:transparent;border:none;border-radius:4px;"
         "padding:3px 6px;color:%3;font-size:11px;}"
         "QToolButton:hover{background:%4;}"
-        "QToolButton::menu-indicator{image:none;}").arg(C_TOOLBAR, C_SEPARATOR, C_TEXT, C_PANE_HDR);
+        "QToolButton::menu-indicator{image:none;}").arg(C_TOOLBAR, C_SEPARATOR, C_TEXT, C_CARD_HOVER);
     if (m_addrRow) m_addrRow->setStyleSheet(barQss);
     if (m_toolRow) m_toolRow->setStyleSheet(barQss);
     if (m_addrBar)
@@ -477,7 +477,7 @@ void MainWindow::applyThemeSurfaces() {
             "QToolButton{background:transparent;border:none;border-radius:4px;"
             "color:%3;font-size:13px;}"
             "QToolButton:hover{background:%4;}")
-            .arg(C_PANE_HDR, C_SEPARATOR, C_TEXT, C_MENUBAR));
+            .arg(C_PANE_HDR, C_SEPARATOR, C_TEXT, C_CARD_HOVER));
         if (QLabel* lbl = h->findChild<QLabel*>())
             lbl->setStyleSheet(QString::fromUtf8(
                 "background:transparent;color:%1;font-size:12px;").arg(C_TEXT));

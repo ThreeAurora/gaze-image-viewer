@@ -69,7 +69,7 @@ void MainWindow::createMenubar() {
         "QMenuBar::item{background:transparent;padding:4px 10px;border-radius:3px;}"
         "QMenuBar::item:selected{background:%4;}"
         "QMenuBar::item:pressed{background:%5;color:#FFF;}")
-        .arg(C_MENUBAR, C_TEXT, C_SEPARATOR, C_PANE_HDR, C_ACCENT));
+        .arg(C_MENUBAR, C_TEXT, C_SEPARATOR, C_CARD_HOVER, C_ACCENT));
 
     // ── 文件(F) ──
     auto *fileMenu = mb->addMenu("文件(&F)");
@@ -505,7 +505,7 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
         "QToolButton{background:transparent;border:none;border-radius:4px;"
         "padding:3px 6px;color:%3;font-size:11px;}"
         "QToolButton:hover{background:%4;}"
-        "QToolButton::menu-indicator{image:none;}").arg(C_TOOLBAR, C_SEPARATOR, C_TEXT, C_PANE_HDR);
+        "QToolButton::menu-indicator{image:none;}").arg(C_TOOLBAR, C_SEPARATOR, C_TEXT, C_CARD_HOVER);
 
     // ── 地址行:上一级 + 路径输入 + 历史下拉 ──
     auto* addrRow = new QWidget;
