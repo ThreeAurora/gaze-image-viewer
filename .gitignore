@@ -19,3 +19,7 @@ build_qt68/CMakeCache.txt
 .vscode/
 .idea/
 cache/tmp/Gaze-v*.zip
+
+__pycache__/
+*.pyc
+
