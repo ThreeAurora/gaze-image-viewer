@@ -158,6 +158,20 @@ QString appQss() {
         "  border-top: 4px solid transparent; border-bottom: 4px solid transparent;"
         "  border-left: 6px solid %11;"
         "}"
+        // ── 对话框按钮(2026-09-03 用户令:确定/取消不够醒目,边框与背景融为一体)──
+        // 全部对话框统一成「次按钮=底色+蓝色描边,默认按钮=蓝底白字」,
+        // 与设置对话框既有按钮样式同口径(那里是内联写死的,这里是全局兜底)。
+        // 必须放在 QMessageBox 之前:两条规则特异性相同,后者赢 —— 消息框
+        // 仍是它自己的老样式。
+        "QDialog QPushButton {"
+        "  background: %16; color: %1;"
+        "  border: 1px solid %5; padding: 6px 18px; border-radius: 4px;"
+        "}"
+        "QDialog QPushButton:hover { background: %17; }"
+        "QDialog QPushButton:default {"
+        "  background: %5; border-color: %5; color: #FFF;"
+        "}"
+        "QDialog QPushButton:default:hover { background: %18; }"
         "QMessageBox { background: %2; color: %1; }"
         "QMessageBox QLabel { color: %1; background: transparent; }"
         "QMessageBox QPushButton {"
@@ -184,7 +198,8 @@ QString appQss() {
         .arg(C_SIDEBAR)
         .arg(C_PREVIEW_BG)
         .arg(C_CARD_HOVER)
-        .arg(C_PANE_HDR);
+        .arg(C_PANE_HDR)
+        .arg(C_ACCENT_DOWN);   // %18:默认(确定)按钮悬停/按下,比 C_ACCENT 暗一档
 }
 
 } // namespace Theme
