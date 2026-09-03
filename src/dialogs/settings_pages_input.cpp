@@ -5,6 +5,7 @@
 #include "constants.h"
 #include "dbprefix.h"
 #include "viewerhotkeys.h"
+#include "i18n.h"
 
 #include <QHBoxLayout>
 #include <QVBoxLayout>
@@ -45,26 +46,26 @@ using namespace sd_impl;   // colorPick
 QWidget* SettingsDialog::pageKeyboardMouse() {
     auto* form = new QFormLayout;
     form->setVerticalSpacing(6);
-    form->addRow(QString::fromUtf8("左/右键方向键"),
-        combo("Keyboard/leftRight", {QString::fromUtf8("上一个文件/下一个文件"),
-            QString::fromUtf8("水平滚动")}, 0));
-    form->addRow(QString::fromUtf8("上/下方向键"),
-        combo("Keyboard/upDown", {QString::fromUtf8("上一个文件/下一个文件"),
-            QString::fromUtf8("向上/向下翻页")}, 0));
-    form->addRow(QString::fromUtf8("空格"),
-        combo("Keyboard/space", {QString::fromUtf8("播放/暂停(视频)"),
-            QString::fromUtf8("什么都不做"),
-            QString::fromUtf8("下一个文件"), QString::fromUtf8("快速幻灯片")}, 0));
-    form->addRow(QString::fromUtf8("快速幻灯片间隔(毫秒)"),
+    form->addRow(gazeTr("左/右键方向键"),
+        combo("Keyboard/leftRight", {gazeTr("上一个文件/下一个文件"),
+            gazeTr("水平滚动")}, 0));
+    form->addRow(gazeTr("上/下方向键"),
+        combo("Keyboard/upDown", {gazeTr("上一个文件/下一个文件"),
+            gazeTr("向上/向下翻页")}, 0));
+    form->addRow(gazeTr("空格"),
+        combo("Keyboard/space", {gazeTr("播放/暂停(视频)"),
+            gazeTr("什么都不做"),
+            gazeTr("下一个文件"), gazeTr("快速幻灯片")}, 0));
+    form->addRow(gazeTr("快速幻灯片间隔(毫秒)"),
         spin("Interface/slideInterval", SLIDE_MS_MIN, SLIDE_MS_MAX, SLIDE_MS_DEF));
     // Viewer/seekSeconds:Ctrl+PgUp/PgDn 一次跳多少秒(1-3600)。
     // 来源 @147575「右键+滚轮具体滚动多少秒…应该在设置里能体现,从1秒到3600秒」;
     // 右键+滚轮后来被用户改判为"等同于 Ctrl+滚轮缩放"(@635777),秒数落到快进快退上
-    form->addRow(QString::fromUtf8("快进/快退秒数"),
+    form->addRow(gazeTr("快进/快退秒数"),
         spin("Viewer/seekSeconds", 1, 3600, 3));
-    form->addRow(chk("Keyboard/escCloseBrowser", QString::fromUtf8("按 ESC 关闭:浏览器模式"), false));
-    form->addRow(chk("Keyboard/escCloseViewer", QString::fromUtf8("按 ESC 关闭:查看器"), true));
-    return wrapTitled(QString::fromUtf8("键盘"), form);
+    form->addRow(chk("Keyboard/escCloseBrowser", gazeTr("按 ESC 关闭:浏览器模式"), false));
+    form->addRow(chk("Keyboard/escCloseViewer", gazeTr("按 ESC 关闭:查看器"), true));
+    return wrapTitled(gazeTr("键盘"), form);
 }
 
 QWidget* SettingsDialog::pageShortcuts() {
@@ -76,19 +77,19 @@ QWidget* SettingsDialog::pageShortcuts() {
     // 顶部行:模式切换 + 筛选
     auto* top = new QHBoxLayout;
     auto* modeCombo = new QComboBox;
-    modeCombo->addItems({QString::fromUtf8("浏览器模式"), QString::fromUtf8("查看器")});
+    modeCombo->addItems({gazeTr("浏览器模式"), gazeTr("查看器")});
     top->addWidget(modeCombo);
     auto* filterEdit = new QLineEdit;
-    filterEdit->setPlaceholderText(QString::fromUtf8("筛选"));
+    filterEdit->setPlaceholderText(gazeTr("筛选"));
     filterEdit->setClearButtonEnabled(true);
     top->addWidget(filterEdit, 1);
     root->addLayout(top);
 
     // 三列表格:动作 | 命令名 | 快捷键(行内编辑)
     auto* table = new QTableWidget(0, 3);
-    table->setHorizontalHeaderLabels({QString::fromUtf8("动作"),
-                                      QString::fromUtf8("命令名"),
-                                      QString::fromUtf8("快捷键")});
+    table->setHorizontalHeaderLabels({gazeTr("动作"),
+                                      gazeTr("命令名"),
+                                      gazeTr("快捷键")});
     table->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
     table->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch);
     table->verticalHeader()->setVisible(false);
@@ -103,16 +104,16 @@ QWidget* SettingsDialog::pageShortcuts() {
 
     // 底部:选中命令的快捷方式(无/默认/自定义)
     auto* footRow = new QHBoxLayout;
-    auto* rbNone   = new QRadioButton(QString::fromUtf8("无"));
-    auto* rbDef    = new QRadioButton(QString::fromUtf8("默认"));
-    auto* rbCustom = new QRadioButton(QString::fromUtf8("自定义"));
+    auto* rbNone   = new QRadioButton(gazeTr("无"));
+    auto* rbDef    = new QRadioButton(gazeTr("默认"));
+    auto* rbCustom = new QRadioButton(gazeTr("自定义"));
     auto* capEdit  = new QKeySequenceEdit;
     capEdit->setEnabled(false);
     footRow->addWidget(rbNone);
     footRow->addWidget(rbDef);
     footRow->addWidget(rbCustom);
     footRow->addWidget(capEdit, 1);
-    root->addWidget(group(QString::fromUtf8("选中命令的快捷方式"), footRow));
+    root->addWidget(group(gazeTr("选中命令的快捷方式"), footRow));
 
     // 固定鼠标绑定说明(2026-08-30 裁决:鼠标设置页已删,绑定写死在代码里)
     auto* mouseTip = new QLabel(QString::fromUtf8(
@@ -250,7 +251,7 @@ QWidget* SettingsDialog::pageShortcuts() {
                 if (ed && ed->keySequence() != ks) ed->setKeySequence(ks);
             });
 
-    return wrapTitled(QString::fromUtf8("快捷键"), root);
+    return wrapTitled(gazeTr("快捷键"), root);
 }
 
 QWidget* SettingsDialog::pageBrowser() {
@@ -260,59 +261,59 @@ QWidget* SettingsDialog::pageBrowser() {
     // 分组"预览"(对齐 XnView MP 浏览器页)
     auto* fPrev = new QFormLayout;
     fPrev->setVerticalSpacing(6);
-    fPrev->addRow(QString::fromUtf8("预览背景色"),
+    fPrev->addRow(gazeTr("预览背景色"),
                   colorPick("Browser/previewBackColor", "#000000"));
-    fPrev->addRow(chk("Browser/showRating", QString::fromUtf8("显示颜色标记"), true));
+    fPrev->addRow(chk("Browser/showRating", gazeTr("显示颜色标记"), true));
     // #111(用户 2026-08-31):文本/PDF 预览单独成开关且默认关,打勾才预览。
     // 长文本另按"行数 + 每行字符数"截断,上限与实测依据见 textlimit.h。
     fPrev->addRow(chk("Preview/previewTxt",
-                      QString::fromUtf8("预览 txt 文本文件内容(超长自动截断)"), false));
+                      gazeTr("预览 txt 文本文件内容(超长自动截断)"), false));
     fPrev->addRow(chk("Preview/showMd",
-                      QString::fromUtf8("以 MD 格式预览 Markdown 文件(超长自动截断)"), false));
+                      gazeTr("以 MD 格式预览 Markdown 文件(超长自动截断)"), false));
     // PDF 用随 Gaze 分发的内置 Ghostscript(gs/),不再要求系统安装(#110)
-    fPrev->addRow(chk("Preview/showPdf", QString::fromUtf8("预览 PDF 文档(内置 Ghostscript 渲染)"), false));
-    root->addWidget(group(QString::fromUtf8("预览"), fPrev));
+    fPrev->addRow(chk("Preview/showPdf", gazeTr("预览 PDF 文档(内置 Ghostscript 渲染)"), false));
+    root->addWidget(group(gazeTr("预览"), fPrev));
 
     // 分组"旋转"
     auto* fRot = new QFormLayout;
     fRot->setVerticalSpacing(6);
-    fRot->addRow(chk("Browser/rotateExifOnly", QString::fromUtf8("仅改变 EXIF 方向(如果可能)"), true));
-    fRot->addRow(chk("Browser/losslessRotate", QString::fromUtf8("使用无损旋转(如果可能)"), true));
-    root->addWidget(group(QString::fromUtf8("旋转"), fRot));
+    fRot->addRow(chk("Browser/rotateExifOnly", gazeTr("仅改变 EXIF 方向(如果可能)"), true));
+    fRot->addRow(chk("Browser/losslessRotate", gazeTr("使用无损旋转(如果可能)"), true));
+    root->addWidget(group(gazeTr("旋转"), fRot));
 
     auto* fMisc = new QFormLayout;
     fMisc->setVerticalSpacing(6);
-    fMisc->addRow(chk("Browser/thumbScrollPreview", QString::fromUtf8("用缩略图查看滚动内容"), true));
-    fMisc->addRow(chk("Browser/showDesktopInTree", QString::fromUtf8("在文件夹树中显示\"桌面\""), true));
+    fMisc->addRow(chk("Browser/thumbScrollPreview", gazeTr("用缩略图查看滚动内容"), true));
+    fMisc->addRow(chk("Browser/showDesktopInTree", gazeTr("在文件夹树中显示\"桌面\""), true));
     // #117:文件树左键按住拖动的语义。默认=扫过即切入,方便连续快速预览不同目录
-    fMisc->addRow(QString::fromUtf8("文件树左键按住拖动"),
-        combo("FolderTree/leftDragSweep", {QString::fromUtf8("切换文件夹(扫过即进入)"),
-                                           QString::fromUtf8("拖动多选(原行为)")}, 0));
+    fMisc->addRow(gazeTr("文件树左键按住拖动"),
+        combo("FolderTree/leftDragSweep", {gazeTr("切换文件夹(扫过即进入)"),
+                                           gazeTr("拖动多选(原行为)")}, 0));
     root->addLayout(fMisc);
-    return wrapTitled(QString::fromUtf8("浏览器"), root);
+    return wrapTitled(gazeTr("浏览器"), root);
 }
 
 QWidget* SettingsDialog::pageFileList() {
     auto* form = new QFormLayout;
     form->setVerticalSpacing(6);
-    form->addRow(chk("FileList/showHidden", QString::fromUtf8("显示隐藏的文件和文件夹"), true));
-    form->addRow(chk("FileList/recognizeByExt", QString::fromUtf8("只按扩展名进行识别文件格式"), true));
-    form->addRow(QString::fromUtf8("扫描文件头"),
-        combo("FileList/scanHeader", {QString::fromUtf8("总是"),
-            QString::fromUtf8("排除软盘/CD/DVD"), QString::fromUtf8("仅电脑本地硬盘"),
-            QString::fromUtf8("从不")}, 0));
-    form->addRow(chk("FileList/mixSort", QString::fromUtf8("混合文件/文件夹排序"), false));
-    form->addRow(chk("FileList/folderAlphabetical", QString::fromUtf8("文件夹总是按字母序排列"), true));
+    form->addRow(chk("FileList/showHidden", gazeTr("显示隐藏的文件和文件夹"), true));
+    form->addRow(chk("FileList/recognizeByExt", gazeTr("只按扩展名进行识别文件格式"), true));
+    form->addRow(gazeTr("扫描文件头"),
+        combo("FileList/scanHeader", {gazeTr("总是"),
+            gazeTr("排除软盘/CD/DVD"), gazeTr("仅电脑本地硬盘"),
+            gazeTr("从不")}, 0));
+    form->addRow(chk("FileList/mixSort", gazeTr("混合文件/文件夹排序"), false));
+    form->addRow(chk("FileList/folderAlphabetical", gazeTr("文件夹总是按字母序排列"), true));
     // #150:启动默认排序,索引含义与 FileGrid 构造函数里的 switch 一一对应
-    form->addRow(QString::fromUtf8("启动时默认排序"),
-        combo("Browser/startupSort", {QString::fromUtf8("文件名(升序)"),
-            QString::fromUtf8("修改日期(降序)"), QString::fromUtf8("创建日期(降序)"),
-            QString::fromUtf8("EXIF 拍摄日期(降序)"), QString::fromUtf8("类型"),
-            QString::fromUtf8("大小(降序)"), QString::fromUtf8("扩展名"),
-            QString::fromUtf8("路径"), QString::fromUtf8("颜色标签"),
-            QString::fromUtf8("记住上次")}, 0));
-    form->addRow(chk("FileList/newAtEnd", QString::fromUtf8("新文件添加至列表末尾"), false));
-    form->addRow(chk("FileList/autoSelectNew", QString::fromUtf8("自动选择新文件"), false));
-    form->addRow(chk("FileList/sizeInBytes", QString::fromUtf8("按字节显示文件大小"), false));
-    return wrapTitled(QString::fromUtf8("文件列表"), form);
+    form->addRow(gazeTr("启动时默认排序"),
+        combo("Browser/startupSort", {gazeTr("文件名(升序)"),
+            gazeTr("修改日期(降序)"), gazeTr("创建日期(降序)"),
+            gazeTr("EXIF 拍摄日期(降序)"), gazeTr("类型"),
+            gazeTr("大小(降序)"), gazeTr("扩展名"),
+            gazeTr("路径"), gazeTr("颜色标签"),
+            gazeTr("记住上次")}, 0));
+    form->addRow(chk("FileList/newAtEnd", gazeTr("新文件添加至列表末尾"), false));
+    form->addRow(chk("FileList/autoSelectNew", gazeTr("自动选择新文件"), false));
+    form->addRow(chk("FileList/sizeInBytes", gazeTr("按字节显示文件大小"), false));
+    return wrapTitled(gazeTr("文件列表"), form);
 }

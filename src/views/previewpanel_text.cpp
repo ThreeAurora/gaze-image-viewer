@@ -13,6 +13,7 @@
 #include "viewerhotkeys.h"
 #include "shelldelete.h"
 #include "fileentry.h"
+#include "i18n.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -65,7 +66,7 @@ void PreviewPanel::showMarkdown(const QString& path) {
 
     const QString html = Md::renderFile(path);
     m_textEdit->setHtml(html.isEmpty()
-        ? QString::fromUtf8("<p style='color:#C0C0C6'>无法读取文件</p>") : html);
+        ? gazeTr("<p style='color:#C0C0C6'>无法读取文件</p>") : html);
     m_textEdit->show();
 }
 
@@ -113,7 +114,7 @@ void PreviewPanel::requestPdf(bool needPageCount) {
                 delete self->m_origPix;
                 self->m_origPix = nullptr;
                 self->m_placeholder->setText(
-                    QString::fromUtf8("无法预览该 PDF\n(内置 gs/ 缺失或文件无法渲染)"));
+                    gazeTr("无法预览该 PDF\n(内置 gs/ 缺失或文件无法渲染)"));
                 self->m_placeholder->show();
                 self->m_imgLabel->hide();
                 self->updatePdfBar();
@@ -145,8 +146,8 @@ void PreviewPanel::updatePdfBar() {
     m_pdfPrev->setEnabled(m_pdfPage > 1);
     m_pdfNext->setEnabled(total <= 0 || m_pdfPage < total);
     m_pdfLabel->setText(total > 0
-        ? QString::fromUtf8("%1 / %2 页").arg(m_pdfPage).arg(total)
-        : QString::fromUtf8("第 %1 页").arg(m_pdfPage));
+        ? gazeTr("%1 / %2 页").arg(m_pdfPage).arg(total)
+        : gazeTr("第 %1 页").arg(m_pdfPage));
     m_pdfLabel->adjustSize();
     m_pdfBar->adjustSize();
     m_pdfBar->move((width() - m_pdfBar->width()) / 2, height() - m_pdfBar->height() - 10);
@@ -177,7 +178,7 @@ void PreviewPanel::showText(const QString& path) {
         m_textEdit->setPlainText(TextCut::apply(raw, byteCut, total));
         m_textEdit->show();
     } else {
-        m_textEdit->setPlainText(QString::fromUtf8("无法读取文件"));
+        m_textEdit->setPlainText(gazeTr("无法读取文件"));
         m_textEdit->show();
     }
 }

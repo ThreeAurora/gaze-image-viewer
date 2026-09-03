@@ -13,6 +13,7 @@
 #include "viewerhotkeys.h"
 #include "shelldelete.h"
 #include "fileentry.h"
+#include "i18n.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -250,37 +251,37 @@ void PreviewPanel::contextMenuEvent(QContextMenuEvent* event) {
     const bool isImage = m_mode == "image";
     const bool hasMedia = m_mode == "video" || m_mode == "audio";
     QMenu menu(this);
-    menu.addAction(QString::fromUtf8("上一个文件"), this, [this]() { emit navFile(-1); });
-    menu.addAction(QString::fromUtf8("下一个文件"), this, [this]() { emit navFile(1); });
+    menu.addAction(gazeTr("上一个文件"), this, [this]() { emit navFile(-1); });
+    menu.addAction(gazeTr("下一个文件"), this, [this]() { emit navFile(1); });
     if (isImage) {
         menu.addSeparator();
-        menu.addAction(QString::fromUtf8("适应窗口"), this, [this]() { fitAuto(); });
-        menu.addAction(QString::fromUtf8("1:1 像素"), this, [this]() {
+        menu.addAction(gazeTr("适应窗口"), this, [this]() { fitAuto(); });
+        menu.addAction(gazeTr("1:1 像素"), this, [this]() {
             if (!m_origPix) return;
             m_scale = oneToOneScale(); m_ctrlZoomed = true; render();
         });
     }
     if (hasMedia || m_isLivePhoto) {
-        menu.addAction(QString::fromUtf8("播放/暂停"), this, [this]() { togglePlayPause(); });
+        menu.addAction(gazeTr("播放/暂停"), this, [this]() { togglePlayPause(); });
     }
     menu.addSeparator();
-    menu.addAction(QString::fromUtf8("用系统默认程序打开"), this, [this]() {
+    menu.addAction(gazeTr("用系统默认程序打开"), this, [this]() {
         QDesktopServices::openUrl(QUrl::fromLocalFile(m_filePath));
     });
     // 进查看器后网格是隐藏的,浏览器那份右键菜单够不着:另起标签要有本地入口
-    menu.addAction(QString::fromUtf8("在新标签卡中打开"), this, [this]() {
+    menu.addAction(gazeTr("在新标签卡中打开"), this, [this]() {
         invokeOnWindow(this, "openViewerTab(QString)", m_filePath);
     });
-    menu.addAction(QString::fromUtf8("复制文件"), this, [this]() {
+    menu.addAction(gazeTr("复制文件"), this, [this]() {
         auto* mime = new QMimeData;
         mime->setUrls({ QUrl::fromLocalFile(m_filePath) });
         QApplication::clipboard()->setMimeData(mime);
     });
-    menu.addAction(QString::fromUtf8("复制文件路径"), this, [this]() {
+    menu.addAction(gazeTr("复制文件路径"), this, [this]() {
         QApplication::clipboard()->setText(m_filePath);
     });
     menu.addSeparator();
-    menu.addAction(QString::fromUtf8("删除"), this, [this]() {
+    menu.addAction(gazeTr("删除"), this, [this]() {
         const QString gone = m_filePath;
         if (!deleteWithSettings({ gone }, this)) return;
         clear();
@@ -333,11 +334,11 @@ bool PreviewPanel::handleBrowserMediaKey(QKeyEvent* e) {
     if (m_mode != "video" && m_mode != "audio" && !m_isGif) return false;
     ensureHotkeys();
     const QString act = hotkeyAction(e);
-    if (act == QString::fromUtf8("\xe6\x92\xad\xe6\x94\xbe/\xe6\x9a\x82\xe5\x81\x9c")) {  // 播放/暂停
+    if (act == gazeTr("播放/暂停")) {  // 播放/暂停
         togglePlayPause();
         return true;
     }
-    if (act == QString::fromUtf8("\xe5\x81\x9c\xe6\xad\xa2")) {  // 停止:与 keyPressEvent 同逻辑
+    if (act == gazeTr("停止")) {  // 停止:与 keyPressEvent 同逻辑
         if (m_isGif) {
             setGifPaused(true);   // 先停:跳帧走暂停态,避开运行态 jumpToFrame 卡死
             gifSeekMs(0);
@@ -365,16 +366,16 @@ void PreviewPanel::keyPressEvent(QKeyEvent* event) {
         if (mw) QMetaObject::invokeMethod(mw, "viewerBack");
         return;
     }
-    if (act == QString::fromUtf8("\xe4\xb8\x8b\xe4\xb8\x80\xe4\xb8\xaa\xe6\x96\x87\xe4\xbb\xb6")) {   // 下一个文件
+    if (act == gazeTr("下一个文件")) {   // 下一个文件
         emit navFile(1);  event->accept();  return;
     }
-    if (act == QString::fromUtf8("\xe4\xb8\x8a\xe4\xb8\x80\xe4\xb8\xaa\xe6\x96\x87\xe4\xbb\xb6")) {   // 上一个文件
+    if (act == gazeTr("上一个文件")) {   // 上一个文件
         emit navFile(-1); event->accept();  return;
     }
     if (m_mode == "image" &&
-        (act == QString::fromUtf8("\xe6\x94\xbe\xe5\xa4\xa7") ||          // 放大
-         act == QString::fromUtf8("\xe7\xbc\xa9\xe5\xb0\x8f"))) {         // 缩小
-        const bool up = (act == QString::fromUtf8("\xe6\x94\xbe\xe5\xa4\xa7"));
+        (act == gazeTr("放大") ||          // 放大
+         act == gazeTr("缩小"))) {         // 缩小
+        const bool up = (act == gazeTr("放大"));
         // Viewer/zoomMode:0=固定档位跳跃,1=连续 1.25/0.8 无级缩放(默认)
         m_scale = pp_impl::s_int("Viewer/zoomMode", 1) == 0
                 ? stepZoom(m_scale, up)
@@ -382,17 +383,17 @@ void PreviewPanel::keyPressEvent(QKeyEvent* event) {
         m_ctrlZoomed = true;
         render();  event->accept();  return;
     }
-    if (m_mode == "image" && act == QString::fromUtf8("\xe9\x80\x82\xe5\xba\x94\xe7\xaa\x97\xe5\x8f\xa3")) {  // 适应窗口
+    if (m_mode == "image" && act == gazeTr("适应窗口")) {  // 适应窗口
         fitAuto();  event->accept();  return;
     }
     if (m_mode == "image" && m_origPix &&
-        act == QString::fromUtf8("1:1 \xe5\x83\x8f\xe7\xb4\xa0")) {       // 1:1 像素
+        act == gazeTr("1:1 像素")) {       // 1:1 像素
         m_scale = oneToOneScale();  m_ctrlZoomed = true;  render();  event->accept();  return;
     }
-    if (act == QString::fromUtf8("\xe6\x92\xad\xe6\x94\xbe/\xe6\x9a\x82\xe5\x81\x9c")) {  // 播放/暂停
+    if (act == gazeTr("播放/暂停")) {  // 播放/暂停
         togglePlayPause();  event->accept();  return;
     }
-    if (act == QString::fromUtf8("\xe5\x81\x9c\xe6\xad\xa2")) {  // 停止(回到开头,默认 T;与 m_btnStop 同逻辑)
+    if (act == gazeTr("停止")) {  // 停止(回到开头,默认 T;与 m_btnStop 同逻辑)
         if (m_isGif) {
             setGifPaused(true);   // 先停:跳帧走暂停态,避开运行态 jumpToFrame 卡死
             gifSeekMs(0);

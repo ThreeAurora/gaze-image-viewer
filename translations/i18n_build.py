@@ -103,11 +103,13 @@ def unescape(seg):
                 while j < m and seg[j] in "0123456789abcdefABCDEF":
                     j += 1
                 out.append(chr(int(seg[i + 2:j], 16)))
-                i = j - 1
+                i = j
+                continue
             else:
                 out.append(nxt)
-        else:
-            out.append(ch)
+            i += 2
+            continue
+        out.append(ch)
         i += 1
     return "".join(out)
 

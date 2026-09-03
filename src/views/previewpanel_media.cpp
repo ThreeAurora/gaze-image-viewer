@@ -13,6 +13,7 @@
 #include "viewerhotkeys.h"
 #include "shelldelete.h"
 #include "fileentry.h"
+#include "i18n.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -334,7 +335,7 @@ void PreviewPanel::renderWave() {
     if (!m_waveLabel || !m_waveLabel->isVisible()) return;
     if (m_waveSnap.failed) {
         m_waveLabel->setText(
-            QString::fromUtf8("\xe6\xb3\xa2\xe5\xbd\xa2\xe4\xb8\x8d\xe5\x8f\xaf\xe7\x94\xa8")); // 波形不可用
+            gazeTr("波形不可用")); // 波形不可用
         return;
     }
     const int w = qMax(64, m_waveLabel->width());

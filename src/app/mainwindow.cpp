@@ -16,6 +16,7 @@
 #include "validname.h"
 #include "keytarget.h"
 #include "logger.h"
+#include "i18n.h"
 
 #include <QMenuBar>
 #include <QStatusBar>
@@ -141,8 +142,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
         const int i = m_viewerTabs->tabAt(pos);
         if (i < 0 || isBrowserTab(i)) return;   // #105:浏览器标签无可关闭
         QMenu menu(m_viewerTabs);
-        menu.addAction(QString::fromUtf8("关闭此标签卡"), this, [this, i]() { closeViewerTab(i); });
-        menu.addAction(QString::fromUtf8("关闭所有标签卡"), this, [this]() {
+        menu.addAction(gazeTr("关闭此标签卡"), this, [this, i]() { closeViewerTab(i); });
+        menu.addAction(gazeTr("关闭所有标签卡"), this, [this]() {
             // QTabBar 没有 clear():一张一张摘。摘的过程中不发 currentChanged,
             // 否则每摘一张预览区就重解码下一张,白白解到底
             m_viewerTabs->blockSignals(true);
@@ -167,7 +168,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     auto* tv = new QVBoxLayout(treePane);
     tv->setContentsMargins(0, 0, 0, 0);
     tv->setSpacing(0);
-    tv->addWidget(createPaneHeader(QString::fromUtf8("文件夹"), "tree"));
+    tv->addWidget(createPaneHeader(gazeTr("文件夹"), "tree"));
 
     m_folderTree = new FolderTree;
     m_folderTree->setMinimumWidth(160);
@@ -265,7 +266,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     auto* pv = new QVBoxLayout(previewPane);
     pv->setContentsMargins(0, 0, 0, 0);
     pv->setSpacing(0);
-    m_previewHdr = createPaneHeader(QString::fromUtf8("预览"), "preview");
+    m_previewHdr = createPaneHeader(gazeTr("预览"), "preview");
     pv->addWidget(m_previewHdr);
     pv->addWidget(m_preview, 1);
     connect(m_preview, &PreviewPanel::navFile, m_fileGrid, &FileGrid::navigateSelection);
@@ -279,7 +280,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     auto* iv = new QVBoxLayout(m_infoPane);
     iv->setContentsMargins(0, 0, 0, 0);
     iv->setSpacing(0);
-    iv->addWidget(createPaneHeader(QString::fromUtf8("信息"), "info"));
+    iv->addWidget(createPaneHeader(gazeTr("信息"), "info"));
     m_info = new InfoPanel;
     m_info->setMinimumHeight(140);
     iv->addWidget(m_info, 1);
@@ -503,8 +504,8 @@ void MainWindow::closeEvent(QCloseEvent* event) {
     //   0 从不(不写回,下次启动不恢复位置)  1 询问  2 始终(默认)
     int saveMode = AppSettings::instance().get("General/saveSession", 2).toInt();
     if (saveMode == 1) {
-        saveMode = QMessageBox::question(this, QString::fromUtf8("退出 Gaze"),
-            QString::fromUtf8("保存当前会话?\n\n保存后下次启动会回到:\n%1")
+        saveMode = QMessageBox::question(this, gazeTr("退出 Gaze"),
+            gazeTr("保存当前会话?\n\n保存后下次启动会回到:\n%1")
                 .arg(m_currentDir),
             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes ? 2 : 0;
     }

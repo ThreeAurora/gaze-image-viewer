@@ -5,6 +5,7 @@
 #include "constants.h"
 #include "dbprefix.h"
 #include "viewerhotkeys.h"
+#include "i18n.h"
 
 #include <QHBoxLayout>
 #include <QVBoxLayout>
@@ -160,7 +161,7 @@ void SettingsDialog::populatePages() {
 }
 
 SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent) {
-    setWindowTitle(QString::fromUtf8("设置"));
+    setWindowTitle(gazeTr("设置"));
     resize(900, 660);
     // 中文字体用雅黑渲染(默认字体小字发虚)
     setFont(QFont(QString::fromUtf8("Microsoft YaHei UI"), 9));
@@ -217,7 +218,7 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent) {
     leftCol->setContentsMargins(0, 0, 0, 0);
     leftCol->setSpacing(6);
     auto* filterEdit = new QLineEdit;
-    filterEdit->setPlaceholderText(QString::fromUtf8("过滤器"));
+    filterEdit->setPlaceholderText(gazeTr("过滤器"));
     filterEdit->setFixedWidth(180);
     filterEdit->setClearButtonEnabled(true);
     leftCol->addWidget(filterEdit);
@@ -272,11 +273,11 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent) {
         "QPushButton:hover{border-color:%3;}"
         "QPushButton#okBtn{background:%3;border-color:%3;color:#FFF;}"
         "QPushButton#okBtn:hover{background:%5;}").arg(C_TOOLBAR, C_SEPARATOR, C_ACCENT, C_TEXT, C_ACCENT_DOWN);
-    auto* resetBtn = new QPushButton(QString::fromUtf8("恢复默认"));
+    auto* resetBtn = new QPushButton(gazeTr("恢复默认"));
     resetBtn->setStyleSheet(btnQss);
     connect(resetBtn, &QPushButton::clicked, this, [this]() {
-        if (QMessageBox::question(this, QString::fromUtf8("恢复默认"),
-            QString::fromUtf8("将所有设置恢复为默认值?"))
+        if (QMessageBox::question(this, gazeTr("恢复默认"),
+            gazeTr("将所有设置恢复为默认值?"))
             == QMessageBox::Yes) {
             AppSettings::instance().clearAll();
             populatePages();
@@ -284,13 +285,13 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent) {
     });
     bottom->addWidget(resetBtn);
     bottom->addStretch();
-    auto* okBtn = new QPushButton(QString::fromUtf8("确定"));
+    auto* okBtn = new QPushButton(gazeTr("确定"));
     okBtn->setObjectName("okBtn");
     // 显式默认:Enter=确定;对话框空格过滤器的候选也按 default 优先
     // (不设的话 autoDefault 会先命中创建更早的"恢复默认")
     okBtn->setDefault(true);
     okBtn->setStyleSheet(btnQss);
-    auto* cancelBtn = new QPushButton(QString::fromUtf8("取消"));
+    auto* cancelBtn = new QPushButton(gazeTr("取消"));
     cancelBtn->setStyleSheet(btnQss);
     connect(okBtn, &QPushButton::clicked, this, &QDialog::accept);
     connect(cancelBtn, &QPushButton::clicked, this, &QDialog::reject);

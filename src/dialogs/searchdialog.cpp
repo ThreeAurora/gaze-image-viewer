@@ -1,6 +1,7 @@
 #include "searchdialog.h"
 #include "fileentry.h"
 #include "constants.h"
+#include "i18n.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -54,7 +55,7 @@ bool plainHit(const QStringList& list, const QString& name) {
 SearchDialog::SearchDialog(const QString& rootDir, QWidget* parent)
     : QDialog(parent), m_root(rootDir)
 {
-    setWindowTitle(QString::fromUtf8("搜索 - ") + QFileInfo(rootDir).fileName());
+    setWindowTitle(gazeTr("搜索 - ") + QFileInfo(rootDir).fileName());
     setAttribute(Qt::WA_DeleteOnClose);   // 非模态:关掉就该回收
     resize(860, 560);
     setStyleSheet(
@@ -82,23 +83,23 @@ SearchDialog::SearchDialog(const QString& rootDir, QWidget* parent)
     form->setHorizontalSpacing(8);
     form->setVerticalSpacing(6);
     m_include = new QLineEdit;
-    m_include->setPlaceholderText(QString::fromUtf8("子串或通配 * ?;多个词用空格分隔,任一命中即算"));
+    m_include->setPlaceholderText(gazeTr("子串或通配 * ?;多个词用空格分隔,任一命中即算"));
     m_exclude = new QLineEdit;
-    m_exclude->setPlaceholderText(QString::fromUtf8("命中这些词的结果被排除(同样的词法规则)"));
-    form->addWidget(new QLabel(QString::fromUtf8("名称:")), 0, 0);
+    m_exclude->setPlaceholderText(gazeTr("命中这些词的结果被排除(同样的词法规则)"));
+    form->addWidget(new QLabel(gazeTr("名称:")), 0, 0);
     form->addWidget(m_include, 0, 1);
-    form->addWidget(new QLabel(QString::fromUtf8("排除:")), 1, 0);
+    form->addWidget(new QLabel(gazeTr("排除:")), 1, 0);
     form->addWidget(m_exclude, 1, 1);
     root->addLayout(form);
 
     auto* opts = new QHBoxLayout;
     opts->setSpacing(14);
-    m_recurse = new QCheckBox(QString::fromUtf8("包含子文件夹"));
+    m_recurse = new QCheckBox(gazeTr("包含子文件夹"));
     m_recurse->setChecked(true);
-    m_hidden  = new QCheckBox(QString::fromUtf8("包含隐藏项"));
-    m_dirsToo = new QCheckBox(QString::fromUtf8("同时搜索文件夹"));
-    m_runBtn  = new QPushButton(QString::fromUtf8("搜索"));
-    m_stopBtn = new QPushButton(QString::fromUtf8("停止"));
+    m_hidden  = new QCheckBox(gazeTr("包含隐藏项"));
+    m_dirsToo = new QCheckBox(gazeTr("同时搜索文件夹"));
+    m_runBtn  = new QPushButton(gazeTr("搜索"));
+    m_stopBtn = new QPushButton(gazeTr("停止"));
     m_stopBtn->setEnabled(false);
     opts->addWidget(m_recurse);
     opts->addWidget(m_hidden);
@@ -108,15 +109,15 @@ SearchDialog::SearchDialog(const QString& rootDir, QWidget* parent)
     opts->addWidget(m_stopBtn);
     root->addLayout(opts);
 
-    m_status = new QLabel(QString::fromUtf8("范围:%1").arg(QDir::toNativeSeparators(rootDir)));
+    m_status = new QLabel(gazeTr("范围:%1").arg(QDir::toNativeSeparators(rootDir)));
     m_status->setStyleSheet(QString("color:%1;").arg(C_TEXT_FAINT));
     m_status->setTextInteractionFlags(Qt::TextSelectableByMouse);
     root->addWidget(m_status);
 
     m_results = new QTreeWidget;
     m_results->setColumnCount(4);
-    m_results->setHeaderLabels({ QString::fromUtf8("名称"), QString::fromUtf8("大小"),
-                                 QString::fromUtf8("修改时间"), QString::fromUtf8("位置") });
+    m_results->setHeaderLabels({ gazeTr("名称"), gazeTr("大小"),
+                                 gazeTr("修改时间"), gazeTr("位置") });
     m_results->setRootIsDecorated(false);
     m_results->setSelectionMode(QAbstractItemView::ExtendedSelection);
     m_results->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -128,7 +129,7 @@ SearchDialog::SearchDialog(const QString& rootDir, QWidget* parent)
 
     connect(m_runBtn, &QPushButton::clicked, this, &SearchDialog::startSearch);
     connect(m_stopBtn, &QPushButton::clicked, this,
-            [this]() { stopScan(QString::fromUtf8("已手动停止")); });
+            [this]() { stopScan(gazeTr("已手动停止")); });
     connect(m_include, &QLineEdit::returnPressed, this, &SearchDialog::startSearch);
     connect(m_exclude, &QLineEdit::returnPressed, this, &SearchDialog::startSearch);
     connect(&m_ticker, &QTimer::timeout, this, &SearchDialog::stepScan);
@@ -146,7 +147,7 @@ SearchDialog::SearchDialog(const QString& rootDir, QWidget* parent)
 void SearchDialog::startSearch() {
     if (m_running) return;
     if (m_root.isEmpty() || !QFileInfo(m_root).isDir()) {
-        m_status->setText(QString::fromUtf8("起始文件夹已不存在"));
+        m_status->setText(gazeTr("起始文件夹已不存在"));
         return;
     }
     m_incPlain.clear();
@@ -166,7 +167,7 @@ void SearchDialog::startSearch() {
             m_excPlain.append(t);
     }
     if (m_incPlain.isEmpty() && m_incWild.isEmpty()) {
-        m_status->setText(QString::fromUtf8("请输入名称条件"));
+        m_status->setText(gazeTr("请输入名称条件"));
         return;
     }
     m_skipHidden = !m_hidden->isChecked();
@@ -180,7 +181,7 @@ void SearchDialog::startSearch() {
     m_running = true;
     m_runBtn->setEnabled(false);
     m_stopBtn->setEnabled(true);
-    m_status->setText(QString::fromUtf8("搜索中…"));
+    m_status->setText(gazeTr("搜索中…"));
     m_ticker.start();
 }
 
@@ -225,13 +226,13 @@ void SearchDialog::stepScan() {
             it->setData(0, Qt::UserRole, fe.path);
             ++m_matches;
             if (m_matches >= kMaxResults) {
-                stopScan(QString::fromUtf8("已达 %1 条命中上限,其余未扫").arg(kMaxResults));
+                stopScan(gazeTr("已达 %1 条命中上限,其余未扫").arg(kMaxResults));
                 return;
             }
         }
         ++m_scannedDirs;
         if (m_scannedDirs >= kMaxDirs) {
-            stopScan(QString::fromUtf8("已达 %1 个目录上限(可能遇到链接环),其余未扫")
+            stopScan(gazeTr("已达 %1 个目录上限(可能遇到链接环),其余未扫")
                          .arg(kMaxDirs));
             return;
         }
@@ -242,7 +243,7 @@ void SearchDialog::stepScan() {
         stopScan(QString());
         return;
     }
-    m_status->setText(QString::fromUtf8("搜索中:已扫 %1 个目录,命中 %2 项…")
+    m_status->setText(gazeTr("搜索中:已扫 %1 个目录,命中 %2 项…")
                           .arg(m_scannedDirs).arg(m_matches));
     m_ticker.start();
 }
@@ -252,9 +253,9 @@ void SearchDialog::stopScan(const QString& tail) {
     m_ticker.stop();
     m_runBtn->setEnabled(true);
     m_stopBtn->setEnabled(false);
-    QString text = QString::fromUtf8("已扫 %1 个目录,命中 %2 项 —— 双击结果在主窗口定位")
+    QString text = gazeTr("已扫 %1 个目录,命中 %2 项 —— 双击结果在主窗口定位")
                        .arg(m_scannedDirs).arg(m_matches);
-    if (!tail.isEmpty()) text += QString::fromUtf8(" —— ") + tail;
+    if (!tail.isEmpty()) text += gazeTr(" —— ") + tail;
     m_status->setText(text);
 }
 
@@ -277,7 +278,7 @@ void SearchDialog::openResult(QTreeWidgetItem* it) {
     QObject* mw = this;
     while (mw && mw->metaObject()->indexOfMethod(slot) < 0) mw = mw->parent();
     if (!mw) {
-        QToolTip::showText(QCursor::pos(), QString::fromUtf8("无法定位主窗口"));
+        QToolTip::showText(QCursor::pos(), gazeTr("无法定位主窗口"));
         return;
     }
     QMetaObject::invokeMethod(mw, name, Q_ARG(QString, path));

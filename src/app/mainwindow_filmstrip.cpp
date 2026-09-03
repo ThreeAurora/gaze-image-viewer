@@ -17,6 +17,7 @@
 #include "thumbnailer.h"
 #include "constants.h"
 #include "fileentry.h"
+#include "i18n.h"
 
 #include <QLabel>
 #include <QHBoxLayout>
@@ -143,7 +144,7 @@ void MainWindow::updateDragHint(const QPoint& pos, bool valid) {
             "border-radius:4px;padding:3px 8px;font-size:12px;}"));
     }
     const bool copy = (QApplication::keyboardModifiers() & Qt::ControlModifier) != 0;
-    const QString verb = copy ? QString::fromUtf8("复制") : QString::fromUtf8("移动");
+    const QString verb = copy ? gazeTr("复制") : gazeTr("移动");
     m_dragHint->setText(valid ? verb : QString());
     if (!valid) { m_dragHint->hide(); return; }
     m_dragHint->adjustSize();

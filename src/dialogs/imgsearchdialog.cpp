@@ -1,6 +1,7 @@
 #include "imgsearchdialog.h"
 #include "imgsearch.h"
 #include "constants.h"
+#include "i18n.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -30,9 +31,9 @@ constexpr int kRankRole  = Qt::UserRole + 2; // 服务端返回序(=相关性)
 constexpr int kMtimeRole = Qt::UserRole + 3; // lastModified 缓存(选"时间"时才统计)
 
 QString sourceName(const QString& type) {
-    if (type == "name") return QString::fromUtf8("名称");
-    if (type == "ocr")  return QString::fromUtf8("文字");
-    if (type == "sem")  return QString::fromUtf8("语义");
+    if (type == "name") return gazeTr("名称");
+    if (type == "ocr")  return gazeTr("文字");
+    if (type == "sem")  return gazeTr("语义");
     return type;
 }
 QString scoreText(const QJsonObject& s, int prec) {
@@ -42,7 +43,7 @@ QString scoreText(const QJsonObject& s, int prec) {
 }
 
 ImageSearchDialog::ImageSearchDialog(QWidget* parent) : QDialog(parent) {
-    setWindowTitle(QString::fromUtf8("以文搜图 - 万象图搜"));
+    setWindowTitle(gazeTr("以文搜图 - 万象图搜"));
     resize(880, 640);
     setStyleSheet(
         QString::fromUtf8("QDialog{background:%1;}"
@@ -78,24 +79,24 @@ ImageSearchDialog::ImageSearchDialog(QWidget* parent) : QDialog(parent) {
     m_input->setPlaceholderText(QString::fromUtf8(
         "输入自然语言、文件名或图片中的文字,如:海边的日落 / IMG_2022 / 发票"));
     m_model = new QComboBox;
-    m_model->addItem(QString::fromUtf8("引擎默认"), QString());
+    m_model->addItem(gazeTr("引擎默认"), QString());
     m_model->addItem(QStringLiteral("cn_clip_b16"), QStringLiteral("cn_clip_b16"));
     m_model->addItem(QStringLiteral("clip_b32"), QStringLiteral("clip_b32"));
-    m_model->setToolTip(QString::fromUtf8("CLIP 语义模型;引擎默认由服务端自选"));
+    m_model->setToolTip(gazeTr("CLIP 语义模型;引擎默认由服务端自选"));
     m_sort = new QComboBox;
-    m_sort->addItem(QString::fromUtf8("按相关性"), 0);
-    m_sort->addItem(QString::fromUtf8("按名称"), 1);
-    m_sort->addItem(QString::fromUtf8("按时间"), 2);
+    m_sort->addItem(gazeTr("按相关性"), 0);
+    m_sort->addItem(gazeTr("按名称"), 1);
+    m_sort->addItem(gazeTr("按时间"), 2);
     m_sort->setToolTip(QString::fromUtf8(
         "名称/时间为本地重排(服务端只保证相关性顺序)"));
-    m_searchBtn = new QPushButton(QString::fromUtf8("搜索"));
+    m_searchBtn = new QPushButton(gazeTr("搜索"));
     top->addWidget(m_input, 1);
     top->addWidget(m_model);
     top->addWidget(m_sort);
     top->addWidget(m_searchBtn);
     root->addLayout(top);
 
-    m_status = new QLabel(QString::fromUtf8("输入关键词后回车;服务未运行时会自动拉起"));
+    m_status = new QLabel(gazeTr("输入关键词后回车;服务未运行时会自动拉起"));
     m_status->setStyleSheet(QString("color:%1;").arg(C_TEXT_FAINT));
     root->addWidget(m_status);
 
@@ -121,7 +122,7 @@ ImageSearchDialog::ImageSearchDialog(QWidget* parent) : QDialog(parent) {
             QMetaObject::invokeMethod(mw, "revealFile", Q_ARG(QString, path));
             accept();
         } else {
-            QToolTip::showText(QCursor::pos(), QString::fromUtf8("无法定位主窗口"));
+            QToolTip::showText(QCursor::pos(), gazeTr("无法定位主窗口"));
         }
     };
 
@@ -143,11 +144,11 @@ ImageSearchDialog::ImageSearchDialog(QWidget* parent) : QDialog(parent) {
         const QString path = it->data(kPathRole).toString();
         if (path.isEmpty()) return;
         QMenu menu(this);
-        QAction* aReveal = menu.addAction(QString::fromUtf8("在 Gaze 中定位"));
-        QAction* aOpen   = menu.addAction(QString::fromUtf8("用系统默认程序打开"));
-        QAction* aShow   = menu.addAction(QString::fromUtf8("在资源管理器中显示"));
+        QAction* aReveal = menu.addAction(gazeTr("在 Gaze 中定位"));
+        QAction* aOpen   = menu.addAction(gazeTr("用系统默认程序打开"));
+        QAction* aShow   = menu.addAction(gazeTr("在资源管理器中显示"));
         menu.addSeparator();
-        QAction* aCopy   = menu.addAction(QString::fromUtf8("复制完整路径"));
+        QAction* aCopy   = menu.addAction(gazeTr("复制完整路径"));
         QAction* chosen = menu.exec(m_list->mapToGlobal(pos));
         if (chosen == aReveal) {
             revealInGaze(path);
@@ -172,7 +173,7 @@ void ImageSearchDialog::doSearch() {
     m_running = true;
     m_searchBtn->setEnabled(false);
     m_list->clear();
-    m_status->setText(QString::fromUtf8("正在唤醒服务…(冷启动需加载模型,约 2 秒)"));
+    m_status->setText(gazeTr("正在唤醒服务…(冷启动需加载模型,约 2 秒)"));
 
     ImgSearch::ensureRunningAsync(this, [this, seq, q](const QString& err) {
         if (seq != m_seq) return;
@@ -182,7 +183,7 @@ void ImageSearchDialog::doSearch() {
             m_status->setText(err);
             return;
         }
-        m_status->setText(QString::fromUtf8("搜索中:%1").arg(q));
+        m_status->setText(gazeTr("搜索中:%1").arg(q));
         ImgSearch::searchAsync(q, m_model->currentData().toString(), this,
             [this, seq](int status, const QJsonDocument& doc) {
                 onResults(seq, status, doc);
@@ -195,22 +196,22 @@ void ImageSearchDialog::onResults(int seq, int status, const QJsonDocument& doc)
     m_running = false;
     m_searchBtn->setEnabled(true);
     if (status == 0) {
-        m_status->setText(QString::fromUtf8("服务无响应(连接失败或超时)"));
+        m_status->setText(gazeTr("服务无响应(连接失败或超时)"));
         return;
     }
     if (status != 200) {
-        m_status->setText(QString::fromUtf8("服务返回错误(HTTP %1)").arg(status));
+        m_status->setText(gazeTr("服务返回错误(HTTP %1)").arg(status));
         return;
     }
     const QJsonObject root = doc.object();
     if (root.isEmpty()) {
-        m_status->setText(QString::fromUtf8("服务响应不是有效 JSON"));
+        m_status->setText(gazeTr("服务响应不是有效 JSON"));
         return;
     }
     m_total = qMax(root.value("total").toInt(), 0);
     const QJsonArray results = root.value("results").toArray();
     if (results.isEmpty()) {
-        m_status->setText(QString::fromUtf8("没有匹配结果"));
+        m_status->setText(gazeTr("没有匹配结果"));
         return;
     }
 
@@ -224,7 +225,7 @@ void ImageSearchDialog::onResults(int seq, int status, const QJsonDocument& doc)
         if (!srcs.isEmpty()) {
             const QJsonObject s0 = srcs.at(0).toObject();
             const QString sc = scoreText(s0, 2);
-            badge = QString::fromUtf8("[%1%2] ")
+            badge = gazeTr("[%1%2] ")
                         .arg(sourceName(s0.value("type").toString()),
                              sc.isEmpty() ? QString() : sc);
         }
@@ -236,7 +237,7 @@ void ImageSearchDialog::onResults(int seq, int status, const QJsonDocument& doc)
             const QString sc = scoreText(s, 3);
             tipLines << (sc.isEmpty()
                 ? sourceName(s.value("type").toString())
-                : QString::fromUtf8("%1: %2")
+                : gazeTr("%1: %2")
                       .arg(sourceName(s.value("type").toString()), sc));
         }
         // 可选片段:snippet/text/match 哪个在就显示哪个,都不在则不加
@@ -253,9 +254,9 @@ void ImageSearchDialog::onResults(int seq, int status, const QJsonDocument& doc)
     }
     resort();   // 名称/时间模式在此本地重排;缩略图按 id 贴,与顺序无关
 
-    QString head = QString::fromUtf8("共 %1 项").arg(m_total > 0 ? m_total : n);
-    if (capped) head += QString::fromUtf8(",已显示前 %1").arg(n);
-    m_status->setText(head + QString::fromUtf8("(双击在 Gaze 中打开)"));
+    QString head = gazeTr("共 %1 项").arg(m_total > 0 ? m_total : n);
+    if (capped) head += gazeTr(",已显示前 %1").arg(n);
+    m_status->setText(head + gazeTr("(双击在 Gaze 中打开)"));
 
     for (int i = 0; i < m_list->count(); ++i)
         loadThumbFor(m_list->item(i)->data(kIdRole).toInt());

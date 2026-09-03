@@ -10,6 +10,7 @@
 #include "searchdialog.h"
 #include "validname.h"
 #include "dialogs/renamedialog.h"   // 2026-09-02:文件重命名对话框(仿 XnView 带插入日期/时间)
+#include "i18n.h"
 
 #include <functional>      // refreshThemeColors 的递归遍历队列
 
@@ -569,7 +570,7 @@ void FolderTree::reportErrors(const QStringList& errors, const QString& title) {
     QString text = errors.join(QLatin1Char('\n'));
     if (errors.size() > 8)
         text = errors.mid(0, 8).join(QLatin1Char('\n'))
-             + QString::fromUtf8("\n…另有 %1 条").arg(errors.size() - 8);
+             + gazeTr("\n…另有 %1 条").arg(errors.size() - 8);
     QMessageBox::warning(this, title, text);
 }
 
@@ -578,22 +579,22 @@ void FolderTree::newFolderInto(QTreeWidgetItem* base) {
     if (dir.isEmpty()) return;
     bool ok = false;
     const QString name = QInputDialog::getText(
-        this, QString::fromUtf8("新建文件夹"), QString::fromUtf8("名称:"),
-        QLineEdit::Normal, QString::fromUtf8("新建文件夹"), &ok).trimmed();
+        this, gazeTr("新建文件夹"), gazeTr("名称:"),
+        QLineEdit::Normal, gazeTr("新建文件夹"), &ok).trimmed();
     if (!ok) return;
     if (const QString why = invalidNameReason(name); !why.isEmpty()) {
-        QMessageBox::warning(this, QString::fromUtf8("新建文件夹"), why);
+        QMessageBox::warning(this, gazeTr("新建文件夹"), why);
         return;
     }
     const QString full = QDir(dir).filePath(name);
     if (QFileInfo::exists(full)) {
-        QMessageBox::warning(this, QString::fromUtf8("新建文件夹"),
-            QString::fromUtf8("同名文件夹已存在:\n") + full);
+        QMessageBox::warning(this, gazeTr("新建文件夹"),
+            gazeTr("同名文件夹已存在:\n") + full);
         return;
     }
     if (!QDir().mkdir(full)) {
-        QMessageBox::warning(this, QString::fromUtf8("新建文件夹"),
-            QString::fromUtf8("创建失败:\n") + full);
+        QMessageBox::warning(this, gazeTr("新建文件夹"),
+            gazeTr("创建失败:\n") + full);
         return;
     }
     refreshNode(dir);
@@ -606,8 +607,8 @@ void FolderTree::pasteInto(QTreeWidgetItem* base) {
     if (dir.isEmpty()) return;
     QStringList errs;
     const bool ok = clipboardPasteInto(QDir(dir), &errs);
-    reportErrors(errs, ok ? QString::fromUtf8("部分项目未能粘贴")
-                          : QString::fromUtf8("粘贴失败"));
+    reportErrors(errs, ok ? gazeTr("部分项目未能粘贴")
+                          : gazeTr("粘贴失败"));
     if (!ok) return;
     refreshNode(dir);
     if (QTreeWidgetItem* it = itemForPath(dir)) it->setExpanded(true);
@@ -634,18 +635,18 @@ void FolderTree::renameItem(QTreeWidgetItem* item) {
     const QString name = RenameDialog::getName(this, oldName);
     if (name.isEmpty() || name == oldName) return;
     if (const QString why = invalidNameReason(name); !why.isEmpty()) {
-        QMessageBox::warning(this, QString::fromUtf8("重命名"), why);
+        QMessageBox::warning(this, gazeTr("重命名"), why);
         return;
     }
     const QString parent = QFileInfo(oldPath).dir().absolutePath();
     const QString newPath = QDir(parent).filePath(name);
     if (QFileInfo::exists(newPath)) {
-        QMessageBox::warning(this, QString::fromUtf8("重命名"),
-            QString::fromUtf8("目标名已存在:\n") + newPath);
+        QMessageBox::warning(this, gazeTr("重命名"),
+            gazeTr("目标名已存在:\n") + newPath);
         return;
     }
     if (!QFile::rename(oldPath, newPath)) {
-        QMessageBox::warning(this, QString::fromUtf8("重命名失败"), oldPath);
+        QMessageBox::warning(this, gazeTr("重命名失败"), oldPath);
         return;
     }
     item->setText(0, name);
@@ -680,22 +681,22 @@ void FolderTree::showContextMenu(const QPoint& pos) {
 
     QMenu menu(this);
     // ── 新建文件夹 ──
-    menu.addAction(IconLib::appIcon("cmd_newFolder"), QString::fromUtf8("新建文件夹"),
+    menu.addAction(IconLib::appIcon("cmd_newFolder"), gazeTr("新建文件夹"),
                    this, [this, base]() { newFolderInto(itemForPath(base)); });
     menu.addSeparator();
     // ── 剪贴板组:盘符根不许剪切/复制(那等于要搬走整个卷) ──
-    menu.addAction(IconLib::appIcon("cmd_cut"), QString::fromUtf8("剪切"),
+    menu.addAction(IconLib::appIcon("cmd_cut"), gazeTr("剪切"),
                    this, [paths]() { clipboardSetFiles(paths, true); })
         ->setEnabled(!hasRoot);
-    menu.addAction(IconLib::appIcon("cmd_copy"), QString::fromUtf8("复制"),
+    menu.addAction(IconLib::appIcon("cmd_copy"), gazeTr("复制"),
                    this, [paths]() { clipboardSetFiles(paths, false); })
         ->setEnabled(!hasRoot);
-    menu.addAction(IconLib::appIcon("cmd_paste"), QString::fromUtf8("粘贴"),
+    menu.addAction(IconLib::appIcon("cmd_paste"), gazeTr("粘贴"),
                    this, [this, base]() { pasteInto(itemForPath(base)); })
         ->setEnabled(clipboardHasFiles());
     menu.addSeparator();
     // ── 删除:确认框/回收站/提示全部走 deleteWithSettings 这一条正门 ──
-    menu.addAction(IconLib::appIcon("cmd_delete"), QString::fromUtf8("删除"),
+    menu.addAction(IconLib::appIcon("cmd_delete"), gazeTr("删除"),
                    this, [this, paths]() {
         if (!deleteWithSettings(paths, this)) return;
         removeNodes(paths);
@@ -706,33 +707,33 @@ void FolderTree::showContextMenu(const QPoint& pos) {
         }
         emit foldersChanged(parents, paths);
     })->setEnabled(!hasRoot);
-    menu.addAction(IconLib::appIcon("cmd_rename"), QString::fromUtf8("重命名"),
+    menu.addAction(IconLib::appIcon("cmd_rename"), gazeTr("重命名"),
                    this, [this, base]() { renameItem(itemForPath(base)); })
         ->setEnabled(!hasRoot && !multi);   // 多项改名语义不明,资源管理器同样禁用
     menu.addSeparator();
     // ── 复制到.. / 移动到...:整个选择集一起走 ──
-    menu.addAction(IconLib::appIcon("cmd_copyTo"), QString::fromUtf8("复制到.."),
+    menu.addAction(IconLib::appIcon("cmd_copyTo"), gazeTr("复制到.."),
                    this, [this, paths]() {
         const QString dst = QFileDialog::getExistingDirectory(
-            this, QString::fromUtf8("复制到.."), QString());
+            this, gazeTr("复制到.."), QString());
         if (dst.isEmpty()) return;
         QStringList errs;
         const bool done = copyPathsTo(paths, dst, nullptr, &errs);
-        reportErrors(errs, done ? QString::fromUtf8("部分项目未能复制")
-                                : QString::fromUtf8("复制失败"));
+        reportErrors(errs, done ? gazeTr("部分项目未能复制")
+                                : gazeTr("复制失败"));
         if (!done) return;
         refreshNode(dst);
         emit foldersChanged({dst}, {});
     })->setEnabled(!hasRoot);
-    menu.addAction(IconLib::appIcon("min_moveTo"), QString::fromUtf8("移动到..."),
+    menu.addAction(IconLib::appIcon("min_moveTo"), gazeTr("移动到..."),
                    this, [this, paths]() {
         const QString dst = QFileDialog::getExistingDirectory(
-            this, QString::fromUtf8("移动到..."), QString());
+            this, gazeTr("移动到..."), QString());
         if (dst.isEmpty()) return;
         QStringList errs;
         const bool done = movePathsTo(paths, dst, nullptr, &errs);
-        reportErrors(errs, done ? QString::fromUtf8("部分项目未能移动")
-                                : QString::fromUtf8("移动失败"));
+        reportErrors(errs, done ? gazeTr("部分项目未能移动")
+                                : gazeTr("移动失败"));
         if (!done) return;
         // 源那一层少了条目,目的那一层多了条目:两端都要对齐磁盘
         QStringList changed;
@@ -747,7 +748,7 @@ void FolderTree::showContextMenu(const QPoint& pos) {
     menu.addSeparator();
     // ── 显示子文件夹中的文件:开关的真源在网格,这里只镜像勾状态 ──
     QAction* sub = menu.addAction(IconLib::appIcon("cmd_showFilesInFolder"),
-                                  QString::fromUtf8("显示子文件夹中的文件"));
+                                  gazeTr("显示子文件夹中的文件"));
     sub->setCheckable(true);
     sub->setChecked(m_subFoldersShown);
     connect(sub, &QAction::triggered, this, [this](bool on) {
@@ -756,17 +757,17 @@ void FolderTree::showContextMenu(const QPoint& pos) {
     });
     menu.addSeparator();
     // ── 搜索...:以光标下这一层为根的递归名称搜索(非模态,可边搜边看主窗口) ──
-    menu.addAction(IconLib::appIcon("cmd_search"), QString::fromUtf8("搜索..."),
+    menu.addAction(IconLib::appIcon("cmd_search"), gazeTr("搜索..."),
                    this, [this, base]() {
         (new SearchDialog(base, window()))->show();
     });
     // ── 用资源管理器打开:交给 Shell,尊重第三方文件管理器的接管 ──
     menu.addAction(IconLib::appIcon("cmd_browse"),
-                   QString::fromUtf8("用资源管理器打开文件"), this, [paths]() {
+                   gazeTr("用资源管理器打开文件"), this, [paths]() {
         for (const auto& p : paths)
             QDesktopServices::openUrl(QUrl::fromLocalFile(p));
     });
-    menu.addAction(IconLib::appIcon("cmd_openProperties"), QString::fromUtf8("属性"),
+    menu.addAction(IconLib::appIcon("cmd_openProperties"), gazeTr("属性"),
                    this, [base]() { showShellProperties(base); });
 
     menu.exec(viewport()->mapToGlobal(pos));

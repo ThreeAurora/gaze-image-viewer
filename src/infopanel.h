@@ -30,6 +30,7 @@
 #include "exifmeta.h"
 #include "settings.h"
 #include "wicdecode.h"
+#include "i18n.h"
 
 class InfoPanel : public QWidget {
 public:
@@ -46,7 +47,7 @@ public:
 
         m_tree = new QTreeWidget;
         m_tree->setColumnCount(2);
-        m_tree->setHeaderLabels({QString::fromUtf8("项目"), QString::fromUtf8("值")});
+        m_tree->setHeaderLabels({gazeTr("项目"), gazeTr("值")});
         m_tree->setRootIsDecorated(true);
         // #119:关掉隔行换色。开交替色时 Qt 用 palette AlternateBase(白)画偶数行,
         // 与样式表的深色底一起形成"一黑一白"斑马纹 —— 用户要的是整块统一底色。
@@ -126,22 +127,22 @@ private:
         const QFileInfo fi(m_path);
 
         // ── 第一段:文件属性(永远有内容,EXIF 缺失时面板也不空)──
-        auto* file = addGroup(QString::fromUtf8("文件"));
-        addRow(file, QString::fromUtf8("名称"), fi.fileName());
-        addRow(file, QString::fromUtf8("所在目录"), fi.absolutePath());
-        addRow(file, QString::fromUtf8("大小"),
-               fi.isDir() ? QString::fromUtf8("(文件夹)") : formatSize(fi.size()));
-        addRow(file, QString::fromUtf8("修改时间"), fi.lastModified().toString(
+        auto* file = addGroup(gazeTr("文件"));
+        addRow(file, gazeTr("名称"), fi.fileName());
+        addRow(file, gazeTr("所在目录"), fi.absolutePath());
+        addRow(file, gazeTr("大小"),
+               fi.isDir() ? gazeTr("(文件夹)") : formatSize(fi.size()));
+        addRow(file, gazeTr("修改时间"), fi.lastModified().toString(
                    QString::fromUtf8("yyyy/MM/dd HH:mm:ss")));
-        addRow(file, QString::fromUtf8("创建时间"), fi.birthTime().isValid()
+        addRow(file, gazeTr("创建时间"), fi.birthTime().isValid()
                    ? fi.birthTime().toString(QString::fromUtf8("yyyy/MM/dd HH:mm:ss"))
                    : QString::fromUtf8("—"));
-        addRow(file, QString::fromUtf8("类型"),
-               fi.isDir() ? QString::fromUtf8("文件夹") : fi.suffix().toUpper());
+        addRow(file, gazeTr("类型"),
+               fi.isDir() ? gazeTr("文件夹") : fi.suffix().toUpper());
 
         if (!thumb.isNull()) {
-            auto* img = addGroup(QString::fromUtf8("图像"));
-            addRow(img, QString::fromUtf8("尺寸"),
+            auto* img = addGroup(gazeTr("图像"));
+            addRow(img, gazeTr("尺寸"),
                    QStringLiteral("%1 × %2").arg(thumb.width()).arg(thumb.height()));
         }
 
@@ -151,21 +152,21 @@ private:
         for (const ExifMeta::Field& f : fields) {
             if (f.group != lastGroup) {
                 lastGroup = f.group;
-                grp = addGroup(lastGroup.isEmpty() ? QString::fromUtf8("元数据") : lastGroup);
+                grp = addGroup(lastGroup.isEmpty() ? gazeTr("元数据") : lastGroup);
             }
             addRow(grp, f.name, f.value);
         }
         if (fields.isEmpty() && !thumb.isNull())
-            addRow(addGroup(QString::fromUtf8("元数据")), QString::fromUtf8("说明"),
-                   QString::fromUtf8("该文件没有内嵌 EXIF"));
+            addRow(addGroup(gazeTr("元数据")), gazeTr("说明"),
+                   gazeTr("该文件没有内嵌 EXIF"));
 
         // 默认展开"文件"与头两个分组,其余折叠 —— 一屏能看到最常用的
         for (int i = 0; i < m_tree->topLevelItemCount() && i < 2; ++i)
             m_tree->topLevelItem(i)->setExpanded(true);
 
         if (thumb.isNull()) {
-            m_hist->setText(fi.isDir() ? QString::fromUtf8("文件夹无直方图")
-                                       : QString::fromUtf8("无直方图"));
+            m_hist->setText(fi.isDir() ? gazeTr("文件夹无直方图")
+                                       : gazeTr("无直方图"));
         } else {
             m_hist->setText(QString());
             m_hist->setPixmap(QPixmap::fromImage(drawHistogram(thumb)));

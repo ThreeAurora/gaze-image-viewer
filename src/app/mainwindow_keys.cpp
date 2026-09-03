@@ -14,6 +14,7 @@
 #include "validname.h"
 #include "keytarget.h"
 #include "logger.h"
+#include "i18n.h"
 
 #include <QMenuBar>
 #include <QStatusBar>
@@ -176,10 +177,10 @@ void MainWindow::dropEvent(QDropEvent* e) {
     // 网格与文件夹树两个落点都经这里,提示天然同时生效。
     if (!dropIntoDir.isEmpty()) {
         const bool copy = (QApplication::keyboardModifiers() & Qt::ControlModifier) != 0;
-        const QString verb = copy ? QString::fromUtf8("复制") : QString::fromUtf8("移动");
+        const QString verb = copy ? gazeTr("复制") : gazeTr("移动");
         const QString what = paths.size() == 1
             ? QFileInfo(paths.first()).fileName()
-            : QString::fromUtf8("%1 个项目").arg(paths.size());
+            : gazeTr("%1 个项目").arg(paths.size());
 
         // 拖到自己所在目录没有意义,提前拦下(连弹窗都不出)
         QStringList actionable;
@@ -192,10 +193,10 @@ void MainWindow::dropEvent(QDropEvent* e) {
 
         if (AppSettings::instance().get("FileOps/dropConfirm", true).toBool()) {
             const QString tip = copy
-                ? QString::fromUtf8("(松开 Ctrl 再拖即为移动)")
-                : QString::fromUtf8("(按住 Ctrl 拖放即为复制)");
-            if (QMessageBox::question(this, QString::fromUtf8("拖放%1").arg(verb),
-                    QString::fromUtf8("将 %1 %2到\n%3 ?\n\n%4")
+                ? gazeTr("(松开 Ctrl 再拖即为移动)")
+                : gazeTr("(按住 Ctrl 拖放即为复制)");
+            if (QMessageBox::question(this, gazeTr("拖放%1").arg(verb),
+                    gazeTr("将 %1 %2到\n%3 ?\n\n%4")
                         .arg(what, verb, dropIntoDir, tip),
                     QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
                 return;   // 用户取消:什么都不做
@@ -219,11 +220,11 @@ void MainWindow::dropEvent(QDropEvent* e) {
             m_fileGrid->refreshCurrentDir();
             if (m_folderTree) m_folderTree->refreshCurrent();
             // 与删除提示同一套左下角 toast,反馈简短明确
-            showDeleteToast(this, QString::fromUtf8("已%1 %2 项到目标文件夹").arg(verb).arg(done));
+            showDeleteToast(this, gazeTr("已%1 %2 项到目标文件夹").arg(verb).arg(done));
         }
         if (!errs.isEmpty())
             QMessageBox::warning(this,
-                QString::fromUtf8("部分项目未能%1").arg(verb),
+                gazeTr("部分项目未能%1").arg(verb),
                 errs.join(QLatin1Char('\n')));
         return;
     }

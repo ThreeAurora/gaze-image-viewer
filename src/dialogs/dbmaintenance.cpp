@@ -2,6 +2,7 @@
 #include "constants.h"
 #include "settings.h"
 #include "dbprefix.h"
+#include "i18n.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -25,7 +26,7 @@ static QSqlDatabase maintenanceDb() {
 }
 
 DbMaintenanceDialog::DbMaintenanceDialog(QWidget* parent) : QDialog(parent) {
-    setWindowTitle(QString::fromUtf8("缩略图数据库维护"));
+    setWindowTitle(gazeTr("缩略图数据库维护"));
     resize(760, 540);
     setStyleSheet(
         QString::fromUtf8("QDialog{background:%1;}"
@@ -42,8 +43,8 @@ DbMaintenanceDialog::DbMaintenanceDialog(QWidget* parent) : QDialog(parent) {
     root->addWidget(m_summary);
 
     m_table = new QTableWidget(0, 3);
-    m_table->setHorizontalHeaderLabels({QString::fromUtf8("缓存目录"),
-        QString::fromUtf8("文件数"), QString::fromUtf8("缩略图体积")});
+    m_table->setHorizontalHeaderLabels({gazeTr("缓存目录"),
+        gazeTr("文件数"), gazeTr("缩略图体积")});
     m_table->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
     m_table->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_table->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -55,14 +56,14 @@ DbMaintenanceDialog::DbMaintenanceDialog(QWidget* parent) : QDialog(parent) {
         connect(b, &QPushButton::clicked, this, slot);
         btns->addWidget(b);
     };
-    addBtn(QString::fromUtf8("删除选中目录条目"), [this]() {
+    addBtn(gazeTr("删除选中目录条目"), [this]() {
         auto sel = m_table->selectedItems();
         if (sel.isEmpty()) return;
         QString dir = m_table->item(sel.first()->row(), 0)->text();
         // 与"删除全部""重建缩略图"对齐:破坏性动作一律先问一句
         //(空格/回车误触这个按钮时,过去是静默 DELETE)
-        if (QMessageBox::question(this, QString::fromUtf8("删除条目"),
-            QString::fromUtf8("删除该目录的全部缩略图缓存条目?\n%1\n(浏览时会自动重建)").arg(dir))
+        if (QMessageBox::question(this, gazeTr("删除条目"),
+            gazeTr("删除该目录的全部缩略图缓存条目?\n%1\n(浏览时会自动重建)").arg(dir))
             != QMessageBox::Yes) return;
         QSqlDatabase d = maintenanceDb();
         QSqlQuery q(d);
@@ -71,10 +72,10 @@ DbMaintenanceDialog::DbMaintenanceDialog(QWidget* parent) : QDialog(parent) {
         q.exec();
         reload();
     });
-    addBtn(QString::fromUtf8("重建缩略图"), [this]() { rebuildThumbs(); });
-    addBtn(QString::fromUtf8("删除全部"), [this]() { deleteAll(); });
+    addBtn(gazeTr("重建缩略图"), [this]() { rebuildThumbs(); });
+    addBtn(gazeTr("删除全部"), [this]() { deleteAll(); });
     btns->addStretch();
-    auto* closeBtn = new QPushButton(QString::fromUtf8("关闭"));
+    auto* closeBtn = new QPushButton(gazeTr("关闭"));
     // 显式默认:不设时 Enter 与"空格=确认"都落在**创建最早**的按钮上,而那是
     // "删除选中目录条目"(直接 DELETE,无二次确认)。实测见 cache/tmp/space_confirm_test.cpp
     closeBtn->setDefault(true);
@@ -136,8 +137,8 @@ void DbMaintenanceDialog::reload() {
 }
 
 void DbMaintenanceDialog::deleteAll() {
-    if (QMessageBox::question(this, QString::fromUtf8("删除全部"),
-        QString::fromUtf8("确认清空全部缩略图缓存?(浏览时会自动重建)"))
+    if (QMessageBox::question(this, gazeTr("删除全部"),
+        gazeTr("确认清空全部缩略图缓存?(浏览时会自动重建)"))
         != QMessageBox::Yes) return;
     QSqlQuery q(maintenanceDb());
     q.exec("DELETE FROM thumbs");
@@ -145,8 +146,8 @@ void DbMaintenanceDialog::deleteAll() {
 }
 
 void DbMaintenanceDialog::rebuildThumbs() {
-    if (QMessageBox::question(this, QString::fromUtf8("重建缩略图"),
-        QString::fromUtf8("清空缓存后,下次浏览文件夹时将按当前设置自动重建缩略图。继续?"))
+    if (QMessageBox::question(this, gazeTr("重建缩略图"),
+        gazeTr("清空缓存后,下次浏览文件夹时将按当前设置自动重建缩略图。继续?"))
         != QMessageBox::Yes) return;
     QSqlQuery q(maintenanceDb());
     q.exec("DELETE FROM thumbs");

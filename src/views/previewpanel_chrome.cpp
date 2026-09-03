@@ -13,6 +13,7 @@
 #include "viewerhotkeys.h"
 #include "shelldelete.h"
 #include "fileentry.h"
+#include "i18n.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -192,7 +193,7 @@ void PreviewPanel::updateInfoBar(const QPoint* cursor) {
                                 : QString())
                    + "  " + formatSize(fi.size());
     }
-    m_infoLabel->setText(QString::fromUtf8("%1  %2%")
+    m_infoLabel->setText(gazeTr("%1  %2%")
         .arg(m_infoBase).arg(int(m_scale * 100)));
     m_infoLabel->adjustSize();
     m_infoLabel->move(12, 12);

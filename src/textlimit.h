@@ -21,6 +21,7 @@
 #include <QString>
 #include <QStringList>
 #include <QFile>
+#include "i18n.h"
 
 namespace TextCut {
 
@@ -94,15 +95,15 @@ inline Clip clip(const QString& raw, bool byteCut_, qint64 totalBytes_) {
 inline QString noticeOf(const Clip& c) {
     QStringList notes;
     if (c.lineCut)
-        notes << QString::fromUtf8("行数超过 %1，仅显示前 %2 行").arg(maxLines).arg(c.lines);
+        notes << gazeTr("行数超过 %1，仅显示前 %2 行").arg(maxLines).arg(c.lines);
     else if (c.byteCut)
-        notes << QString::fromUtf8("文件 %1 KB，仅读取前 %2 KB")
+        notes << gazeTr("文件 %1 KB，仅读取前 %2 KB")
                      .arg(c.totalBytes / 1024).arg(c.shownBytes / 1024);
     if (c.longLines > 0)
-        notes << QString::fromUtf8("%1 行超过 %2 字符，每行只显示前 %2 字符")
+        notes << gazeTr("%1 行超过 %2 字符，每行只显示前 %2 字符")
                      .arg(c.longLines).arg(maxLineChars);
     return notes.isEmpty() ? QString()
-                           : QString::fromUtf8("已截断：%1").arg(notes.join(QString::fromUtf8("；")));
+                           : gazeTr("已截断：%1").arg(notes.join(QString::fromUtf8("；")));
 }
 
 // 纯文本预览用:截断 + 末尾追加提示行

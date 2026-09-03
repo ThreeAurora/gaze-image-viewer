@@ -12,6 +12,7 @@
 #include "namesort.h"
 #include "perflog.h"
 #include "logger.h"
+#include "i18n.h"
 
 #include <set>
 #include <algorithm>
@@ -465,11 +466,11 @@ void FileGrid::newFolder() {
     if (dir.isEmpty()) return;
     const QString full = QDir(dir).filePath(name);
     if (QFileInfo::exists(full)) {
-        QMessageBox::warning(this, "新建文件夹", QString::fromUtf8("同名文件夹已存在:\n") + full);
+        QMessageBox::warning(this, "新建文件夹", gazeTr("同名文件夹已存在:\n") + full);
         return;
     }
     if (!QDir().mkdir(full)) {
-        QMessageBox::warning(this, "新建文件夹", QString::fromUtf8("创建失败:\n") + full);
+        QMessageBox::warning(this, "新建文件夹", gazeTr("创建失败:\n") + full);
         return;
     }
     m_preferPath = full;

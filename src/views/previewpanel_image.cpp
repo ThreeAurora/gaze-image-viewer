@@ -13,6 +13,7 @@
 #include "viewerhotkeys.h"
 #include "shelldelete.h"
 #include "fileentry.h"
+#include "i18n.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -273,7 +274,7 @@ void PreviewPanel::onFullDecoded(std::shared_ptr<QImage> img, const QString& pat
         if (img && !img->isNull()) {
             applyImage(*img);
         } else {
-            showImageHint(QString::fromUtf8("无法加载图片"));
+            showImageHint(gazeTr("无法加载图片"));
         }
     }
 

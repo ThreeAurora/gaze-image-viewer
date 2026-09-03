@@ -15,6 +15,7 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QKeyEvent>
+#include "i18n.h"
 
 class RenameDialog : public QDialog {
     Q_OBJECT
@@ -30,14 +31,14 @@ public:
 private:
     explicit RenameDialog(QWidget* parent, const QString& oldName)
         : QDialog(parent) {
-        setWindowTitle(QString::fromUtf8("文件重命名"));
+        setWindowTitle(gazeTr("文件重命名"));
         setMinimumWidth(420);
 
         auto* root = new QVBoxLayout(this);
         root->setContentsMargins(16, 14, 16, 14);
         root->setSpacing(10);
 
-        auto* label = new QLabel(QString::fromUtf8("新文件名:"), this);
+        auto* label = new QLabel(gazeTr("新文件名:"), this);
 
         // 输入行:输入框 + 插入日期/时间(N 版主视觉在右侧,给足换行的余量)
         auto* row = new QHBoxLayout;
@@ -47,7 +48,7 @@ private:
         m_edit->setMinimumWidth(240);
         row->addWidget(m_edit, 1);
 
-        auto* insertBtn = new QPushButton(QString::fromUtf8("插入日期/时间\xc2\xbb"), this);
+        auto* insertBtn = new QPushButton(gazeTr("插入日期/时间»"), this);
         insertBtn->setCursor(Qt::PointingHandCursor);
         insertBtn->setFlat(true);
         insertBtn->setStyleSheet(QString::fromUtf8(
@@ -62,8 +63,8 @@ private:
         // 按钮行:确定(默认)+ 取消
         auto* btns = new QHBoxLayout;
         btns->addStretch(1);
-        auto* okBtn = new QPushButton(QString::fromUtf8("确定"), this);
-        auto* cancelBtn = new QPushButton(QString::fromUtf8("取消"), this);
+        auto* okBtn = new QPushButton(gazeTr("确定"), this);
+        auto* cancelBtn = new QPushButton(gazeTr("取消"), this);
         okBtn->setDefault(true);
         btns->addWidget(okBtn);
         btns->addWidget(cancelBtn);

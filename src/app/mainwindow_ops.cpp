@@ -15,6 +15,7 @@
 #include "validname.h"
 #include "keytarget.h"
 #include "logger.h"
+#include "i18n.h"
 
 #include <QMenuBar>
 #include <QStatusBar>
@@ -163,17 +164,17 @@ void MainWindow::renameCurrent() {
     if (name.isEmpty() || name == fi.fileName()) return;
     // 校验必须先于拼路径:"a/b" 会让下面的 rename 把文件搬到别处,界面上毫无动静
     if (const QString why = invalidNameReason(name); !why.isEmpty()) {
-        QMessageBox::warning(this, QString::fromUtf8("重命名"), why);
+        QMessageBox::warning(this, gazeTr("重命名"), why);
         return;
     }
     const QString np = QDir(fi.absolutePath()).filePath(name);
     if (QFileInfo::exists(np)) {
-        QMessageBox::warning(this, QString::fromUtf8("重命名"),
-                             QString::fromUtf8("目标名已存在:\n") + np);
+        QMessageBox::warning(this, gazeTr("重命名"),
+                             gazeTr("目标名已存在:\n") + np);
         return;
     }
     if (!QFile::rename(paths.first(), np)) {
-        QMessageBox::warning(this, QString::fromUtf8("重命名失败"), np);
+        QMessageBox::warning(this, gazeTr("重命名失败"), np);
         return;
     }
     m_fileGrid->setPreferPath(np);
@@ -239,15 +240,15 @@ void MainWindow::rebuildRecentMenu(QMenu* menu) {
     trimRecentList();     // 上限以设置页为准;截断走同一个防抖落盘
     menu->clear();
     if (m_recentList.isEmpty()) {
-        menu->addAction(QString::fromUtf8("(空)"))->setEnabled(false);
+        menu->addAction(gazeTr("(空)"))->setEnabled(false);
         return;
     }
     for (const auto& p : m_recentList) {
         menu->addAction(p, this, [this, p]() {
             QFileInfo fi(p);
             if (!fi.exists()) {
-                QMessageBox::information(this, QString::fromUtf8("最近的文件"),
-                    QString::fromUtf8("文件不存在:\n") + p);
+                QMessageBox::information(this, gazeTr("最近的文件"),
+                    gazeTr("文件不存在:\n") + p);
                 return;
             }
             navigateTo(fi.absolutePath());

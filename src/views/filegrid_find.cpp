@@ -12,6 +12,7 @@
 #include "namesort.h"
 #include "perflog.h"
 #include "logger.h"
+#include "i18n.h"
 
 #include <set>
 #include <algorithm>
@@ -89,7 +90,7 @@ void FileGrid::buildFindBar() {
     lay->setSpacing(4);
 
     m_findEdit = new QLineEdit(m_findBar);
-    m_findEdit->setPlaceholderText(QString::fromUtf8("查找文件名..."));
+    m_findEdit->setPlaceholderText(gazeTr("查找文件名..."));
     m_findEdit->setClearButtonEnabled(true);
     m_findEdit->setFixedSize(180, 24);
     m_findEdit->installEventFilter(this);   // Enter/Shift+Enter/Up/Down/Esc
@@ -121,21 +122,21 @@ void FileGrid::buildFindBar() {
 
     m_findPrev = new QToolButton(m_findBar);
     m_findPrev->setIcon(whiteStdIcon(style(), QStyle::SP_ArrowUp));
-    m_findPrev->setToolTip(QString::fromUtf8("上一个(Shift+Enter)"));
+    m_findPrev->setToolTip(gazeTr("上一个(Shift+Enter)"));
     m_findPrev->setFixedSize(24, 24);
     connect(m_findPrev, &QToolButton::clicked, this, [this]() { findStep(-1); });
     lay->addWidget(m_findPrev);
 
     m_findNext = new QToolButton(m_findBar);
     m_findNext->setIcon(whiteStdIcon(style(), QStyle::SP_ArrowDown));
-    m_findNext->setToolTip(QString::fromUtf8("下一个(Enter)"));
+    m_findNext->setToolTip(gazeTr("下一个(Enter)"));
     m_findNext->setFixedSize(24, 24);
     connect(m_findNext, &QToolButton::clicked, this, [this]() { findStep(1); });
     lay->addWidget(m_findNext);
 
     auto* btnClose = new QToolButton(m_findBar);
     btnClose->setIcon(whiteStdIcon(style(), QStyle::SP_TitleBarCloseButton));
-    btnClose->setToolTip(QString::fromUtf8("关闭(Esc)"));
+    btnClose->setToolTip(gazeTr("关闭(Esc)"));
     btnClose->setFixedSize(24, 24);
     connect(btnClose, &QToolButton::clicked, this, [this]() { closeFind(); });
     lay->addWidget(btnClose);
@@ -183,7 +184,7 @@ void FileGrid::findRefresh() {
         }
     }
     m_findInfo->setText(m_findHitCount == 0
-        ? QString::fromUtf8("无匹配")
+        ? gazeTr("无匹配")
         : QString("%1/%2").arg(m_findOrdinal >= 0 ? m_findOrdinal + 1 : 0).arg(m_findHitCount));
     m_findPrev->setEnabled(before);
     m_findNext->setEnabled(after);

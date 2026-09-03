@@ -13,6 +13,7 @@
 #include "namesort.h"
 #include "perflog.h"
 #include "logger.h"
+#include "i18n.h"
 
 #include <set>
 #include <algorithm>
@@ -182,12 +183,12 @@ QString FileGrid::tipFor(int idx) const {
         ? QDateTime::fromSecsSinceEpoch(static_cast<qint64>(e.ctime)) : QDateTime();
     const QDateTime mod = e.mtime > 0
         ? QDateTime::fromSecsSinceEpoch(static_cast<qint64>(e.mtime)) : QDateTime();
-    const QString dash = QString::fromUtf8("\xe2\x80\x94");
+    const QString dash = gazeTr("—");
     // 2026-09-03 夜修:文件名与"创建:"之间丢过换行,两者挤同一行
     return e.name + "\n"
-        + QString::fromUtf8("\xe5\x88\x9b\xe5\xbb\xba: ")   // 创建:
+        + gazeTr("创建: ")   // 创建:
         + (birth.isValid() ? birth.toString("yyyy/MM/dd - HH:mm:ss") : dash) + "\n"
-        + QString::fromUtf8("\xe4\xbf\xae\xe6\x94\xb9: ")   // 修改:
+        + gazeTr("修改: ")   // 修改:
         + (mod.isValid() ? mod.toString("yyyy/MM/dd - HH:mm:ss") : dash) + "\n"
         + (m_sizeBytes ? QString::number(e.size) + " B" : formatSize(e.size));
 }
@@ -354,15 +355,15 @@ void FileGrid::onCanvasMenu(int index, const QPoint& globalPos) {
             emit selectionChanged({});
         }
         QMenu menu(viewport());
-        menu.addAction(IconLib::appIcon("cmd_newFolder"), QString::fromUtf8("新建文件夹"),
+        menu.addAction(IconLib::appIcon("cmd_newFolder"), gazeTr("新建文件夹"),
                        this, [this]() { newFolder(); });
-        menu.addAction(IconLib::appIcon("cmd_open"), QString::fromUtf8("在资源管理器中显示"),
+        menu.addAction(IconLib::appIcon("cmd_open"), gazeTr("在资源管理器中显示"),
                        this, [this]() {
                            if (!m_currentDir.isEmpty())
                                QDesktopServices::openUrl(QUrl::fromLocalFile(m_currentDir));
                        });
-        menu.addAction(QString::fromUtf8("全选"), this, [this]() { selectAllEntries(); });
-        menu.addAction(IconLib::appIcon("cmd_openProperties"), QString::fromUtf8("属性"),
+        menu.addAction(gazeTr("全选"), this, [this]() { selectAllEntries(); });
+        menu.addAction(IconLib::appIcon("cmd_openProperties"), gazeTr("属性"),
                        this, [this]() {
                            if (!m_currentDir.isEmpty())
                                showShellProperties(m_currentDir);
@@ -438,17 +439,17 @@ void FileGrid::endInlineRename(bool commit) {
     if (newName == fi.fileName()) return;
     // 就地编辑框什么字符都收:不校验就拼路径,"a/b" 会把文件静默送出目录
     if (const QString why = invalidNameReason(newName); !why.isEmpty()) {
-        QMessageBox::warning(this, QString::fromUtf8("重命名"), why);
+        QMessageBox::warning(this, gazeTr("重命名"), why);
         return;
     }
     const QString np = QDir(fi.absolutePath()).filePath(newName);
     if (QFileInfo::exists(np)) {
-        QMessageBox::warning(this, QString::fromUtf8("重命名"),
-                             QString::fromUtf8("目标名已存在:\n") + np);
+        QMessageBox::warning(this, gazeTr("重命名"),
+                             gazeTr("目标名已存在:\n") + np);
         return;
     }
     if (!QFile::rename(oldPath, np)) {
-        QMessageBox::warning(this, QString::fromUtf8("重命名失败"), np);
+        QMessageBox::warning(this, gazeTr("重命名失败"), np);
         return;
     }
     m_preferPath = np;
@@ -574,11 +575,11 @@ void FileGrid::keyPressEvent(QKeyEvent* event) {
             const bool pasted = clipboardPasteInto(QDir(m_currentDir), &errs);
             if (pasted) {
                 if (!errs.isEmpty())
-                    QMessageBox::warning(this, QString::fromUtf8("部分项目未能粘贴"),
+                    QMessageBox::warning(this, gazeTr("部分项目未能粘贴"),
                                          errs.join(QLatin1Char('\n')));
                 loadDirectory(m_currentDir);
             } else if (!errs.isEmpty()) {
-                QMessageBox::warning(this, QString::fromUtf8("粘贴失败"),
+                QMessageBox::warning(this, gazeTr("粘贴失败"),
                                      errs.join(QLatin1Char('\n')));
             }
             event->accept();

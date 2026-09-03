@@ -1,4 +1,5 @@
 #include "printdialog.h"
+#include "i18n.h"
 
 #include "constants.h"
 #include "imgproc.h"
@@ -75,7 +76,7 @@ void cbSetVal(QComboBox* cb, int val) {
 QString paperLabel(const QPageSize& s) {
     const QSizeF mm = s.size(QPageSize::Millimeter);
     QString name = s.name();
-    if (name.isEmpty()) name = QString::fromUtf8("自定义");
+    if (name.isEmpty()) name = gazeTr("自定义");
     return QStringLiteral("%1  %2×%3mm").arg(name)
         .arg(QString::number(mm.width(), 'f', 0), QString::number(mm.height(), 'f', 0));
 }
@@ -100,8 +101,8 @@ QVector<QPageSize> fallbackPapers() {
 void PrintDialog::printImages(QWidget* parent, const QStringList& candidates) {
     const QStringList imgs = imageOnly(candidates);
     if (imgs.isEmpty()) {
-        QMessageBox::information(parent, QString::fromUtf8("打印"),
-            QString::fromUtf8("所选内容里没有可打印的图片(共 %1 项)。")
+        QMessageBox::information(parent, gazeTr("打印"),
+            gazeTr("所选内容里没有可打印的图片(共 %1 项)。")
                 .arg(candidates.size()));
         return;
     }
@@ -112,7 +113,7 @@ void PrintDialog::printImages(QWidget* parent, const QStringList& candidates) {
 PrintDialog::PrintDialog(QWidget* parent, const QStringList& imagePaths)
     : QDialog(parent), m_paths(imagePaths)
 {
-    setWindowTitle(QString::fromUtf8("打印"));
+    setWindowTitle(gazeTr("打印"));
     resize(1060, 680);
     m_exifRotate = AppSettings::instance().get("General/exifRotate", true).toBool();
     buildUi();
@@ -151,86 +152,86 @@ void PrintDialog::resizeEvent(QResizeEvent* e) {
 void PrintDialog::buildUi() {
     AppSettings& st = AppSettings::instance();
 
-    auto* printerBox = new QGroupBox(QString::fromUtf8("打印机"), this);
+    auto* printerBox = new QGroupBox(gazeTr("打印机"), this);
     {
         auto* f = new QFormLayout(printerBox);
         m_printerCb = new QComboBox(printerBox);
-        f->addRow(QString::fromUtf8("名称"), m_printerCb);
-        m_copiesLbl = new QLabel(QString::fromUtf8("份数"), printerBox);
+        f->addRow(gazeTr("名称"), m_printerCb);
+        m_copiesLbl = new QLabel(gazeTr("份数"), printerBox);
         m_copiesSpn = new QSpinBox(printerBox);
         m_copiesSpn->setRange(1, 99);
         m_copiesSpn->setValue(st.get("Print/copies", 1).toInt());
-        m_copiesSpn->setSuffix(QString::fromUtf8(" 份"));
+        m_copiesSpn->setSuffix(gazeTr(" 份"));
         f->addRow(m_copiesLbl, m_copiesSpn);
     }
 
-    auto* pageBox = new QGroupBox(QString::fromUtf8("纸张"), this);
+    auto* pageBox = new QGroupBox(gazeTr("纸张"), this);
     {
         auto* f = new QFormLayout(pageBox);
         m_paperCb = new QComboBox(pageBox);
-        f->addRow(QString::fromUtf8("纸张"), m_paperCb);
+        f->addRow(gazeTr("纸张"), m_paperCb);
         m_orientCb = new QComboBox(pageBox);
-        addCb(m_orientCb, QString::fromUtf8("纵向"), 0);
-        addCb(m_orientCb, QString::fromUtf8("横向"), 1);
+        addCb(m_orientCb, gazeTr("纵向"), 0);
+        addCb(m_orientCb, gazeTr("横向"), 1);
         m_orientCb->setCurrentIndex(st.get("Print/landscape", false).toBool() ? 1 : 0);   // #106:landscape 此前只写不读
-        f->addRow(QString::fromUtf8("方向"), m_orientCb);
+        f->addRow(gazeTr("方向"), m_orientCb);
         m_marginSpn = new QDoubleSpinBox(pageBox);
         m_marginSpn->setRange(0, 50);
         m_marginSpn->setDecimals(1);
         m_marginSpn->setSingleStep(0.5);
         m_marginSpn->setSuffix(QString::fromUtf8(" mm"));
         m_marginSpn->setValue(st.get("Print/marginMm", 5.0).toDouble());
-        f->addRow(QString::fromUtf8("页边距"), m_marginSpn);
+        f->addRow(gazeTr("页边距"), m_marginSpn);
         m_gapSpn = new QDoubleSpinBox(pageBox);
         m_gapSpn->setRange(0, 30);
         m_gapSpn->setDecimals(1);
         m_gapSpn->setSingleStep(0.5);
         m_gapSpn->setSuffix(QString::fromUtf8(" mm"));
         m_gapSpn->setValue(st.get("Print/gapMm", 2.0).toDouble());
-        f->addRow(QString::fromUtf8("图间距"), m_gapSpn);
+        f->addRow(gazeTr("图间距"), m_gapSpn);
     }
 
-    auto* layBox = new QGroupBox(QString::fromUtf8("版式"), this);
+    auto* layBox = new QGroupBox(gazeTr("版式"), this);
     {
         auto* f = new QFormLayout(layBox);
         m_perPageCb = new QComboBox(layBox);
         for (int n : {1, 2, 3, 4, 6, 9})
-            addCb(m_perPageCb, QString::fromUtf8("%1 张/页").arg(n), n);
+            addCb(m_perPageCb, gazeTr("%1 张/页").arg(n), n);
         cbSetVal(m_perPageCb, st.get("Print/perPage", 1).toInt());
-        f->addRow(QString::fromUtf8("每页"), m_perPageCb);
+        f->addRow(gazeTr("每页"), m_perPageCb);
 
         m_fitCb = new QComboBox(layBox);
-        addCb(m_fitCb, QString::fromUtf8("适应边框"), PrintFit::Fit);
-        addCb(m_fitCb, QString::fromUtf8("不放大"),   PrintFit::NoUpscale);
-        addCb(m_fitCb, QString::fromUtf8("原始尺寸"), PrintFit::Actual);
-        addCb(m_fitCb, QString::fromUtf8("填满裁边"), PrintFit::Fill);
+        addCb(m_fitCb, gazeTr("适应边框"), PrintFit::Fit);
+        addCb(m_fitCb, gazeTr("不放大"),   PrintFit::NoUpscale);
+        addCb(m_fitCb, gazeTr("原始尺寸"), PrintFit::Actual);
+        addCb(m_fitCb, gazeTr("填满裁边"), PrintFit::Fill);
         cbSetVal(m_fitCb, st.get("Print/fit", PrintFit::Fit).toInt());
-        f->addRow(QString::fromUtf8("缩放"), m_fitCb);
+        f->addRow(gazeTr("缩放"), m_fitCb);
 
         m_captionCb = new QComboBox(layBox);
-        addCb(m_captionCb, QString::fromUtf8("无"),         PrintCaption::None);
-        addCb(m_captionCb, QString::fromUtf8("文件名"),      PrintCaption::Name);
-        addCb(m_captionCb, QString::fromUtf8("文件名+尺寸"), PrintCaption::NameSize);
-        addCb(m_captionCb, QString::fromUtf8("文件名+日期"), PrintCaption::NameDate);
+        addCb(m_captionCb, gazeTr("无"),         PrintCaption::None);
+        addCb(m_captionCb, gazeTr("文件名"),      PrintCaption::Name);
+        addCb(m_captionCb, gazeTr("文件名+尺寸"), PrintCaption::NameSize);
+        addCb(m_captionCb, gazeTr("文件名+日期"), PrintCaption::NameDate);
         cbSetVal(m_captionCb, st.get("Print/caption", PrintCaption::Name).toInt());
-        f->addRow(QString::fromUtf8("说明文字"), m_captionCb);
+        f->addRow(gazeTr("说明文字"), m_captionCb);
 
         m_captionPt = new QSpinBox(layBox);
         m_captionPt->setRange(6, 24);
         m_captionPt->setValue(st.get("Print/captionPt", 9).toInt());
         m_captionPt->setSuffix(QString::fromUtf8(" pt"));
-        f->addRow(QString::fromUtf8("文字字号"), m_captionPt);
+        f->addRow(gazeTr("文字字号"), m_captionPt);
 
         m_bgCb = new QComboBox(layBox);
-        addCb(m_bgCb, QString::fromUtf8("白色"),   PrintBg::White);
-        addCb(m_bgCb, QString::fromUtf8("黑色"),   PrintBg::Black);
-        addCb(m_bgCb, QString::fromUtf8("不填充"), PrintBg::None);
+        addCb(m_bgCb, gazeTr("白色"),   PrintBg::White);
+        addCb(m_bgCb, gazeTr("黑色"),   PrintBg::Black);
+        addCb(m_bgCb, gazeTr("不填充"), PrintBg::None);
         cbSetVal(m_bgCb, st.get("Print/background", PrintBg::White).toInt());
-        f->addRow(QString::fromUtf8("背景"), m_bgCb);
+        f->addRow(gazeTr("背景"), m_bgCb);
 
-        m_grayChk = new QCheckBox(QString::fromUtf8("转灰度"), layBox);
+        m_grayChk = new QCheckBox(gazeTr("转灰度"), layBox);
         m_grayChk->setChecked(st.get("Print/grayscale", false).toBool());
-        m_borderChk = new QCheckBox(QString::fromUtf8("每张图描边"), layBox);
+        m_borderChk = new QCheckBox(gazeTr("每张图描边"), layBox);
         m_borderChk->setChecked(st.get("Print/border", false).toBool());
         auto* chk = new QHBoxLayout();
         chk->addWidget(m_grayChk);
@@ -238,14 +239,14 @@ void PrintDialog::buildUi() {
         f->addRow(QString(), chk);
     }
 
-    auto* rangeBox = new QGroupBox(QString::fromUtf8("打印范围"), this);
+    auto* rangeBox = new QGroupBox(gazeTr("打印范围"), this);
     {
         auto* g = new QGridLayout(rangeBox);
         g->setContentsMargins(9, 6, 9, 6);
-        m_rAll   = new QRadioButton(QString::fromUtf8("全部"), rangeBox);
-        m_rOdd   = new QRadioButton(QString::fromUtf8("奇数页"), rangeBox);
-        m_rEven  = new QRadioButton(QString::fromUtf8("偶数页"), rangeBox);
-        m_rRange = new QRadioButton(QString::fromUtf8("页码"), rangeBox);
+        m_rAll   = new QRadioButton(gazeTr("全部"), rangeBox);
+        m_rOdd   = new QRadioButton(gazeTr("奇数页"), rangeBox);
+        m_rEven  = new QRadioButton(gazeTr("偶数页"), rangeBox);
+        m_rRange = new QRadioButton(gazeTr("页码"), rangeBox);
         m_rangeEd = new QLineEdit(rangeBox);
         m_rangeEd->setPlaceholderText(QStringLiteral("1-3,5,8-"));
         m_rangeEd->setEnabled(false);
@@ -273,10 +274,10 @@ void PrintDialog::buildUi() {
 
     m_prevBtn = new QToolButton(this);
     m_prevBtn->setArrowType(Qt::LeftArrow);
-    m_prevBtn->setToolTip(QString::fromUtf8("上一页"));
+    m_prevBtn->setToolTip(gazeTr("上一页"));
     m_nextBtn = new QToolButton(this);
     m_nextBtn->setArrowType(Qt::RightArrow);
-    m_nextBtn->setToolTip(QString::fromUtf8("下一页"));
+    m_nextBtn->setToolTip(gazeTr("下一页"));
     m_pageLbl = new QLabel(this);
     auto* nav = new QHBoxLayout();
     nav->addWidget(m_prevBtn);
@@ -305,7 +306,7 @@ void PrintDialog::buildUi() {
     top->addLayout(right, 1);
 
     auto* btns = new QDialogButtonBox(Qt::Horizontal, this);
-    m_printBtn = btns->addButton(QString::fromUtf8("打印"), QDialogButtonBox::AcceptRole);
+    m_printBtn = btns->addButton(gazeTr("打印"), QDialogButtonBox::AcceptRole);
     m_printBtn->setDefault(true);
     btns->addButton(QDialogButtonBox::Cancel);
 
@@ -349,7 +350,7 @@ void PrintDialog::loadPrinters() {
         if (!pi.location().isEmpty()) tip += (tip.isEmpty() ? QString() : QStringLiteral(" · "))
                                             + pi.location();
         const QString label = pi.printerName()
-            + (pi.isDefault() ? QString::fromUtf8("  (默认)") : QString());
+            + (pi.isDefault() ? gazeTr("  (默认)") : QString());
         m_printerCb->addItem(label, pi.printerName());
         m_printerCb->setItemData(m_printerCb->count() - 1, tip, Qt::ToolTipRole);
     }
@@ -584,32 +585,32 @@ QList<int> PrintDialog::pagesToPrint(QString* err) const {
 
     const QString text = m_rangeEd->text().trimmed();
     if (text.isEmpty())
-        return bad(QString::fromUtf8("页码框是空的:形如 1-3,5,8-(8- 表示从第 8 页到最后)。"));
+        return bad(gazeTr("页码框是空的:形如 1-3,5,8-(8- 表示从第 8 页到最后)。"));
 
     QSet<int> seen;
     const QStringList segs = text.split(QRegularExpression(QStringLiteral("[,，;；、\\s]+")),
                                         Qt::SkipEmptyParts);
     if (segs.isEmpty())
-        return bad(QString::fromUtf8("页码无法解析:%1").arg(text));
+        return bad(gazeTr("页码无法解析:%1").arg(text));
     for (const QString& seg : segs) {
         const QStringList ab = seg.split(QLatin1Char('-'), Qt::KeepEmptyParts);
-        if (ab.size() > 2) return bad(QString::fromUtf8("页码无法解析:%1").arg(seg));
+        if (ab.size() > 2) return bad(gazeTr("页码无法解析:%1").arg(seg));
         const QString a = ab.value(0).trimmed(), b = ab.value(1).trimmed();
-        if (a.isEmpty() && b.isEmpty()) return bad(QString::fromUtf8("页码无法解析:%1").arg(seg));
+        if (a.isEmpty() && b.isEmpty()) return bad(gazeTr("页码无法解析:%1").arg(seg));
         bool oka = false, okb = false;
         const int from = a.isEmpty() ? 1            : a.toInt(&oka);
         const int to   = b.isEmpty() ? (ab.size() > 1 ? total : from) : b.toInt(&okb);
         if ((!a.isEmpty() && !oka) || (!b.isEmpty() && !okb))
-            return bad(QString::fromUtf8("页码无法解析:%1").arg(seg));
+            return bad(gazeTr("页码无法解析:%1").arg(seg));
         if (from < 1 || to < 1)
-            return bad(QString::fromUtf8("页码要从 1 开始:%1").arg(seg));
+            return bad(gazeTr("页码要从 1 开始:%1").arg(seg));
         if (from > to)
-            return bad(QString::fromUtf8("页码 %1 起点大于终点。").arg(seg));
+            return bad(gazeTr("页码 %1 起点大于终点。").arg(seg));
         if (to > total)
-            return bad(QString::fromUtf8("页码 %1 超出总页数 %2。").arg(seg).arg(total));
+            return bad(gazeTr("页码 %1 超出总页数 %2。").arg(seg).arg(total));
         for (int p = from; p <= to; ++p) seen.insert(p - 1);
     }
-    if (seen.isEmpty()) return bad(QString::fromUtf8("页码条件没命中任何页。"));
+    if (seen.isEmpty()) return bad(gazeTr("页码条件没命中任何页。"));
     out = QList<int>(seen.begin(), seen.end());
     std::sort(out.begin(), out.end());
     return out;
@@ -623,7 +624,7 @@ void PrintDialog::updateSummary() {
     const int total = pageCount();
     m_prevBtn->setEnabled(m_previewPage > 0);
     m_nextBtn->setEnabled(m_previewPage + 1 < total);
-    m_pageLbl->setText(QString::fromUtf8("第 %1 / %2 页")
+    m_pageLbl->setText(gazeTr("第 %1 / %2 页")
                            .arg(total ? m_previewPage + 1 : 0).arg(total));
 
     QString err;
@@ -635,21 +636,21 @@ void PrintDialog::updateSummary() {
         txt = err;
     } else {
         const PrintOptions o = options();
-        txt = QString::fromUtf8("%1 张图片 · 每页 %2 张 · 共 %3 页 · 将打印 %4 页")
+        txt = gazeTr("%1 张图片 · 每页 %2 张 · 共 %3 页 · 将打印 %4 页")
                   .arg(m_paths.size()).arg(o.perPage).arg(total).arg(pages.size());
         if (!m_copiesSpn->isHidden())
-            txt += QString::fromUtf8(" × %1 份").arg(m_copiesSpn->value());
-        txt += QString::fromUtf8(" · %1 %2")
+            txt += gazeTr(" × %1 份").arg(m_copiesSpn->value());
+        txt += gazeTr(" · %1 %2")
                    .arg(m_paperCb->currentText(),
-                        m_orientCb->currentIndex() == 1 ? QString::fromUtf8("横向")
-                                                        : QString::fromUtf8("纵向"));
+                        m_orientCb->currentIndex() == 1 ? gazeTr("横向")
+                                                        : gazeTr("纵向"));
         if (o.fit == PrintFit::Actual)
-            txt += QString::fromUtf8("\n\"原始尺寸\"按文件自带 DPI 出图:预览要把整张图解开,会慢一些。");
+            txt += gazeTr("\n\"原始尺寸\"按文件自带 DPI 出图:预览要把整张图解开,会慢一些。");
         if (m_failedLastPage > 0)
-            txt += QString::fromUtf8("\n本页 %1 张读不到文件,已按占格画叉。").arg(m_failedLastPage);
+            txt += gazeTr("\n本页 %1 张读不到文件,已按占格画叉。").arg(m_failedLastPage);
         if (m_shrunkLastPage > 0)
-            txt += QString::fromUtf8("\n本页 %1 张按原始尺寸放不下,已收缩到可印区。").arg(m_shrunkLastPage);
-        if (m_pending > 0) txt += QString::fromUtf8("\n正在取图…");
+            txt += gazeTr("\n本页 %1 张按原始尺寸放不下,已收缩到可印区。").arg(m_shrunkLastPage);
+        if (m_pending > 0) txt += gazeTr("\n正在取图…");
     }
     m_summary->setText(txt);
     m_printBtn->setEnabled(m_printer != nullptr && err.isEmpty() && !pages.isEmpty());
@@ -662,18 +663,18 @@ void PrintDialog::doPrint() {
     QString err;
     const QList<int> pages = pagesToPrint(&err);
     if (!err.isEmpty()) {
-        QMessageBox::warning(this, QString::fromUtf8("打印"), err);
+        QMessageBox::warning(this, gazeTr("打印"), err);
         return;
     }
     if (pages.isEmpty()) {
-        QMessageBox::warning(this, QString::fromUtf8("打印"),
-                             QString::fromUtf8("按当前页码条件没有可打印的页。"));
+        QMessageBox::warning(this, gazeTr("打印"),
+                             gazeTr("按当前页码条件没有可打印的页。"));
         return;
     }
     if (m_geometryDirty) { configurePrinter(); m_geometryDirty = false; }
     if (!m_printer) {
-        QMessageBox::warning(this, QString::fromUtf8("打印"),
-            m_statusNote.isEmpty() ? QString::fromUtf8("打印机未就绪。") : m_statusNote);
+        QMessageBox::warning(this, gazeTr("打印"),
+            m_statusNote.isEmpty() ? gazeTr("打印机未就绪。") : m_statusNote);
         return;
     }
     m_printing = true;
@@ -681,7 +682,7 @@ void PrintDialog::doPrint() {
 
     const PrintOptions o = options();
     const QFileInfo first(m_paths.first());
-    m_printer->setDocName(QString::fromUtf8("Gaze - %1")
+    m_printer->setDocName(gazeTr("Gaze - %1")
                               .arg(QFileInfo(first.absolutePath()).fileName()));
     if (m_printer->supportsMultipleCopies())
         m_printer->setCopyCount(m_copiesSpn->value());
@@ -691,7 +692,7 @@ void PrintDialog::doPrint() {
     // 出图就是 realDpi 分辨率:比可印区像素还多的原图,对这台打印机没有额外信息量
     const int capSide = int(std::ceil(std::max(pageDev.width(), pageDev.height()))) + 1;
 
-    QProgressDialog prog(QString::fromUtf8("正在准备打印…"), QString::fromUtf8("取消"),
+    QProgressDialog prog(gazeTr("正在准备打印…"), gazeTr("取消"),
                          0, pages.size(), this);
     prog.setWindowModality(Qt::ApplicationModal);
     prog.setMinimumDuration(0);
@@ -702,8 +703,8 @@ void PrintDialog::doPrint() {
     QPainter g;
     if (!g.begin(m_printer.get())) {
         m_printing = false;
-        QMessageBox::critical(this, QString::fromUtf8("打印"),
-            QString::fromUtf8("无法开始打印作业:打印机拒绝或驱动出错。"));
+        QMessageBox::critical(this, gazeTr("打印"),
+            gazeTr("无法开始打印作业:打印机拒绝或驱动出错。"));
         updateSummary();
         return;
     }
@@ -740,7 +741,7 @@ void PrintDialog::doPrint() {
             aborted = true;
             break;
         }
-        prog.setLabelText(QString::fromUtf8("正在打印 第 %1 / %2 页").arg(i + 1).arg(pages.size()));
+        prog.setLabelText(gazeTr("正在打印 第 %1 / %2 页").arg(i + 1).arg(pages.size()));
         PrintPageResult r;
         printRenderPage(g, pageDev, realDpi, o, m_paths, pages[i], infoFn, imgFn, &r);
         fulls.clear();
@@ -754,20 +755,20 @@ void PrintDialog::doPrint() {
     prog.hide();
     const bool jobError = m_printer->printerState() == QPrinter::Error;
 
-    QString txt = aborted ? QString::fromUtf8("已取消:前 %1 页已送印。").arg(done)
-                          : QString::fromUtf8("已送印 %1 页 · %2 张图片。").arg(done).arg(all.drawn);
+    QString txt = aborted ? gazeTr("已取消:前 %1 页已送印。").arg(done)
+                          : gazeTr("已送印 %1 页 · %2 张图片。").arg(done).arg(all.drawn);
     if (all.failed > 0)
-        txt += QString::fromUtf8("\n其中 %1 张读不到文件,纸上已按占格画叉。").arg(all.failed);
+        txt += gazeTr("\n其中 %1 张读不到文件,纸上已按占格画叉。").arg(all.failed);
     if (all.shrunk > 0)
-        txt += QString::fromUtf8("\n%1 张按原始尺寸放不下,已收缩。").arg(all.shrunk);
+        txt += gazeTr("\n%1 张按原始尺寸放不下,已收缩。").arg(all.shrunk);
     if (jobError)
-        txt += QString::fromUtf8("\n打印机报错(离线/缺纸/拒绝)。");
+        txt += gazeTr("\n打印机报错(离线/缺纸/拒绝)。");
 
     m_printing = false;
     persist();
     hide();
     QMessageBox::information(parentWidget() ? parentWidget() : static_cast<QWidget*>(this),
-                             QString::fromUtf8("打印"), txt);
+                             gazeTr("打印"), txt);
     accept();
 }
 

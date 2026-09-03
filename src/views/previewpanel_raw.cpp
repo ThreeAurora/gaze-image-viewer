@@ -15,6 +15,7 @@
 #include "rawdecode.h"
 #include "constants.h"
 #include "fileentry.h"
+#include "i18n.h"
 
 #include <QFileInfo>
 #include <QTextEdit>
@@ -22,7 +23,7 @@
 #include <QPointer>
 
 namespace {
-const QString kRawBtnText = QString::fromUtf8("加载原始 RAW");
+const QString kRawBtnText = gazeTr("加载原始 RAW");
 }
 
 void PreviewPanel::showRawPlaceholder(const QString& path) {
@@ -84,7 +85,7 @@ void PreviewPanel::decodeRawAsync() {
 #ifdef HAS_RAWDEC
     m_rawBusy = true;
     m_rawBtn->setEnabled(false);
-    m_rawBtn->setText(QString::fromUtf8("正在解码…"));
+    m_rawBtn->setText(gazeTr("正在解码…"));
     m_rawCaption->setText(QString::fromUtf8(
         "正在后台解码 RAW（大文件需数秒）——现在切换文件会立即放弃本次解码"));
     const quint64 gen = m_imgReqGen;   // loadFile 已为本次装载递增

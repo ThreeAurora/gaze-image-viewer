@@ -4,6 +4,7 @@
 #include "labelstore.h"
 #include "settings.h"
 #include "constants.h"
+#include "i18n.h"
 
 #include <QPainter>
 #include <QPainterPath>
@@ -87,12 +88,12 @@ void FileCard::setup(const FileEntry& entry, int size, int viewMode, int height)
         QDateTime mod = entry.mtime > 0
             ? QDateTime::fromSecsSinceEpoch(static_cast<qint64>(entry.mtime)) : QDateTime();
         QString tip = entry.name + "\n"
-            + "\xe5\x88\x9b\xe5\xbb\xba: " + (birth.isValid()
+            + "创建: " + (birth.isValid()
                 ? birth.toString("yyyy/MM/dd - HH:mm:ss")
-                : QString::fromUtf8("\xe2\x80\x94")) + "\n"
-            + "\xe4\xbf\xae\xe6\x94\xb9: " + (mod.isValid()
+                : gazeTr("—")) + "\n"
+            + "修改: " + (mod.isValid()
                 ? mod.toString("yyyy/MM/dd - HH:mm:ss")
-                : QString::fromUtf8("\xe2\x80\x94")) + "\n"
+                : gazeTr("—")) + "\n"
             + cardSizeText(entry.size);
         setToolTip(tip);
     }

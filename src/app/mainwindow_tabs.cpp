@@ -14,6 +14,7 @@
 #include "validname.h"
 #include "keytarget.h"
 #include "logger.h"
+#include "i18n.h"
 
 #include <QMenuBar>
 #include <QStatusBar>
@@ -107,9 +108,9 @@ void MainWindow::ensureBrowserTab() {
     // 插入会让 current 平移,QTabBar 空表插入还会发 currentChanged ——
     // 全挡住:当前落位由调用方(openViewerTab 的 setCurrentIndex)显式做
     m_viewerTabs->blockSignals(true);
-    const int i = m_viewerTabs->insertTab(0, QString::fromUtf8("浏览器"));
+    const int i = m_viewerTabs->insertTab(0, gazeTr("浏览器"));
     m_viewerTabs->setTabData(i, mw_impl::kBrowserTabData);
-    m_viewerTabs->setTabToolTip(i, QString::fromUtf8("返回浏览器(标准模式)"));
+    m_viewerTabs->setTabToolTip(i, gazeTr("返回浏览器(标准模式)"));
     m_viewerTabs->blockSignals(false);
 }
 
@@ -138,7 +139,7 @@ void MainWindow::installTabCloseButton(int index) {
     // 不用 setTabsClosable:系统提供的 × 图标准在深色标签上几乎看不见,
     // 与面板标题条的关闭按钮同款自绘"×",配色走主题常量
     auto* x = new QToolButton;
-    x->setText(QString::fromUtf8("\xc3\x97"));
+    x->setText(gazeTr("×"));
     x->setAutoRaise(true);
     x->setFocusPolicy(Qt::NoFocus);
     x->setCursor(Qt::ArrowCursor);

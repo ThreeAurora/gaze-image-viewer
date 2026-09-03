@@ -10,6 +10,7 @@
 #include "settings.h"
 #include "validname.h"
 #include "toolpath.h"
+#include "i18n.h"
 
 #include <QFileInfo>
 #include <QDir>
@@ -256,8 +257,8 @@ static bool reencodeRotate(const QString& path, const QString& tmp,
 }
 
 static void rotateFailedMsg(const QString& path) {
-    QMessageBox::warning(nullptr, QString::fromUtf8("旋转/翻转"),
-        QString::fromUtf8("无法完成该变换(解码或写回失败):\n") + path);
+    QMessageBox::warning(nullptr, gazeTr("旋转/翻转"),
+        gazeTr("无法完成该变换(解码或写回失败):\n") + path);
 }
 
 // 结果已经在 tmp 落盘:备份原件 → 原子替换 → 恢复时间戳 → 让网格重读
@@ -267,8 +268,8 @@ static void commitRotateResult(const QString& path, const QString& tmp,
     backupOriginal(path);
     if (!QFile::rename(tmp, path)) {
         QFile::remove(tmp);
-        QMessageBox::warning(nullptr, QString::fromUtf8("旋转/翻转"),
-            QString::fromUtf8("写回文件失败:\n") + path);
+        QMessageBox::warning(nullptr, gazeTr("旋转/翻转"),
+            gazeTr("写回文件失败:\n") + path);
         return;
     }
     restoreFileTimes(path, mod, birth);
@@ -399,7 +400,7 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
         }
         QString np = QDir(fi.absolutePath()).filePath(name);
         if (QFileInfo::exists(np)) {
-            QMessageBox::warning(par, "重命名", QString::fromUtf8("目标名已存在:\n") + np);
+            QMessageBox::warning(par, "重命名", gazeTr("目标名已存在:\n") + np);
             return;
         }
         if (!QFile::rename(m_filePath, np)) {
@@ -411,7 +412,7 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
     });
     // ── FileOps/duplicateTemplate:创建副本的命名模板 ──
     // 模板里的 # 是自增序号(从 1 起找第一个不冲突的名字)
-    addAction(IconLib::appIcon("cmd_copy"), QString::fromUtf8("创建副本"), this, [this, grid]() {
+    addAction(IconLib::appIcon("cmd_copy"), gazeTr("创建副本"), this, [this, grid]() {
         QFileInfo fi(m_filePath);
         if (!fi.isFile()) return;
         const QString base = fi.completeBaseName();
@@ -434,7 +435,7 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
         }
         if (target.isEmpty()) return;
         if (!QFile::copy(m_filePath, target)) {
-            QMessageBox::warning(nullptr, QString::fromUtf8("创建副本失败"), target);
+            QMessageBox::warning(nullptr, gazeTr("创建副本失败"), target);
             return;
         }
         if (grid) { grid->setPreferPath(target); grid->refreshCurrentDir(); }
@@ -455,11 +456,11 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
         QString full = QDir(base).filePath(name);
         if (QFileInfo::exists(full)) {
             QMessageBox::warning(par, "新建文件夹",
-                QString::fromUtf8("同名文件夹已存在:\n") + full);
+                gazeTr("同名文件夹已存在:\n") + full);
             return;
         }
         if (!QDir().mkdir(full)) {
-            QMessageBox::warning(par, "新建文件夹", QString::fromUtf8("创建失败:\n") + full);
+            QMessageBox::warning(par, "新建文件夹", gazeTr("创建失败:\n") + full);
             return;
         }
         if (grid) { grid->setPreferPath(full); grid->refreshCurrentDir(); }
@@ -479,8 +480,8 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
         const bool lossless = allowLossless
                               && (rotExt == "jpg" || rotExt == "jpeg")
                               && !findJpegtran().isEmpty();
-        const QString lossTag = lossless ? QString::fromUtf8("(无损)") : QString();
-        auto* rotMenu = addMenu(IconLib::appIcon("cmd_rotate"), QString::fromUtf8("旋转/翻转"));
+        const QString lossTag = lossless ? gazeTr("(无损)") : QString();
+        auto* rotMenu = addMenu(IconLib::appIcon("cmd_rotate"), gazeTr("旋转/翻转"));
         auto doRot = [this, grid, lossless, rotExt](int mode) {
             AppSettings& st = AppSettings::instance();
             // 副本:无损那步改到后台跑,续命回调里不能再碰 this(菜单关掉就析构了)
@@ -548,19 +549,19 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
             reencodeThenCommit();
         };
         rotMenu->addAction(IconLib::appIcon("cmd_rotate90"),
-            QString::fromUtf8("左旋 90°") + lossTag, this, [doRot]() { doRot(0); });
+            gazeTr("左旋 90°") + lossTag, this, [doRot]() { doRot(0); });
         rotMenu->addAction(IconLib::appIcon("cmd_rotate270"),
-            QString::fromUtf8("右旋 90°") + lossTag, this, [doRot]() { doRot(1); });
+            gazeTr("右旋 90°") + lossTag, this, [doRot]() { doRot(1); });
         rotMenu->addAction(IconLib::appIcon("cmd_horizontalFlip"),
-            QString::fromUtf8("水平翻转") + lossTag, this, [doRot]() { doRot(2); });
+            gazeTr("水平翻转") + lossTag, this, [doRot]() { doRot(2); });
         rotMenu->addAction(IconLib::appIcon("cmd_verticalFlip"),
-            QString::fromUtf8("垂直翻转") + lossTag, this, [doRot]() { doRot(3); });
+            gazeTr("垂直翻转") + lossTag, this, [doRot]() { doRot(3); });
 
         // ── #83 无损裁剪 ──
         // JPEG:jpegtran -crop WxH+X+Y -perfect -copy all(选区已吸附到 16px MCU,
         //      -perfect 保证做不到无损就直接失败,不偷偷降质)
         // 其它格式:QImage::copy 后按原格式保存(PNG 无损;其余如实说明会重编码)
-        addAction(IconLib::appIcon("cmd_crop"), QString::fromUtf8("裁剪...(无损)"),
+        addAction(IconLib::appIcon("cmd_crop"), gazeTr("裁剪...(无损)"),
                   this, [this, grid]() {
             CropDialog dlg(m_filePath, nullptr);
             if (dlg.exec() != QDialog::Accepted) return;
@@ -609,7 +610,7 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
             }
 
             if (!ok) {
-                QMessageBox::warning(nullptr, QString::fromUtf8("裁剪失败"),
+                QMessageBox::warning(nullptr, gazeTr("裁剪失败"),
                     QString::fromUtf8("无法无损完成该裁剪:\n%1\n\n"
                                       "可换个选区(建议选区再大一点、离边缘远一点)重试。")
                         .arg(m_filePath));
@@ -617,8 +618,8 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
             }
             if (!QFile::rename(tmp, m_filePath)) {
                 QFile::remove(tmp);
-                QMessageBox::warning(nullptr, QString::fromUtf8("裁剪失败"),
-                                     QString::fromUtf8("写回文件失败:\n") + m_filePath);
+                QMessageBox::warning(nullptr, gazeTr("裁剪失败"),
+                                     gazeTr("写回文件失败:\n") + m_filePath);
                 return;
             }
             // 时间戳照旧保留,与旋转一致
@@ -701,7 +702,7 @@ void FileContextMenu::extractFrames(const QString& videoPath) {
         [outDir](bool ok, const QString& why) {
             if (ok)
                 QMessageBox::information(nullptr, "完成",
-                    QString::fromUtf8("帧提取完成:\n") + outDir);
+                    gazeTr("帧提取完成:\n") + outDir);
             else
                 QMessageBox::warning(nullptr, "帧提取失败", why + "\n" + outDir);
         });

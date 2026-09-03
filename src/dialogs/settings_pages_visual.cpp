@@ -6,6 +6,7 @@
 #include "dbprefix.h"
 #include "viewerhotkeys.h"
 #include "theme.h"
+#include "i18n.h"
 
 #include <QHBoxLayout>
 #include <QVBoxLayout>
@@ -48,25 +49,25 @@ QWidget* SettingsDialog::pageThumbs() {
     // 分组"创建"
     auto* fCreate = new QFormLayout;
     fCreate->setVerticalSpacing(6);
-    fCreate->addRow(chk("Thumbs/folder4", QString::fromUtf8("在文件夹缩略图中显示4张缩略图(而非1张)"), true));
-    fCreate->addRow(chk("Thumbs/video4", QString::fromUtf8("在视频缩略图中显示4张缩略图(替代1张)"), false));
-    fCreate->addRow(chk("Thumbs/highQuality", QString::fromUtf8("创建高品质的缩略图"), true));
-    fCreate->addRow(chk("Thumbs/useEmbedded", QString::fromUtf8("使用嵌入缩略图"), true));
-    fCreate->addRow(chk("Thumbs/embedFallback", QString::fromUtf8("当内嵌缩略图尺寸小于缩略图尺寸时从原图创建"), true));
-    fCreate->addRow(chk("Thumbs/wholeFolder", QString::fromUtf8("为整个文件夹创建缩略图"), false));
-    fCreate->addRow(QString::fromUtf8("视频提取帧位置(%,0=第 1 秒)"),
+    fCreate->addRow(chk("Thumbs/folder4", gazeTr("在文件夹缩略图中显示4张缩略图(而非1张)"), true));
+    fCreate->addRow(chk("Thumbs/video4", gazeTr("在视频缩略图中显示4张缩略图(替代1张)"), false));
+    fCreate->addRow(chk("Thumbs/highQuality", gazeTr("创建高品质的缩略图"), true));
+    fCreate->addRow(chk("Thumbs/useEmbedded", gazeTr("使用嵌入缩略图"), true));
+    fCreate->addRow(chk("Thumbs/embedFallback", gazeTr("当内嵌缩略图尺寸小于缩略图尺寸时从原图创建"), true));
+    fCreate->addRow(chk("Thumbs/wholeFolder", gazeTr("为整个文件夹创建缩略图"), false));
+    fCreate->addRow(gazeTr("视频提取帧位置(%,0=第 1 秒)"),
         spin("Thumbs/videoFramePct", 0, 100, 0));
-    root->addWidget(group(QString::fromUtf8("创建"), fCreate));
+    root->addWidget(group(gazeTr("创建"), fCreate));
 
     // 分组"处理"
     auto* fProc = new QFormLayout;
     fProc->setVerticalSpacing(6);
-    fProc->addRow(chk("Thumbs/alpha", QString::fromUtf8("使用alpha通道"), true));
-    fProc->addRow(chk("Thumbs/transparencyGrid", QString::fromUtf8("使用透明网格"), true));
-    fProc->addRow(chk("Thumbs/sharpen", QString::fromUtf8("锐化缩略图"), false));
-    fProc->addRow(chk("Thumbs/gamma", QString::fromUtf8("使用 Gamma 纠正"), false));
-    root->addWidget(group(QString::fromUtf8("处理"), fProc));
-    return wrapTitled(QString::fromUtf8("缩略图"), root);
+    fProc->addRow(chk("Thumbs/alpha", gazeTr("使用alpha通道"), true));
+    fProc->addRow(chk("Thumbs/transparencyGrid", gazeTr("使用透明网格"), true));
+    fProc->addRow(chk("Thumbs/sharpen", gazeTr("锐化缩略图"), false));
+    fProc->addRow(chk("Thumbs/gamma", gazeTr("使用 Gamma 纠正"), false));
+    root->addWidget(group(gazeTr("处理"), fProc));
+    return wrapTitled(gazeTr("缩略图"), root);
 }
 
 QWidget* SettingsDialog::pageAppearance() {
@@ -75,11 +76,11 @@ QWidget* SettingsDialog::pageAppearance() {
     // C_* 宏在 paintEvent 里也是 T() 双档即时求值,所以换主题只需重设样式表
     // 并让各控件重绘 —— 不再需要重启。
     auto* themeCombo = new QComboBox;
-    themeCombo->addItems({QString::fromUtf8("深色"), QString::fromUtf8("浅色")});
+    themeCombo->addItems({gazeTr("深色"), gazeTr("浅色")});
     themeCombo->setCurrentIndex(
         AppSettings::instance().get("Appearance/theme", QStringLiteral("dark")).toString()
             == QLatin1String("light") ? 1 : 0);
-    themeCombo->setToolTip(QString::fromUtf8("立即生效"));
+    themeCombo->setToolTip(gazeTr("立即生效"));
     connect(themeCombo, &QComboBox::currentIndexChanged, this, [](int v) {
         AppSettings::instance().set("Appearance/theme", v == 1 ? QStringLiteral("light")
                                                                : QStringLiteral("dark"));
@@ -94,29 +95,29 @@ QWidget* SettingsDialog::pageAppearance() {
         Q_UNUSED(app)
 #endif
     });
-    form->addRow(QString::fromUtf8("主题(立即生效)"), themeCombo);
-    form->addRow(QString::fromUtf8("自定义缩略图尺寸 - 宽"),
+    form->addRow(gazeTr("主题(立即生效)"), themeCombo);
+    form->addRow(gazeTr("自定义缩略图尺寸 - 宽"),
         spin("Appearance/customThumbW", THUMB_W_MIN, THUMB_W_MAX, 96));
     // 0 = 与宽同高(接线前的既有行为);>0 才按设置值固定缩略图框高
     auto* thumbH = spin("Appearance/customThumbH", 0, 512, 0);
-    thumbH->setSpecialValueText(QString::fromUtf8("跟随宽度"));
-    form->addRow(QString::fromUtf8("自定义缩略图尺寸 - 高"), thumbH);
-    form->addRow(chk("Appearance/shadow", QString::fromUtf8("使用阴影"), false));
-    form->addRow(QString::fromUtf8("边框粗细"), spin("Appearance/borderSize", 0, 10, 0));
-    form->addRow(QString::fromUtf8("间距"), spin("Appearance/spacing", 0, 40, 6));
-    form->addRow(chk("Appearance/labelSpacing", QString::fromUtf8("标签间的间距"), true));
-    form->addRow(QString::fromUtf8("图像对齐"),
-        combo("Appearance/imageAlign", {QString::fromUtf8("左"), QString::fromUtf8("居中"),
-            QString::fromUtf8("右")}, 1));
-    form->addRow(QString::fromUtf8("标签排列"),
-        combo("Appearance/labelAlign", {QString::fromUtf8("左"), QString::fromUtf8("居中"),
-            QString::fromUtf8("右")}, 1));
-    form->addRow(chk("Appearance/formatColor", QString::fromUtf8("文件根据格式显示以下颜色(文件名底色)"), true));
+    thumbH->setSpecialValueText(gazeTr("跟随宽度"));
+    form->addRow(gazeTr("自定义缩略图尺寸 - 高"), thumbH);
+    form->addRow(chk("Appearance/shadow", gazeTr("使用阴影"), false));
+    form->addRow(gazeTr("边框粗细"), spin("Appearance/borderSize", 0, 10, 0));
+    form->addRow(gazeTr("间距"), spin("Appearance/spacing", 0, 40, 6));
+    form->addRow(chk("Appearance/labelSpacing", gazeTr("标签间的间距"), true));
+    form->addRow(gazeTr("图像对齐"),
+        combo("Appearance/imageAlign", {gazeTr("左"), gazeTr("居中"),
+            gazeTr("右")}, 1));
+    form->addRow(gazeTr("标签排列"),
+        combo("Appearance/labelAlign", {gazeTr("左"), gazeTr("居中"),
+            gazeTr("右")}, 1));
+    form->addRow(chk("Appearance/formatColor", gazeTr("文件根据格式显示以下颜色(文件名底色)"), true));
     // #126:这里原来是一段写死的 XnView 说明 + "(颜色编辑器即将支持)"。
     //   编辑器其实早就存在(「缩略图 → 标签颜色」:增删改扩展名、取色、写 ini、
     //   FileCard 真生效),那句占位话就是谎话。改成显示**当前真表**并一键跳过去。
     {
-        QString t = QString::fromUtf8("标签颜色(扩展名 → 文件名底色,当前生效表):\n");
+        QString t = gazeTr("标签颜色(扩展名 → 文件名底色,当前生效表):\n");
         QHash<QString, QStringList> byColor;
         for (const auto& e : LabelColors::all())
             byColor[e.second.name(QColor::HexRgb)].append(e.first);
@@ -125,23 +126,23 @@ QWidget* SettingsDialog::pageAppearance() {
         for (const QString& c : colors) {
             const QStringList exts = byColor.value(c);
             const QString shown = exts.size() > 8
-                ? exts.mid(0, 8).join(',') + QString::fromUtf8(",…(共 %1 项)").arg(exts.size())
+                ? exts.mid(0, 8).join(',') + gazeTr(",…(共 %1 项)").arg(exts.size())
                 : exts.join(',');
-            t += QString::fromUtf8("  %1 ← %2\n").arg(c, shown);
+            t += gazeTr("  %1 ← %2\n").arg(c, shown);
         }
-        t += QString::fromUtf8("未列出的格式:%1\n(上面总开关关掉时一律不上底色)")
+        t += gazeTr("未列出的格式:%1\n(上面总开关关掉时一律不上底色)")
                  .arg(LabelColors::fallbackColor().name(QColor::HexRgb));
         auto* lab = new QLabel(t);
         lab->setTextInteractionFlags(Qt::TextSelectableByMouse);
         form->addRow(lab);
     }
     auto* lcBtn = new QPushButton(
-        QString::fromUtf8("打开颜色编辑器(缩略图 → 标签颜色)"));
+        gazeTr("打开颜色编辑器(缩略图 → 标签颜色)"));
     connect(lcBtn, &QPushButton::clicked, this, [this]() {
         if (m_labelColorsItem) m_cats->setCurrentItem(m_labelColorsItem);
     });
     form->addRow(lcBtn);
-    return wrapTitled(QString::fromUtf8("外观"), form);
+    return wrapTitled(gazeTr("外观"), form);
 }
 
 // ── 标签颜色页:扩展名列表整行底色填充,选中变蓝;右列输入/新建/移除/改色;底部默认色 ──
@@ -150,7 +151,7 @@ QWidget* SettingsDialog::pageLabelColors() {
     root->setSpacing(6);
 
     root->addWidget(chk("Appearance/formatColor",
-                        QString::fromUtf8("文件根据格式显示以下颜色(文件名底色)"), true));
+                        gazeTr("文件根据格式显示以下颜色(文件名底色)"), true));
 
     auto* body = new QHBoxLayout;
     body->setSpacing(8);
@@ -168,13 +169,13 @@ QWidget* SettingsDialog::pageLabelColors() {
     auto* right = new QVBoxLayout;
     right->setSpacing(8);
     auto* inRow = new QHBoxLayout;
-    inRow->addWidget(new QLabel(QString::fromUtf8("输入扩展名:")));
+    inRow->addWidget(new QLabel(gazeTr("输入扩展名:")));
     auto* extEdit = new QLineEdit;
     extEdit->setPlaceholderText(QString::fromUtf8("gif"));
     extEdit->setFixedWidth(120);
     inRow->addWidget(extEdit);
     inRow->addSpacing(8);
-    inRow->addWidget(new QLabel(QString::fromUtf8("或选一种格式:")));
+    inRow->addWidget(new QLabel(gazeTr("或选一种格式:")));
     auto* extCombo = new QComboBox;
     {
         QStringList exts;
@@ -196,13 +197,13 @@ QWidget* SettingsDialog::pageLabelColors() {
     auto* whiteBtn = new QToolButton;
     whiteBtn->setFixedSize(30, 24);
     whiteBtn->setStyleSheet(QString::fromUtf8("background:#FFFFFF;border:1px solid %1;").arg(C_SEPARATOR));
-    whiteBtn->setToolTip(QString::fromUtf8("设为白色"));
+    whiteBtn->setToolTip(gazeTr("设为白色"));
     swRow->addWidget(colorBtn);
     swRow->addWidget(whiteBtn);
     right->addLayout(swRow);
 
-    auto* addBtn = new QPushButton(QString::fromUtf8("新建"));
-    auto* removeBtn = new QPushButton(QString::fromUtf8("移除"));
+    auto* addBtn = new QPushButton(gazeTr("新建"));
+    auto* removeBtn = new QPushButton(gazeTr("移除"));
     right->addWidget(addBtn);
     right->addWidget(removeBtn);
     right->addStretch(1);
@@ -213,7 +214,7 @@ QWidget* SettingsDialog::pageLabelColors() {
 
     // 底部:默认颜色(未列出格式的底色)
     auto* defRow = new QHBoxLayout;
-    defRow->addWidget(new QLabel(QString::fromUtf8("默认颜色")));
+    defRow->addWidget(new QLabel(gazeTr("默认颜色")));
     auto* defBtn = new QToolButton;
     defBtn->setFixedSize(30, 24);
     defBtn->setStyleSheet(QString("background:%1;border:1px solid %2;")
@@ -257,7 +258,7 @@ QWidget* SettingsDialog::pageLabelColors() {
         QListWidgetItem* it = list->currentItem();
         if (!it) return;
         QColor c = QColorDialog::getColor(LabelColors::colorForExt(it->text()),
-                                          this, QString::fromUtf8("选择颜色"));
+                                          this, gazeTr("选择颜色"));
         if (!c.isValid()) return;
         LabelColors::set(it->text(), c);
         refill();
@@ -286,7 +287,7 @@ QWidget* SettingsDialog::pageLabelColors() {
     });
     connect(defBtn, &QToolButton::clicked, this, [defBtn, refill]() {
         QColor c = QColorDialog::getColor(LabelColors::fallbackColor(),
-                                          nullptr, QString::fromUtf8("默认颜色"));
+                                          nullptr, gazeTr("默认颜色"));
         if (!c.isValid()) return;
         LabelColors::setFallbackColor(c);
         defBtn->setStyleSheet(QString("background:%1;border:1px solid %2;")
@@ -294,5 +295,5 @@ QWidget* SettingsDialog::pageLabelColors() {
         refill();
     });
 
-    return wrapTitled(QString::fromUtf8("标签颜色"), root);
+    return wrapTitled(gazeTr("标签颜色"), root);
 }

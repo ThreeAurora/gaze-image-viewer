@@ -10,6 +10,7 @@
 #include <QSet>
 #include <QString>
 #include <QToolButton>
+#include "i18n.h"
 
 #include "settings.h"
 #include "constants.h"
@@ -34,7 +35,7 @@ inline const QSet<QString>& pendingKeys() {
 inline void markPending(QWidget* w, const QString& key) {
     if (!w || !pendingKeys().contains(key)) return;
     w->setEnabled(false);
-    w->setToolTip(QString::fromUtf8("尚未生效:该功能还没有实现,此项当前不影响程序行为"));
+    w->setToolTip(gazeTr("尚未生效:该功能还没有实现,此项当前不影响程序行为"));
 }
 
 // 颜色选择:色块按钮 + 原生 QColorDialog(色相环/RGB/HTML 全功能色板,非文字选项)
@@ -50,7 +51,7 @@ inline QWidget* colorPick(const QString& key, const QString& def) {
     QObject::connect(btn, &QToolButton::clicked, btn, [btn, key, def, apply]() {
         QColor cur(AppSettings::instance().get(key, def).toString());
         if (!cur.isValid()) cur = QColor(def);
-        QColor c = QColorDialog::getColor(cur, btn, QString::fromUtf8("选择颜色"));
+        QColor c = QColorDialog::getColor(cur, btn, gazeTr("选择颜色"));
         if (!c.isValid()) return;
         AppSettings::instance().set(key, c.name(QColor::HexRgb));
         apply(c);

@@ -23,6 +23,7 @@
 #include <cstdint>
 #include <cstring>
 #include <cmath>
+#include "i18n.h"
 
 namespace ExifMeta {
 
@@ -341,8 +342,8 @@ inline QList<Field> read(const QString& path) {
     const QList<Raw> raws = readRaw(path);
     for (const Raw& r : raws) {
         if (r.ifd == QLatin1String("JPEG") || r.ifd == QLatin1String("PNG")) {
-            out.append(Field{ QString::fromUtf8("注释"),
-                              QString::fromUtf8("文本"), r.text });
+            out.append(Field{ gazeTr("注释"),
+                              gazeTr("文本"), r.text });
         }
     }
     return out;

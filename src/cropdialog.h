@@ -21,6 +21,7 @@
 #include <QShortcut>
 #include <algorithm>
 #include <cmath>
+#include "i18n.h"
 
 // 刻意不加 Q_OBJECT:这是纯头文件类,不进 AUTOMOC(加了会缺 vtable)。
 // 本类不声明任何信号/槽/属性,连的都是 QDialog 已有的槽,不需要元对象。
@@ -29,7 +30,7 @@ public:
     CropDialog(const QString& path, QWidget* parent = nullptr)
         : QDialog(parent), m_path(path)
     {
-        setWindowTitle(QString::fromUtf8("裁剪 — %1").arg(QFileInfo(path).fileName()));
+        setWindowTitle(gazeTr("裁剪 — %1").arg(QFileInfo(path).fileName()));
         setModal(true);
         resize(920, 660);
 
@@ -48,9 +49,9 @@ public:
         root->addWidget(m_info);
 
         auto* bar = new QHBoxLayout;
-        m_btnFull = new QPushButton(QString::fromUtf8("全选"));
-        m_btnOk   = new QPushButton(QString::fromUtf8("裁剪"));
-        auto* cancel = new QPushButton(QString::fromUtf8("取消"));
+        m_btnFull = new QPushButton(gazeTr("全选"));
+        m_btnOk   = new QPushButton(gazeTr("裁剪"));
+        auto* cancel = new QPushButton(gazeTr("取消"));
         m_btnOk->setDefault(true);
         bar->addWidget(m_btnFull);
         bar->addStretch();
@@ -137,7 +138,7 @@ private:
     }
 
     void updateView() {
-        if (m_img.isNull()) { m_info->setText(QString::fromUtf8("无法读取该图片")); return; }
+        if (m_img.isNull()) { m_info->setText(gazeTr("无法读取该图片")); return; }
         const QSize avail = m_view->size() - QSize(16, 16);
         m_scale = std::min(double(avail.width())  / m_img.width(),
                            double(avail.height()) / m_img.height());
@@ -166,8 +167,8 @@ private:
             .arg(m_sel.width()).arg(m_sel.height())
             .arg(m_sel.x()).arg(m_sel.y())
             .arg(m_img.width()).arg(m_img.height())
-            .arg(jpeg ? QString::fromUtf8("已吸附到 16px 无损边界(JPEG 走 jpegtran -perfect)")
-                      : QString::fromUtf8("非 JPEG:按像素精确裁剪(PNG 无损,其它格式会重编码)")));
+            .arg(jpeg ? gazeTr("已吸附到 16px 无损边界(JPEG 走 jpegtran -perfect)")
+                      : gazeTr("非 JPEG:按像素精确裁剪(PNG 无损,其它格式会重编码)")));
         m_btnOk->setEnabled(m_sel.isValid() && m_sel.width() >= MCU && m_sel.height() >= MCU);
     }
 

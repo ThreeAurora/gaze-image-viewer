@@ -14,6 +14,7 @@
 #include <QPropertyAnimation>
 #include "settings.h"
 #include "constants.h"
+#include "i18n.h"
 
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -119,19 +120,19 @@ inline bool deleteWithSettings(const QStringList& paths, QWidget* parent) {
             : QString::number(paths.size()) + QStringLiteral(" 个项目");
         QString text;
         if (paths.size() == 1 && dirCount == 1)
-            text = QString::fromUtf8("你确认要删除文件夹吗？\n");
+            text = gazeTr("你确认要删除文件夹吗？\n");
         else if (dirCount > 0)
-            text = QString::fromUtf8("确定删除 %1（含 %2 个文件夹）？\n").arg(what).arg(dirCount);
+            text = gazeTr("确定删除 %1（含 %2 个文件夹）？\n").arg(what).arg(dirCount);
         else
             text = toRecycle
-                ? QString::fromUtf8("确定将 %1 移至回收站？\n").arg(what)
-                : QString::fromUtf8("确定永久删除 %1？此操作不可恢复！\n").arg(what);
+                ? gazeTr("确定将 %1 移至回收站？\n").arg(what)
+                : gazeTr("确定永久删除 %1？此操作不可恢复！\n").arg(what);
         text += toRecycle
-            ? QString::fromUtf8("可从回收站恢复。")
-            : QString::fromUtf8("此操作不可恢复！");
+            ? gazeTr("可从回收站恢复。")
+            : gazeTr("此操作不可恢复！");
         const QString title = (paths.size() == 1 && dirCount == 1)
-            ? QString::fromUtf8("删除文件夹")
-            : (toRecycle ? QString::fromUtf8("删除") : QString::fromUtf8("永久删除"));
+            ? gazeTr("删除文件夹")
+            : (toRecycle ? gazeTr("删除") : gazeTr("永久删除"));
         if (QMessageBox::question(parent, title,
                 text + "\n" + paths.first(),
                 QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes)
@@ -140,12 +141,12 @@ inline bool deleteWithSettings(const QStringList& paths, QWidget* parent) {
     if (shellDelete(paths, toRecycle, parent)) {
         // 短文案:不带文件名/数量,一个词说完落点(回收站/永久保留区分)
         showDeleteToast(parent,
-            toRecycle ? QString::fromUtf8("已移至回收站")
-                      : QString::fromUtf8("已永久删除"));
+            toRecycle ? gazeTr("已移至回收站")
+                      : gazeTr("已永久删除"));
         return true;
     }
-    QMessageBox::warning(parent, QString::fromUtf8("删除"),
-        QString::fromUtf8("删除失败:\n") + paths.first());
+    QMessageBox::warning(parent, gazeTr("删除"),
+        gazeTr("删除失败:\n") + paths.first());
     return false;
 }
 

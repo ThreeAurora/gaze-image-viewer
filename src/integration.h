@@ -3,6 +3,7 @@
 #include <QCoreApplication>
 #include <QDir>
 #include "settings.h"   // #106:shellMenu 读点统一走 AppSettings,别再自己拼 ini 路径
+#include "i18n.h"
 
 // 系统集成:资源管理器右键菜单 / 打开方式注册(HKCU,免管理员)
 namespace Integration {
@@ -22,7 +23,7 @@ inline bool addBrowseContextMenu() {
     const QString exe = exeNative();
     QSettings r1("HKEY_CURRENT_USER\\Software\\Classes\\Directory\\shell\\GazeBrowse",
                  QSettings::NativeFormat);
-    r1.setValue(".", QString::fromUtf8("用 Gaze 浏览"));
+    r1.setValue(".", gazeTr("用 Gaze 浏览"));
     r1.setValue("Icon", exe);
     QSettings c1("HKEY_CURRENT_USER\\Software\\Classes\\Directory\\shell\\GazeBrowse\\command",
                  QSettings::NativeFormat);
@@ -34,7 +35,7 @@ inline bool addBrowseContextMenu() {
     QSettings c2("HKEY_CURRENT_USER\\Software\\Classes\\Directory\\Background\\shell\\GazeBrowse\\command",
                  QSettings::NativeFormat);
     if (shellMenuEnabled()) {
-        r2.setValue(".", QString::fromUtf8("用 Gaze 浏览"));
+        r2.setValue(".", gazeTr("用 Gaze 浏览"));
         r2.setValue("Icon", exe);
         c2.setValue(".", "\"" + exe + "\" \"%V\"");
         ok = ok && r2.status() == QSettings::NoError;
@@ -57,7 +58,7 @@ inline bool registerOpenWith() {
     const QString exe = exeNative();
     QSettings r("HKEY_CURRENT_USER\\Software\\Classes\\Applications\\Gaze.exe",
                 QSettings::NativeFormat);
-    r.setValue(".", QString::fromUtf8("Gaze 图片浏览器"));
+    r.setValue(".", gazeTr("Gaze 图片浏览器"));
     r.setValue("FriendlyAppName", QString::fromUtf8("Gaze"));
     QSettings c("HKEY_CURRENT_USER\\Software\\Classes\\Applications\\Gaze.exe\\shell\\open\\command",
                 QSettings::NativeFormat);

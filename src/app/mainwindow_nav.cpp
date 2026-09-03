@@ -14,6 +14,7 @@
 #include "validname.h"
 #include "keytarget.h"
 #include "logger.h"
+#include "i18n.h"
 
 #include <QMenuBar>
 #include <QStatusBar>
@@ -174,7 +175,7 @@ void MainWindow::gotoTypedPath() {
     const QFileInfo fi(mw_impl::canonicalPath(raw));
     if (fi.isFile()) { revealFile(fi.absoluteFilePath()); return; }
     Logger::event(QStringLiteral("addr: cannot jump to '%1'").arg(raw));
-    m_statusLabel->setText(QString::fromUtf8("路径不存在: %1")
+    m_statusLabel->setText(gazeTr("路径不存在: %1")
                                .arg(QDir::toNativeSeparators(raw)));
 }
 
@@ -187,7 +188,7 @@ void MainWindow::editCustomFilter() {
     bool ok = false;
     const QString cur = st.get("Browser/customExts", QString()).toString();
     const QString txt = QInputDialog::getText(
-        this, QString::fromUtf8("自定义格式筛选"),
+        this, gazeTr("自定义格式筛选"),
         QString::fromUtf8("只显示这些扩展名的文件(逗号分隔,不用写点):\n"
                           "例:psd, ai, raw, cr2, nef"),
         QLineEdit::Normal, cur, &ok).trimmed();
@@ -208,11 +209,11 @@ void MainWindow::editCustomFilter() {
         // 清单空 = 这一档不该"看起来生效却什么都不显示":退回全部并说明
         m_fileGrid->setFilterMode(FILTER_ALL);
         m_statusLabel->setText(
-            QString::fromUtf8("自定义筛选的扩展名清单是空的,已回到\"全部\""));
+            gazeTr("自定义筛选的扩展名清单是空的,已回到\"全部\""));
         return;
     }
     m_fileGrid->setFilterMode(FILTER_CUSTOM);   // 换档后重筛当前目录
-    m_statusLabel->setText(QString::fromUtf8("自定义筛选:%1 项扩展名(%2)")
+    m_statusLabel->setText(gazeTr("自定义筛选:%1 项扩展名(%2)")
                                .arg(parts.size()).arg(parts.join(',')));
 }
 
@@ -220,7 +221,7 @@ void MainWindow::updateStatus() {
     int fc = m_fileGrid->fileCount();
     int sc = m_fileGrid->selectedCount();
     qint64 ss = m_fileGrid->selectedSize();
-    QString text = QString("%1 \xe9\xa1\xb9").arg(fc); // 项
+    QString text = QString("%1 项").arg(fc); // 项
     // 单选文件夹:目录条目没有 size 字段,照旧会显示 [0 B]。这里对目录递归
     // 快速估算大小,截断时补 "≈" 前缀;合计与单行详情共用这一次结果。
     QString approx;
@@ -229,12 +230,12 @@ void MainWindow::updateStatus() {
         if (!paths.isEmpty() && QFileInfo(paths.first()).isDir()) {
             qint64 sz = 0, cnt = 0;
             if (!quickDirSize(paths.first(), &sz, &cnt))
-                approx = QString::fromUtf8("\xe2\x89\x88 ");   // ≈ 
+                approx = gazeTr("≈ ");   // ≈ 
             ss = sz;
         }
     }
     if (sc > 0) {
-        text += QString("  \xc2\xb7  \xe5\xb7\xb2\xe9\x80\x89 %1 \xe9\xa1\xb9 \xc2\xb7 [%2%3]")
+        text += QString("  ·  已选 %1 项 · [%2%3]")
                     .arg(sc).arg(approx).arg(formatSize(ss));
         auto paths = m_fileGrid->selectedPaths();
         if (!paths.isEmpty()) {
@@ -379,21 +380,21 @@ QString MainWindow::renderTitle(const QString& tplIn, const QString& filePath) c
     subst("y-m-d_h-n-s", fmtT(birthT, "-"));
     subst("y_m_d_h_n_s", fmtT(birthT, "_"));
     // 标题里的路径同样用反斜杠(与地址栏一致);末尾 "\" 只属于可编辑的地址栏
-    subst(QString::fromUtf8("路径"),
+    subst(gazeTr("路径"),
           QDir::toNativeSeparators(hasSel ? fi.absoluteFilePath() : dir));
-    subst(QString::fromUtf8("文件夹"), QDir::toNativeSeparators(dir));
-    subst(QString::fromUtf8("文件夹名"), dirName);
+    subst(gazeTr("文件夹"), QDir::toNativeSeparators(dir));
+    subst(gazeTr("文件夹名"), dirName);
     // 目录没有"扩展名"这一说:两个名字令牌都给完整目录名,
     // 不能套 completeBaseName 的点切分(那会把 "A.B 文件夹" 截成 "A")
-    subst(QString::fromUtf8("文件名"),
+    subst(gazeTr("文件名"),
           isDirSel ? fi.fileName() : (hasFile ? fi.completeBaseName() : QString()));
-    subst(QString::fromUtf8("文件名 含扩展名"), hasSel ? fi.fileName() : QString());
-    subst(QString::fromUtf8("大小"), sizeText);
-    subst(QString::fromUtf8("修改日期"), mdate);
-    subst(QString::fromUtf8("创建日期"), cdate);
-    subst(QString::fromUtf8("颜色标签"), label);
-    subst(QString::fromUtf8("宽"), w > 0 ? QString::number(w) : QString());
-    subst(QString::fromUtf8("高"), h > 0 ? QString::number(h) : QString());
+    subst(gazeTr("文件名 含扩展名"), hasSel ? fi.fileName() : QString());
+    subst(gazeTr("大小"), sizeText);
+    subst(gazeTr("修改日期"), mdate);
+    subst(gazeTr("创建日期"), cdate);
+    subst(gazeTr("颜色标签"), label);
+    subst(gazeTr("宽"), w > 0 ? QString::number(w) : QString());
+    subst(gazeTr("高"), h > 0 ? QString::number(h) : QString());
     // 单字母时间变量:大写=修改时间,小写=创建时间(N/n=分钟,与 M/m=月 区分)
     auto part = [](const QDateTime& t, QChar which) -> QString {
         if (!t.isValid()) return QString();
@@ -513,7 +514,7 @@ void MainWindow::syncFilterIndicators(int mode) {
             cb->setPlaceholderText(QString());
         } else {
             cb->setCurrentIndex(-1);
-            cb->setPlaceholderText(QString::fromUtf8("筛选：") + mw_impl::filterModeName(mode));
+            cb->setPlaceholderText(gazeTr("筛选：") + mw_impl::filterModeName(mode));
         }
         cb->blockSignals(false);
     }

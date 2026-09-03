@@ -1,5 +1,6 @@
 #pragma once
 #include <QString>
+#include "i18n.h"
 
 // ═══════════════════════════════════════════
 // Windows 文件/目录名校验(重命名、新建文件夹、布局名共用一份口径)
@@ -10,16 +11,16 @@
 // ═══════════════════════════════════════════
 inline QString invalidNameReason(const QString& name) {
     if (name.isEmpty())
-        return QString::fromUtf8("名称不能为空");
+        return gazeTr("名称不能为空");
 
     static const QString bad = QStringLiteral("/\\:*?\"<>|");
     for (const QChar c : name)
         if (bad.contains(c) || c.unicode() < 0x20)
-            return QString::fromUtf8("名称不能包含以下字符:\n/ \\ : * ? \" < > | 以及控制字符");
+            return gazeTr("名称不能包含以下字符:\n/ \\ : * ? \" < > | 以及控制字符");
 
     // Windows 会静默去掉结尾的点和空格。宁可当场拒绝,也不要"改了名却少了几个字符"
     if (name.endsWith(QLatin1Char('.')) || name.endsWith(QLatin1Char(' ')))
-        return QString::fromUtf8("名称不能以点号或空格结尾(Windows 会静默去掉)");
+        return gazeTr("名称不能以点号或空格结尾(Windows 会静默去掉)");
 
     // 保留设备名:看点号前的那一段,CON.txt 同样建不出来
     const QString stem = name.section(QLatin1Char('.'), 0, 0).toUpper();
@@ -28,9 +29,9 @@ inline QString invalidNameReason(const QString& name) {
                                      "LPT1","LPT2","LPT3","LPT4","LPT5","LPT6","LPT7","LPT8","LPT9" };
     for (const char* d : devices)
         if (stem == QString::fromLatin1(d))
-            return QString::fromUtf8("“%1”是 Windows 保留设备名，不能用作名称").arg(stem);
+            return gazeTr("“%1”是 Windows 保留设备名，不能用作名称").arg(stem);
 
     if (name.size() > 255)
-        return QString::fromUtf8("名称过长(上限 255 个字符)");
+        return gazeTr("名称过长(上限 255 个字符)");
     return {};
 }

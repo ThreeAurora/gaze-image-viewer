@@ -82,7 +82,7 @@ void MainWindow::createMenubar() {
     connect(recentMenu, &QMenu::aboutToShow, this, [this, recentMenu]() {
         rebuildRecentMenu(recentMenu);
     });
-    fileMenu->addAction(IconLib::appIcon("cmd_print"), QString::fromUtf8("打印..."),
+    fileMenu->addAction(IconLib::appIcon("cmd_print"), gazeTr("打印..."),
         QKeySequence("Ctrl+P"), this, [this]() {
             // 有选中打选中,没选中打当前列表全部(和右键"打印"同一口径);
             // 夹在里面的文件夹/视频由 PrintDialog 按扩展名滤掉并如实提示
@@ -93,14 +93,14 @@ void MainWindow::createMenubar() {
             PrintDialog::printImages(this, paths);
         });
     fileMenu->addSeparator();
-    fileMenu->addAction(QString::fromUtf8("刷新(&R)"), QKeySequence("F5"), this, [this](){ refresh(); });
+    fileMenu->addAction(gazeTr("刷新(&R)"), QKeySequence("F5"), this, [this](){ refresh(); });
     fileMenu->addSeparator();
-    fileMenu->addAction(QString::fromUtf8("退出(&X)"), QKeySequence("Alt+X"), this, &QWidget::close);
+    fileMenu->addAction(gazeTr("退出(&X)"), QKeySequence("Alt+X"), this, &QWidget::close);
 
     // ── 编辑(E) ──
-    auto *editMenu = mb->addMenu(QString::fromUtf8("编辑(&E)"));
+    auto *editMenu = mb->addMenu(gazeTr("编辑(&E)"));
     editMenu->addAction(IconLib::appIcon("cmd_copyPath"),
-        QString::fromUtf8("复制绝对路径"), QKeySequence("Ctrl+Shift+C"), this, [this]() {
+        gazeTr("复制绝对路径"), QKeySequence("Ctrl+Shift+C"), this, [this]() {
             auto paths = m_fileGrid->selectedPaths();
             if (!paths.isEmpty())
                 QApplication::clipboard()->setText(paths.join("\n"));
@@ -115,44 +115,44 @@ void MainWindow::createMenubar() {
     // F2 仍保留 eventFilter 里的带守卫硬编码(见 mainwindow_keys.cpp)，可配主键
     // 由此 QAction 承担 —— 改键后 ini 覆盖，F2 仍作固定别名可用。
     editMenu->addAction(IconLib::appIcon("cmd_rename"),
-        QString::fromUtf8("重命名(&R)"), QKeySequence("F2"), this, &MainWindow::renameFocused);
+        gazeTr("重命名(&R)"), QKeySequence("F2"), this, &MainWindow::renameFocused);
     editMenu->addSeparator();
     editMenu->addAction(IconLib::appIcon("cmd_selectAllFile"),
-        QString::fromUtf8("全选"), QKeySequence("Ctrl+A"), this, [this](){ m_fileGrid->selectAllEntries(); });
-    editMenu->addAction(QString::fromUtf8("反选"), QKeySequence("Ctrl+I"), this, [this](){ m_fileGrid->selectInvert(); });
+        gazeTr("全选"), QKeySequence("Ctrl+A"), this, [this](){ m_fileGrid->selectAllEntries(); });
+    editMenu->addAction(gazeTr("反选"), QKeySequence("Ctrl+I"), this, [this](){ m_fileGrid->selectInvert(); });
     editMenu->addSeparator();
-    editMenu->addAction(QString::fromUtf8("全选文件"), this, [this](){ m_fileGrid->selectByKind(FileGrid::KindFiles); });
-    editMenu->addAction(QString::fromUtf8("全选文件夹"), this, [this](){ m_fileGrid->selectByKind(FileGrid::KindDirs); });
-    editMenu->addAction(QString::fromUtf8("全选图像"), this, [this](){ m_fileGrid->selectByKind(FileGrid::KindImages); });
-    editMenu->addAction(QString::fromUtf8("全选视频"), this, [this](){ m_fileGrid->selectByKind(FileGrid::KindVideos); });
-    editMenu->addAction(QString::fromUtf8("全选音频"), this, [this](){ m_fileGrid->selectByKind(FileGrid::KindAudio); });
+    editMenu->addAction(gazeTr("全选文件"), this, [this](){ m_fileGrid->selectByKind(FileGrid::KindFiles); });
+    editMenu->addAction(gazeTr("全选文件夹"), this, [this](){ m_fileGrid->selectByKind(FileGrid::KindDirs); });
+    editMenu->addAction(gazeTr("全选图像"), this, [this](){ m_fileGrid->selectByKind(FileGrid::KindImages); });
+    editMenu->addAction(gazeTr("全选视频"), this, [this](){ m_fileGrid->selectByKind(FileGrid::KindVideos); });
+    editMenu->addAction(gazeTr("全选音频"), this, [this](){ m_fileGrid->selectByKind(FileGrid::KindAudio); });
     // 颜色标签:原"元数据"一级菜单下,按需求挪到编辑(元数据菜单随之删除)
     editMenu->addSeparator();
     auto *labelMenu = editMenu->addMenu(IconLib::appIcon("label_item"),
-                                        QString::fromUtf8("设置颜色标签"));
+                                        gazeTr("设置颜色标签"));
     struct { int c; QString name; } colors[] = {
-        {1, QString::fromUtf8("红色  (Ctrl+1)")},
-        {2, QString::fromUtf8("橙色  (Ctrl+2)")},
-        {3, QString::fromUtf8("黄色  (Ctrl+3)")},
-        {4, QString::fromUtf8("绿色  (Ctrl+4)")},
-        {5, QString::fromUtf8("蓝色  (Ctrl+5)")},
+        {1, gazeTr("红色  (Ctrl+1)")},
+        {2, gazeTr("橙色  (Ctrl+2)")},
+        {3, gazeTr("黄色  (Ctrl+3)")},
+        {4, gazeTr("绿色  (Ctrl+4)")},
+        {5, gazeTr("蓝色  (Ctrl+5)")},
     };
     for (auto& c : colors)
         labelMenu->addAction(c.name, this, [this, c](){ applyColorLabel(c.c); });
     labelMenu->addSeparator();
-    labelMenu->addAction(QString::fromUtf8("取消颜色标记  (Ctrl+0 / D)"), this, [this](){ applyColorLabel(0); });
+    labelMenu->addAction(gazeTr("取消颜色标记  (Ctrl+0 / D)"), this, [this](){ applyColorLabel(0); });
 
     // ── 查看(V) ──
-    auto *viewMenu = mb->addMenu(QString::fromUtf8("查看(&V)"));
+    auto *viewMenu = mb->addMenu(gazeTr("查看(&V)"));
     auto* fsAct = viewMenu->addAction(IconLib::appIcon("cmd_fullscreen"),
-        QString::fromUtf8("界面全屏"), QKeySequence("F11"), this, [this]() {
+        gazeTr("界面全屏"), QKeySequence("F11"), this, [this]() {
             if (m_fullView) { exitFullView(); return; }   // F11 也得把全屏预览整个退干净(#154)
             if (isFullScreen()) showNormal(); else enterFullscreen();
         });
     fsAct->setCheckable(true);
     // 键位写在标题里而不挂 QAction::setShortcut:菜单裸键会连文本框里的 G 一起吞掉(#61),
     // 实际响应在 qApp 事件过滤器里(那里有"这个键是不是该给文本框"的判断)
-    auto* fullAct = viewMenu->addAction(QString::fromUtf8("全屏预览  (G)"), this, [this]() {
+    auto* fullAct = viewMenu->addAction(gazeTr("全屏预览  (G)"), this, [this]() {
         toggleFullView();
     });
     fullAct->setCheckable(true);
@@ -166,7 +166,7 @@ void MainWindow::createMenubar() {
     viewMenu->addMenu(createSortMenu(viewMenu))->setIcon(IconLib::appIcon("sort"));
     viewMenu->addMenu(createFilterMenu(viewMenu))->setIcon(IconLib::appIcon("cmd_filter"));
     auto *thumbSizeMenu = viewMenu->addMenu(IconLib::appIcon("cmd_paneThumbs"),
-                                            QString::fromUtf8("缩略图尺寸"));
+                                            gazeTr("缩略图尺寸"));
     struct { int w; QString label; } sizes[] = {
         {64, "64x48"}, {85, "85x64"}, {92, "92x69"}, {96, "96x72"},
         {128, "128x96"}, {192, "192x144"}, {384, "384x288"}, {768, "768x576"},
@@ -177,12 +177,12 @@ void MainWindow::createMenubar() {
         a->setData(s.w);
     }
     {
-        auto* a = thumbSizeMenu->addAction(QString::fromUtf8("自定义..."), this, [this]() {
+        auto* a = thumbSizeMenu->addAction(gazeTr("自定义..."), this, [this]() {
             bool ok = false;
             AppSettings& st = AppSettings::instance();
             int def = qBound(THUMB_W_MIN, st.get("Appearance/customThumbW", 96).toInt(), THUMB_W_MAX);
-            int v = QInputDialog::getInt(this, QString::fromUtf8("自定义缩略图尺寸"),
-                QString::fromUtf8("宽度(像素):"), def, THUMB_W_MIN, THUMB_W_MAX, 8, &ok);
+            int v = QInputDialog::getInt(this, gazeTr("自定义缩略图尺寸"),
+                gazeTr("宽度(像素):"), def, THUMB_W_MIN, THUMB_W_MAX, 8, &ok);
             if (!ok) return;
             onSizeChanged(v);   // setCardSize 负责落盘 customThumbW(外观页同一条目)
         });
@@ -210,11 +210,11 @@ void MainWindow::createMenubar() {
                 a->setChecked(!preset);
     });
     viewMenu->addSeparator();
-    viewMenu->addAction(QString::fromUtf8("放大缩略图"), QKeySequence("Ctrl+="), this, [this](){ onThumbZoom(1); });
-    viewMenu->addAction(QString::fromUtf8("缩小缩略图"), QKeySequence("Ctrl+-"), this, [this](){ onThumbZoom(-1); });
-    m_actBack = viewMenu->addAction(QString::fromUtf8("后退"), QKeySequence("Alt+Left"), this, [this](){ goBack(); });
-    m_actFwd  = viewMenu->addAction(QString::fromUtf8("前进"), QKeySequence("Alt+Right"), this, [this](){ goForward(); });
-    viewMenu->addAction(QString::fromUtf8("上级目录"), QKeySequence("Backspace"), this, [this](){ goUp(); });
+    viewMenu->addAction(gazeTr("放大缩略图"), QKeySequence("Ctrl+="), this, [this](){ onThumbZoom(1); });
+    viewMenu->addAction(gazeTr("缩小缩略图"), QKeySequence("Ctrl+-"), this, [this](){ onThumbZoom(-1); });
+    m_actBack = viewMenu->addAction(gazeTr("后退"), QKeySequence("Alt+Left"), this, [this](){ goBack(); });
+    m_actFwd  = viewMenu->addAction(gazeTr("前进"), QKeySequence("Alt+Right"), this, [this](){ goForward(); });
+    viewMenu->addAction(gazeTr("上级目录"), QKeySequence("Backspace"), this, [this](){ goUp(); });
 
     // ── 布局(L) → 视图 ──(依次追加,顺序即"文件 编辑 查看 布局 视图 工具 帮助")
     createLayoutMenu();
@@ -222,19 +222,19 @@ void MainWindow::createMenubar() {
 
     // ── 工具(T) ──
     // #132:顺序按"先配置工具、再用工具"排 —— 设置 在 以文搜图 上面(用户令)。
-    auto *toolMenu = mb->addMenu(QString::fromUtf8("工具(&T)"));
+    auto *toolMenu = mb->addMenu(gazeTr("工具(&T)"));
     toolMenu->addAction(IconLib::appIcon("cmd_options"),
-        QString::fromUtf8("设置..."), QKeySequence("F12"), this, [this]() {
+        gazeTr("设置..."), QKeySequence("F12"), this, [this]() {
             SettingsDialog dlg(this);
             dlg.exec();
         });
     toolMenu->addAction(IconLib::appIcon("cmd_search"),
-        QString::fromUtf8("以文搜图..."), QKeySequence("Ctrl+Shift+F"), this, [this]() {
+        gazeTr("以文搜图..."), QKeySequence("Ctrl+Shift+F"), this, [this]() {
             ImageSearchDialog dlg(this);
             dlg.exec();
         });
     toolMenu->addAction(IconLib::appIcon("cmd_editMetadata"),
-        QString::fromUtf8("缩略图数据库维护..."), this, [this]() {
+        gazeTr("缩略图数据库维护..."), this, [this]() {
             DbMaintenanceDialog dlg(this);
             dlg.exec();
         });
@@ -330,13 +330,13 @@ void MainWindow::createMenubar() {
 // 查看方式/排序/筛选 菜单(菜单栏与工具栏共用)
 // ═══════════════════════════════════════════
 QMenu* MainWindow::createViewModeMenu(QWidget* parent) {
-    auto *m = new QMenu(QString::fromUtf8("查看方式"), parent);
+    auto *m = new QMenu(gazeTr("查看方式"), parent);
     // 查看方式 7 种(批次 3 实装差异渲染;当前统一缩略图)
     QStringList modes = {
-        QString::fromUtf8("缩略图"), QString::fromUtf8("缩略图 + 文件名"),
-        QString::fromUtf8("缩略图 + 标签"), QString::fromUtf8("缩略图 + 详细"),
-        QString::fromUtf8("图标"), QString::fromUtf8("列表"),
-        QString::fromUtf8("详细信息"), QString::fromUtf8("瀑布流"),
+        gazeTr("缩略图"), gazeTr("缩略图 + 文件名"),
+        gazeTr("缩略图 + 标签"), gazeTr("缩略图 + 详细"),
+        gazeTr("图标"), gazeTr("列表"),
+        gazeTr("详细信息"), gazeTr("瀑布流"),
     };
     int curMode = m_fileGrid ? m_fileGrid->viewMode() : VM_THUMBS_NAME;
     for (int i = 0; i < modes.size(); ++i) {
@@ -352,26 +352,26 @@ QMenu* MainWindow::createViewModeMenu(QWidget* parent) {
 }
 
 QMenu* MainWindow::createSortMenu(QWidget* parent) {
-    auto *m = new QMenu(QString::fromUtf8("排序"), parent);
+    auto *m = new QMenu(gazeTr("排序"), parent);
     // 注释/自定义排序未上桌:没有对应数据模型(此前静默退化成文件名排序,
     // 属于"假装能用"),等实装注释功能后再回到菜单
     struct { int col; QString name; } cols[] = {
-        {SORT_NAME,      QString::fromUtf8("文件名")},
-        {SORT_EXT,       QString::fromUtf8("扩展名")},
-        {SORT_MDATE,     QString::fromUtf8("修改日期")},
-        {SORT_CDATE,     QString::fromUtf8("创建日期")},
-        {SORT_EXIF,      QString::fromUtf8("EXIF 拍摄日期")},
-        {SORT_EXIFMOD,   QString::fromUtf8("EXIF 修改日期")},
-        {SORT_TYPE,      QString::fromUtf8("类型")},
-        {SORT_SIZE,      QString::fromUtf8("文件大小")},
-        {SORT_IMGSIZE,   QString::fromUtf8("图像大小")},
-        {SORT_WIDTH,     QString::fromUtf8("图像宽度")},
-        {SORT_HEIGHT,    QString::fromUtf8("图像高度")},
-        {SORT_ORIENTATION, QString::fromUtf8("图像方向")},
-        {SORT_RATIO,     QString::fromUtf8("图像比例")},
-        {SORT_PRINTSIZE, QString::fromUtf8("打印尺寸")},
-        {SORT_PATH,      QString::fromUtf8("路径")},
-        {SORT_COLORLABEL, QString::fromUtf8("颜色标签")},
+        {SORT_NAME,      gazeTr("文件名")},
+        {SORT_EXT,       gazeTr("扩展名")},
+        {SORT_MDATE,     gazeTr("修改日期")},
+        {SORT_CDATE,     gazeTr("创建日期")},
+        {SORT_EXIF,      gazeTr("EXIF 拍摄日期")},
+        {SORT_EXIFMOD,   gazeTr("EXIF 修改日期")},
+        {SORT_TYPE,      gazeTr("类型")},
+        {SORT_SIZE,      gazeTr("文件大小")},
+        {SORT_IMGSIZE,   gazeTr("图像大小")},
+        {SORT_WIDTH,     gazeTr("图像宽度")},
+        {SORT_HEIGHT,    gazeTr("图像高度")},
+        {SORT_ORIENTATION, gazeTr("图像方向")},
+        {SORT_RATIO,     gazeTr("图像比例")},
+        {SORT_PRINTSIZE, gazeTr("打印尺寸")},
+        {SORT_PATH,      gazeTr("路径")},
+        {SORT_COLORLABEL, gazeTr("颜色标签")},
     };
     for (auto& c : cols) {
         QAction* a = m->addAction(c.name, this, [this, c]() {
@@ -382,13 +382,13 @@ QMenu* MainWindow::createSortMenu(QWidget* parent) {
     }
     m->addSeparator();
     {
-        auto* a = m->addAction(QString::fromUtf8("升序"), this, [this]() {
+        auto* a = m->addAction(gazeTr("升序"), this, [this]() {
             m_fileGrid->sort(m_fileGrid->currentSortCol(), true);
         });
         a->setCheckable(true); a->setData(1001);
     }
     {
-        auto* a = m->addAction(QString::fromUtf8("降序"), this, [this]() {
+        auto* a = m->addAction(gazeTr("降序"), this, [this]() {
             m_fileGrid->sort(m_fileGrid->currentSortCol(), false);
         });
         a->setCheckable(true); a->setData(1002);
@@ -396,26 +396,26 @@ QMenu* MainWindow::createSortMenu(QWidget* parent) {
     m->addSeparator();
     // 文件名顺序三式:数字感知(默认,资源管理器风格)/纯字母/系统规则
     {
-        auto* a = m->addAction(QString::fromUtf8("文件名 - 数字顺序"), this, [this]() {
+        auto* a = m->addAction(gazeTr("文件名 - 数字顺序"), this, [this]() {
             m_fileGrid->setNameOrder(NameNatural);
         });
         a->setCheckable(true); a->setData(2000 + NameNatural);
     }
     {
-        auto* a = m->addAction(QString::fromUtf8("文件名 - 字母顺序"), this, [this]() {
+        auto* a = m->addAction(gazeTr("文件名 - 字母顺序"), this, [this]() {
             m_fileGrid->setNameOrder(NameAlpha);
         });
         a->setCheckable(true); a->setData(2000 + NameAlpha);
     }
     {
-        auto* a = m->addAction(QString::fromUtf8("文件名 - 正常顺序"), this, [this]() {
+        auto* a = m->addAction(gazeTr("文件名 - 正常顺序"), this, [this]() {
             m_fileGrid->setNameOrder(NameNormal);
         });
         a->setCheckable(true); a->setData(2000 + NameNormal);
     }
     m->addSeparator();
     {
-        auto* a = m->addAction(QString::fromUtf8("显示列标题"), this, [this]() {
+        auto* a = m->addAction(gazeTr("显示列标题"), this, [this]() {
             m_sortHeader->setVisible(!m_sortHeader->isVisible());
             AppSettings::instance().setPersist("Browser/sortHeader", m_sortHeader->isVisible());
         });
@@ -437,14 +437,14 @@ QMenu* MainWindow::createSortMenu(QWidget* parent) {
         }
     });
     m->addSeparator();
-    auto* zoomMenu = m->addMenu(QString::fromUtf8("缩略图缩放"));
-    zoomMenu->addAction(QString::fromUtf8("放大"), QKeySequence("Ctrl+="), this, [this](){ onThumbZoom(1); });
-    zoomMenu->addAction(QString::fromUtf8("缩小"), QKeySequence("Ctrl+-"), this, [this](){ onThumbZoom(-1); });
+    auto* zoomMenu = m->addMenu(gazeTr("缩略图缩放"));
+    zoomMenu->addAction(gazeTr("放大"), QKeySequence("Ctrl+="), this, [this](){ onThumbZoom(1); });
+    zoomMenu->addAction(gazeTr("缩小"), QKeySequence("Ctrl+-"), this, [this](){ onThumbZoom(-1); });
     return m;
 }
 
 QMenu* MainWindow::createFilterMenu(QWidget* parent) {
-    auto *m = new QMenu(QString::fromUtf8("筛选"), parent);
+    auto *m = new QMenu(gazeTr("筛选"), parent);
     bool sepDone = false;
     for (const mw_impl::FilterEntry& it : mw_impl::kFilterModes) {
         const QString name = QString::fromUtf8(it.name);
@@ -527,12 +527,12 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
         connect(btn, &QToolButton::clicked, this, slot);
         al->addWidget(btn);
     };
-    mkAddrNav("up", QString::fromUtf8("上级目录 (Backspace)"),
+    mkAddrNav("up", gazeTr("上级目录 (Backspace)"),
           [this](){ goUp(); });
 
     m_addrBar = new QLineEdit;
     m_addrBar->setFixedHeight(26);
-    m_addrBar->setPlaceholderText(QString::fromUtf8("输入路径,回车跳转"));
+    m_addrBar->setPlaceholderText(gazeTr("输入路径,回车跳转"));
     m_addrBar->setToolTip(QString::fromUtf8(
         "回车跳转到该路径(目录=进去,文件=进它的目录并选中)\n单击全选整条路径,再点一下落光标"));
     m_addrBar->setStyleSheet(QString::fromUtf8(
@@ -545,11 +545,11 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
 
     // 历史路径下拉(上限 30,无动画)
     auto* histBtn = new QToolButton;
-    histBtn->setText(QString::fromUtf8("\xe2\x96\xbc")); // ▼
+    histBtn->setText(gazeTr("▼")); // ▼
     histBtn->setFixedSize(22, 26);
     histBtn->setStyleSheet(QString::fromUtf8("QToolButton{color:%1;font-size:9px;}")
                                .arg(C_SB_ARROW));   // #151:同款小号箭头灰
-    histBtn->setToolTip(QString::fromUtf8("\xe5\x8e\x86\xe5\x8f\xb2\xe8\xae\xbf\xe9\x97\xae\xe8\xb7\xaf\xe5\xbe\x84")); // 历史访问路径
+    histBtn->setToolTip(gazeTr("历史访问路径")); // 历史访问路径
     histBtn->setPopupMode(QToolButton::InstantPopup);
     auto* histMenu = new QMenu(histBtn);
     connect(histMenu, &QMenu::aboutToShow, this, [this, histMenu]() {
@@ -557,7 +557,7 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
         QSettings s = mw_impl::appSettings();
         QStringList lst = s.value("Browser/pathHistory").toStringList();
         if (lst.isEmpty()) {
-            histMenu->addAction(QString::fromUtf8("(空)"))->setEnabled(false);
+            histMenu->addAction(gazeTr("(空)"))->setEnabled(false);
             return;
         }
         for (const auto& p : lst)
@@ -586,11 +586,11 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
         b2->addWidget(btn);
         return btn;
     };
-    m_btnBack = mkNav(IconLib::appIcon("cmd_filePrevious"), QString::fromUtf8("后退 (Alt+←)"),
+    m_btnBack = mkNav(IconLib::appIcon("cmd_filePrevious"), gazeTr("后退 (Alt+←)"),
                       [this](){ goBack(); });
-    m_btnFwd  = mkNav(IconLib::appIcon("cmd_fileNext"), QString::fromUtf8("前进 (Alt+→)"),
+    m_btnFwd  = mkNav(IconLib::appIcon("cmd_fileNext"), gazeTr("前进 (Alt+→)"),
                       [this](){ goForward(); });
-    mkNav(IconLib::appIcon("cmd_refresh"), QString::fromUtf8("刷新 (F5)"),
+    mkNav(IconLib::appIcon("cmd_refresh"), gazeTr("刷新 (F5)"),
           [this](){ refresh(); });
     // 工具栏可能建在第一跳 navigateTo 之后，这里补一次初始状态
     updateNavEnabled();
@@ -605,7 +605,7 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
         // 方形图标，肉眼完全看不出能展开(违反「控件须有可见指示器」)。
         // 改成图标旁带一颗 ▼，与地址栏历史按钮(histBtn)同一形态 = 用户点名的参照物。
         btn->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-        btn->setText(QString::fromUtf8("\xe2\x96\xbc")); // ▼
+        btn->setText(gazeTr("▼")); // ▼
         btn->setFixedSize(46, 26);
         // #151:▼ 原样继承 barQss 的 11px/C_TEXT(近白)= 用户点名"太白太大"。
         // 按钮自有表只压这两项:9px + 箭头灰(C_SB_ARROW,与滚动条/数字框箭头同色);
@@ -617,11 +617,11 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
         b2->addWidget(btn);
     };
     mkMenuBtn(IconLib::appIcon("viewas"),
-              QString::fromUtf8("查看方式"), createViewModeMenu(bar2));
+              gazeTr("查看方式"), createViewModeMenu(bar2));
     mkMenuBtn(IconLib::appIcon("sort"),
-              QString::fromUtf8("排序"), createSortMenu(bar2));
+              gazeTr("排序"), createSortMenu(bar2));
     mkMenuBtn(IconLib::appIcon("cmd_filter"),
-              QString::fromUtf8("筛选"), createFilterMenu(bar2));
+              gazeTr("筛选"), createFilterMenu(bar2));
 
     // 红色标记三态筛选:显示全部 → 仅红色标记 → 仅未标记
     auto* redBtn = new QToolButton;
@@ -652,7 +652,7 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
     colsBtn->setIcon(IconLib::appIcon("cmd_paneThumbs"));
     colsBtn->setIconSize(QSize(17, 17));
     colsBtn->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-    colsBtn->setText(QString::fromUtf8("\xe2\x96\xbc"));
+    colsBtn->setText(gazeTr("▼"));
     colsBtn->setFixedSize(46, 26);
     colsBtn->setStyleSheet(QString::fromUtf8("QToolButton{color:%1;font-size:9px;}")
                                .arg(C_SB_ARROW));   // #151:同款小号箭头灰
@@ -663,7 +663,7 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
     auto* colsGroup = new QActionGroup(colsMenu);
     colsGroup->setExclusive(true);
     int curFixed = m_fileGrid ? m_fileGrid->fixedCols() : 0;   // 构造期 grid 未创建
-    auto* autoAct = colsMenu->addAction(QString::fromUtf8("自动"));
+    auto* autoAct = colsMenu->addAction(gazeTr("自动"));
     autoAct->setCheckable(true);
     autoAct->setChecked(curFixed == 0);
     colsGroup->addAction(autoAct);
@@ -671,7 +671,7 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
             [this](){ m_fileGrid->setFixedCols(0); });
     colsMenu->addSeparator();
     for (int n = 1; n <= 16; ++n) {
-        QAction* a = colsMenu->addAction(QString::fromUtf8("%1 列").arg(n));
+        QAction* a = colsMenu->addAction(gazeTr("%1 列").arg(n));
         a->setCheckable(true);
         a->setChecked(curFixed == n);
         colsGroup->addAction(a);
@@ -695,18 +695,18 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
 
     m_formatFilterCombo = new QComboBox;
     m_formatFilterCombo->setFixedSize(112, 26);
-    m_formatFilterCombo->setToolTip(QString::fromUtf8("按文件格式筛选当前目录"));
+    m_formatFilterCombo->setToolTip(gazeTr("按文件格式筛选当前目录"));
     {
         struct { const char* label; int mode; } items[] = {
-            {"\xe5\x85\xa8\xe9\x83\xa8",               FILTER_ALL},          // 全部
-            {"\xe5\x9b\xbe\xe7\x89\x87",               FILTER_IMAGES},       // 图片
-            {"\xe8\xa7\x86\xe9\xa2\x91",               FILTER_VIDEOS},       // 视频
-            {"\xe9\x9f\xb3\xe9\xa2\x91",               FILTER_AUDIO},        // 音频
-            {"\xe6\x96\x87\xe6\xa1\xa3",               FILTER_DOCUMENTS},    // 文档
-            {"\xe5\x8e\x8b\xe7\xbc\xa9\xe6\x96\x87\xe4\xbb\xb6", FILTER_ARCHIVES}, // 压缩文件
-            {"\xe5\x8f\xaf\xe6\x89\xa7\xe8\xa1\x8c\xe6\x96\x87\xe4\xbb\xb6", FILTER_EXECUTABLES}, // 可执行文件
-            {"\xe6\x96\x87\xe4\xbb\xb6\xe5\xa4\xb9",   FILTER_FOLDERS},      // 文件夹
-            {"\xe8\x87\xaa\xe5\xae\x9a\xe4\xb9\x89\xe2\x80\xa6", FILTER_CUSTOM}, // 自定义…(#125)
+            {"全部",               FILTER_ALL},          // 全部
+            {"图片",               FILTER_IMAGES},       // 图片
+            {"视频",               FILTER_VIDEOS},       // 视频
+            {"音频",               FILTER_AUDIO},        // 音频
+            {"文档",               FILTER_DOCUMENTS},    // 文档
+            {"压缩文件", FILTER_ARCHIVES}, // 压缩文件
+            {"可执行文件", FILTER_EXECUTABLES}, // 可执行文件
+            {"文件夹",   FILTER_FOLDERS},      // 文件夹
+            {"自定义…", FILTER_CUSTOM}, // 自定义…(#125)
         };
         for (auto& it : items)
             m_formatFilterCombo->addItem(QString::fromUtf8(it.label), it.mode);
@@ -730,7 +730,7 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
         "QComboBox QAbstractItemView::item{min-height:24px;padding:2px 8px;}")
         .arg(C_TOOLBAR, C_TEXT, C_SEPARATOR, C_ACCENT,
              C_CONTENT, C_TEXT, C_SEPARATOR, C_ACCENT));
-    auto* comboArrow = new QLabel(QString::fromUtf8("\xe2\x96\xbc"), m_formatFilterCombo);
+    auto* comboArrow = new QLabel(gazeTr("▼"), m_formatFilterCombo);
     comboArrow->setStyleSheet(QString::fromUtf8(
         "color:%1;background:transparent;font-size:9px;").arg(C_SB_ARROW));
     comboArrow->setAlignment(Qt::AlignCenter);

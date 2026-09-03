@@ -14,6 +14,7 @@
 #include "validname.h"
 #include "keytarget.h"
 #include "logger.h"
+#include "i18n.h"
 
 #include <QMenuBar>
 #include <QStatusBar>
@@ -107,14 +108,14 @@ void MainWindow::applyLastLayout() {
 }
 
 void MainWindow::createLayoutMenu() {
-    auto* lm = new QMenu(QString::fromUtf8("布局(&L)"), this);
+    auto* lm = new QMenu(gazeTr("布局(&L)"), this);
     lm->setStyleSheet(menuBar()->styleSheet());
     menuBar()->addMenu(lm);   // 追加到末尾:菜单顺序由 createMenubar 的调用顺序决定
     connect(lm, &QMenu::aboutToShow, this, [this, lm]() {
         lm->clear();
         QSettings s = mw_impl::appSettings();
         bool followLast = s.value("Layout/followLast", true).toBool();
-        QAction* follow = lm->addAction(QString::fromUtf8("跟随上次窗口状态"));
+        QAction* follow = lm->addAction(gazeTr("跟随上次窗口状态"));
         follow->setCheckable(true);
         follow->setChecked(followLast);
         connect(follow, &QAction::triggered, this, [this, follow]() {
@@ -126,25 +127,25 @@ void MainWindow::createLayoutMenu() {
             }
         });
         lm->addSeparator();
-        lm->addAction(QString::fromUtf8("保存当前布局..."), this, [this]() {
+        lm->addAction(gazeTr("保存当前布局..."), this, [this]() {
             QSettings st = mw_impl::appSettings();
             QStringList names = st.value("Layout/names").toStringList();
-            QString def = QString::fromUtf8("布局 %1").arg(names.size() + 1);
+            QString def = gazeTr("布局 %1").arg(names.size() + 1);
             QString name = QInputDialog::getText(this,
-                QString::fromUtf8("保存当前布局"),
-                QString::fromUtf8("布局名称:"), QLineEdit::Normal, def).trimmed();
+                gazeTr("保存当前布局"),
+                gazeTr("布局名称:"), QLineEdit::Normal, def).trimmed();
             if (name.isEmpty()) return;
             // 名字直接拼进 QSettings 键(Layout/<name>/geometry):
             // 含斜杠会写进别的组,叫 last/active/names 则撞上内置状态键并毁掉存档
             if (const QString why = invalidNameReason(name); !why.isEmpty()) {
-                QMessageBox::warning(this, QString::fromUtf8("保存当前布局"), why);
+                QMessageBox::warning(this, gazeTr("保存当前布局"), why);
                 return;
             }
             const QString lc = name.toLower();
             if (lc == QLatin1String("last") || lc == QLatin1String("active")
                 || lc == QLatin1String("followlast") || lc == QLatin1String("names")) {
-                QMessageBox::warning(this, QString::fromUtf8("保存当前布局"),
-                    QString::fromUtf8("“%1”是布局存档的保留名称，换一个").arg(name));
+                QMessageBox::warning(this, gazeTr("保存当前布局"),
+                    gazeTr("“%1”是布局存档的保留名称，换一个").arg(name));
                 return;
             }
             saveLayout(name);
@@ -162,14 +163,14 @@ void MainWindow::createLayoutMenu() {
                 });
             }
             lm->addSeparator();
-            lm->addAction(QString::fromUtf8("删除布局..."), this, [this, lm]() {
+            lm->addAction(gazeTr("删除布局..."), this, [this, lm]() {
                 QSettings st = mw_impl::appSettings();
                 QStringList ns = st.value("Layout/names").toStringList();
                 if (ns.isEmpty()) return;
                 bool ok = false;
                 QString del = QInputDialog::getItem(this,
-                    QString::fromUtf8("删除布局"),
-                    QString::fromUtf8("选择要删除的布局:"), ns, 0, false, &ok);
+                    gazeTr("删除布局"),
+                    gazeTr("选择要删除的布局:"), ns, 0, false, &ok);
                 if (!ok || del.isEmpty()) return;
                 st.remove("Layout/" + del);
                 ns.removeAll(del);
@@ -224,10 +225,10 @@ QWidget* MainWindow::createPaneHeader(const QString& title, const char* paneId) 
     lbl->setStyleSheet(QString::fromUtf8("background:transparent;color:%1;font-size:12px;").arg(C_TEXT));
     hl->addWidget(lbl, 1);
     auto* x = new QToolButton;
-    x->setText(QString::fromUtf8("\xc3\x97"));   // ×
+    x->setText(gazeTr("×"));   // ×
     x->setFixedSize(18, 18);
     x->setCursor(Qt::PointingHandCursor);
-    x->setToolTip(QString::fromUtf8("隐藏此面板(视图菜单可再打开)"));
+    x->setToolTip(gazeTr("隐藏此面板(视图菜单可再打开)"));
     connect(x, &QToolButton::clicked, this, [this, paneId]() {
         setPaneVisible(paneId, false);
     });
@@ -300,23 +301,23 @@ void MainWindow::restorePanes(const QString& csv) {
 
 // ── 一级菜单"视图":面板开关,开着的显示 ✓ ──
 void MainWindow::createViewMenu() {
-    auto* vm = new QMenu(QString::fromUtf8("视图(&W)"), this);
+    auto* vm = new QMenu(gazeTr("视图(&W)"), this);
     vm->setStyleSheet(menuBar()->styleSheet());
     menuBar()->addMenu(vm);
 
     struct Item { const char* id; const char* name; const char* key; };
     const Item items[] = {
-        { "tree",    "\xe6\x96\x87\xe4\xbb\xb6\xe5\xa4\xb9\xe6\xa0\x91", "" },      // 文件夹树
+        { "tree",    "文件夹树", "" },      // 文件夹树
         // #136:用户令「F3 不是预览的快捷键，而是重命名的快捷键」→ F3 让给重命名。
         // **这一行不能删**：kPanes/m_paneActs/items 是三张并行表，数量由下面的
         // static_assert 钉死，删行=编译不过 + 按下标写 m_paneActs 会错位。
         // 连带影响（如实记录）：预览面板从此没有默认快捷键，而设置→快捷键配置页
         // 只列"带 shortcut 的动作"，所以它不再出现在那张表里。
-        { "preview", "\xe9\xa2\x84\xe8\xa7\x88\xe9\x9d\xa2\xe6\x9d\xbf", "" },     // 预览面板
-        { "addr",    "\xe5\x9c\xb0\xe5\x9d\x80\xe6\xa0\x8f", "" },                 // 地址栏
-        { "tool",    "\xe5\xb7\xa5\xe5\x85\xb7\xe6\xa0\x8f", "" },                 // 工具栏
-        { "status",  "\xe7\x8a\xb6\xe6\x80\x81\xe6\xa0\x8f", "" },                 // 状态栏
-        { "info",    "\xe4\xbf\xa1\xe6\x81\xaf\xe9\x9d\xa2\xe6\x9d\xbf", "F9" },     // 信息面板(元数据+直方图)
+        { "preview", "预览面板", "" },     // 预览面板
+        { "addr",    "地址栏", "" },                 // 地址栏
+        { "tool",    "工具栏", "" },                 // 工具栏
+        { "status",  "状态栏", "" },                 // 状态栏
+        { "info",    "信息面板", "F9" },     // 信息面板(元数据+直方图)
     };
     const QStringList all = paneIds();
     // kPanes / m_paneActs / items 是三张手工并行维护的表。飘了的后果不是"菜单
@@ -350,23 +351,23 @@ void MainWindow::createViewMenu() {
     // 启动读一次,运行中切换不会重刷已构造的样式表 —— 这里如实只落 ini+弹窗
     // 告知重启,不装即时生效
     vm->addSeparator();
-    auto* themeMenu = vm->addMenu(QString::fromUtf8("主题"));
-    auto* thDark = themeMenu->addAction(QString::fromUtf8("深色"));
-    auto* thLight = themeMenu->addAction(QString::fromUtf8("浅色"));
+    auto* themeMenu = vm->addMenu(gazeTr("主题"));
+    auto* thDark = themeMenu->addAction(gazeTr("深色"));
+    auto* thLight = themeMenu->addAction(gazeTr("浅色"));
     thDark->setCheckable(true);
     thLight->setCheckable(true);
     auto switchTheme = [this](const QString& v, const QString& label) {
         AppSettings& st = AppSettings::instance();
         if (st.get("Appearance/theme", QStringLiteral("dark")).toString() == v) return;
         st.set("Appearance/theme", v);
-        QMessageBox::information(this, QString::fromUtf8("主题"),
-            QString::fromUtf8("已选「%1」，重启 Gaze 后生效。").arg(label));
+        QMessageBox::information(this, gazeTr("主题"),
+            gazeTr("已选「%1」，重启 Gaze 后生效。").arg(label));
     };
     connect(thDark, &QAction::triggered, this, [switchTheme]() {
-        switchTheme(QStringLiteral("dark"), QString::fromUtf8("深色"));
+        switchTheme(QStringLiteral("dark"), gazeTr("深色"));
     });
     connect(thLight, &QAction::triggered, this, [switchTheme]() {
-        switchTheme(QStringLiteral("light"), QString::fromUtf8("浅色"));
+        switchTheme(QStringLiteral("light"), gazeTr("浅色"));
     });
     connect(themeMenu, &QMenu::aboutToShow, this, [thDark, thLight]() {
         const bool light =

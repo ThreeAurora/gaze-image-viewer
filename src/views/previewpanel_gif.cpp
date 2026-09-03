@@ -13,6 +13,7 @@
 #include "viewerhotkeys.h"
 #include "shelldelete.h"
 #include "fileentry.h"
+#include "i18n.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -135,7 +136,7 @@ void PreviewPanel::showGif(const QString& path) {
     QImage first = reader->read();
     if (first.isNull()) {
         delete reader;
-        showImageHint(QString::fromUtf8("无法加载动画"));
+        showImageHint(gazeTr("无法加载动画"));
         return;
     }
 

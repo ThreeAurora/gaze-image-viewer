@@ -13,6 +13,7 @@
 #include "viewerhotkeys.h"
 #include "shelldelete.h"
 #include "fileentry.h"
+#include "i18n.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -175,7 +176,7 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
 
     m_btnPrev = new QPushButton;
     mkBtn(m_btnPrev, QStyle::SP_MediaSkipBackward, 30,
-          QString::fromUtf8("\xe4\xb8\x8a\xe4\xb8\x80\xe4\xb8\xaa\xe6\x96\x87\xe4\xbb\xb6")); // 上一个文件
+          gazeTr("上一个文件")); // 上一个文件
     connect(m_btnPrev, &QPushButton::clicked, this, [this]() { emit navFile(-1); });
 
     // 播放/暂停:m_player 会被 teardownPlayer 销毁并重建,
@@ -183,7 +184,7 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     // 一次点击 = N 次状态切换。故连接固定在构造函数建立,槽内以 m_player 判空。
     m_btnPlay = new QPushButton;
     mkBtn(m_btnPlay, QStyle::SP_MediaPlay, 32,
-          QString::fromUtf8("\xe6\x92\xad\xe6\x94\xbe/\xe6\x9a\x82\xe5\x81\x9c")); // 播放/暂停
+          gazeTr("播放/暂停")); // 播放/暂停
     connect(m_btnPlay, &QPushButton::clicked, this, [this]() {
         // #97:GIF 与视频共用这一条控制栏,必须经 togglePlayPause 分流,
         // 否则在 GIF 上点播放会把上一段视频接着放出来
@@ -192,7 +193,7 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
 
     m_btnStop = new QPushButton;
     mkBtn(m_btnStop, QStyle::SP_MediaStop, 30,
-          QString::fromUtf8("\xe5\x81\x9c\xe6\xad\xa2(\xe5\x9b\x9e\xe5\x88\xb0\xe5\xbc\x80\xe5\xa4\xb4, T)")); // 停止(回到开头, T)
+          gazeTr("停止(回到开头, T)")); // 停止(回到开头, T)
     connect(m_btnStop, &QPushButton::clicked, this, [this]() {
         if (m_isGif) {
             setGifPaused(true);   // 先停:跳帧走暂停态,避开运行态 jumpToFrame 卡死
@@ -206,7 +207,7 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
 
     m_btnVolume = new QToolButton;
     mkBtn(m_btnVolume, QStyle::SP_MediaVolume, 32,
-          QString::fromUtf8("\xe9\x9f\xb3\xe9\x87\x8f"));   // 音量
+          gazeTr("音量"));   // 音量
 
     m_progress = new QSlider(Qt::Horizontal);
     m_progress->setRange(0, 0);
@@ -294,7 +295,7 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
             if (m_audioOutput) m_audioOutput->setVolume(v / 100.0);
             val->setText(QString::number(v));
             m_btnVolume->setToolTip(
-                QString::fromUtf8("音量 %1").arg(v));
+                gazeTr("音量 %1").arg(v));
         });
         auto* act = new QWidgetAction(&volMenu);
         act->setDefaultWidget(wrap);
@@ -354,13 +355,13 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
             QObject::connect(b, &QPushButton::clicked, this, fn);
             fl->addWidget(b);
         };
-        add(QStyle::SP_MediaSkipBackward, QString::fromUtf8("上一个文件"),
+        add(QStyle::SP_MediaSkipBackward, gazeTr("上一个文件"),
             [this]() { emit navFile(-1); });
-        add(QStyle::SP_MediaSkipForward, QString::fromUtf8("下一个文件"),
+        add(QStyle::SP_MediaSkipForward, gazeTr("下一个文件"),
             [this]() { emit navFile(1); });
-        add(QStyle::SP_DialogResetButton, QString::fromUtf8("适应窗口"),
+        add(QStyle::SP_DialogResetButton, gazeTr("适应窗口"),
             [this]() { fitAuto(); });
-        add(QStyle::SP_DialogCloseButton, QString::fromUtf8("退出全屏"),
+        add(QStyle::SP_DialogCloseButton, gazeTr("退出全屏"),
             [this]() { if (inFullscreen()) window()->showNormal(); });
     }
 
@@ -399,9 +400,9 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
             "padding:2px 4px;color:#E8E8E8;min-width:24px;}"
             "QPushButton:hover{background:#3A3A42;}"
             "QPushButton:disabled{color:#5A5A62;}";
-        m_pdfPrev = new QPushButton(QString::fromUtf8("◀ 上一页"));
-        m_pdfNext = new QPushButton(QString::fromUtf8("下一页 ▶"));
-        m_pdfLabel = new QLabel(QString::fromUtf8("第 1 页"));
+        m_pdfPrev = new QPushButton(gazeTr("◀ 上一页"));
+        m_pdfNext = new QPushButton(gazeTr("下一页 ▶"));
+        m_pdfLabel = new QLabel(gazeTr("第 1 页"));
         m_pdfLabel->setStyleSheet(
             "QLabel{background:transparent;color:#E0E0E0;font-size:12px;padding:0 4px;}");
         m_pdfPrev->setStyleSheet(bq);
