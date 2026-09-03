@@ -61,14 +61,17 @@
 // ═══════════════════════════════════════════
 // 查看器标签卡(Interface/multiViewerTabs / oneViewerTab / syncBrowser)
 //   两个开关各管一件事(与 XnView 同义,别把它们当互为反面):
-//     multiViewerTabs 关(默认) = 一个文件只占一个标签:重复打开或导航到它,
+//     multiViewerTabs 关(默认) = 一个文件只占一个标签:查看器内导航到它,
 //                                切到已有那个标签,而不是再开一个同文件的标签
 //                       开     = 允许同一文件占多个标签
 //     oneViewerTab    开       = 一批文件只装一个标签,后开的就地顶掉当前标签
-//   导航(方向键/双击/列表选中)永远不追加标签:表非空时只把当前那张就地改成目标,
-//   multiViewerTabs=关 且目标已有标签时则切过去。想让表变长,只有"在新标签卡中打开"
-//   (浏览器右键 / 预览区右键)这一个入口 —— 翻 500 张图不该留下 500 张标签。
-//   标签表跨"退回浏览器"保留;Interface/maxViewerTabs(0=不限)只约束追加新标签时。
+//   查看器内的导航(方向键/列表选中)永远不追加标签:表非空时只把当前那张就地
+//   改成目标(syncViewerTab)。想让表变长,只有"在新标签卡中打开"(浏览器右键 /
+//   预览区右键)与"从浏览器再进查看器看另一张"(2026-09-03 用户令:已开的标签
+//   必须留着,改为激活或追加)这两个入口 —— 翻 500 张图不该留下 500 张标签。
+//   标签表跨"退回浏览器"保留,且退回浏览器后标签栏**继续显示**(updateTabBarVis):
+//   用户点「浏览器」标签只是回到标准模式,他的文件标签必须一直看得见、点得着。
+//   Interface/maxViewerTabs(0=不限)只约束追加新标签时。
 //   路径存在 tabData 里(不是并行数组),所以 removeTab/拖拽重排不需要任何索引修正。
 //   #105:索引 0 常驻「浏览器」标签(tabData=哨兵),用户明令"点它回标准模式"。
 //   它无 × 按钮、中键/右键关闭跳过、拖拽后归位;凡按 tabData 判"是不是真文件"的
@@ -78,6 +81,15 @@
 bool MainWindow::isBrowserTab(int index) const {
     return m_viewerTabs && index >= 0 && index < m_viewerTabs->count()
         && m_viewerTabs->tabData(index).toString() == mw_impl::kBrowserTabData;
+}
+
+// 标签栏显隐总闸(2026-09-03 用户令):查看器模式恒显示;浏览器模式只要还有
+// 图片标签就显示 —— 点「浏览器」标签回浏览器后,文件标签必须看得见、点得着,
+// 一张不剩才收。全屏(含 G 全屏预览)沿用旧规矩:整个收掉,只留画面。
+void MainWindow::updateTabBarVis() {
+    if (!m_viewerTabs) return;
+    m_viewerTabs->setVisible(!isFullScreen()
+                             && (m_viewerMode || imageTabCount() > 0));
 }
 
 int MainWindow::firstImageTab() const {
@@ -186,7 +198,7 @@ void MainWindow::closeViewerTab(int index) {
     // 的路径已经先退过了,这里只兜 current 不在那条路径上的情形)
     if (imageTabCount() > 0) return;
     if (m_viewerMode) toggleViewer();
-    else m_viewerTabs->hide();
+    else updateTabBarVis();   // 浏览器态关光图签:标签栏按总闸收起
 }
 
 void MainWindow::pruneDeadViewerTabs() {
@@ -204,7 +216,7 @@ void MainWindow::pruneDeadViewerTabs() {
     m_viewerTabs->blockSignals(false);
     // 摘完可能一张不剩(文件在别处被删/移走)。查看器模式下留一条空标签栏
     // 就是用户明确不要的那种"空白栏",这里跟着实际张数收口
-    if (m_viewerMode) m_viewerTabs->setVisible(m_viewerTabs->count() > 0);
+    updateTabBarVis();
 }
 
 void MainWindow::syncViewerTab(const QString& path) {
@@ -277,9 +289,10 @@ void MainWindow::openViewerTab(const QString& path) {
 }
 
 // ── 2026-09-02 用户令:双击预览区 / Ctrl+双击 ──
-// openViewerTab 的"从浏览器进入"段把当前文件切过去并选中新标签 —— 双击正好
-// 要这个效果。后台开(Ctrl)则是"进查看器但不把焦点切到新标签":标签仍在手,
-// 只是浏览器焦点不丢,滚轮/方向键不受影响。
+// 双击 = 进查看器并选中新标签(openViewerTab 的"从浏览器进入"段正好做这个)。
+// Ctrl+双击 = 只把标签记下,人不进查看器:2026-09-03 起浏览器态只要还有图片
+// 标签,标签栏就会当场浮现(updateTabBarVis),但模式与焦点都留在浏览器,
+// 滚轮/方向键不受影响。
 Q_INVOKABLE void MainWindow::openTabForeground() {
     if (m_currentFile.isEmpty()) return;
     openViewerTab(m_currentFile);
@@ -287,14 +300,6 @@ Q_INVOKABLE void MainWindow::openTabForeground() {
 
 Q_INVOKABLE void MainWindow::openTabBackground() {
     if (m_currentFile.isEmpty() || !m_viewerTabs) return;
-    if (!m_viewerMode) {
-        // 进查看器(标签条随之可见),但不开新标签 —— 后台只负责追加,焦点不切。
-        // m_viewerNoSync 让 toggleViewer 不改任何已有标签。
-        m_viewerNoSync = true;
-        toggleViewer();
-        m_viewerNoSync = false;
-        if (!m_viewerMode) return;
-    }
     ensureBrowserTab();
     AppSettings& st = AppSettings::instance();
     const bool oneTab   = st.get("Interface/oneViewerTab", false).toBool();
@@ -317,4 +322,5 @@ Q_INVOKABLE void MainWindow::openTabBackground() {
     }
     m_viewerTabs->blockSignals(false);
     addViewerTab(m_currentFile);   // 追加,但不 setCurrentIndex —— 焦点留在浏览器
+    updateTabBarVis();             // 浏览器态开的第一张图签:标签栏当场浮现
 }

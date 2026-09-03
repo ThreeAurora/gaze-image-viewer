@@ -389,18 +389,18 @@ void MainWindow::toggleViewer() {
         m_savedSplitter = m_splitter->sizes();   // 记住进入前布局(拖过的分栏不丢)
         QList<int> sz { 0, 0, width() };
         m_splitter->setSizes(sz);
-        // 进查看器:标签表跨退出保留,先丢掉文件已经不在的那几张(在浏览器里删过的),
-        // 再按当前文件补开/就地同步。#105:索引 0 的「浏览器」标签常驻,点它
-        // 回标准模式,所以进查看器后标签条必有内容、恒显示。
+        // 进查看器:标签表跨退出保留,先丢掉文件已经不在的那几张(在浏览器里删过的)。
+        // #105:索引 0 的「浏览器」标签常驻,点它回标准模式。
+        // 2026-09-03 用户令:进查看器不再就地覆写已有标签(旧 syncViewerTab 路径会把
+        // 当前标签改成新文件,用户体感就是"标签被关了")—— 改走 openViewerTab:
+        // 该文件已有标签就激活,没有才追加。查看器内部导航(方向键/列表选中)仍走
+        // syncViewerTab 就地覆写,"翻 500 张不留 500 张标签"的规矩不变。
         if (m_viewerTabs) {
             pruneDeadViewerTabs();
             ensureBrowserTab();
-            if (imageTabCount() == 0) {
-                if (!m_currentFile.isEmpty()) openViewerTab(m_currentFile);
-            } else if (!m_viewerNoSync && !m_currentFile.isEmpty()) {
-                syncViewerTab(m_currentFile);
-            }
-            m_viewerTabs->setVisible(true);
+            if (!m_viewerNoSync && !m_currentFile.isEmpty())
+                openViewerTab(m_currentFile);
+            updateTabBarVis();
         }
     } else {
         m_preview->setMinimumWidth(200);
@@ -413,8 +413,13 @@ void MainWindow::toggleViewer() {
                 const QString p = tabPath(curTab);
                 if (!p.isEmpty()) m_fileGrid->selectByPath(p);
             }
-            m_viewerTabs->hide();
-            // 只藏不清表:退回浏览器再进来,那几张标签还在
+            // 只藏不清表:退回浏览器再进来,那几张标签还在。2026-09-03:退到浏览器后
+            // 标签栏不再无条件消失 —— 还有图片标签就继续显示(显隐只归总闸管)。
+            updateTabBarVis();
+            // 当前高亮挪回「浏览器」标签:浏览器态里高亮停在图片标签上会让人以为
+            // 还停在查看器。currentChanged 里浏览器态点浏览器标签是 no-op,不会绕圈
+            if (!isBrowserTab(m_viewerTabs->currentIndex()))
+                m_viewerTabs->setCurrentIndex(0);
         }
         // 恢复进入前的实际布局(硬编码重置会让用户拖好的分栏变掉)
         if (m_savedSplitter.size() == 3)
@@ -465,8 +470,7 @@ void MainWindow::exitFullView() {
 void MainWindow::applyFullViewChrome() {
     const bool fs = isFullScreen();
     menuBar()->setVisible(!(fs && m_fullView) && !(fs && m_viewerMode));
-    if (m_viewerTabs)
-        m_viewerTabs->setVisible(m_viewerMode && !fs);
+    updateTabBarVis();   // 标签条显隐只归总闸管(全屏收掉;查看器态或浏览器态有图签才显示)
 }
 
 void MainWindow::changeEvent(QEvent* event) {
