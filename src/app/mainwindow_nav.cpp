@@ -189,7 +189,7 @@ void MainWindow::editCustomFilter() {
     const QString cur = st.get("Browser/customExts", QString()).toString();
     const QString txt = QInputDialog::getText(
         this, gazeTr("自定义格式筛选"),
-        QString::fromUtf8("只显示这些扩展名的文件(逗号分隔,不用写点):\n"
+        gazeTr("只显示这些扩展名的文件(逗号分隔,不用写点):\n"
                           "例:psd, ai, raw, cr2, nef"),
         QLineEdit::Normal, cur, &ok).trimmed();
     if (!ok) {   // 取消:筛选维持原样,指示器也弹回去(下拉框刚才已停在"自定义…")
@@ -341,7 +341,7 @@ QString MainWindow::renderTitle(const QString& tplIn, const QString& filePath) c
         cdate = fi.birthTime().toString("yyyy/MM/dd - HH:mm:ss");
         int cl = m_fileGrid->colorLabelOf(filePath);
         static const char* names[] = {"", "红", "橙", "黄", "绿", "蓝"};
-        if (cl >= 1 && cl <= 5) label = QString::fromUtf8(names[cl]);
+        if (cl >= 1 && cl <= 5) label = gazeTr(names[cl]);
     }
     if (hasFile) {
         const bool bytes = AppSettings::instance()

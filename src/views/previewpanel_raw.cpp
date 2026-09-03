@@ -44,7 +44,7 @@ void PreviewPanel::showRawPlaceholder(const QString& path) {
     m_rawBtn->setEnabled(true);
     m_rawBtn->setText(kRawBtnText);
     QFileInfo fi(path);
-    m_rawCaption->setText(QString::fromUtf8(
+    m_rawCaption->setText(gazeTr(
         "%1 · 相机 RAW 原始文件（%2）\n正在提取相机内嵌预览…")
         .arg(fi.fileName(), formatSize(fi.size())));
     m_rawBox->show();
@@ -60,7 +60,7 @@ void PreviewPanel::showRawPlaceholder(const QString& path) {
         }, Qt::QueuedConnection);
     });
 #else
-    m_rawCaption->setText(QString::fromUtf8(
+    m_rawCaption->setText(gazeTr(
         "本构建未编入 RAW 解码器（thirdparty/LibRaw 缺失）"));
 #endif
 }
@@ -75,7 +75,7 @@ void PreviewPanel::onEmbeddedRawReady(const QImage& img, const QString& path, qu
         return;
     }
     QFileInfo fi(path);
-    m_rawCaption->setText(QString::fromUtf8(
+    m_rawCaption->setText(gazeTr(
         "%1 · 相机 RAW 原始文件（%2）\n全解为可视图像需数秒；解码途中切换文件会立即放弃。")
         .arg(fi.fileName(), formatSize(fi.size())));
 }
@@ -86,7 +86,7 @@ void PreviewPanel::decodeRawAsync() {
     m_rawBusy = true;
     m_rawBtn->setEnabled(false);
     m_rawBtn->setText(gazeTr("正在解码…"));
-    m_rawCaption->setText(QString::fromUtf8(
+    m_rawCaption->setText(gazeTr(
         "正在后台解码 RAW（大文件需数秒）——现在切换文件会立即放弃本次解码"));
     const quint64 gen = m_imgReqGen;   // loadFile 已为本次装载递增
     const QString path = m_filePath;
@@ -99,7 +99,7 @@ void PreviewPanel::decodeRawAsync() {
         }, Qt::QueuedConnection);
     });
 #else
-    m_rawCaption->setText(QString::fromUtf8(
+    m_rawCaption->setText(gazeTr(
         "本构建未编入 RAW 解码器（thirdparty/LibRaw 缺失）"));
 #endif
 }
@@ -111,7 +111,7 @@ void PreviewPanel::onRawDecoded(const QImage& img, const QString& path, quint64 
     m_rawBtn->setEnabled(true);
     m_rawBtn->setText(kRawBtnText);
     if (img.isNull()) {
-        m_rawCaption->setText(QString::fromUtf8(
+        m_rawCaption->setText(gazeTr(
             "解码失败：内置解码器不支持该 RAW 或文件已损坏"));
         return;
     }

@@ -447,7 +447,7 @@ QMenu* MainWindow::createFilterMenu(QWidget* parent) {
     auto *m = new QMenu(gazeTr("筛选"), parent);
     bool sepDone = false;
     for (const mw_impl::FilterEntry& it : mw_impl::kFilterModes) {
-        const QString name = QString::fromUtf8(it.name);
+        const QString name = gazeTr(it.name);
         if (it.mode < 0) {   // 自定义占位
             QAction* a = m->addAction(name);
             a->setEnabled(false);
@@ -533,7 +533,7 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
     m_addrBar = new QLineEdit;
     m_addrBar->setFixedHeight(26);
     m_addrBar->setPlaceholderText(gazeTr("输入路径,回车跳转"));
-    m_addrBar->setToolTip(QString::fromUtf8(
+    m_addrBar->setToolTip(gazeTr(
         "回车跳转到该路径(目录=进去,文件=进它的目录并选中)\n单击全选整条路径,再点一下落光标"));
     m_addrBar->setStyleSheet(QString::fromUtf8(
         "QLineEdit{background:%1;color:%2;"
@@ -628,7 +628,7 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
     redBtn->setIcon(IconLib::appIcon("cmd_showRed"));
     redBtn->setIconSize(QSize(17, 17));
     redBtn->setFixedSize(30, 26);
-    redBtn->setToolTip(QString::fromUtf8(
+    redBtn->setToolTip(gazeTr(
         "筛选红色标记(三态循环):\n"
         "第 1 次点击 — 只显示红色标记的文件\n"
         "第 2 次点击 — 只显示未标红的文件\n"
@@ -656,7 +656,7 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
     colsBtn->setFixedSize(46, 26);
     colsBtn->setStyleSheet(QString::fromUtf8("QToolButton{color:%1;font-size:9px;}")
                                .arg(C_SB_ARROW));   // #151:同款小号箭头灰
-    colsBtn->setToolTip(QString::fromUtf8(
+    colsBtn->setToolTip(gazeTr(
         "缩略图列数\n手动指定后,拖动边框/缩放窗口时缩略图贴边缩放但列数不变"));
     colsBtn->setPopupMode(QToolButton::InstantPopup);
     auto* colsMenu = new QMenu(colsBtn);
@@ -709,7 +709,7 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
             {"自定义…", FILTER_CUSTOM}, // 自定义…(#125)
         };
         for (auto& it : items)
-            m_formatFilterCombo->addItem(QString::fromUtf8(it.label), it.mode);
+            m_formatFilterCombo->addItem(gazeTr(it.label), it.mode);
     }
     // 下箭头(#151):局部表里那份 CSS 边框三角(#134 二次实测认为能画出来)
     // 用户在真机上仍然看不到 —— 根因未明,不再赌样式表,改用与三颗按钮同款的

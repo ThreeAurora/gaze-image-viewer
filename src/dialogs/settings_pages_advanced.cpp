@@ -145,7 +145,7 @@ QWidget* SettingsDialog::pageMaintenance() {
             }
         }
         QFileInfo fi(d.databaseName());
-        summary->setText(QString::fromUtf8(
+        summary->setText(gazeTr(
             "数据库 [目录:%1  →  元数据:%2  →  缩略图:%3]")
             .arg(QString::asprintf("%.2f MB", (fi.size() + totalMeta) / 1048576.0))
             .arg(QString::asprintf("%.2f MB", totalMeta / 1048576.0))
@@ -301,8 +301,8 @@ QWidget* SettingsDialog::pageIntegration() {
         bool ok = on ? Integration::addBrowseContextMenu()
                      : Integration::removeBrowseContextMenu();
         QMessageBox::information(nullptr, gazeTr("系统集成"),
-            ok ? QString::fromUtf8(on ? "已添加右键菜单,资源管理器中即时生效。"
-                                      : "已移除右键菜单。")
+            ok ? (on ? gazeTr("已添加右键菜单,资源管理器中即时生效。")
+                     : gazeTr("已移除右键菜单。"))
                : gazeTr("注册表写入失败。"));
     });
     fMenu->addRow(browseChk);
@@ -358,7 +358,7 @@ QWidget* SettingsDialog::pageIntegration() {
                 const QString target = AppSettings::iniPathForLocation(
                     idx, AppSettings::instance().get("Integration/customIniDir").toString());
                 QMessageBox::information(nullptr, gazeTr("配置文件"),
-                    QString::fromUtf8("下次启动起,配置文件改用:\n%1\n\n"
+                    gazeTr("下次启动起,配置文件改用:\n%1\n\n"
                                       "当前设置已复制到该位置(目标已有文件时不覆盖)。")
                         .arg(QDir::toNativeSeparators(target)));
             });
@@ -439,7 +439,7 @@ QWidget* SettingsDialog::pageImgSearch() {
 
     fLoc->addRow(gazeTr("端口"),
                  spin("ImgSearch/port", 1024, 65535, 8747));
-    auto* portNote = new QLabel(QString::fromUtf8(
+    auto* portNote = new QLabel(gazeTr(
         "与 imgseek 服务实际监听端口一致(默认 8747);服务已在运行时改动需重启服务。"));
     portNote->setStyleSheet(
         QString("background:transparent;color:%1;").arg(C_TEXT_FAINT));
@@ -451,7 +451,7 @@ QWidget* SettingsDialog::pageImgSearch() {
     fLife->setVerticalSpacing(6);
     fLife->addRow(chk("ImgSearch/killOnExit",
         gazeTr("退出 Gaze 时结束由 Gaze 拉起的图搜服务"), false));
-    auto* lifeNote = new QLabel(QString::fromUtf8(
+    auto* lifeNote = new QLabel(gazeTr(
         "只回收由 Gaze 自动拉起的服务实例;手动启动的不受影响。"));
     lifeNote->setStyleSheet(
         QString("background:transparent;color:%1;").arg(C_TEXT_FAINT));

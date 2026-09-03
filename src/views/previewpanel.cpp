@@ -236,8 +236,7 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     m_timeLabel->setStyleSheet(
         QString("color:%1;font-size:12px;background:transparent;").arg(C_TEXT));
     m_timeLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-    m_timeLabel->setToolTip(QString::fromUtf8(
-        "\xe7\x82\xb9\xe5\x87\xbb\xe5\x88\x87\xe6\x8d\xa2 \xe5\xb7\xb2\xe6\x92\xad/\xe5\x89\xa9\xe4\xbd\x99\xe6\x97\xb6\xe9\x97\xb4")); // 点击切换 已播/剩余时间
+    m_timeLabel->setToolTip(gazeTr("点击切换 已播/剩余时间"));
     m_timeLabel->installEventFilter(this);  // 点击切换剩余时间显示
     cl->addWidget(m_timeLabel);
 

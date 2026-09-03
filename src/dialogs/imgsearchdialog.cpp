@@ -76,7 +76,7 @@ ImageSearchDialog::ImageSearchDialog(QWidget* parent) : QDialog(parent) {
 
     auto* top = new QHBoxLayout;
     m_input = new QLineEdit;
-    m_input->setPlaceholderText(QString::fromUtf8(
+    m_input->setPlaceholderText(gazeTr(
         "输入自然语言、文件名或图片中的文字,如:海边的日落 / IMG_2022 / 发票"));
     m_model = new QComboBox;
     m_model->addItem(gazeTr("引擎默认"), QString());
@@ -87,7 +87,7 @@ ImageSearchDialog::ImageSearchDialog(QWidget* parent) : QDialog(parent) {
     m_sort->addItem(gazeTr("按相关性"), 0);
     m_sort->addItem(gazeTr("按名称"), 1);
     m_sort->addItem(gazeTr("按时间"), 2);
-    m_sort->setToolTip(QString::fromUtf8(
+    m_sort->setToolTip(gazeTr(
         "名称/时间为本地重排(服务端只保证相关性顺序)"));
     m_searchBtn = new QPushButton(gazeTr("搜索"));
     top->addWidget(m_input, 1);

@@ -9,6 +9,7 @@
 // 只被单个编译单元用的(如 kPanes/kPaneCount)仍然留在那一个 .cpp 里。
 #include "constants.h"
 #include "filegrid.h"    // FILTER_* 枚举(kFilterModes 表的初值)
+#include "i18n.h"        // filterModeName 在使用点包 gazeTr(表数据中文)
 #include "settings.h"    // AppSettings(appSettings()/slideIntervalMs 读同一份 ini)
 #include <QDir>
 #include <QList>
@@ -72,7 +73,7 @@ inline const FilterEntry kFilterModes[] = {
 inline QString filterModeName(int mode) {
     if (mode < 0) return QString();
     for (const FilterEntry& e : kFilterModes)
-        if (e.mode == mode) return QString::fromUtf8(e.name);
+        if (e.mode == mode) return gazeTr(e.name);
     return QString();
 }
 

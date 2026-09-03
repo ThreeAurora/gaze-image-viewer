@@ -50,13 +50,13 @@ QWidget* SettingsDialog::pageGeneral() {
     // 勾上才按标称物理尺寸换算 —— #95 当年就是因为这条乘法默认生效,
     // 72dpi 截图被画得比"适应窗口"还小,才把 1:1 收回纯像素口径的。
     QWidget* wDpi = chk("General/exifDpi", gazeTr("1:1 按文件 DPI 显示物理尺寸"), false);
-    wDpi->setToolTip(QString::fromUtf8(
+    wDpi->setToolTip(gazeTr(
         "勾上后\"1:1 / 长按看原图\"按文件自带 DPI 换算(屏幕DPI ÷ 图像DPI),\n"
         "显示的是标称物理尺寸;文件没写 DPI 时仍按纯像素 1:1。\n"
         "不勾 = 1 图像像素 : 1 屏幕像素(#95 口径,默认)。"));
     form->addRow(wDpi);
     QWidget* wAdj = chk("General/dpiAdjust", gazeTr("若 X/Y DPI 不相等,调整缩放"), true);
-    wAdj->setToolTip(QString::fromUtf8(
+    wAdj->setToolTip(gazeTr(
         "只在上一项勾选时参与:X/Y DPI 不等时横轴按各自 DPI 换算,\n"
         "免得非正方形像素的图(少数 TIFF/BMP)被拉变形。"));
     form->addRow(wAdj);
@@ -120,7 +120,7 @@ QWidget* SettingsDialog::pageFileOps() {
     form->addRow(gazeTr("重复文件命名"),
         combo("FileOps/duplicateTemplate",
               {"<文件名>-(#)", "<文件名> - 副本 (#)", "<文件名>-副本 (#)", "<文件名>-#", "副本 (#) - <文件名>"}, 0));
-    form->addRow(new QLabel(QString::fromUtf8(
+    form->addRow(new QLabel(gazeTr(
         "说明:右键无损旋转/翻转会先复制原件再旋转,不修改任何元数据(含创建/修改时间)。")));
     return wrapTitled(gazeTr("文件操作"), form);
 }
@@ -130,20 +130,20 @@ QWidget* SettingsDialog::pageInterface() {
     form->setVerticalSpacing(6);
     auto* multiTabs = chk("Interface/multiViewerTabs",
                           gazeTr("同一文件多个查看器标签卡"), false);
-    multiTabs->setToolTip(QString::fromUtf8(
+    multiTabs->setToolTip(gazeTr(
         "开:同一个文件可以再开一张标签(右键\"在新标签卡中打开\"点两次就有两张)。\n"
         "关(默认):一个文件只占一张标签,重复打开就切回已有那张。"));
     form->addRow(multiTabs);
     auto* syncBrowser = chk("Interface/syncBrowser",
                             gazeTr("关闭视图时,同步调整浏览器"), false);
-    syncBrowser->setToolTip(QString::fromUtf8(
+    syncBrowser->setToolTip(gazeTr(
         "开:切换查看器标签、以及退回浏览器时,把文件列表的选中项挪到那个文件上,\n"
         "于是退回后高亮的就是刚才最后看的那张,标题栏与预览也都跟着它。\n"
         "关(默认):退回浏览器后列表仍停在你进查看器前的那一行。"));
     form->addRow(syncBrowser);
     auto* oneTab = chk("Interface/oneViewerTab",
                        gazeTr("一个文件仅有一个查看器标签卡"), false);
-    oneTab->setToolTip(QString::fromUtf8(
+    oneTab->setToolTip(gazeTr(
         "开:查看器始终只保留一张标签,新打开的文件顶掉当前标签。\n"
         "关(默认):右键\"在新标签卡中打开\"每张另起一条,张数受下面的上限约束。"));
     form->addRow(oneTab);
@@ -151,7 +151,7 @@ QWidget* SettingsDialog::pageInterface() {
         spin("Interface/maxViewerTabs", 0, 100, 99));
     auto* panesOnStart = chk("Interface/showPanesOnStart",
         gazeTr("启动时打开文件列表和预览框"), true);
-    panesOnStart->setToolTip(QString::fromUtf8(
+    panesOnStart->setToolTip(gazeTr(
         "勾选:启动时强制显示文件夹树与预览面板。\n"
         "不勾选:沿用上次退出时的面板开关(需保存布局或启用\"应用关闭时的布局\")。"));
     form->addRow(panesOnStart);

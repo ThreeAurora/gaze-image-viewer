@@ -329,7 +329,7 @@ void MainWindow::createViewMenu() {
     static_assert(int(sizeof(m_paneActs) / sizeof(m_paneActs[0])) >= kPaneCount,
                   "m_paneActs 容量必须覆盖 kPanes");
     for (int i = 0; i < kPaneCount; ++i) {
-        QAction* a = vm->addAction(QString::fromUtf8(items[i].name));
+        QAction* a = vm->addAction(gazeTr(items[i].name));
         a->setCheckable(true);
         a->setChecked(paneOn(QString::fromLatin1(items[i].id)));
         if (items[i].key[0]) a->setShortcut(QKeySequence(items[i].key));

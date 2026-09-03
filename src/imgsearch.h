@@ -16,6 +16,7 @@
 // schema 未落实,客户端只提供通用 get/post,不建 UI(不猜字段名)。
 // ═══════════════════════════════════════════════════════════
 
+#include "i18n.h"       // 错误消息使用点包 gazeTr
 #include <functional>
 #include <QString>
 #include <QList>
@@ -175,7 +176,7 @@ inline void ensureRunningAsync(QObject* ctx, std::function<void(QString)> onRead
         const QString py = AppSettings::instance().get(
             "ImgSearch/python", QStringLiteral("C:/miniconda3")).toString();
         if (!QFileInfo::exists(dir + "/main.py")) {
-            onReady(QString::fromUtf8(
+            onReady(gazeTr(
                 "未找到万象图搜项目:%1/main.py —— 可在 设置 → 以文搜图 改目录").arg(dir));
             return;
         }
@@ -185,7 +186,7 @@ inline void ensureRunningAsync(QObject* ctx, std::function<void(QString)> onRead
         if (!p.startDetached(py, {"main.py", "--no-browser",
                                   "--port", QString::number(port())},
                              dir, &pid)) {
-            onReady(QString::fromUtf8(
+            onReady(gazeTr(
                 "无法启动 Python 解释器:%1 —— 检查 设置 → 以文搜图").arg(py));
             return;
         }
@@ -204,7 +205,7 @@ inline void ensureRunningAsync(QObject* ctx, std::function<void(QString)> onRead
                 } else if (QDateTime::currentMSecsSinceEpoch() >= deadline) {
                     *done = true;
                     t->stop(); t->deleteLater();
-                    onReady(QString::fromUtf8(
+                    onReady(gazeTr(
                         "服务启动超时(30s)。可手动运行 main.py,或在 设置 → 以文搜图 检查配置"));
                 }
             });

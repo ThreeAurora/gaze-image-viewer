@@ -198,13 +198,18 @@ def main():
     merged.update(comm)
 
     print("== 生成 gaze_en.ts ==")
+    # 源串取并集:代码提取到的字面量 + common.json 手工登记的键(表数据/变量实参
+    # 在使用点包 gazeTr(变量),提取器看不见,靠登记进字典才能入 ts/qm)
+    all_sources = dict(sources)
+    for k in merged:
+        all_sources.setdefault(k, "(common.json 登记)")
     lines = ['<?xml version="1.0" encoding="utf-8"?>',
              "<!DOCTYPE TS>",
              '<TS version="2.1" language="en_US">',
              "<context>",
              "    <name>Gaze</name>"]
     translated = missing = 0
-    for src in sorted(sources):
+    for src in sorted(all_sources):
         en = merged.get(src)
         lines.append("    <message>")
         lines.append("        <source>%s</source>" % xml_escape(src))
@@ -219,12 +224,12 @@ def main():
     lines.append("</TS>")
     with open(TS_PATH, "w", encoding="utf-8") as f:
         f.write("\n".join(lines))
-    print("  共 %d 条,已译 %d,缺译 %d" % (len(sources), translated, missing))
+    print("  共 %d 条,已译 %d,缺译 %d" % (len(all_sources), translated, missing))
     if missing:
         print("== 缺译清单(运行时将回退中文,待补) ==")
-        for src in sorted(sources):
+        for src in sorted(all_sources):
             if not merged.get(src):
-                print("    -", repr(src), "  @", sources[src])
+                print("    -", repr(src), "  @", all_sources[src])
     if not target_dir:
         return
     qm_path = os.path.join(target_dir, "gaze_en.qm")

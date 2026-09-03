@@ -611,7 +611,7 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
 
             if (!ok) {
                 QMessageBox::warning(nullptr, gazeTr("裁剪失败"),
-                    QString::fromUtf8("无法无损完成该裁剪:\n%1\n\n"
+                    gazeTr("无法无损完成该裁剪:\n%1\n\n"
                                       "可换个选区(建议选区再大一点、离边缘远一点)重试。")
                         .arg(m_filePath));
                 return;

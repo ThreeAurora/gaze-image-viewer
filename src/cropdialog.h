@@ -162,7 +162,7 @@ private:
         m_view->setPixmap(canvas);
 
         const bool jpeg = isJpeg();
-        m_info->setText(QString::fromUtf8(
+        m_info->setText(gazeTr(
             "裁剪区域 %1×%2  @(%3,%4)   原图 %5×%6   %7")
             .arg(m_sel.width()).arg(m_sel.height())
             .arg(m_sel.x()).arg(m_sel.y())

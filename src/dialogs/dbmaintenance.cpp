@@ -114,7 +114,7 @@ void DbMaintenanceDialog::reload() {
     // 数据库文件大小
     QFileInfo fi(d.databaseName());
     qint64 dbSize = fi.size();
-    m_summary->setText(QString::fromUtf8(
+    m_summary->setText(gazeTr(
         "数据库:%1  ·  缓存条目:%2  ·  缩略图合计:%3")
         .arg(fi.fileName() + QString(" (%1 MB)").arg(dbSize / 1024 / 1024))
         .arg(total)

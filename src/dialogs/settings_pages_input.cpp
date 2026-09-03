@@ -116,7 +116,7 @@ QWidget* SettingsDialog::pageShortcuts() {
     root->addWidget(group(gazeTr("选中命令的快捷方式"), footRow));
 
     // 固定鼠标绑定说明(2026-08-30 裁决:鼠标设置页已删,绑定写死在代码里)
-    auto* mouseTip = new QLabel(QString::fromUtf8(
+    auto* mouseTip = new QLabel(gazeTr(
         "鼠标：滚轮 = 上一个/下一个文件；Ctrl+滚轮 或 按住右键+滚轮 = 放大/缩小；"
         "左键拖动 = 移动画面；右键 = 上下文菜单；中键动作见「切换模式」页。"));
     mouseTip->setWordWrap(true);
