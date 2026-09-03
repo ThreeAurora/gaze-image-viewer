@@ -125,8 +125,9 @@ public:
 signals:
     void fileCountChanged();
     void selectionChanged(const QString& currentPath);
-    // 2026-09-03:鼠标单选目录卡 → 文件树镜像选中(仅鼠标单选目录时发出)
-    void dirSelected(const QString& dirPath);
+    // 注:2026-09-03 曾加过 dirSelected(鼠标单选目录卡→文件树镜像选中),
+    // 用户裁决「选中文件夹时树应当留在原处,只有双击打开才同步」后整条链路已移除。
+    // 树同步的唯一落点是 MainWindow::navigateTo 里的 FolderTree::focusPath。
     void filterModeChanged(int mode);
 
 protected:

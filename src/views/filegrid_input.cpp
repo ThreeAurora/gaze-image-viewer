@@ -279,10 +279,10 @@ void FileGrid::onCanvasRelease(int index) {
     // 普通单击选中首排/末排文件时,自动贴边完整展示那一排
     if (!ctrl) scrollToRow(index);
 
-    // 2026-09-03:鼠标单选**目录**卡 → 通知主窗口,让文件树镜像选中同一条目
-    // (只在这里发:loadDirectory 自动选中首项/方向键盘选都不触发,避免树瞎跳)
-    if (QFileInfo(m_entries[index].path).isDir())
-        emit dirSelected(m_entries[index].path);
+    // 注:这里过去会 emit dirSelected 让文件树镜像选中同一目录(2026-09-03 加的)。
+    // 用户裁决「文件页中选中某文件夹时,文件树应当依然在原处;只有双击打开该
+    // 文件夹时,才该去选中它」——故整条反向联动链路已移除。
+    // 双击目录卡走 onCanvasDblClick → MainWindow::navigateTo,树在那里同步。
 
     emit selectionChanged(m_entries[index].path);
 }

@@ -94,12 +94,11 @@ void MainWindow::onTreeFolderSelected(const QString& path) {
     m_navFromTree = false;
 }
 
-// 2026-09-03:文件页鼠标单选目录卡 → 文件树镜像。树里若已有该节点,focusPath
-// 直接选中+滚动;不在树里(折叠分支/未物化)则顺着路径展开过去。焦点不抢:
-// 网格握着焦点亮蓝,树镜像显示暗蓝,正是"选中色随焦点分流"的两档语义。
-void MainWindow::onGridDirSelected(const QString& path) {
-    if (m_folderTree) m_folderTree->focusPath(path);
-}
+// 注:MainWindow::onGridDirSelected(文件页鼠标单选目录卡 → 文件树镜像选中)
+// 已于 2026-09-03 按用户裁决移除。用户原话:「当文件页中选中某文件夹时,文件树
+// 应当依然在原处……只有我双击打开该文件夹时,你才该去选中它。」
+// 于是树同步收口到唯一一处:navigateTo(见其末尾的 focusPath),即只有真正
+// 进入目录(双击目录卡/地址栏回车/前进后退/上级/树点击)才移动树。
 
 bool MainWindow::navigateTo(const QString &path) {
     QString p = mw_impl::canonicalPath(path);
@@ -149,7 +148,10 @@ bool MainWindow::navigateTo(const QString &path) {
     // 不 clear():loadDirectory 内部已默认选中第一项并触发预览加载,
     // 这里再 clear 会把刚发起的预览抹掉(进文件夹预览空白的原因)。
     // 空目录时 selectionChanged({}) 自行走 clear,无需代办
-    // 树跟随当前目录:地址栏/历史/双击卡片/搜索定位都汇到这一处
+    // 树跟随当前目录 —— 全项目唯一的树同步落点(2026-09-03 用户裁决后收口):
+    // 只有**真正进入**目录才动树,即双击目录卡 / 地址栏回车 / 前进后退 / 上级
+    // / 搜索定位 / 树点击(本函数)这几条路。文件页里单击(或键盘)选中一个
+    // 文件夹卡片时树必须留在原处,不再镜像跟随。
     if (m_folderTree) m_folderTree->focusPath(p);
     return true;
 }

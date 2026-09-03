@@ -82,8 +82,8 @@ private:
     void applyThemeSurfaces();
     void updateStatus();
     void onSelectionChanged(const QString &path);
-    // 2026-09-03:文件页鼠标单选目录卡 → 文件树镜像选中(网格→树这支反向联动)
-    void onGridDirSelected(const QString& path);
+    // 注:onGridDirSelected(文件页单选目录卡→树镜像)已按用户 2026-09-03 裁决移除,
+    // 单击目录卡不再动树;树只在 navigateTo(双击打开/地址栏/历史/上级)里同步。
     void onSizeChanged(int value);
     void onThumbZoom(int delta);
     void goBack();

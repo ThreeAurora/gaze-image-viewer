@@ -198,8 +198,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 
     m_fileGrid = new FileGrid;
     cl->addWidget(m_fileGrid, 1);
-    // 反向联动:文件页鼠标单选目录卡 → 树镜像选中同一条目(2026-09-03)
-    connect(m_fileGrid, &FileGrid::dirSelected, this, &MainWindow::onGridDirSelected);
+    // 注:过去这里有一条"文件页鼠标单选目录卡 → 树镜像选中"的反向联动
+    // (FileGrid::dirSelected → MainWindow::onGridDirSelected),2026-09-03 用户
+    // 裁决「选中文件夹时树应当留在原处,只有双击打开才同步」后已移除。
+    // 树同步只发生在真正进入目录时(navigateTo 里的 FolderTree::focusPath)。
     // 拖放(#81):只在 MainWindow 上 setAcceptDrops,网格/树都不开 ——
     // 子控件若 acceptDrops 却不实现 dropEvent,会把事件吞掉,主窗口反而收不到。
     // 事件沿父链上浮到这里,落点判定在 dropEvent 里用 childAt 做
