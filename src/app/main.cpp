@@ -25,6 +25,8 @@
 #include <QTranslator>
 #include <QLocale>
 #include <QLibraryInfo>
+#include <QAbstractNativeEventFilter>
+#include <windows.h>
 #include "mainwindow.h"
 #include "constants.h"
 #include "keytarget.h"
@@ -117,15 +119,44 @@ protected:
     }
 };
 
-// ── 启动防闪(2026-09-03 复盘)──
-// 误诊教训:Qt6 **所有**顶层窗口共用 Win32 类名 "Qt683QWindowIcon"
-// (MainWindow/QDialog/QVideoWindow 全是它,"Icon"只是类名后缀,不是"图标
-// 小窗")。上一版按类名钳屏外的 StartupWindowGuard 把视频输出窗、设置等
-// 弹出对话框一起钳到了 (-32000,-32000) —— 弹窗全部不可见但模态照常拦截
-// 鼠标,只能强杀进程。该过滤器已整体删除。
-// 真正的启动闪框:FFmpeg 后端的 QVideoWindow 是独立顶层 HWND,恢复上次
-// 会话时构造期 loadFile → 视频窗先于主窗口落位,孤立映射一帧。修复 =
-// 上次选中文件的预览恢复推迟到主窗口首帧之后(见 restoreStartupPreview)。
+// ── 启动防闪 #2(2026-09-03 复盘两轮后的最终修法)──
+// 两轮旧解法的错都在**识别口径**上:
+//   · 第一版只把主窗口整体透明 —— 透明盖得住主窗自身的第一帧,盖不住
+//     Qt 为顶层窗口自动建的 160x28「图标拥有者」小窗:它是个独立顶层
+//     HWND,与预览的是图片还是视频无关,首次 show 落位前会在原位(-32000
+//     之前)短暂映射一帧 —— 就是用户看到的"一闪而过的、只有空标题栏的
+//     小窗",不分图片/视频都能复现。
+//   · 第二版在原生消息层按**类名**全钳 —— Qt6 所有顶层窗口(MainWindow/
+//     QDialog/QVideoWindow)共用 Win32 类名 "Qt683QWindowIcon",于是视频
+//     输出窗、设置等弹出框一起被送出屏幕(弹窗不可见但模态照常拦鼠标,
+//     只能强杀进程)。只能整版回退。
+// 可靠区分点其实在**尺寸**:图标小窗固定 160x28(专伺候任务栏/Alt-Tab);
+// 视频窗/对话框是实物内容尺寸(几百 x 几百起)。第三版只钳"小尺寸"的
+// Qt683QWindowIcon,大窗一概放行 —— 同类名不再彼此误伤。
+class StartupWindowGuard : public QAbstractNativeEventFilter {
+public:
+    bool nativeEventFilter(const QByteArray&, void* message, qintptr*) override {
+        auto* msg = static_cast<MSG*>(message);
+        if (!msg || msg->message != WM_WINDOWPOSCHANGING || !msg->hwnd)
+            return false;
+        wchar_t cls[64];
+        const int n = GetClassNameW(msg->hwnd, cls, 64);
+        if (n <= 0) return false;
+        const QString clsName = QString::fromWCharArray(cls, n);
+        auto* wp = reinterpret_cast<WINDOWPOS*>(msg->lParam);
+        // 只拦 Qt683QWindowIcon 且尺寸像"图标拥有者小窗"的:窗口照建照活
+        //(任务栏/Alt-Tab 图标由它托管),只是落位一律压到屏外,闪现从根上消失。
+        if (clsName == QStringLiteral("Qt683QWindowIcon")
+            && wp->cx <= 200 && wp->cy <= 80) {
+            if (wp->x > -1000 || wp->y > -1000) {
+                wp->x = -32000;
+                wp->y = -32000;
+            }
+            return false;   // 只改位置:尺寸/显示标志不动,继续走默认流程
+        }
+        return false;
+    }
+};
 
 // "仅允许运行一个实例":第二个进程把命令行路径转交给已运行实例后退出
 static const QString kSingleServer = QStringLiteral("GazeSingleInstance");
@@ -333,6 +364,10 @@ int main(int argc, char *argv[]) {
     // 同一拍里恢复上次选中文件的预览 —— QVideoWindow(FFmpeg 后端的顶层
     // 视频输出窗)若在主窗显示前装载,会在屏幕上孤立映射一帧"闪框",
     // 必须等主窗口就位后再触发 loadFile(见 MainWindow::restoreStartupPreview)。
+    // 另装 StartupWindowGuard:把 Qt 的 160x28「图标拥有者」小窗钳在屏外,
+    // 该窗是独立顶层 HWND,透明度管不着它(定义处注释了识别口径)。
+    static StartupWindowGuard s_startupGuard;
+    app.installNativeEventFilter(&s_startupGuard);
     w.setWindowOpacity(0.0);
     w.show();
     QTimer::singleShot(0, &w, [&w]() {
