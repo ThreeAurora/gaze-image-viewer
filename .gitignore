@@ -20,6 +20,10 @@ build_qt68/CMakeCache.txt
 .idea/
 cache/tmp/Gaze-v*.zip
 
+# 分发产物目录（铁律 1 例外项，HANDOFF.md 明确点名：dist/ 与 portable_test/）
+/dist/
+cache/tmp/portable_test/
+
 __pycache__/
 *.pyc
 
