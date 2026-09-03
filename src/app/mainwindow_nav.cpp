@@ -54,6 +54,29 @@
 #include "settings_dialog.h"
 #include "dbmaintenance.h"
 #include "settings.h"
+#include <QDirIterator>
+#include <QElapsedTimer>
+
+// ── 文件夹大小快速估算(信息栏用) ──
+// 全量递归对巨目录(几十万条目)会卡 UI,故设两道闸:**条目硬顶**与**时间片**,
+// 谁先到都停手 —— 状态栏只展示个量级,截断时加 "≈" 前缀。"≈" 是诚实的:
+// 文件夹大小本来就没有瞬时精确值,超过 30ms 就没必要为它继续占住事件循环。
+// 返回 true = 全量算完(精确值);false = 被闸截断(约值,调用方加 ≈)。
+static bool quickDirSize(const QString& dir, qint64* sizeOut, qint64* countOut) {
+    *sizeOut = 0; *countOut = 0;
+    QDirIterator it(dir, QDir::Files | QDir::NoDotAndDotDot,
+                    QDirIterator::Subdirectories);
+    QElapsedTimer t; t.start();
+    enum { kHardCap = 200000 };        // 防极端:再大也只算前面一部分
+    constexpr qint64 kBudgetMs = 30;   // 状态栏量级估算的时间预算
+    while (it.hasNext()) {
+        it.next();
+        const QFileInfo fi = it.fileInfo();
+        if (fi.isFile()) { *sizeOut += fi.size(); ++(*countOut); }
+        if (*countOut > kHardCap || t.elapsed() > kBudgetMs) return false;  // 截断
+    }
+    return true;
+}
 
 #include "mainwindow_internal.h"
 
@@ -191,14 +214,29 @@ void MainWindow::updateStatus() {
     int sc = m_fileGrid->selectedCount();
     qint64 ss = m_fileGrid->selectedSize();
     QString text = QString("%1 \xe9\xa1\xb9").arg(fc); // 项
+    // 单选文件夹:目录条目没有 size 字段,照旧会显示 [0 B]。这里对目录递归
+    // 快速估算大小,截断时补 "≈" 前缀;合计与单行详情共用这一次结果。
+    QString approx;
+    if (sc == 1) {
+        const auto paths = m_fileGrid->selectedPaths();
+        if (!paths.isEmpty() && QFileInfo(paths.first()).isDir()) {
+            qint64 sz = 0, cnt = 0;
+            if (!quickDirSize(paths.first(), &sz, &cnt))
+                approx = QString::fromUtf8("\xe2\x89\x88 ");   // ≈ 
+            ss = sz;
+        }
+    }
     if (sc > 0) {
-        text += QString("  \xc2\xb7  \xe5\xb7\xb2\xe9\x80\x89 %1 \xe9\xa1\xb9 \xc2\xb7 [%2]")
-                    .arg(sc).arg(formatSize(ss));
+        text += QString("  \xc2\xb7  \xe5\xb7\xb2\xe9\x80\x89 %1 \xe9\xa1\xb9 \xc2\xb7 [%2%3]")
+                    .arg(sc).arg(approx).arg(formatSize(ss));
         auto paths = m_fileGrid->selectedPaths();
         if (!paths.isEmpty()) {
             QFileInfo fi(paths.first());
+            const QString oneSize = (fi.isDir() && sc == 1)
+                                  ? approx + formatSize(ss)
+                                  : formatSize(fi.size());
             text += "  " + fi.fileName()
-                  + "  " + formatSize(fi.size())
+                  + "  " + oneSize
                   + "  " + fi.lastModified().toString("yyyy/M/d - HH:mm:ss");
         }
     }
