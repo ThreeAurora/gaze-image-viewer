@@ -25,6 +25,10 @@
 #include <QTranslator>
 #include <QLocale>
 #include <QLibraryInfo>
+#include <QSet>
+#include <QElapsedTimer>
+#include <QAbstractNativeEventFilter>
+#include <windows.h>
 #include "mainwindow.h"
 #include "constants.h"
 #include "keytarget.h"
@@ -115,6 +119,60 @@ protected:
         QTimer::singleShot(0, this, [btn]() { if (btn) btn->animateClick(); });
         return true;
     }
+};
+
+// ── 启动防闪 #2(2026-09-03):Qt 的「图标拥有者」小窗 ──
+// 第一版防闪(首帧整体透明)只盖得住主窗口自身:那个 160x28 的图标小窗
+// (Win32 class=Qt683QWindowIcon)是**另一个顶层 HWND**,主窗口的 opacity
+// 对它无效 —— 它在被 Qt 挪到屏外(-32000,-32000)前仍会在原位短暂映射一
+// 帧,就是用户看到的"一闪而过的、仅含空标题栏的小窗"。Qt 没有公开开关,
+// 这里在原生消息层拦 WM_WINDOWPOSCHANGING:凡 class=Qt683QWindowIcon 的
+// 窗口,落位请求一律压到屏外 —— 窗口照建照活(任务栏/Alt-Tab 图标由它
+// 托管),但所有像素都不落在屏幕上,闪现从根上消失。
+// 附带诊断:启动头 2.5s 里任何 class 以 "Qt6" 开头、且试图落在屏内的顶层
+// 窗都会记进日志,便于未来揪出别的瞬态小窗。
+class StartupWindowGuard : public QAbstractNativeEventFilter {
+public:
+    void start() { m_diagUntil.start(); }
+    bool nativeEventFilter(const QByteArray&, void* message, qintptr*) override {
+        auto* msg = static_cast<MSG*>(message);
+        if (!msg || msg->message != WM_WINDOWPOSCHANGING || !msg->hwnd)
+            return false;
+        wchar_t cls[64];
+        const int n = GetClassNameW(msg->hwnd, cls, 64);
+        if (n <= 0) return false;
+        const QString clsName = QString::fromWCharArray(cls, n);
+        auto* wp = reinterpret_cast<WINDOWPOS*>(msg->lParam);
+        if (clsName == QStringLiteral("Qt683QWindowIcon")) {
+            if (wp->x > -1000 || wp->y > -1000) {
+                Logger::event(QStringLiteral(
+                    "startup-guard: icon-owner window clamped offscreen x=%1 y=%2")
+                        .arg(wp->x).arg(wp->y));
+                wp->x = -32000;   // 只改位置:尺寸/显示标志不动,Qt 本身也会挪到屏外
+                wp->y = -32000;
+            }
+            return false;        // 改完继续走默认流程,别把消息整个吞掉
+        }
+        if (m_diagUntil.isValid() && m_diagUntil.elapsed() < 2500
+            && clsName.startsWith(QLatin1String("Qt6"))) {
+            const QRect r(wp->x, wp->y, wp->cx, wp->cy);
+            if (r.x() >= -200 && r.y() >= -200) {
+                const QString key = clsName + QLatin1Char('@')
+                    + QString::number(r.x()) + QLatin1Char(',') + QString::number(r.y())
+                    + QLatin1Char('+') + QString::number(r.width())
+                    + QLatin1Char('x') + QString::number(r.height());
+                if (!m_seen.contains(key)) {
+                    m_seen.insert(key);
+                    Logger::event(QStringLiteral("startup-guard: flash-candidate class=%1 rect=%2")
+                                  .arg(clsName, key));
+                }
+            }
+        }
+        return false;
+    }
+private:
+    QElapsedTimer m_diagUntil;
+    QSet<QString> m_seen;
 };
 
 // "仅允许运行一个实例":第二个进程把命令行路径转交给已运行实例后退出
@@ -287,7 +345,8 @@ int main(int argc, char *argv[]) {
     Logger::boot("handoff-probe");
 
     // 全局 QSS 收编进 Theme::appQss()(#96):Theme::T 让同一张样式表在深/浅两档间取值,
-    // Appearance/theme 决定,重启生效。样式文本与占位符表见 theme.cpp
+    // Appearance/theme 决定。设置页切换会走 Theme::notifyChanged() 重灌内联样式/缓存色,
+    // 主题切换即时生效,无需重启(协议见 theme.h)。启动这里只做首帧一致性。
     Theme::init();
     app.setStyleSheet(Theme::appQss());
 
@@ -318,11 +377,13 @@ int main(int argc, char *argv[]) {
     QObject::connect(&AppSettings::instance(), &AppSettings::changed,
                      &w, [applySingleInstance]() { applySingleInstance(); });
 
-    // 启动防闪:Windows 上 Qt 会为顶层窗口建一个 160x28 的"图标拥有者"小窗
-    // (class=Qt683QWindowIcon,平时藏在屏幕外 -32000,-32000,伺候任务栏/Alt-Tab
-    // 图标)。首次 show 时它会在落位前先映射一帧 —— 表现为"一闪而过的、只有
-    // 标题栏的空白小窗"。该行为 Qt 无公开开关,故用"首帧整体透明,事件循环
-    // 下一跳再亮出"把所有首帧瞬态(含图标小窗)一次性盖掉,不影响感知速度。
+    // 启动防闪:①整体透明压掉主窗口自身的第一帧瞬态(旧版已有);
+    // ②StartupWindowGuard 在原生消息层把 Qt 的"图标拥有者"小窗
+    // (Qt683QWindowIcon)钳在屏外 —— 那是个独立顶层 HWND,透明度管不着它,
+    // 上一版只靠透明所以它还在闪(详见 guard 定义处注释)。
+    StartupWindowGuard startupGuard;
+    app.installNativeEventFilter(&startupGuard);
+    startupGuard.start();
     w.setWindowOpacity(0.0);
     w.show();
     QTimer::singleShot(0, &w, [&w]() { w.setWindowOpacity(1.0); });
