@@ -90,6 +90,10 @@ Fetching images…</translation>
         <translation>Page %1 / %2</translation>
     </message>
     <message>
+        <source>%1 · %2 / %3</source>
+        <translation>%1 · %2 / %3</translation>
+    </message>
+    <message>
         <source>%1 · 相机 RAW 原始文件（%2）
 全解为可视图像需数秒；解码途中切换文件会立即放弃。</source>
         <translation>%1 · camera RAW file (%2)

@@ -62,8 +62,9 @@ add_executable(Gaze WIN32
     src/app/mainwindow_tabs.cpp
     src/app/mainwindow_keys.cpp
     src/app/mainwindow_ops.cpp
-    src/app/mainwindow_filmstrip.cpp   # 2026-09-02:G 全屏顶部就近图片缩略图条
+    src/app/mainwindow_filmstrip.cpp   # 2026-09-02:G 全屏顶部胶片条(显隐与数据对账)
     src/views/foldertree.cpp
+    src/views/filmstrip.cpp            # #203:胶片条本体(QListView 虚拟化,交互自理)
 
     # 文件列表:模型与载入 / 几何布局 / 绘制 / 输入与选择 / 排序筛选 / 内联搜索
     src/views/filegrid.cpp

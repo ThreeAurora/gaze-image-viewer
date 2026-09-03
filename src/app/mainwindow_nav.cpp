@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "foldertree.h"
 #include "filegrid.h"
+#include "views/filmstrip.h"   // #203:onSelectionChanged 里让胶片条跟着切图
 #include "previewpanel.h"
 #include "imgsearchdialog.h"
 #include "printdialog.h"
@@ -258,6 +259,9 @@ void MainWindow::onSelectionChanged(const QString &path) {
     m_preview->loadFile(path);
     // 导航不新增标签,但要让标签条跟着显示这张(已是当前标签则原地不动)
     if (m_viewerMode && !path.isEmpty()) syncViewerTab(path);
+    // #203:G 全屏预览开着胶片条时,方向键/列表切图让条的蓝框/居中/题注跟过来
+    if (m_fullView && m_filmStrip && m_filmStrip->isVisible())
+        m_filmStrip->syncCurrent(path);
     // 相邻预读:方向键切下一张/上一张时零等待显示
     m_preview->preload(m_fileGrid->neighborOf(path, -1),
                        m_fileGrid->neighborOf(path, +1));

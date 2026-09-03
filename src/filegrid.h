@@ -85,6 +85,7 @@ public:
     // 拖放(#81):追加选中(不清空已有选中),用于一次拖进多个文件时全选
     void selectPathAdditive(const QString& path);
     QString pathAt(int idx) const;           // 条目序号 → 路径(越界/空白返回空)
+    QString currentDir() const { return m_currentDir; }   // #203 胶片条对账数据来源
     int    hitTest(const QPoint& canvasPos);  // 画布坐标 → 条目序号(拖放落点判定)
     QString neighborOf(const QString& path, int delta) const;  // 相邻文件路径(预读用)
 

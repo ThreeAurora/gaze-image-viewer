@@ -1,136 +1,77 @@
 // ═══════════════════════════════════════════════════════════
-// MainWindow 全屏胶片条(filmstrip) —— 2026-09-02 用户令
+// MainWindow 全屏胶片条(filmstrip) —— #203 全面重做(2026-09-03 用户令)
 //
-// G 全屏预览时:光标挪到窗口顶端 → 顶部浮现一排"就近图片"的缩略图条。
-// 滚轮在条上 = 切换文件;点击某张 → 跳过去显示在中间,当前查看那张加蓝框。
-// 不光标到顶 = 零装饰,与"全屏只留画面"的总原则一致。
-//
-// 数据源:FileGrid 当前目录的显示列表(m_entries),以当前文件为中心取 ±8
-// 张(共 17)。缩略图走 Thumbnailer::enqueue → thumbnailReady 异步回填,
-// 网格刚展示过的文件必然命中缓存,秒出。
+// G 全屏预览:光标挪到窗口顶端 → 顶部浮现胶片条。控件本体在 src/views/
+// filmstrip.h(QListView 虚拟化):整个目录随便滚、滚到哪缩略图加载到哪、
+// 点击跳转、按住平移、底部题注"文件名 · i / n"。本文件只剩 MainWindow 一侧
+// 的三件事:建控件+接跳转、光标到顶显隐、把 FileGrid 显示列表灌进条。
+// 光标不在顶部 = 零装饰,与"全屏只留画面"的总原则一致。
 // ═══════════════════════════════════════════════════════════
 
 #include "mainwindow.h"
-#include "foldertree.h"
+#include "foldertree.h"      // 拖放提示段:updateFolderDropTarget 摸树行
 #include "filegrid.h"
-#include "previewpanel.h"
-#include "thumbnailer.h"
-#include "constants.h"
-#include "fileentry.h"
-#include "i18n.h"
+#include "views/filmstrip.h"
+#include "i18n.h"            // 拖放提示段:gazeTr("复制"/"移动")
 
 #include <QLabel>
-#include <QHBoxLayout>
-#include <QMouseEvent>
-#include <QScrollBar>
-#include <QFileInfo>
 #include <QApplication>
 
 namespace {
-constexpr int kFilmHalf = 8;          // 当前文件前后各 8 张
-constexpr int kFilmH    = 64;         // 条目高度
-constexpr int kFilmEdge = 48;         // 光标顶边触发区
+constexpr int kFilmEdge  = 48;    // 光标顶边触发区
+constexpr int kStripMaxW = 1600;  // 条最大宽(超宽屏上不铺满整窗)
 }
 
 void MainWindow::createFilmStrip() {
-    m_filmStrip = new QWidget(this);
-    m_filmStrip->setStyleSheet(QString::fromUtf8(
-        "QWidget#filmStrip{background:rgba(18,18,24,235);border:1px solid #3A3A42;"
-        "border-radius:8px;}"));
-    m_filmStrip->setObjectName(QStringLiteral("filmStrip"));
+    m_filmStrip = new FilmStrip(this);
     m_filmStrip->hide();
-    // 触达:整条最上层,滚轮/点击都落在条上
-    m_filmStrip->raise();
+    // 条上点击 → 与"点击标签"/"导航"同一条路:selectByPath 会一路 loadFile +
+    // 刷标题;onSelectionChanged 再把蓝框/题注带回来(见 mainwindow_nav.cpp)
+    connect(m_filmStrip, &FilmStrip::jumpRequested, this, [this](const QString& p) {
+        if (m_fileGrid && !p.isEmpty() && p != m_currentFile)
+            m_fileGrid->selectByPath(p);
+    });
+    // 目录内容变了(增删/重载)才需要重建数据;平时只对账当前文件
+    connect(m_fileGrid, &FileGrid::fileCountChanged, this, [this]() {
+        m_filmDirty = true;
+    });
 }
 
-// 光标到顶 → 显示并刷新条目;离开 → 隐藏。进全屏时由 toggleFullView 主动刷一次,
-// 这里只负责显隐 + 滚轮/点击不悬空(mouseMove 在 mouse 没有按下时也来)。
+// 光标到顶 → 显示并刷新;离开顶区 → 隐藏。条自身的事件(滚轮/拖动/点击)全部
+// 在 FilmStrip 内部自理,这里只管显隐 + 几何。条显示期间光标在条上时
+// eventFilter 不触发(事件归条),自然形成"粘滞",无需额外判断。
 void MainWindow::updateFilmStrip(const QPoint* cursor) {
+    if (!m_filmStrip) return;
     if (!m_fullView) { m_filmStrip->hide(); return; }
     const bool nearTop = cursor && cursor->y() <= kFilmEdge;
     if (!nearTop) { m_filmStrip->hide(); return; }
     refreshFilmStrip();
-    m_filmStrip->adjustSize();
-    m_filmStrip->move((width() - m_filmStrip->width()) / 2, 8);
-    m_filmStrip->raise();
-    m_filmStrip->show();
+    if (!m_filmStrip->isVisible() && m_filmStrip->count() > 0) {
+        const int w = qMin(width() - 24, kStripMaxW);
+        m_filmStrip->setGeometry((width() - w) / 2, 8, w, FilmStrip::preferredHeight());
+        m_filmStrip->raise();
+        m_filmStrip->show();
+    }
 }
 
-// 以当前文件为中心重建条目。缩略图异步回填:先清空放占位,enqueue 后由
-// mainwindow.cpp 的 thumbnailReady 回调按路径落图(与标签缩略图同一机制)。
+// 把 FileGrid 当前目录的显示列表灌进条。#203:只有目录或条目数变了才重建
+// (m_filmDirty 由 fileCountChanged 置位,目录串对账防"数没变内容换了");
+// 平时只把当前文件对进去(蓝框/居中/题注),不再像旧实现那样每拍全量重建。
 void MainWindow::refreshFilmStrip() {
-    if (!m_filmStrip) return;
-    // 从 FileGrid 拿当前目录的显示列表;拿不到就空条
-    // 取当前文件在列表里的位置
-    const int total = m_fileGrid ? m_fileGrid->fileCount() : 0;
+    if (!m_filmStrip || !m_fileGrid) return;
+    const int total = m_fileGrid->fileCount();
     if (total <= 0 || m_currentFile.isEmpty()) { m_filmStrip->hide(); return; }
-    int cur = -1;
-    for (int i = 0; i < total; ++i) {
-        if (m_fileGrid->pathAt(i) == m_currentFile) { cur = i; break; }
+    const QString dir = m_fileGrid->currentDir();
+    if (!m_filmDirty && dir == m_filmDir && m_filmStrip->count() > 0) {
+        m_filmStrip->syncCurrent(m_currentFile);
+        return;
     }
-    if (cur < 0) { m_filmStrip->hide(); return; }
-
-    const int from = qMax(0, cur - kFilmHalf);
-    const int to   = qMin(total - 1, cur + kFilmHalf);
-    // 2026-09-03 夜修:光标在顶部每动一次 mouseMove 都会刷一遍,这里
-    // 先比"窗口路径列表"——没变就直接返回,不再每次销毁重建 17 个标签
-    //(旧实现每拍全量重建,还要走一遍 setLayout,见下方修法)
-    QStringList want;
-    want.reserve(to - from + 1);
-    for (int i = from; i <= to; ++i)
-        want << m_fileGrid->pathAt(i);
-    if (want == m_filmPaths && m_filmItems.size() == want.size()) return;
-    m_filmPaths = want;
-
-    // 2026-09-03 夜修"单个黑点":旧代码每次 new QHBoxLayout 后 setLayout,
-    // 但 widget 已有 layout 时 setLayout 会被 Qt 拒绝(仅告警)——第二拍起
-    // 新标签全堆在 (0,0)、旧 layout 里还挂着已 delete 的标签,整条塌缩成
-    // 一个小黑块。正确做法:先删旧 layout(不删它管的子控件),再删旧标签,
-    // 然后 QHBoxLayout(parent) 构造即自动挂载,不需要再 setLayout。
-    if (QLayout* old = m_filmStrip->layout()) { delete old; }
-    qDeleteAll(m_filmItems);
-    m_filmItems.clear();
-    auto* lay = new QHBoxLayout(m_filmStrip);
-    lay->setContentsMargins(6, 6, 6, 6);
-    lay->setSpacing(4);
-    for (int k = 0; k < m_filmPaths.size(); ++k) {
-        const bool isCur = (from + k) == cur;
-        auto* lb = new QLabel;
-        lb->setFixedSize(72, kFilmH);
-        lb->setAlignment(Qt::AlignCenter);
-        lb->setScaledContents(false);
-        lb->setToolTip(QFileInfo(m_filmPaths[k]).fileName());
-        // 蓝框:当前文件这张;其余透明
-        lb->setStyleSheet(isCur
-            ? QString("QLabel{background:#26262B;border:2px solid %1;border-radius:4px;}")
-                  .arg(QColor(0, 120, 215).name())
-            : QString("QLabel{background:#26262B;border:1px solid %1;border-radius:4px;}")
-                  .arg(C_SEPARATOR));
-        lb->setCursor(Qt::PointingHandCursor);
-        lb->setProperty("idx", from + k);
-        if (from + k == cur) {
-            // 当前那张放一张"当前"标记也 OK,但蓝框已足够;这里不叠加
-        }
-        lb->installEventFilter(this);          // 点击/滚轮由 eventFilter 分支收
-        lay->addWidget(lb);
-        m_filmItems << lb;
-        // 缩略图异步回填
-        const QString& p = m_filmPaths[k];
-        QString su = QFileInfo(p).suffix().toLower();
-        if (!su.isEmpty()) su.prepend(QLatin1Char('.'));
-        Thumbnailer::instance().enqueue(p, 72, VIDEO_EXTS.count(su) > 0);
-    }
-    // thumbnailReady 连接(见 ctor)会按路径回填 m_filmItems 里对应那张
-    // 注:QHBoxLayout(parent) 构造时已自动挂到 m_filmStrip,不再 setLayout(见上)
-}
-
-void MainWindow::jumpToFilmItem(int idx) {
-    if (idx < 0 || idx >= m_filmPaths.size()) return;
-    const QString path = m_filmPaths[idx];
-    if (path == m_currentFile) return;
-    // 与"点击标签"/"导航"同一条路:选中列表项会一路 loadFile + 刷标题
-    if (m_fileGrid) m_fileGrid->selectByPath(path);
-    refreshFilmStrip();          // 当前文件变了,蓝框跟过去
+    QStringList paths;
+    paths.reserve(total);
+    for (int i = 0; i < total; ++i) paths << m_fileGrid->pathAt(i);
+    m_filmDir = dir;
+    m_filmDirty = false;
+    m_filmStrip->setEntries(paths, m_currentFile);
 }
 
 // ═══════════════════════════════════════════════════════════

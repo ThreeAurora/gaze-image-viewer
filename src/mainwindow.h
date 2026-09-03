@@ -19,6 +19,7 @@ class FileGrid;
 class PreviewPanel;
 class InfoPanel;
 class SortHeader;
+class FilmStrip;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -36,8 +37,9 @@ public:
     Q_INVOKABLE void openViewerTab(const QString& path);  // 右键"在新标签卡中打开"
     // 2026-09-02 用户令:双击预览区 = 开新标签并选中它;Ctrl+双击 = 后台开(焦点不跳走)
     Q_INVOKABLE void openTabForeground();   // 双击:进查看器 + 开新标签 + 选中
-    Q_INVOKABLE void openTabBackground();   // Ctrl+双击:进查看器 + 开新标签但焦点留在浏览器
+    Q_INVOKABLE void openTabBackground();   // Ctrl+双击:后台开新标签,焦点留在浏览器
     void syncViewerTab(const QString& path);
+    void updateTabBarVis();   // 标签栏显隐总闸(2026-09-03:浏览器态有图签也显示)
     void closeViewerTab(int index);              // 关闭按钮/标签右键菜单/中键
     Q_INVOKABLE void toggleViewer();   // 浏览器 ↔ 查看器(单图模式)
     Q_INVOKABLE void toggleFullView();   // G(#154):全屏预览=只铺画面,不进查看器不碰标签
@@ -149,11 +151,11 @@ private:
     void applyShortcuts();                      // 应用自定义快捷键(ini)
     void collectMenuActions(QMenu* menu, QList<QAction*>& out);
     // ── 2026-09-02 全屏胶片条(filmstrip)──
-    // G 全屏预览时光标移到顶部浮现一排就近图片缩略图:蓝框标当前,滚轮/点击切文件。
+    // G 全屏预览时光标移到顶部浮现缩略图条;#203 重做为 FilmStrip 独立控件
+    //(QListView 虚拟化:全目录可滚、当前项居中、悬停反馈、题注行)。
     void createFilmStrip();                    // ctor:建隐藏的顶部条
-    void updateFilmStrip(const QPoint* cursor); // 光标到顶显示、否则隐藏(鼠标移动驱动)
-    void refreshFilmStrip();                   // 换文件/进全屏时重建条目(缩略图异步回填)
-    void jumpToFilmItem(int idx);              // 点击:到对应文件
+    void updateFilmStrip(const QPoint* cursor); // 光标到顶显示、离开条与触发区隐藏
+    void refreshFilmStrip();                   // 目录/当前文件变化时重建或跟随
     // 2026-09-02 拖放提示:拖动时更新光标旁"复制/移动"浮标,并高亮落点文件夹
     void updateDragHint(const QPoint& pos, bool valid);  // valid=落在可放置区
     void hideDragHint();
@@ -195,11 +197,11 @@ private:
     Qt::WindowStates m_preFullViewState = Qt::WindowNoState; // 进全屏预览前的窗口状态(2026-09-02:退出时恢复最大化,不再被 showNormal 打回普通)
     int  m_redFilterMode = 0; // 红标筛选三态:0全部 1仅红标 2仅非红标
     QToolButton* m_redBtn = nullptr; // 红标三态钮,蓝色背景指示器由 syncFilterIndicators 独家维护(#107)
-    QTabBar*    m_viewerTabs = nullptr;  // 查看器标签条(仅查看器模式可见)
+    QTabBar*    m_viewerTabs = nullptr;  // 查看器标签条(浏览器态有图签也显示,见 updateTabBarVis)
     // ── 2026-09-02 全屏胶片条 ──
-    QWidget*            m_filmStrip = nullptr;  // 顶部缩略图条(全屏预览,光标到顶显示)
-    QList<QLabel*>      m_filmItems;            // 条目 label(路径在 UserRole)
-    QStringList         m_filmPaths;            // 对应文件路径(与 m_filmItems 对齐)
+    FilmStrip*          m_filmStrip = nullptr;  // 顶部缩略图条(全屏预览,光标到顶显示)
+    bool                m_filmDirty = false;    // 目录列表变了,胶片条下次显示要重建
+    QString             m_filmDir;              // 胶片条上次装载的目录(判目录切换)
     // 2026-09-02 拖放:光标旁"复制/移动"浮标 + 落点文件夹高亮
     QLabel*             m_dragHint = nullptr;   // 拖动时跟随光标的动作提示(隐藏态)
     bool   m_viewerNoSync = false;       // 进查看器时不要就地改标签(由"开新标签"自己追加)

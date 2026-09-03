@@ -83,8 +83,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     createMenubar();
     Logger::boot("ctor:menubar");
 
-    // 查看器标签条(Edge 式,只在查看器模式显示):标签的文件路径存在 tabData 里,
-    // 增删/拖拽重排都带着它走,所以没有并行的路径数组需要同步(语义见文件末尾段注释)
+    // 查看器标签条(Edge 式):2026-09-03 起显隐由 updateTabBarVis 总闸统一管 ——
+    // 查看器模式恒显示;浏览器模式只要还有图片标签就继续显示,一张不剩才收。
+    // 标签的文件路径存在 tabData 里,增删/拖拽重排都带着它走,所以没有并行的
+    // 路径数组需要同步(语义见文件末尾段注释)
     m_viewerTabs = new QTabBar;
     m_viewerTabs->setExpanding(false);
     m_viewerTabs->setMovable(true);
@@ -95,8 +97,13 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     m_viewerTabs->hide();
     m_viewerTabs->installEventFilter(this);      // 中键关标签:QTabBar 没有这个信号
     connect(m_viewerTabs, &QTabBar::currentChanged, this, [this](int i) {
-        // #105:「浏览器」标签 = 回标准模式的出口(用户点它就是想退出查看器)
-        if (i >= 0 && isBrowserTab(i)) { toggleViewer(); return; }
+        // #105:「浏览器」标签 = 回标准模式的出口(用户点它就是想退出查看器)。
+        // 2026-09-03:浏览器态标签栏也显示后,这个标签在浏览器里也会被点到 ——
+        // 已在浏览器时再 toggleViewer 会反向把人带进查看器,必须挡掉。
+        if (i >= 0 && isBrowserTab(i)) {
+            if (m_viewerMode) toggleViewer();
+            return;
+        }
         const QString p = tabPath(i);
         if (p.isEmpty()) return;
         // Interface/syncBrowser:切标签时把浏览器选中项挪过去(它会一路 loadFile)
@@ -115,18 +122,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     connect(&Thumbnailer::instance(), &Thumbnailer::thumbnailReady, this,
             [this](const QString& path, const QImage& img) {
         if (img.isNull()) return;
-        // ① 标签缩略图
+        // 标签缩略图(#203 起:全屏胶片条的回填由 FilmStrip 自己连 Thumbnailer,
+        // 这里不再代收)
         if (m_viewerTabs) {
             const int i = indexOfTabPath(path);
             if (i >= 0) m_viewerTabs->setTabIcon(i, QIcon(QPixmap::fromImage(img)));
-        }
-        // ② 全屏胶片条回填
-        if (m_filmStrip && m_filmStrip->isVisible()) {
-            const int f = m_filmPaths.indexOf(path);
-            if (f >= 0 && f < m_filmItems.size())
-                m_filmItems[f]->setPixmap(QPixmap::fromImage(
-                    img.scaled(QSize(68, 64), Qt::KeepAspectRatio,
-                               Qt::SmoothTransformation)));
         }
     });
     // #105:「浏览器」标签钉死在索引 0 —— 拖拽重排只允许发生在图片标签之间
@@ -313,7 +313,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     // Global shortcuts via event filter
     qApp->installEventFilter(this);
 
-    createFilmStrip();   // 2026-09-02:G 全屏顶部就近图片缩略图条(隐藏,光标到顶出现)
+    createFilmStrip();   // #203:G 全屏顶部胶片条(隐藏;光标到顶出现,交互在控件内自理)
 
     m_folderTree->loadDrives();
     Logger::boot("ctor:drives");
