@@ -84,6 +84,11 @@ static bool quickDirSize(const QString& dir, qint64* sizeOut, qint64* countOut) 
 // navigateTo 底部的 setFocus 就不再加到网格头上 —— 焦点留在树上,树亮蓝、
 // 网格暗蓝,正是"选中色随焦点分流"想要的两套状态。
 void MainWindow::onTreeFolderSelected(const QString& path) {
+    // 点的正是当前所在目录:跳过重扫 —— loadDirectory 会把选中项重置到第一排
+    // 第一个,并把刚铺好的滚动/预览打断。点击本身已让树得焦,文件页选中色随
+    // 失焦变暗(两档蓝分流),正是用户要的「保留原选中、仅变暗」。
+    if (mw_impl::canonicalPath(path).compare(m_currentDir, Qt::CaseInsensitive) == 0)
+        return;
     m_navFromTree = true;
     navigateTo(path);
     m_navFromTree = false;
