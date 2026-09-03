@@ -116,13 +116,10 @@ QImage Thumbnailer::imageThumb(const QString& filePath, int size) {
     // ── 策略0.5: CMYK JPG → WIC 色彩管理(与预览同管线) ──
     // Qt/libjpeg 对无 ICC 的 CMYK 只做简单反演,必然偏亮;WIC 按 SWOP 假定转换
     // 与 QQ/Windows 照片同色。Shell 未命中(大图/无缓存)时必须走这条,否则偏亮。
+    // #206:收口到 decodeCmykCached —— 大图走 4096 副本,批量扫图不再每张 4~5s
     if (WicDecode::isFourChannelJpeg(filePath)) {
-        QSize orig = QImageReader(filePath).size();
-        if (orig.isValid() && orig.width() > 0 && orig.height() > 0) {
-            QSize want = orig.scaled(size * sample, size * sample, Qt::KeepAspectRatio);
-            QImage wic = WicDecode::decodeCmyk(filePath, want);
-            if (!wic.isNull()) return scaleTo(wic);
-        }
+        QImage wic = ImgProc::decodeCmykCached(filePath, size * sample);
+        if (!wic.isNull()) return scaleTo(wic);
     }
 
     // ── 策略1: 小文件直接加载 ──

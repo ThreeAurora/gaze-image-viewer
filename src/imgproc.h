@@ -5,10 +5,16 @@
 #include <QColor>
 #include <QSize>
 #include <QFileInfo>
+#include <QDir>
+#include <QFile>
+#include <QSaveFile>
+#include <QMutex>
+#include <QCryptographicHash>
 #include <cmath>
 #include <cstring>
 #include "wicdecode.h"
 #include "foreignimg.h"
+#include "settings.h"
 
 // ═══════════════════════════════════════════
 // 图像后处理公共件(缩略图管线 + 查看器渲染共用)
@@ -134,6 +140,72 @@ inline QSize orientedSize(const QString& path, bool exifRotate) {
     return s;
 }
 
+// ── CMYK 大图降采样副本缓存(#206) ──────────────────
+// 实测(cache/tmp/probe_cmyk,用户样本 9463x6675 CMYK 中国地图):WIC 对四通道
+// JPEG 没有解码级抽点——scaler 插在帧上照样全量解码+全图 CMYK→sRGB 转换,
+// 512/2048/4096 档全都要 4.2~5.1s;全尺寸(预览 decodeFull 的 maxSide=0)更是
+// 7.2s + 252MB 位图。预览、相邻预读、直方图、缩略图每处每次各付一遍,选中
+// 这类文件就是"卡十秒+预览迟迟不显示"。
+// 副本 = 首次 WIC 解到长边 4096(色彩口径不变,与系统照片应用同一套 WIC 转换)
+// 存 JPEG q92 到 dataDir/cmykpyr/,之后所有调用方毫秒级命中。
+// ⚠ 语义标注:超过 4096 的原图,预览/打印拿到的最长边即 4096(A3@300dpi≈3500px
+//   仍够);副本不含原生 JFIF 密度,需要原生 DPI 的调用方对 CMYK 大图拿不到。
+// ⚠ WIC 与 Qt/libjpeg 对无 ICC 的 CMYK 颜色不同(实测 SSIM 0.969):全应用只有
+//   这一个口子出 CMYK 像素,预览/缩略图/直方图/打印天然同色 —— "同一文件两处
+//   颜色不一样"的病根就在多口径,收口即治愈。
+// 副本长边档位(见 decodeCmykCached)
+constexpr int kCmykPyrSide = 4096;
+
+inline QImage decodeCmykCached(const QString& path, int maxSide) {
+    const QSize orig = QImageReader(path).size();
+    if (!orig.isValid()) return WicDecode::decodeCmyk(path);
+    if (qMax(orig.width(), orig.height()) <= kCmykPyrSide) {
+        QSize want;
+        if (maxSide > 0 && qMax(orig.width(), orig.height()) > maxSide)
+            want = orig.scaled(maxSide, maxSide, Qt::KeepAspectRatio);
+        return WicDecode::decodeCmyk(path, want);
+    }
+
+    const QFileInfo fi(path);
+    const QString key = QString::fromLatin1(QCryptographicHash::hash(
+        (path + QLatin1Char('|') + QString::number(fi.lastModified().toMSecsSinceEpoch())
+         + QLatin1Char('|') + QString::number(fi.size()) + QStringLiteral("|p4096")).toUtf8(),
+        QCryptographicHash::Md5).toHex());
+    const QString dir = AppSettings::instance().dataDir() + QStringLiteral("/cmykpyr");
+    const QString file = dir + QLatin1Char('/') + key + QStringLiteral(".jpg");
+
+    QImage pyramid;
+    if (QFileInfo::exists(file)) {
+        pyramid = QImage(file);
+        if (pyramid.isNull()) QFile::remove(file);   // 坏条目:删掉重解
+    }
+    if (pyramid.isNull()) {
+        // 全局锁:CMYK 大图解码是重活,同刻只放一个进 WIC —— 防预览+预读+
+        // 直方图+缩略图四个 worker 各付一遍 5s、各持一份大中间内存
+        static QMutex s_decodeMutex;
+        QMutexLocker lk(&s_decodeMutex);
+        pyramid = QImage(file);                      // 拿锁后复查:先到者可能已写好
+        if (pyramid.isNull()) {
+            pyramid = WicDecode::decodeCmyk(
+                path, orig.scaled(kCmykPyrSide, kCmykPyrSide, Qt::KeepAspectRatio));
+            if (!pyramid.isNull()) {
+                QDir().mkpath(dir);
+                QSaveFile f(file);                   // 临时+原子提交,半截副本不出现在正式名下
+                if (f.open(QIODevice::WriteOnly) && pyramid.save(&f, "JPG", 92))
+                    f.commit();
+                else
+                    f.cancelWriting();
+            }
+        }
+    }
+    if (pyramid.isNull()) return {};
+    // 副本已是 sRGB,Qt smooth 缩放不再有颜色口径问题
+    if (maxSide > 0 && qMax(pyramid.width(), pyramid.height()) > maxSide)
+        return pyramid.scaled(maxSide, maxSide, Qt::KeepAspectRatio,
+                              Qt::SmoothTransformation);
+    return pyramid;
+}
+
 // ── 全图解码统一入口(查看器) ──────────────────
 // 原先只住在 previewpanel.cpp 里(叫 loadFullImage)。解码口径必须只有一份 ——
 // CMYK 印刷 JPG 走 WIC 色彩管理那套,复制一份解码路径迟早和查看器偏色不一致。
@@ -159,14 +231,9 @@ inline QImage decodeScaled(const QString& path, bool exifRotate, int maxSide) {
         }
     }
     if (WicDecode::isFourChannelJpeg(path)) {
-        // WIC 这条路**不做 EXIF 转正**(decodeCmyk 只按 frame 原始宽高走 scaler),
-        // 所以 want 必须按未转正尺寸算。CMYK JPEG 带拍摄方向是极罕见的组合,
-        // 表现与查看器/缩略图一致(都不转正)。
-        QSize want;
-        const QSize s0 = QImageReader(path).size();
-        if (maxSide > 0 && s0.isValid() && qMax(s0.width(), s0.height()) > maxSide)
-            want = s0.scaled(maxSide, maxSide, Qt::KeepAspectRatio);
-        QImage wic = WicDecode::decodeCmyk(path, want);
+        // #206:大图走 4096 副本缓存(首次 WIC 解码落盘,之后毫秒级);WIC 不做
+        // EXIF 转正的口径不变(副本与直解都不转正),表现与缩略图一致。
+        QImage wic = decodeCmykCached(path, maxSide);
         if (!wic.isNull()) return wic;          // 失败则回退 Qt 常规路径(绝不空手而归)
     }
     QImageReader r(path);

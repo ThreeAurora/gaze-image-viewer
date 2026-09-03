@@ -30,6 +30,7 @@
 #include "exifmeta.h"
 #include "settings.h"
 #include "wicdecode.h"
+#include "imgproc.h"
 #include "i18n.h"
 
 class InfoPanel : public QWidget {
@@ -84,10 +85,9 @@ public:
                 // CMYK JPG(#57):直方图与预览/缩略图共用同一份"WIC 色彩管理"口径,
                 // 否则反演图把 B 通道顶高,直方图形状就被一股偏蓝假象带歪
                 if (WicDecode::isFourChannelJpeg(path)) {
-                    QSize o = QImageReader(path).size();
-                    QSize want = o.isValid()
-                        ? o.scaled(512, 512, Qt::KeepAspectRatio) : QSize(512, 512);
-                    thumb = WicDecode::decodeCmyk(path, want);
+                    // #206:收口到 decodeCmykCached —— 大图走 4096 副本(512 档
+                    // 从副本缩,毫秒级),不再每次选中都全量 WIC 解 4~5 秒
+                    thumb = ImgProc::decodeCmykCached(path, 512);
                 } else {
                     QImageReader r(path);
                     const QSize orig = r.size();
