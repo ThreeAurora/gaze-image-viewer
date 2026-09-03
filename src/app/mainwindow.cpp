@@ -418,6 +418,12 @@ void MainWindow::restoreStartupPreview() {
         m_fileGrid->selectByPath(last);
 }
 
+// 预热预览媒体栈:QMediaPlayer/QVideoWidget 首次创建同步且重(日志实测 3~4 秒),
+// main.cpp 在主窗 show 后、恢复上次选中文件之前调用,把这笔开销挪出点击路径
+void MainWindow::warmUpPreviewMedia() {
+    m_preview->warmUp();
+}
+
 // ── 主题切换:重灌"构造期内联样式表 + 填充期缓存色"──
 // 设置页切换主题协议见 theme.h。这里补齐全局 QSS 刷不到的部分:
 //   · 各面板/分割条/状态栏/工具栏/地址栏的内联 setStyleSheet(构造期

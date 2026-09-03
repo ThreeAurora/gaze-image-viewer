@@ -47,6 +47,10 @@ public:
     // "播放/暂停""停止"在浏览器里同样生效(如选中视频自动播放后按 T 停止)。
     // 命中并执行返回 true;其余情况 false 交回调用方继续路由。
     bool handleBrowserMediaKey(QKeyEvent* e);
+    // 预热媒体栈:QMediaPlayer/QVideoWidget 首次创建会同步加载 FFmpeg 后端
+    // 与视频渲染管线(实测 3~4 秒,全在 GUI 线程)。主窗显示后调用一次,
+    // 把这笔开销挪出"点文件夹/选视频"的点击路径。
+    void warmUp();
 
 signals:
     void navFile(int delta);

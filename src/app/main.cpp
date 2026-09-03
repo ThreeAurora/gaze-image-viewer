@@ -387,6 +387,11 @@ int main(int argc, char *argv[]) {
     w.show();
     QTimer::singleShot(0, &w, [&w]() {
         w.setWindowOpacity(1.0);
+        // 预热媒体栈放在恢复预览之前:QMediaPlayer/QVideoWidget 首建要同步
+        // 加载 FFmpeg 后端与视频渲染管线(日志实测 3~4 秒,GUI 线程),恢复的
+        // 上次文件若是视频,player/渲染栈已就绪,选中即秒开;此后点树里
+        // 首项为视频的文件夹也不再付这笔账
+        w.warmUpPreviewMedia();
         w.restoreStartupPreview();
     });
     Logger::boot("show");

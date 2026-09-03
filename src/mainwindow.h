@@ -49,6 +49,10 @@ public:
     // 启动收尾:主窗口首帧显示后恢复上次选中文件(防 QVideoWindow 独立闪框,
     // 由 main.cpp 在 opacity 恢复同拍调用;构造期只记 m_startupRestoreFile)
     void restoreStartupPreview();
+    // 预热预览媒体栈(QMediaPlayer/QVideoWidget 首建数秒,挪出点击路径),
+    // 由 main.cpp 在 show 后与 restoreStartupPreview 同拍调用(实现在 .cpp,
+    // 这里只有前向声明)
+    void warmUpPreviewMedia();
     // 切换模式触发键(设置→交互→切换模式):"SwitchMode/doubleClick" 等
     Q_INVOKABLE void requestSwitchMode(const QString& triggerKey);
     void saveLayout(const QString& name);   // 布局保存/应用(查看→布局;退出自动存 _last)

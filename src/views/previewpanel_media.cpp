@@ -224,6 +224,8 @@ void PreviewPanel::showVideo(const QString& path) {
 // Qt 内部清空视频输出;无帧窗口期显示纯黑,绝不透出下层残留画面
 void PreviewPanel::ensureVideoWidget() {
     if (m_vw) return;
+    QElapsedTimer initSw;
+    initSw.start();
     m_vw = new QVideoWidget(m_videoWidget);
     m_vw->setGeometry(m_videoWidget->rect());
     m_vw->setAutoFillBackground(true);
@@ -238,6 +240,18 @@ void PreviewPanel::ensureVideoWidget() {
         m_videoCover->setPalette(QPalette(QColor("#000000")));
     }
     m_videoCover->setGeometry(m_videoWidget->rect());
+    // QVideoWidget 首建要拉起视频渲染管线(D3D 设备/swapchain),与 QMediaPlayer
+    // 构造同属"媒体栈冷启动",耗时同埋探针便于归因
+    Logger::event(QStringLiteral("ensureVideoWidget: QVideoWidget %1 ms")
+                      .arg(initSw.elapsed()));
+}
+
+// 预热媒体栈:QMediaPlayer/QVideoWidget 的首次创建同步且重(日志实测 3~4 秒,
+// 全在 GUI 线程)。主窗 show 后调用,把这笔开销从"点击树里首项为视频的文件夹/
+// 启动恢复预览"的路径上挪走。已建好则瞬间返回,重复调用无害。
+void PreviewPanel::warmUp() {
+    setupPlayer();
+    ensureVideoWidget();
 }
 
 void PreviewPanel::showAudio(const QString& path) {

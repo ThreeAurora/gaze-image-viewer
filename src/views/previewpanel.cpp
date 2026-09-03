@@ -562,11 +562,18 @@ void PreviewPanel::showNoPreview() {
 void PreviewPanel::setupPlayer() {
     if (m_player) return;
 
+    // 首次创建实测可达数秒(FFmpeg 后端加载/硬解设备枚举/音频端点),埋探针:
+    // 下次日志直接看到这笔开销落在谁头上,不用再靠 loadFile→showVideo 的时间差倒推
+    QElapsedTimer initSw;
+    initSw.start();
+
     // Qt6 API: QMediaPlayer + QAudioOutput
     m_player = new QMediaPlayer(this);
     m_audioOutput = new QAudioOutput(this);
     m_player->setAudioOutput(m_audioOutput);
     m_audioOutput->setVolume(0.8);
+    Logger::event(QStringLiteral("setupPlayer: QMediaPlayer+QAudioOutput %1 ms")
+                      .arg(initSw.elapsed()));
 
     // 注:视频控件(QVideoWidget)统一由 showVideo → ensureVideoWidget() 创建/复用,
     // 绝不在每次切换视频时重建 —— 新建控件存在"无帧透明窗口期",
