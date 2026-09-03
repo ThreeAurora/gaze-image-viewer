@@ -13,7 +13,7 @@
 //   浅色档为 2026-08-31 新增,由外到内逐层变亮(菜单栏 > 工具条 > 树 > 列表 > 预览),
 //   内容区纯白。切换走 Appearance/theme,重启生效。
 #define C_WIN_BG        Theme::T("#212126", "#F3F3F5")   // 窗体底
-#define C_MENUBAR       Theme::T("#31313A", "#F9F9FB")   // 菜单栏(最亮一层)
+#define C_MENUBAR       Theme::T("#191919", "#F9F9FB")   // 菜单栏(2026-09-03 用户定版 rgb(25,25,25),原 #31313A=rgb(49,49,58))
 #define C_TOOLBAR       Theme::T("#2A2A31", "#ECECEF")   // 工具条/地址栏/列表表头
 #define C_STATUSBAR     Theme::T("#25252B", "#F0F0F3")   // 状态栏
 #define C_SIDEBAR       Theme::T("#212126", "#F3F3F5")   // 文件夹树
