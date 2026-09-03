@@ -212,6 +212,11 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/thirdparty/LibRaw/libraw/libraw.h")
     # 0.21.x 源码全在 src/(internal/ 只有头文件),一个 GLOB 收齐
     file(GLOB_RECURSE LIBRAW_SOURCES CONFIGURE_DEPENDS
         "${CMAKE_SOURCE_DIR}/thirdparty/LibRaw/src/*.cpp")
+    # 0.22 起源码树混入 postprocessing_ph.cpp —— "无后处理构建"的占位实现,
+    # 与真实实现(dcraw_process/dcraw_make_mem_image 等)同符号双定义,上游自己的
+    # Makefile 也从不与真实现同编。全功能构建必须排除,否则谁能进 Gaze.exe 全看
+    # 静态库归档顺序的运气。
+    list(FILTER LIBRAW_SOURCES EXCLUDE REGEX "postprocessing_ph\\.cpp$")
     add_library(rawdec STATIC ${LIBRAW_SOURCES})
     target_include_directories(rawdec PUBLIC "${CMAKE_SOURCE_DIR}/thirdparty/LibRaw")
     # dcraw 血统代码有类型双关,-fno-strict-aliasing 保优化下行为不漂
