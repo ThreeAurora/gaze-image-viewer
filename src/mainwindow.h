@@ -10,8 +10,10 @@
 #include <QTabBar>
 #include <QFileInfo>
 #include <QPoint>
+#include <QPointer>
 
 class QVBoxLayout;
+class QDialog;
 class QComboBox;
 class QToolButton;
 class FolderTree;
@@ -20,6 +22,9 @@ class PreviewPanel;
 class InfoPanel;
 class SortHeader;
 class FilmStrip;
+class SettingsDialog;      // #218 长驻工具窗(非模态单例)
+class ImageSearchDialog;
+class DbMaintenanceDialog;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -235,4 +240,12 @@ private:
     QString     m_startupRestoreFile;
     QTimer      m_slideTimer;        // 快速幻灯片(Keyboard/space=快速幻灯片)
     bool        m_slideshow = false;
+    // ── #218 长驻工具窗(非模态单例)──
+    // 弹窗不得锁主窗:主窗右上角 X 与任务栏关闭在弹窗开着时必须仍可点。
+    // exec()=应用级模态正是"打开设置后连 Gaze 都关不掉"的根因。
+    // 侧挂 finished→deleteLater:窗一关(含 取消/Esc 的 reject)对象即析构,
+    // QPointer 槽位自动落空,再按入口重建全新实例(设置重读 ini)。
+    QPointer<QDialog> m_settingsDlg;
+    QPointer<QDialog> m_imgSearchDlg;
+    QPointer<QDialog> m_dbMaintDlg;
 };

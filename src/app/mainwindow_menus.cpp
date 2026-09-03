@@ -222,28 +222,52 @@ void MainWindow::createMenubar() {
 
     // ── 工具(T) ──
     // #132:顺序按"先配置工具、再用工具"排 —— 设置 在 以文搜图 上面(用户令)。
-    auto *toolMenu = mb->addMenu(gazeTr("工具(&T)"));
+    // #218:三个长驻工具窗一律非模态单例 —— exec() 的应用级模态会整个锁死主窗
+    //(用户点名:设置开着时主窗右上角 X 与任务栏关闭都必须仍能点)。已开着就提到前台。
+    // 关窗即析构(finished→deleteLater,QDialog 的取消/Esc 走 reject 只是 hide,
+    // WA_DeleteOnClose 对它们不生效):槽位落空,下次全新实例重读设置。
+    auto* toolMenu = mb->addMenu(gazeTr("工具(&T)"));
     toolMenu->addAction(IconLib::appIcon("cmd_options"),
         gazeTr("设置..."), QKeySequence("F12"), this, [this]() {
-            SettingsDialog dlg(this);
-            dlg.exec();
+            if (m_settingsDlg) {
+                m_settingsDlg->setWindowState(m_settingsDlg->windowState() & ~Qt::WindowMinimized);
+                m_settingsDlg->show(); m_settingsDlg->raise(); m_settingsDlg->activateWindow();
+                return;
+            }
+            m_settingsDlg = new SettingsDialog(this);
+            connect(m_settingsDlg, &QDialog::finished, m_settingsDlg, &QDialog::deleteLater);
+            m_settingsDlg->show();
         });
     toolMenu->addAction(IconLib::appIcon("cmd_search"),
         gazeTr("以文搜图..."), QKeySequence("Ctrl+Shift+F"), this, [this]() {
-            ImageSearchDialog dlg(this);
-            dlg.exec();
+            if (m_imgSearchDlg) {
+                m_imgSearchDlg->setWindowState(m_imgSearchDlg->windowState() & ~Qt::WindowMinimized);
+                m_imgSearchDlg->show(); m_imgSearchDlg->raise(); m_imgSearchDlg->activateWindow();
+                return;
+            }
+            m_imgSearchDlg = new ImageSearchDialog(this);
+            connect(m_imgSearchDlg, &QDialog::finished, m_imgSearchDlg, &QDialog::deleteLater);
+            m_imgSearchDlg->show();
         });
     toolMenu->addAction(IconLib::appIcon("cmd_editMetadata"),
         gazeTr("缩略图数据库维护..."), this, [this]() {
-            DbMaintenanceDialog dlg(this);
-            dlg.exec();
+            if (m_dbMaintDlg) {
+                m_dbMaintDlg->setWindowState(m_dbMaintDlg->windowState() & ~Qt::WindowMinimized);
+                m_dbMaintDlg->show(); m_dbMaintDlg->raise(); m_dbMaintDlg->activateWindow();
+                return;
+            }
+            m_dbMaintDlg = new DbMaintenanceDialog(this);
+            connect(m_dbMaintDlg, &QDialog::finished, m_dbMaintDlg, &QDialog::deleteLater);
+            m_dbMaintDlg->show();
         });
     // #123:原「批量重命名...」菜单项已删 —— 该功能在 TODO_ALL §9 否决清单(@153611)。
 
     // ── 帮助(H) ──
+    // #218:信息框也非模态(堆上+finished→deleteLater,挂主窗为父——主窗关则随之
+    // 销毁,应用照常退出);模态的 about/information 会把主窗按住不让点
     auto *helpMenu = mb->addMenu(gazeTr("帮助(&H)"));
-    helpMenu->addAction(gazeTr("快捷键帮助(&K)"), this, [](){
-        QMessageBox::information(nullptr, gazeTr("快捷键帮助"),
+    helpMenu->addAction(gazeTr("快捷键帮助(&K)"), this, [this](){
+        auto* mb = new QMessageBox(QMessageBox::Information, gazeTr("快捷键帮助"),
             gazeTr("C / ← / ↑ — 上一个\n"
             "V / → / ↓ — 下一个\n"
             "空格 — 播放/暂停\n"
@@ -262,17 +286,23 @@ void MainWindow::createMenubar() {
             "Enter — 切换查看器/浏览器(设置→键盘)\n"
             "Ctrl+A — 全选  Ctrl+I — 反选\n"
             "Esc — 退出全屏\n"
-            "拖放 — 移动到文件夹  Ctrl+拖放 — 复制(设置→文件操作可关确认弹窗)"));
+            "拖放 — 移动到文件夹  Ctrl+拖放 — 复制(设置→文件操作可关确认弹窗)"),
+            QMessageBox::Ok, this);
+        connect(mb, &QDialog::finished, mb, &QDialog::deleteLater);
+        mb->show();
     });
-    helpMenu->addAction(gazeTr("关于(&A)"), this, [](){
-        QMessageBox::about(nullptr, gazeTr("关于 Gaze"),
+    helpMenu->addAction(gazeTr("关于(&A)"), this, [this](){
+        auto* mb = new QMessageBox(QMessageBox::Information, gazeTr("关于 Gaze"),
             gazeTr("Gaze\n通用图片/文件资源管理器\n\n"
             "主要功能:\n"
             "· 图库浏览(文件夹树 + 缩略图网格 + 预览面板)\n"
             "· Live Photo / Motion Photo 动态照片自动播放\n"
             "· 图片/视频/音频预览,颜色标记与筛选\n"
             "· 图片查看器模式(Ctrl+滚轮缩放细节)\n\n"
-            "版本 1.0 — C++ + Qt6"));
+            "版本 1.0 — C++ + Qt6"),
+            QMessageBox::Ok, this);
+        connect(mb, &QDialog::finished, mb, &QDialog::deleteLater);
+        mb->show();
     });
 
     // ── 语言(2026-09-03 国际化)──
