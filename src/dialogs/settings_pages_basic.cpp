@@ -147,8 +147,8 @@ QWidget* SettingsDialog::pageInterface() {
         "开:查看器始终只保留一张标签,新打开的文件顶掉当前标签。\n"
         "关(默认):右键\"在新标签卡中打开\"每张另起一条,张数受下面的上限约束。"));
     form->addRow(oneTab);
-    form->addRow(gazeTr("查看器标签卡上限(0=不限,默认99)"),
-        spin("Interface/maxViewerTabs", 0, 100, 99));
+    form->addRow(gazeTr("查看器标签卡上限(2-99,默认99)"),
+        spin("Interface/maxViewerTabs", 2, 99, 99));
     auto* panesOnStart = chk("Interface/showPanesOnStart",
         gazeTr("启动时打开文件列表和预览框"), true);
     panesOnStart->setToolTip(gazeTr(

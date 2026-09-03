@@ -1876,8 +1876,8 @@ Try a different selection (a bit larger and farther from the edges).</translatio
         <translation>Viewer</translation>
     </message>
     <message>
-        <source>查看器标签卡上限(0=不限,默认99)</source>
-        <translation>Viewer tab limit (0 = unlimited, default 99)</translation>
+        <source>查看器标签卡上限(2-99,默认99)</source>
+        <translation>Viewer tab limit (2-99, default 99)</translation>
     </message>
     <message>
         <source>查看方式</source>

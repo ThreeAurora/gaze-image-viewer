@@ -71,7 +71,7 @@
 //   必须留着,改为激活或追加)这两个入口 —— 翻 500 张图不该留下 500 张标签。
 //   标签表跨"退回浏览器"保留,且退回浏览器后标签栏**继续显示**(updateTabBarVis):
 //   用户点「浏览器」标签只是回到标准模式,他的文件标签必须一直看得见、点得着。
-//   Interface/maxViewerTabs(0=不限)只约束追加新标签时。
+//   Interface/maxViewerTabs(2~99,默认99;旧ini的0=不限按99算)只约束追加新标签时。
 //   路径存在 tabData 里(不是并行数组),所以 removeTab/拖拽重排不需要任何索引修正。
 //   #105:索引 0 常驻「浏览器」标签(tabData=哨兵),用户明令"点它回标准模式"。
 //   它无 × 按钮、中键/右键关闭跳过、拖拽后归位;凡按 tabData 判"是不是真文件"的
@@ -273,9 +273,11 @@ void MainWindow::openViewerTab(const QString& path) {
     // multiViewerTabs=关:该文件已有标签就激活它,不再开第二个
     const int dup = multiTab ? -1 : indexOfTabPath(path);
     if (dup >= 0) { m_viewerTabs->setCurrentIndex(dup); return; }
-    // Interface/maxViewerTabs:0=不限。超出时丢最老的一张(不当场丢新开的,
-    // 用户点的是"打开这个文件",结果必须看得见它)
-    const int cap = st.get("Interface/maxViewerTabs", 99).toInt();
+    // Interface/maxViewerTabs(2~99,2026-09-04 用户令)。超出时丢最老的一张
+    // (不当场丢新开的,用户点的是"打开这个文件",结果必须看得见它)。
+    // 旧 ini 里存的 0=不限按 99 算:99 张实际用不到头,语义等价
+    int cap = st.get("Interface/maxViewerTabs", 99).toInt();
+    if (cap < 2 || cap > 99) cap = 99;
     m_viewerTabs->blockSignals(true);   // 摘旧标签会挪 currentIndex,同一张图没必要再解一遍
     while (cap > 0 && imageTabCount() >= cap) {
         int victim = firstImageTab();   // #105:只摘图片标签,浏览器标签和正看着的这张除外
@@ -304,7 +306,8 @@ Q_INVOKABLE void MainWindow::openTabBackground() {
     AppSettings& st = AppSettings::instance();
     const bool oneTab   = st.get("Interface/oneViewerTab", false).toBool();
     const bool multiTab = st.get("Interface/multiViewerTabs", false).toBool();
-    const int  cap       = st.get("Interface/maxViewerTabs", 99).toInt();
+    int cap = st.get("Interface/maxViewerTabs", 99).toInt();
+    if (cap < 2 || cap > 99) cap = 99;   // 与 openViewerTab 同一钳制(旧 0=不限 → 99)
     if (oneTab) { openViewerTab(m_currentFile); return; }   // 单签模式没有"后台"可言
     const int dup = multiTab ? -1 : indexOfTabPath(m_currentFile);
     if (dup >= 0) return;                                    // 已有该文件标签:不重复开
