@@ -79,12 +79,14 @@ bool MainWindow::dropOnValidTarget(const QPoint& pos) const {
     return false;
 }
 
-// 内部起拖(文件页拖出)时,落点必须是一个"能移进去的文件夹"才有意义:
-//   · 文件页空白/非文件夹卡片 → 目标=当前目录本身,移动=自己移到自己 → 禁止
-//   · 树中源文件所在目录节点    → 同上,自己移到自己 → 禁止
-// 外部拖入(资源管理器)保持原语义:空白=导航过去,文件夹=移动/复制进去。
+// 落点是否"有意义"(2026-09-03):落点必须是"有地方可挪、且挪得有意义"才放行。
+//   · 文件页空白 → 内部起拖(源=网格):目标=当前目录本身,自己移自己 → 禁止;
+//                  外部拖入(资源管理器):保持"空白=导航过去"的原语义 → 放行
+//   · 文件页非文件夹卡片 → 没地方可挪 → 禁止(两种来源一律禁止)
+//   · 树/网格里"被拖文件所在目录"节点 → 自己移/复制到自己 → 禁止(**含外部拖入**)
+//   · 被拖目录本身(self-drop:把 A 夹拖到树里的 A 夹上)→ 禁止
 bool MainWindow::dropTargetMeaningful(const QPoint& pos, const QDropEvent* e) const {
-    if (e->source() != m_fileGrid) return true;   // 外部拖入不做精细化拦截
+    const bool internal = (e->source() == m_fileGrid);
     const QMimeData* md = e->mimeData();
     if (!md || !md->hasUrls()) return false;
 
@@ -99,15 +101,17 @@ bool MainWindow::dropTargetMeaningful(const QPoint& pos, const QDropEvent* e) co
         const QString hit = m_folderTree->pathAt(m_folderTree->mapFrom(this, pos));
         if (!hit.isEmpty() && QFileInfo(hit).isDir()) dropInto = hit;
     }
-    if (dropInto.isEmpty()) return false;
+    if (dropInto.isEmpty()) return internal;   // 外部拖入放行(空白=导航);内部拖入禁止
 
-    // 任一被拖文件就躺在目标文件夹里 → 移动回原地,无意义
+    // 任一被拖文件就躺在目标文件夹里(自己移到自己),或目标就是被拖目录本身
+    // (把 A 夹挪进 A 夹),无论内外部拖入一律禁止
     const QString target = QDir::fromNativeSeparators(dropInto);
     for (const QUrl& u : md->urls()) {
         if (!u.isLocalFile()) continue;
-        if (QFileInfo(QDir::fromNativeSeparators(u.toLocalFile())).absolutePath()
-            == target)
-            return false;
+        const QString p = QDir::fromNativeSeparators(u.toLocalFile());
+        if (p.compare(target, Qt::CaseInsensitive) == 0) return false;   // 夹拖到自己身上
+        if (QFileInfo(p).absolutePath().compare(target, Qt::CaseInsensitive) == 0)
+            return false;                                                 // 就在目标里
     }
     return true;
 }
