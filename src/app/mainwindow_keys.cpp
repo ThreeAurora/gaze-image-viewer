@@ -376,10 +376,15 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
                 return true;
             // Space/Enter 在按钮/列表/滑块里有本职动作(激活、选中、就地编辑)
             const bool forActivation = forText || activationKeyWidget(tgt);
+            // 空格例外(2026-09-03 用户令):焦点落在文件树/文件页/滑块等任何
+            // 位置,空格仍是预览媒体播放/暂停 —— 条目视图"空格选中当前项"的
+            // 本职让位。仅文本输入(打空格)与按钮(激活)保留空格本职。
+            const bool spaceReserved = forText
+                || qobject_cast<const QAbstractButton*>(tgt);
             // Keyboard/space:0 播放/暂停(默认) 1 什么都不做 2 下一个文件 3 快速幻灯片
             // (选项表与设置→快捷键→空格一致)
             // 只拦不带 Ctrl/Alt/Meta 的空格:Alt+Space 是系统窗口菜单
-            if (!forActivation
+            if (!spaceReserved
                 && ke->key() == Qt::Key_Space
                 && (ke->modifiers() & (Qt::ControlModifier | Qt::AltModifier
                                        | Qt::MetaModifier)) == 0) {
