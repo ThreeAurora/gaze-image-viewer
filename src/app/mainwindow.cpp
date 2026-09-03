@@ -11,7 +11,8 @@
 #include "fileentry.h"
 #include "livephoto.h"
 #include "constants.h"
-#include "thumbnailer.h"   // #105:查看器标签名左侧的小缩略图走同一缩略图管线
+#include "theme.h"        // addChangeHandler/notifyChanged:主题即时切换广播
+#include "thumbnailer.h"  // #105:查看器标签名左侧的小缩略图走同一缩略图管线
 #include "validname.h"
 #include "keytarget.h"
 #include "logger.h"
@@ -388,7 +389,75 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
         applyTitle();
         m_slideTimer.setInterval(mw_impl::slideIntervalMs());
     });
+
+    // 主题切换即时生效:全局 QSS 刷新覆盖不到的内联样式/缓存色,由
+    // applyThemeSurfaces() 重灌。设置页切主题 → Theme::notifyChanged() 触发。
+    Theme::addChangeHandler([this]() { applyThemeSurfaces(); });
     Logger::boot("ctor:done");
+}
+
+// ── 主题切换:重灌"构造期内联样式表 + 填充期缓存色"──
+// 设置页切换主题协议见 theme.h。这里补齐全局 QSS 刷不到的部分:
+//   · 各面板/分割条/状态栏/工具栏/地址栏的内联 setStyleSheet(构造期
+//     .arg(C_*) 求值一次,之后不再变)
+//   · FileGrid 画布背景、PreviewPanel 文字色、FolderTree 行前景色
+//     (加载时缓存进 item,必须重灌)
+void MainWindow::applyThemeSurfaces() {
+    if (m_splitter)
+        m_splitter->setStyleSheet(QString::fromUtf8(
+            "QSplitter::handle{background:%1;width:1px;}").arg(C_SEPARATOR));
+    if (m_treePane)
+        m_treePane->setStyleSheet(QString("background:%1;border:none;").arg(C_SIDEBAR));
+    if (m_previewPane)
+        m_previewPane->setStyleSheet(QString("background:%1;border:none;").arg(C_PREVIEW_BG));
+    if (m_infoPane)
+        m_infoPane->setStyleSheet(QString("background:%1;border:none;").arg(C_PREVIEW_BG));
+
+    const QString barQss =
+        QString::fromUtf8("QWidget{background:%1;border-bottom:1px solid %2;}"
+        "QToolButton{background:transparent;border:none;border-radius:4px;"
+        "padding:3px 6px;color:%3;font-size:11px;}"
+        "QToolButton:hover{background:%4;}"
+        "QToolButton::menu-indicator{image:none;}").arg(C_TOOLBAR, C_SEPARATOR, C_TEXT, C_PANE_HDR);
+    if (m_addrRow) m_addrRow->setStyleSheet(barQss);
+    if (m_toolRow) m_toolRow->setStyleSheet(barQss);
+    if (m_addrBar)
+        m_addrBar->setStyleSheet(QString::fromUtf8(
+            "QLineEdit{background:%1;color:%2;"
+            "border:1px solid %3;"
+            "border-radius:4px;padding:2px 8px;font-size:11px;}")
+            .arg(C_CONTENT, C_TEXT, C_CARD_BORDER));
+
+    if (QStatusBar* sb = statusBar()) {
+        sb->setStyleSheet(QString::fromUtf8(
+            "QStatusBar{background:%1;border-top:1px solid %2;"
+            "color:%3;font-size:11px;padding:2px 10px;}"
+            "QStatusBar::item{border:none;}")
+            .arg(C_STATUSBAR, C_SEPARATOR, C_TEXT));
+        if (m_statusLabel)
+            m_statusLabel->setStyleSheet(QString("color:%1;background:transparent;").arg(C_TEXT));
+        if (m_pathLabel)
+            m_pathLabel->setStyleSheet(QString("color:%1;background:transparent;").arg(C_TEXT));
+    }
+
+    // 面板标题条("文件夹"/"预览"/"信息")与其标题文字
+    for (QWidget* h : m_paneHdrs) {
+        if (!h) continue;
+        h->setStyleSheet(QString::fromUtf8(
+            "QWidget{background:%1;border-bottom:1px solid %2;}"
+            "QToolButton{background:transparent;border:none;border-radius:4px;"
+            "color:%3;font-size:13px;}"
+            "QToolButton:hover{background:%4;}")
+            .arg(C_PANE_HDR, C_SEPARATOR, C_TEXT, C_MENUBAR));
+        if (QLabel* lbl = h->findChild<QLabel*>())
+            lbl->setStyleSheet(QString::fromUtf8(
+                "background:transparent;color:%1;font-size:12px;").arg(C_TEXT));
+    }
+
+    // 子树缓存色(各自的重灌入口)
+    if (m_fileGrid)   m_fileGrid->refreshThemeColors();
+    if (m_preview)    m_preview->refreshThemeColors();
+    if (m_folderTree) m_folderTree->refreshThemeColors();
 }
 
 void MainWindow::closeEvent(QCloseEvent* event) {

@@ -24,6 +24,8 @@ public:
     void loadDrives();
     void loadChildren(QTreeWidgetItem* item);
     void focusPath(const QString& dirPath);
+    // 主题切换:重灌已加载行的前景色(加载时缓存进 item,切主题须重设)
+    void refreshThemeColors();
 
     // 树右键"显示子文件夹中的文件"的镜像状态:真源在 FileGrid(它才做递归扫描),
     // 这里只用于画 ✓,由主窗口在启动时灌入、此后跟随菜单开关同步。

@@ -73,6 +73,10 @@ private:
 
     void createMenubar();
     void createStatusbar();
+    // 主题切换:全局 QSS 覆盖不到的"构造期内联样式表/填充期缓存色"在这里重灌。
+    // 由 Theme::addChangeHandler 在 ctor 注册,设置页切换主题 → notifyChanged →
+    // 本函数按新色重设各面板/工具栏/状态栏样式 + 让子树重建缓存色。
+    void applyThemeSurfaces();
     void updateStatus();
     void onSelectionChanged(const QString &path);
     // 2026-09-03:文件页鼠标单选目录卡 → 文件树镜像选中(网格→树这支反向联动)
@@ -199,6 +203,8 @@ private:
     QWidget* m_previewHdr = nullptr;  // 预览标题条(查看器模式下隐藏,单图不需要)
     QWidget* m_infoPane  = nullptr;  // #80 信息面板容器(含标题条,挂在预览栏内)
     InfoPanel* m_info    = nullptr;  // #80 元数据表 + 直方图
+    // 各面板标题条(createPaneHeader 产出;主题切换时重灌内联样式)
+    QList<QWidget*> m_paneHdrs;
     QWidget* m_addrRow = nullptr;     // 地址栏行(视图菜单可隐藏)
     QWidget* m_toolRow = nullptr;     // 工具栏第二行(视图菜单可隐藏)
     // 面板开关 action(视图菜单),与 m_panesOn 同步 ✓

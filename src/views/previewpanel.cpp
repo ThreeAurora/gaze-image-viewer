@@ -743,3 +743,13 @@ void PreviewPanel::clear() {
     m_livePhotoOriginalPath.clear();
     m_isLivePhoto = false;
 }
+
+// 主题切换:音频/波形标签文字色是构造期内联样式表,按新色重灌
+void PreviewPanel::refreshThemeColors() {
+    if (m_audioLabel)
+        m_audioLabel->setStyleSheet(
+            QString("color:%1;font-size:16px;background:transparent;").arg(C_TEXT_SUB));
+    if (m_waveLabel)
+        m_waveLabel->setStyleSheet(
+            QString("color:%1;font-size:12px;background:transparent;").arg(C_TEXT_DIM));
+}

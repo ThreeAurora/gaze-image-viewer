@@ -247,6 +247,13 @@ void FileGrid::refreshCurrentDir() {
     if (!m_currentDir.isEmpty()) loadDirectory(m_currentDir);
 }
 
+// 主题切换:画布背景是构造期内联样式表(全局 QSS 刷新覆盖不到),按新色重灌 + 重绘
+void FileGrid::refreshThemeColors() {
+    if (m_canvas)
+        m_canvas->setStyleSheet(QString::fromUtf8("background:%1;").arg(C_CONTENT));
+    refreshView();
+}
+
 // 删除后重载:落点 = 被删块的后一项,已在末尾则前一项(对齐 XnView)
 // 落点必须在重载前的 m_entries 上算 — 重载后索引含义已变
 void FileGrid::reloadAfterDelete(const QStringList& deleted) {

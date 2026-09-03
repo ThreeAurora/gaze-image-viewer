@@ -11,6 +11,8 @@
 #include "validname.h"
 #include "dialogs/renamedialog.h"   // 2026-09-02:文件重命名对话框(仿 XnView 带插入日期/时间)
 
+#include <functional>      // refreshThemeColors 的递归遍历队列
+
 #include <windows.h>
 #include <shellapi.h>
 
@@ -287,6 +289,7 @@ void FolderTree::loadChildren(QTreeWidgetItem* item) {
         // 隐藏文件夹用淡灰文字 + 半透明图标；普通文件夹正常
         child->setIcon(0, fe.hidden ? m_folderIconDim : m_folderIcon);
         child->setData(0, Qt::UserRole, fe.path);
+        child->setData(0, Qt::UserRole + 1, fe.hidden);  // 主题切换重灌前景色用
         child->setForeground(0, QBrush(QColor(fe.hidden ? C_TEXT_HIDDEN : C_TREE_TEXT)));
         // 检测是否有子文件夹（含隐藏）；没有就不留展开按钮
         if (hasVisibleSubdirs(fe.path))
@@ -492,6 +495,20 @@ void FolderTree::refreshCurrent() {
         const QString p = it->data(0, Qt::UserRole).toString();
         if (!p.isEmpty()) refreshNode(p);
     }
+}
+
+// 主题切换:行前景色在加载时就 setForeground 进了 item(全局 QSS 刷新覆盖不到),
+// 遍历已物化行按隐藏标志重灌,避免"树里仍留旧主题的文字色"
+void FolderTree::refreshThemeColors() {
+    std::function<void(QTreeWidgetItem*)> walk = [&walk](QTreeWidgetItem* it) {
+        for (int i = 0; i < it->childCount(); ++i) {
+            QTreeWidgetItem* c = it->child(i);
+            const bool hidden = c->data(0, Qt::UserRole + 1).toBool();
+            c->setForeground(0, QBrush(QColor(hidden ? C_TEXT_HIDDEN : C_TREE_TEXT)));
+            walk(c);
+        }
+    };
+    walk(invisibleRootItem());
 }
 
 bool FolderTree::isVolumeRoot(const QString& path) {

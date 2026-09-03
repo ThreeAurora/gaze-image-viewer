@@ -57,6 +57,8 @@ public:
 
     void loadDirectory(const QString& dirPath);
     void refreshCurrentDir();    // 重新加载当前目录(文件操作后)
+    // 主题切换:重灌画布背景色(构造期内联样式表,QSS 刷新覆盖不到)
+    void refreshThemeColors();
     // 删除后重载:选中被删项的下一项(末项则上一项),对齐 XnView
     void reloadAfterDelete(const QStringList& deleted);
     void setCardSize(int size);

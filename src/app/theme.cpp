@@ -6,6 +6,7 @@ namespace Theme {
 
 namespace {
 bool g_light = false;
+std::vector<ChangeHandler> g_handlers;
 }
 
 void init() {
@@ -14,6 +15,14 @@ void init() {
 }
 
 bool light() { return g_light; }
+
+void addChangeHandler(ChangeHandler h) {
+    g_handlers.push_back(std::move(h));
+}
+
+void notifyChanged() {
+    for (const auto& h : g_handlers) h();
+}
 
 QString appQss() {
     // 占位符按 %1..%17 顺序逐个 .arg:单个 arg() 每次替换最小编号占位符,

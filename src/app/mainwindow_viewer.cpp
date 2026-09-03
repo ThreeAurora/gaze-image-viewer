@@ -208,6 +208,7 @@ bool MainWindow::paneVisible(const char* paneId) const {
 QWidget* MainWindow::createPaneHeader(const QString& title, const char* paneId) {
     auto* h = new QWidget;
     h->setFixedHeight(24);
+    m_paneHdrs.push_back(h);   // 主题切换时 applyThemeSurfaces 重灌本条样式
     h->setStyleSheet(QString::fromUtf8(
         "QWidget{background:%1;border-bottom:1px solid %2;}"
         "QToolButton{background:transparent;border:none;border-radius:4px;"

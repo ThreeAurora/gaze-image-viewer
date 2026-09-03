@@ -29,6 +29,8 @@ public:
     explicit PreviewPanel(QWidget *parent = nullptr);
     ~PreviewPanel() override;
     void loadFile(const QString &path);
+    // 主题切换:重灌音频/波形标签文字色(构造期内联样式表,QSS 刷新覆盖不到)
+    void refreshThemeColors();
     // 预览当前显示的文件(空=没有)。调用方用它挡掉"对同一张再解一遍"
     const QString& filePath() const { return m_filePath; }
     void clear();

@@ -84,6 +84,7 @@ QWidget* SettingsDialog::pageAppearance() {
         AppSettings::instance().set("Appearance/theme", v == 1 ? QStringLiteral("light")
                                                                : QStringLiteral("dark"));
         Theme::init();                                   // 重读双档标志
+        Theme::notifyChanged();                          // 重灌内联样式/缓存色(全量即时)
         if (QApplication* app = qobject_cast<QApplication*>(QApplication::instance()))
             app->setStyleSheet(Theme::appQss());         // 全局样式表即时切换
 #if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
