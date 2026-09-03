@@ -133,7 +133,17 @@ void MainWindow::dragMoveEvent(QDragMoveEvent* e) {
     } else {
         e->ignore();                            // 禁止光标 + 松开无动作
         hideDragHint();
+        // 2026-09-04:禁止落点(同目录/被拖夹自身)仍保留树落点白框 —— 光标说
+        // "放不进去",白框说"你悬停的是这一行"。落点在树外时不画(落空即清)。
+        if (dropOnValidTarget(pos)) updateFolderDropTarget(pos, true);
     }
+}
+
+// 拖出窗口:Qt 补发 leave。清"复制/移动"浮标与树落点白框,防白框残留在
+// 最后一行上(拖放全程没有真正的鼠标移动事件,不 leave 就一直挂着)。
+void MainWindow::dragLeaveEvent(QDragLeaveEvent* e) {
+    hideDragHint();
+    QMainWindow::dragLeaveEvent(e);
 }
 
 void MainWindow::dropEvent(QDropEvent* e) {

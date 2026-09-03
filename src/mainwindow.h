@@ -70,6 +70,7 @@ protected:
     // 可放置区域只有网格与树(#109):拖到别处 dragMove 被 ignore → 禁止光标,松开无动作。
     void dragEnterEvent(QDragEnterEvent* e) override;
     void dragMoveEvent(QDragMoveEvent* e) override;
+    void dragLeaveEvent(QDragLeaveEvent* e) override;   // 拖出窗口:清浮标+树白框
     void dropEvent(QDropEvent* e) override;
 
 private:

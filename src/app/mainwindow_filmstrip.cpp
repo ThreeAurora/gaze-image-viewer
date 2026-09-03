@@ -104,7 +104,7 @@ void MainWindow::hideDragHint() {
 // 单独 setStyleSheet,这里用"临时选中态"(白框)并在离开时还原 —— 只影响视觉,
 // 不改选中集。QTreeWidget 的 selected 样式是白字蓝底,不是白框;改用
 // 给当前 item 的 foreground 亮白 + 一个"即将放入"的观感,靠树的高亮 bolder。
-// 落空/非目录:不画
+// 落空(拖到行间空隙/拖在网格上):清标记 —— 否则旧白框残留在上一行
 void MainWindow::updateFolderDropTarget(const QPoint& pos, bool highlight) {
     if (!m_folderTree) return;
     if (!highlight) {
@@ -113,7 +113,6 @@ void MainWindow::updateFolderDropTarget(const QPoint& pos, bool highlight) {
         return;
     }
     QTreeWidgetItem* it = m_folderTree->itemAt(m_folderTree->mapFrom(this, pos));
-    if (!it) return;
-    m_folderTree->setProperty("_dropItem", QVariant::fromValue(it));
+    m_folderTree->setProperty("_dropItem", it ? QVariant::fromValue(it) : QVariant());
     m_folderTree->viewport()->update();
 }
