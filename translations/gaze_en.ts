@@ -194,6 +194,10 @@ Extracting embedded camera preview…</translation>
         <translation>Gaze - %1</translation>
     </message>
     <message>
+        <source>Gaze 图片</source>
+        <translation>Gaze image</translation>
+    </message>
+    <message>
         <source>Gaze 图片浏览器</source>
         <translation>Gaze Image Browser</translation>
     </message>
@@ -1230,6 +1234,12 @@ Click once to select the whole path, click again to place the caret</translation
         <translation>Permanently deleted</translation>
     </message>
     <message>
+        <source>已注册。任意图片右键→&quot;打开方式&quot;可选 Gaze;
+系统设置→应用→默认应用→Gaze→&quot;设为默认&quot;一键绑定全部类型。</source>
+        <translation>Registered. Right-click any image → &apos;Open with&apos; → Gaze;
+or in system Settings → Apps → Default apps → Gaze → &apos;Set default&apos; binds all types at once.</translation>
+    </message>
+    <message>
         <source>已注册。右键文件 → 打开方式 中可选 Gaze。</source>
         <translation>Registered. Gaze is now available under right-click → Open with.</translation>
     </message>
@@ -1244,6 +1254,10 @@ Click once to select the whole path, click again to place the caret</translation
     <message>
         <source>已移除 %1 条孤立条目。</source>
         <translation>Removed %1 orphaned entries.</translation>
+    </message>
+    <message>
+        <source>已移除 Gaze 的全部文件关联登记。</source>
+        <translation>All Gaze file association entries removed.</translation>
     </message>
     <message>
         <source>已移除右键菜单。</source>
@@ -1988,6 +2002,14 @@ Try a different selection (a bit larger and farther from the edges).</translatio
         <translation>Register application (add to the &quot;Open with&quot; list)</translation>
     </message>
     <message>
+        <source>注册文件关联(图片+RAW 全部扩展名)</source>
+        <translation>Register file associations (all image + RAW extensions)</translation>
+    </message>
+    <message>
+        <source>注册文件关联失败(注册表写入被拒)。</source>
+        <translation>Registering file associations failed (registry write denied).</translation>
+    </message>
+    <message>
         <source>注册表写入失败。</source>
         <translation>Failed to write the registry.</translation>
     </message>
@@ -2174,6 +2196,14 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     <message>
         <source>移除</source>
         <translation>Remove</translation>
+    </message>
+    <message>
+        <source>移除失败(注册表写入被拒)。</source>
+        <translation>Removal failed (registry write denied).</translation>
+    </message>
+    <message>
+        <source>移除文件关联</source>
+        <translation>Remove file associations</translation>
     </message>
     <message>
         <source>程序文件夹(便携)</source>
@@ -2612,6 +2642,10 @@ Continue?</translation>
     <message>
         <source>转灰度</source>
         <translation>Convert to grayscale</translation>
+    </message>
+    <message>
+        <source>轻量图片浏览器与管理器</source>
+        <translation>Lightweight image viewer and manager</translation>
     </message>
     <message>
         <source>输入关键词后回车;服务未运行时会自动拉起</source>

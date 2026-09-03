@@ -321,6 +321,25 @@ QWidget* SettingsDialog::pageIntegration() {
                : gazeTr("注册失败。"));
     });
     fAssoc->addRow(regBtn);
+    // #204 文件关联:ProgId+应用能力+逐扩展名登记,一步到位。
+    // "真正的默认"(UserChoice)带系统哈希,程序不可直写 —— 注册后走
+    // 系统设置→默认应用→Gaze→"设为默认",由 Windows 落笔,这是官方正路。
+    auto* assocBtn = new QPushButton(gazeTr("注册文件关联(图片+RAW 全部扩展名)"));
+    connect(assocBtn, &QPushButton::clicked, this, []() {
+        bool ok = Integration::registerFileAssociations();
+        QMessageBox::information(nullptr, gazeTr("文件关联"),
+            ok ? gazeTr("已注册。任意图片右键→\"打开方式\"可选 Gaze;\n系统设置→应用→默认应用→Gaze→\"设为默认\"一键绑定全部类型。")
+               : gazeTr("注册文件关联失败(注册表写入被拒)。"));
+    });
+    fAssoc->addRow(assocBtn);
+    auto* unassocBtn = new QPushButton(gazeTr("移除文件关联"));
+    connect(unassocBtn, &QPushButton::clicked, this, []() {
+        bool ok = Integration::removeFileAssociations();
+        QMessageBox::information(nullptr, gazeTr("文件关联"),
+            ok ? gazeTr("已移除 Gaze 的全部文件关联登记。")
+               : gazeTr("移除失败(注册表写入被拒)。"));
+    });
+    fAssoc->addRow(unassocBtn);
     auto* defAppBtn = new QPushButton(gazeTr("打开系统\"默认应用程序\"设置"));
     connect(defAppBtn, &QPushButton::clicked, this, []() {
         QProcess::startDetached("ms-settings:defaultapps");
