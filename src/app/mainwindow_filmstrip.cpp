@@ -60,7 +60,6 @@ void MainWindow::updateFilmStrip(const QPoint* cursor) {
 void MainWindow::refreshFilmStrip() {
     if (!m_filmStrip) return;
     // 从 FileGrid 拿当前目录的显示列表;拿不到就空条
-    m_filmPaths.clear();
     // 取当前文件在列表里的位置
     const int total = m_fileGrid ? m_fileGrid->fileCount() : 0;
     if (total <= 0 || m_currentFile.isEmpty()) { m_filmStrip->hide(); return; }
@@ -72,11 +71,22 @@ void MainWindow::refreshFilmStrip() {
 
     const int from = qMax(0, cur - kFilmHalf);
     const int to   = qMin(total - 1, cur + kFilmHalf);
-    m_filmPaths.clear();
+    // 2026-09-03 夜修:光标在顶部每动一次 mouseMove 都会刷一遍,这里
+    // 先比"窗口路径列表"——没变就直接返回,不再每次销毁重建 17 个标签
+    //(旧实现每拍全量重建,还要走一遍 setLayout,见下方修法)
+    QStringList want;
+    want.reserve(to - from + 1);
     for (int i = from; i <= to; ++i)
-        m_filmPaths << m_fileGrid->pathAt(i);
+        want << m_fileGrid->pathAt(i);
+    if (want == m_filmPaths && m_filmItems.size() == want.size()) return;
+    m_filmPaths = want;
 
-    // 重建 label 列表(条目结构变了,直接全量重建最简单)
+    // 2026-09-03 夜修"单个黑点":旧代码每次 new QHBoxLayout 后 setLayout,
+    // 但 widget 已有 layout 时 setLayout 会被 Qt 拒绝(仅告警)——第二拍起
+    // 新标签全堆在 (0,0)、旧 layout 里还挂着已 delete 的标签,整条塌缩成
+    // 一个小黑块。正确做法:先删旧 layout(不删它管的子控件),再删旧标签,
+    // 然后 QHBoxLayout(parent) 构造即自动挂载,不需要再 setLayout。
+    if (QLayout* old = m_filmStrip->layout()) { delete old; }
     qDeleteAll(m_filmItems);
     m_filmItems.clear();
     auto* lay = new QHBoxLayout(m_filmStrip);
@@ -110,7 +120,7 @@ void MainWindow::refreshFilmStrip() {
         Thumbnailer::instance().enqueue(p, 72, VIDEO_EXTS.count(su) > 0);
     }
     // thumbnailReady 连接(见 ctor)会按路径回填 m_filmItems 里对应那张
-    m_filmStrip->setLayout(lay);
+    // 注:QHBoxLayout(parent) 构造时已自动挂到 m_filmStrip,不再 setLayout(见上)
 }
 
 void MainWindow::jumpToFilmItem(int idx) {
