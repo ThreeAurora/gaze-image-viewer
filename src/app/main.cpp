@@ -22,6 +22,9 @@
 #include <QEventLoop>
 #include <QTimer>
 #include <QPointer>
+#include <QTranslator>
+#include <QLocale>
+#include <QLibraryInfo>
 #include "mainwindow.h"
 #include "constants.h"
 #include "keytarget.h"
@@ -238,7 +241,47 @@ int main(int argc, char *argv[]) {
         return out;
     };
 
-    if (AppSettings::instance().get("General/singleInstance", false).toBool()
+    // ── 界面语言(2026-09-03 国际化)──
+    // General/language:system=跟随系统(默认)| zh=简体中文 | en=English。
+    // 跟随系统 = 非中文系统一律进英文 —— 老外装上即英文界面,不用找开关;
+    // 手动切换走菜单栏"语言"菜单写入本键,重启后生效(整套 UI 在构造期解析)。
+    // 英文译文装在 exe 旁 gaze_en.qm(由 translations/i18n_build.py 生成)。
+    // 除应用自己的译文,z 模式/ en 模式分别加载 qtbase_zh_CN / qtbase_en:
+    // Qt 标准按钮、QFileDialog 等内置部件的文字按系统区域自动加载,与所选
+    // 界面语言不一致会混出"中文界面+英文按钮"(中文系统强制 English 时),
+    // 这里手动装一份后装的译者会盖过自动那份(后装优先),保证两厢一致。
+    // --restart 是语言切换后的自重启标记:携带它跳过单实例握手,避开
+    // "新进程把路径转交给旧进程、旧进程随即退出"的竞态。
+    const bool relaunched = QCoreApplication::arguments()
+        .contains(QStringLiteral("--restart"));
+    {
+        QString lang = AppSettings::instance().get("General/language", "system").toString();
+        if (lang == QLatin1String("system")) {
+            const QLocale::Language sys = QLocale::system().language();
+            lang = (sys == QLocale::Chinese) ? QStringLiteral("zh")
+                                             : QStringLiteral("en");
+        }
+        static QTranslator s_qtbase;   // 覆盖 Qt 内置部件(标准按钮等)的自动译文
+        const QString qtPath = QLibraryInfo::path(QLibraryInfo::TranslationsPath);
+        QString qtbaseFile = (lang == QLatin1String("zh"))
+            ? QStringLiteral("qtbase_zh_CN") : QStringLiteral("qtbase_en");
+        if (s_qtbase.load(qtbaseFile, qtPath)) app.installTranslator(&s_qtbase);
+        if (lang == QLatin1String("en")) {
+            static QTranslator s_en;
+            const QString qm = QCoreApplication::applicationDirPath()
+                + QStringLiteral("/gaze_en.qm");
+            const bool loaded = s_en.load(qm);
+            Logger::event(QStringLiteral("i18n: lang=en qm=%1 loaded=%2")
+                          .arg(qm, loaded ? "yes" : "NO"));
+            if (loaded)
+                app.installTranslator(&s_en);
+        } else {
+            Logger::event(QStringLiteral("i18n: lang=%1 (source zh)").arg(lang));
+        }
+    }
+
+    if (!relaunched
+        && AppSettings::instance().get("General/singleInstance", false).toBool()
         && handOffToRunningInstance(cliPaths()))
         return 0;
     Logger::boot("handoff-probe");
