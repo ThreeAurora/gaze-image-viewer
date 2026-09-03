@@ -324,6 +324,32 @@ bool PreviewPanel::claimsHotkey(QKeyEvent* e) {
     return !hotkeyAction(e).isEmpty();
 }
 
+// 浏览器态媒体键(2026-09-03):预览面板正在显示媒体(视频/音频/GIF)时,
+// 查看器表的"播放/暂停""停止"在浏览器里同样生效 —— 浏览器选中视频、预览
+// 自动播放后按 T 停止是基本诉求(此前 T 只在查看器模式作数,浏览器态落空)。
+// 其余动作(缩放/适应窗口/切换文件)是查看器语义,浏览器不接;与浏览器
+// 字母键(F/D/G)的撞车只在用户自定义改键时发生,由调用方顺序决定优先级。
+bool PreviewPanel::handleBrowserMediaKey(QKeyEvent* e) {
+    if (m_mode != "video" && m_mode != "audio" && !m_isGif) return false;
+    ensureHotkeys();
+    const QString act = hotkeyAction(e);
+    if (act == QString::fromUtf8("\xe6\x92\xad\xe6\x94\xbe/\xe6\x9a\x82\xe5\x81\x9c")) {  // 播放/暂停
+        togglePlayPause();
+        return true;
+    }
+    if (act == QString::fromUtf8("\xe5\x81\x9c\xe6\xad\xa2")) {  // 停止:与 keyPressEvent 同逻辑
+        if (m_isGif) {
+            setGifPaused(true);   // 先停:跳帧走暂停态,避开运行态 jumpToFrame 卡死
+            gifSeekMs(0);
+        } else if (m_player) {
+            m_player->stop();     // Qt6 stop 同时把位置归零 → 再播从头开始
+            m_progress->setValue(0);
+        }
+        return true;
+    }
+    return false;
+}
+
 void PreviewPanel::keyPressEvent(QKeyEvent* event) {
     // 这张表只在查看器里作数:实测焦点不会随策略降级/窗格复显自动交还
     // (cache/tmp/focus_probe.cpp)，万一它还留在这块面板上，不闸一下浏览器

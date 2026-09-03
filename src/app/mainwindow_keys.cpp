@@ -364,6 +364,12 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
         if (!bypass) {
             // 键盘就是这些控件的输入手段,字母/Space/Enter/Esc 一律不抢
             const bool forText = textInputWidget(tgt);
+            // 浏览器态媒体键(2026-09-03):预览面板正在显示媒体(视频/音频/GIF)
+            // 时,查看器表的"播放/暂停""停止"(默认 T)在浏览器同样生效 —— 此前
+            // T 只在查看器模式作数,浏览器选中视频、预览自动播放后按 T 无反应。
+            // 默认键位不与浏览器字母键(F/D/G)撞车;用户自定义改键相撞时媒体态优先。
+            if (!forText && !m_viewerMode && m_preview->handleBrowserMediaKey(ke))
+                return true;
             // Space/Enter 在按钮/列表/滑块里有本职动作(激活、选中、就地编辑)
             const bool forActivation = forText || activationKeyWidget(tgt);
             // Keyboard/space:0 播放/暂停(默认) 1 什么都不做 2 下一个文件 3 快速幻灯片
