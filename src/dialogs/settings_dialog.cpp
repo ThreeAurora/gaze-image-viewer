@@ -53,13 +53,14 @@ QWidget* wrapTitled(const QString& title, QLayout* lay) {
     page->setPalette(pal);
     auto* v = new QVBoxLayout(page);
     // #148:全局紧凑(2026-09-01 用户令,此前 #108 只收紧异常空隔不够)
-    // 2026-09-03 夜再收:大标题与分隔线、分隔线与内容的 8px 间距在内容少的
-    // 分组页(标题栏/缩略图/查看/其他/全屏/系统集成/以文搜图)上显得"上下间距过大"
     v->setContentsMargins(14, 8, 14, 8);
     v->setSpacing(5);
     auto* h = new QLabel(title);
     h->setStyleSheet(QString::fromUtf8("font-size:15px;font-weight:700;color:%1;"
                      "background:transparent;").arg(C_TEXT));
+    // 标题钉死高度:否则页内剩余空间先喂给这个 Preferred 标题(探针实测被撑到
+    // 519px,文字 AlignVCenter 浮在空带中央——即用户报的"标题上下间距过大")
+    h->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     v->addWidget(h);
     auto* line = new QFrame;
     line->setFrameShape(QFrame::HLine);
@@ -67,6 +68,9 @@ QWidget* wrapTitled(const QString& title, QLayout* lay) {
     line->setStyleSheet(QString::fromUtf8("background:%1;border:none;").arg(C_TEXT));
     v->addWidget(line);
     v->addLayout(lay, 1);
+    // 组框全被 #156 钉 Fixed,内层 max 顶死 → stretch=1 失效,剩余空间会摊进各
+    // cell(元素垂直居中、缝变大)。页尾兜底弹簧独占剩余;stretch=0 不与长页内容争空间
+    v->addStretch(0);
     return page;
 }
 
