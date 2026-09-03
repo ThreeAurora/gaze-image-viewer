@@ -34,6 +34,9 @@ public:
     // 预览当前显示的文件(空=没有)。调用方用它挡掉"对同一张再解一遍"
     const QString& filePath() const { return m_filePath; }
     void clear();
+    // #214:删除/移动/改名前释放本面板握着的文件句柄(播放器/GIF/波形解码线程)。
+    // 只在命中当前预览文件(或其所在目录被整删)时动手;只放句柄不换画面
+    void releaseFileLocks(const QStringList& paths);
     void togglePlayPause();
     void seekDelta(int seconds);
     // 相邻预读:切换方向键时预解码下一张/上一张,命中则零等待显示(mainwindow 调用)

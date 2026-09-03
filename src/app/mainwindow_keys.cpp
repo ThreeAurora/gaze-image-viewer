@@ -7,6 +7,7 @@
 #include "printdialog.h"
 #include "infopanel.h"
 #include "shelldelete.h"   // showDeleteToast:拖放复制成功的左下角提示
+#include "filelockrelease.h"   // #214:拖放移动前放掉预览握着的句柄
 #include "sortheader.h"
 #include "fileentry.h"
 #include "livephoto.h"
@@ -214,6 +215,7 @@ void MainWindow::dropEvent(QDropEvent* e) {
             }
         }
 
+        if (!copy) releaseGazeFileLocks(actionable);   // #214:移动前放句柄(播放中视频/音频被锁)
         QStringList errs;
         int done = 0;
         for (const QString& p : actionable) {

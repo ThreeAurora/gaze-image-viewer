@@ -151,6 +151,11 @@ void MainWindow::renameFocused() {
     renameCurrent();
 }
 
+// ── #214:shelldelete/clipboardops 在动文件前经元对象叫到这里,转调预览面板放句柄
+void MainWindow::releaseFileLocks(const QStringList& paths) {
+    if (m_preview) m_preview->releaseFileLocks(paths);
+}
+
 // ── 重命名当前选中项:FileOps/renameDialog 决定弹对话框还是卡片上就地改
 void MainWindow::renameCurrent() {
     const auto paths = m_fileGrid->selectedPaths();
@@ -173,6 +178,8 @@ void MainWindow::renameCurrent() {
                              gazeTr("目标名已存在:\n") + np);
         return;
     }
+    // #214:改名目标若正被预览播放(视频/音频),句柄不放 rename 会失败
+    releaseGazeFileLocks({paths.first()});
     if (!QFile::rename(paths.first(), np)) {
         QMessageBox::warning(this, gazeTr("重命名失败"), np);
         return;

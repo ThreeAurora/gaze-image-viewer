@@ -645,6 +645,8 @@ void FolderTree::renameItem(QTreeWidgetItem* item) {
             gazeTr("目标名已存在:\n") + newPath);
         return;
     }
+    // #214:改名的目录若正被预览播放(里面的视频/音频),句柄不放 rename 会失败
+    releaseGazeFileLocks({oldPath});
     if (!QFile::rename(oldPath, newPath)) {
         QMessageBox::warning(this, gazeTr("重命名失败"), oldPath);
         return;
@@ -700,6 +702,9 @@ void FolderTree::showContextMenu(const QPoint& pos) {
                    this, [this, paths]() {
         if (!deleteWithSettings(paths, this)) return;
         removeNodes(paths);
+        // #214:删掉的文件若开着标签,让主窗摘掉死签(与网格 reloadAfterDelete 同一规矩)
+        if (QWidget* w = window())
+            QMetaObject::invokeMethod(w, "pruneDeadViewerTabs");
         QStringList parents;
         for (const auto& p : paths) {
             const QString par = QFileInfo(p).dir().absolutePath();

@@ -403,6 +403,8 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
             QMessageBox::warning(par, "重命名", gazeTr("目标名已存在:\n") + np);
             return;
         }
+        // #214:改名目标若正被预览播放,句柄不放 rename 会失败
+        releaseGazeFileLocks({m_filePath});
         if (!QFile::rename(m_filePath, np)) {
             QMessageBox::warning(par, "重命名失败", m_filePath);
             return;

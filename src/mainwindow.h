@@ -48,6 +48,7 @@ public:
     Q_INVOKABLE void viewerBack();     // ESC:查看器退回浏览器(幂等)
     Q_INVOKABLE void refresh();        // 重载当前目录(F5/工具栏/布局菜单)
     Q_INVOKABLE void reloadAfterDelete(const QString& deletedPath);  // 删除后重载并选中下一项
+    Q_INVOKABLE void releaseFileLocks(const QStringList& paths);  // #214:删/移/改名前放掉预览握着的句柄
     // 启动收尾:主窗口首帧显示后恢复上次选中文件(防 QVideoWindow 独立闪框,
     // 由 main.cpp 在 opacity 恢复同拍调用;构造期只记 m_startupRestoreFile)
     void restoreStartupPreview();

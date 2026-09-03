@@ -448,6 +448,8 @@ void FileGrid::endInlineRename(bool commit) {
                              gazeTr("目标名已存在:\n") + np);
         return;
     }
+    // #214:改名目标若正被预览播放,句柄不放 rename 会失败
+    releaseGazeFileLocks({oldPath});
     if (!QFile::rename(oldPath, np)) {
         QMessageBox::warning(this, gazeTr("重命名失败"), np);
         return;

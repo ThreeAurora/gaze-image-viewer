@@ -11,6 +11,7 @@
 #include <QUrl>
 #include <QString>
 #include <QStringList>
+#include "filelockrelease.h"   // #214:移动前放掉预览握着的句柄
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
@@ -124,6 +125,8 @@ inline bool copyPathsTo(const QStringList& paths, const QString& dstDir,
 // (源仅在目的已复制成功时才清除,不会两头都不剩)
 inline bool movePathsTo(const QStringList& paths, const QString& dstDir,
                         int* doneOut = nullptr, QStringList* errors = nullptr) {
+    // #214:跨卷回落是"复制+删源",源被预览播放锁着时删除会失败,动手前统一放句柄
+    releaseGazeFileLocks(paths);
     int done = 0;
     for (const auto& p : paths) {
         const QFileInfo fi(p);

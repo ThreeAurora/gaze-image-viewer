@@ -731,6 +731,29 @@ void PreviewPanel::teardownPlayer() {
     m_coverArmed = false;
 }
 
+// #214:删除/移动/改名前释放句柄。命中判定含"删的是文件夹、正在播里面的文件"
+// (前缀按 / 对齐;Windows 路径大小写不敏感,两种写法都要容)。只放句柄不换画面:
+// 删除成功后调用方 reloadAfterDelete 自然换图;取消/失败场景画面停原地不算错。
+// WaveForm 解码线程同样握着音频文件的读句柄,一并收。
+void PreviewPanel::releaseFileLocks(const QStringList& paths) {
+    if (paths.isEmpty()) return;
+    auto hit = [&paths](const QString& f) {
+        if (f.isEmpty()) return false;
+        const QString af = QFileInfo(f).absoluteFilePath();
+        for (const QString& p : paths) {
+            const QString base = QFileInfo(p).absoluteFilePath();
+            if (af.compare(base, Qt::CaseInsensitive) == 0) return true;
+            if (af.startsWith(base + QLatin1Char('/'), Qt::CaseInsensitive)) return true;
+        }
+        return false;
+    };
+    if (!hit(m_filePath) && !hit(m_livePhotoOriginalPath)) return;
+    Logger::event(QStringLiteral("releaseFileLocks '%1'").arg(m_filePath));
+    stopMovie();
+    teardownPlayer();
+    teardownWave();
+}
+
 void PreviewPanel::clear() {
     Logger::event(QStringLiteral("clear (was '%1')").arg(m_filePath));
     teardownPlayer();

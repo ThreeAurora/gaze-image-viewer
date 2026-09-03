@@ -15,6 +15,7 @@
 #include "settings.h"
 #include "constants.h"
 #include "i18n.h"
+#include "filelockrelease.h"   // #214:动文件前放掉预览握着的句柄
 
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -138,6 +139,9 @@ inline bool deleteWithSettings(const QStringList& paths, QWidget* parent) {
                 QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes)
             return false;
     }
+    // #214:确认之后、动手之前放句柄——播放中的视频被 QMediaPlayer(WMF) 锁着,
+    // 不放的话 Shell 删除会失败。四条删除入口(网格键盘/右键/树/查看器)全走这里
+    releaseGazeFileLocks(paths);
     if (shellDelete(paths, toRecycle, parent)) {
         // 短文案:不带文件名/数量,一个词说完落点(回收站/永久保留区分)
         showDeleteToast(parent,
