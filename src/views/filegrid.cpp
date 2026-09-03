@@ -453,11 +453,11 @@ void FileGrid::deleteSelection() {
 
 void FileGrid::newFolder() {
     bool ok;
-    const QString name = QInputDialog::getText(this, "新建文件夹", "名称:",
-                                        QLineEdit::Normal, "新建文件夹", &ok).trimmed();
+    const QString name = QInputDialog::getText(this, gazeTr("新建文件夹"), gazeTr("名称:"),
+                                        QLineEdit::Normal, gazeTr("新建文件夹"), &ok).trimmed();
     if (!ok || name.isEmpty()) return;
     if (const QString why = invalidNameReason(name); !why.isEmpty()) {
-        QMessageBox::warning(this, "新建文件夹", why);
+        QMessageBox::warning(this, gazeTr("新建文件夹"), why);
         return;
     }
     // 一直用 m_currentDir:旧写法取"第一个条目的父目录",空目录时退回 home,
@@ -466,11 +466,11 @@ void FileGrid::newFolder() {
     if (dir.isEmpty()) return;
     const QString full = QDir(dir).filePath(name);
     if (QFileInfo::exists(full)) {
-        QMessageBox::warning(this, "新建文件夹", gazeTr("同名文件夹已存在:\n") + full);
+        QMessageBox::warning(this, gazeTr("新建文件夹"), gazeTr("同名文件夹已存在:\n") + full);
         return;
     }
     if (!QDir().mkdir(full)) {
-        QMessageBox::warning(this, "新建文件夹", gazeTr("创建失败:\n") + full);
+        QMessageBox::warning(this, gazeTr("新建文件夹"), gazeTr("创建失败:\n") + full);
         return;
     }
     m_preferPath = full;

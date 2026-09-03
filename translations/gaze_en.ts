@@ -62,6 +62,10 @@ Fetching images…</translation>
         <translation>  (default)</translation>
     </message>
     <message>
+        <source>  ·  已选 %1 项 · [%2%3]</source>
+        <translation>  ·  %1 selected · [%2%3]</translation>
+    </message>
+    <message>
         <source> · %1 %2</source>
         <translation> · %1 %2</translation>
     </message>
@@ -74,8 +78,16 @@ Fetching images…</translation>
         <translation> —— </translation>
     </message>
     <message>
+        <source> 个项目</source>
+        <translation> items</translation>
+    </message>
+    <message>
         <source> 份</source>
         <translation> copies</translation>
+    </message>
+    <message>
+        <source> 文件</source>
+        <translation> file</translation>
     </message>
     <message>
         <source> 毫秒</source>
@@ -126,8 +138,36 @@ Extracting embedded camera preview…</translation>
         <translation>%1 line(s) exceed %2 characters; only the first %2 characters of each line are shown</translation>
     </message>
     <message>
+        <source>%1 项</source>
+        <translation>%1 items</translation>
+    </message>
+    <message>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
+    </message>
+    <message>
+        <source>%1:不能复制进自己的子目录</source>
+        <translation>%1:cannot copy into its own subfolder</translation>
+    </message>
+    <message>
+        <source>%1:不能移动到子目录中</source>
+        <translation>%1:cannot move into its own subfolder</translation>
+    </message>
+    <message>
+        <source>%1:复制失败</source>
+        <translation>%1:copy failed</translation>
+    </message>
+    <message>
+        <source>%1:已复制到目标,但源未能删除(留下副本)</source>
+        <translation>%1:copied to target, but the source could not be deleted (a duplicate was left behind)</translation>
+    </message>
+    <message>
+        <source>%1:源已不存在</source>
+        <translation>%1:source no longer exists</translation>
+    </message>
+    <message>
+        <source>%1:移动失败</source>
+        <translation>%1:move failed</translation>
     </message>
     <message>
         <source>(双击在 Gaze 中打开)</source>
@@ -162,6 +202,14 @@ Extracting embedded camera preview…</translation>
         <translation>, first %1 shown</translation>
     </message>
     <message>
+        <source>1.00 正方形</source>
+        <translation>1.00 Square</translation>
+    </message>
+    <message>
+        <source>1.90 D4/D16 非变形</source>
+        <translation>1.90 D4/D16 Non-anamorphic</translation>
+    </message>
+    <message>
         <source>1:1 像素</source>
         <translation>1:1 pixels</translation>
     </message>
@@ -170,12 +218,104 @@ Extracting embedded camera preview…</translation>
         <translation>1:1 shows the physical size using the file&apos;s DPI</translation>
     </message>
     <message>
+        <source>2.00 变形</source>
+        <translation>2.00 Anamorphic</translation>
+    </message>
+    <message>
+        <source>3G2 视频</source>
+        <translation>3G2 video</translation>
+    </message>
+    <message>
+        <source>7Z 压缩</source>
+        <translation>7Z archive</translation>
+    </message>
+    <message>
         <source>&lt;p style=&apos;color:#C0C0C6&apos;&gt;无法读取文件&lt;/p&gt;</source>
         <translation>&lt;p style=&apos;color:#C0C0C6&apos;&gt;Cannot read file&lt;/p&gt;</translation>
     </message>
     <message>
+        <source>AAC 音频</source>
+        <translation>AAC audio</translation>
+    </message>
+    <message>
+        <source>AC3 音频</source>
+        <translation>AC3 audio</translation>
+    </message>
+    <message>
+        <source>AMR 音频</source>
+        <translation>AMR audio</translation>
+    </message>
+    <message>
+        <source>APNG 图片</source>
+        <translation>APNG image</translation>
+    </message>
+    <message>
+        <source>AVI 视频</source>
+        <translation>AVI video</translation>
+    </message>
+    <message>
+        <source>AVIF 图片</source>
+        <translation>AVIF image</translation>
+    </message>
+    <message>
+        <source>AVIF 序列</source>
+        <translation>AVIF sequence</translation>
+    </message>
+    <message>
+        <source>BMP 图片</source>
+        <translation>BMP image</translation>
+    </message>
+    <message>
+        <source>C / ← / ↑ — 上一个
+V / → / ↓ — 下一个
+空格 — 播放/暂停
+Ctrl+PgUp/PgDn — 快退/快进(秒数见设置→键盘)
+按住右键+滚轮 — 缩放(等同 Ctrl+滚轮)
+双击预览区 — 全屏
+F5 — 刷新  F11 — 界面全屏
+G — 全屏预览(只铺画面;再按 G 或 ESC 完全回到原布局)
+Alt+←/→ — 后退/前进  Backspace — 上级
+Ctrl+1~5 — 设置颜色标记(红橙黄绿蓝)
+Ctrl+0 / D — 取消颜色标记
+F — 加红色标记
+F2 — 重命名(文件树与文件页都可用,改谁看焦点;可在设置→快捷键改)
+F3 — 预览面板开关
+Del / S — 删除选中  X — 新建文件夹
+Enter — 切换查看器/浏览器(设置→键盘)
+Ctrl+A — 全选  Ctrl+I — 反选
+Esc — 退出全屏
+拖放 — 移动到文件夹  Ctrl+拖放 — 复制(设置→文件操作可关确认弹窗)</source>
+        <translation>C / ← / ↑ — Previous
+V / → / ↓ — Next
+Space — Play/Pause
+Ctrl+PgUp/PgDn — Rewind / Fast-forward (interval in Settings → Keyboard)
+Hold right button + wheel — Zoom (same as Ctrl+wheel)
+Double-click preview — Fullscreen
+F5 — Refresh  F11 — Fullscreen UI
+G — Fullscreen preview (picture only; press G or ESC again to fully restore the layout)
+Alt+←/→ — Back / Forward  Backspace — Parent folder
+Ctrl+1~5 — Set color label (red/orange/yellow/green/blue)
+Ctrl+0 / D — Clear color label
+F — Add red label
+F2 — Rename (works in the folder tree and the file grid; target follows focus; remappable in Settings → Shortcuts)
+F3 — Toggle preview panel
+Del / S — Delete selected  X — New folder
+Enter — Switch viewer/browser (Settings → Keyboard)
+Ctrl+A — Select all  Ctrl+I — Invert selection
+Esc — Exit fullscreen
+Drag &amp; drop — Move to folder  Ctrl+drag — Copy (confirmation dialog can be turned off in Settings → File Operations)</translation>
+    </message>
+    <message>
         <source>CLIP 语义模型;引擎默认由服务端自选</source>
         <translation>CLIP semantic model; the engine picks a default automatically</translation>
+    </message>
+    <message>
+        <source>DDS 图片</source>
+        <translation>DDS image</translation>
+    </message>
+    <message>
+        <source>DPX 图片</source>
+        <translation>DPX image</translation>
     </message>
     <message>
         <source>EXIF 修改日期</source>
@@ -190,6 +330,52 @@ Extracting embedded camera preview…</translation>
         <translation>EXIF date taken (descending)</translation>
     </message>
     <message>
+        <source>EXIF日期</source>
+        <translation>EXIF Date</translation>
+    </message>
+    <message>
+        <source>EXR 图片</source>
+        <translation>EXR image</translation>
+    </message>
+    <message>
+        <source>Excel 表格</source>
+        <translation>Excel spreadsheet</translation>
+    </message>
+    <message>
+        <source>FLAC 音频</source>
+        <translation>FLAC audio</translation>
+    </message>
+    <message>
+        <source>FLV 视频</source>
+        <translation>FLV video</translation>
+    </message>
+    <message>
+        <source>GIF 图片</source>
+        <translation>GIF image</translation>
+    </message>
+    <message>
+        <source>Gaze
+通用图片/文件资源管理器
+
+主要功能:
+· 图库浏览(文件夹树 + 缩略图网格 + 预览面板)
+· Live Photo / Motion Photo 动态照片自动播放
+· 图片/视频/音频预览,颜色标记与筛选
+· 图片查看器模式(Ctrl+滚轮缩放细节)
+
+版本 1.0 — C++ + Qt6</source>
+        <translation>Gaze
+General-purpose image/file explorer
+
+Key features:
+· Gallery browsing (folder tree + thumbnail grid + preview panel)
+· Live Photo / Motion Photo auto playback
+· Image/video/audio preview, color labels and filtering
+· Image viewer mode (Ctrl+wheel to zoom for detail)
+
+Version 1.0 — C++ + Qt6</translation>
+    </message>
+    <message>
         <source>Gaze - %1</source>
         <translation>Gaze - %1</translation>
     </message>
@@ -202,12 +388,130 @@ Extracting embedded camera preview…</translation>
         <translation>Gaze Image Browser</translation>
     </message>
     <message>
+        <source>HEIC 图片</source>
+        <translation>HEIC image</translation>
+    </message>
+    <message>
+        <source>HEIF 图片</source>
+        <translation>HEIF image</translation>
+    </message>
+    <message>
+        <source>JPEG 2000 图片</source>
+        <translation>JPEG 2000 image</translation>
+    </message>
+    <message>
+        <source>JPEG XL 图片</source>
+        <translation>JPEG XL image</translation>
+    </message>
+    <message>
+        <source>JPEG 图片</source>
+        <translation>JPEG image</translation>
+    </message>
+    <message>
+        <source>M4A 音频</source>
+        <translation>M4A audio</translation>
+    </message>
+    <message>
+        <source>MKV 视频</source>
+        <translation>MKV video</translation>
+    </message>
+    <message>
+        <source>MOV 视频</source>
+        <translation>MOV video</translation>
+    </message>
+    <message>
+        <source>MP3 音频</source>
+        <translation>MP3 audio</translation>
+    </message>
+    <message>
+        <source>MP4 视频</source>
+        <translation>MP4 video</translation>
+    </message>
+    <message>
+        <source>MPEG-1 视频</source>
+        <translation>MPEG-1 video</translation>
+    </message>
+    <message>
+        <source>MPEG-2 视频</source>
+        <translation>MPEG-2 video</translation>
+    </message>
+    <message>
+        <source>OGG 音频</source>
+        <translation>OGG audio</translation>
+    </message>
+    <message>
+        <source>OGM 视频</source>
+        <translation>OGM video</translation>
+    </message>
+    <message>
+        <source>OPUS 音频</source>
+        <translation>OPUS audio</translation>
+    </message>
+    <message>
+        <source>PDF 文档</source>
+        <translation>PDF document</translation>
+    </message>
+    <message>
+        <source>PNG 图片</source>
+        <translation>PNG image</translation>
+    </message>
+    <message>
         <source>Python</source>
         <translation>Python</translation>
     </message>
     <message>
+        <source>QOI 图片</source>
+        <translation>QOI image</translation>
+    </message>
+    <message>
+        <source>RAR 压缩</source>
+        <translation>RAR archive</translation>
+    </message>
+    <message>
+        <source>SVG 图片</source>
+        <translation>SVG image</translation>
+    </message>
+    <message>
+        <source>TIFF 图片</source>
+        <translation>TIFF image</translation>
+    </message>
+    <message>
+        <source>WAV 音频</source>
+        <translation>WAV audio</translation>
+    </message>
+    <message>
+        <source>WMA 音频</source>
+        <translation>WMA audio</translation>
+    </message>
+    <message>
+        <source>WMV 视频</source>
+        <translation>WMV video</translation>
+    </message>
+    <message>
+        <source>WebM 视频</source>
+        <translation>WebM video</translation>
+    </message>
+    <message>
+        <source>WebP 图片</source>
+        <translation>WebP image</translation>
+    </message>
+    <message>
+        <source>Word 文档</source>
+        <translation>Word document</translation>
+    </message>
+    <message>
+        <source>ZIP 压缩</source>
+        <translation>ZIP archive</translation>
+    </message>
+    <message>
         <source>[%1%2] </source>
         <translation>[%1%2] </translation>
+    </message>
+    <message>
+        <source>ffmpeg 未找到(exe旁 ffmpeg/ 与 PATH 均无)。
+</source>
+        <translation>ffmpeg not found (neither beside the exe in ffmpeg/ nor on PATH).
+</translation>
     </message>
     <message>
         <source>×</source>
@@ -604,6 +908,14 @@ Next start will restore:
         <translation>%1 items in total</translation>
     </message>
     <message>
+        <source>关于 Gaze</source>
+        <translation>About Gaze</translation>
+    </message>
+    <message>
+        <source>关于(&amp;A)</source>
+        <translation>&amp;About</translation>
+    </message>
+    <message>
         <source>关闭</source>
         <translation>Close</translation>
     </message>
@@ -696,6 +1008,10 @@ Next start will restore:
         <translation>Delete</translation>
     </message>
     <message>
+        <source>删除  (Del)</source>
+        <translation>Delete  (Del)</translation>
+    </message>
+    <message>
         <source>删除全部</source>
         <translation>Delete all</translation>
     </message>
@@ -784,6 +1100,10 @@ Next start will restore:
         <translation>Action</translation>
     </message>
     <message>
+        <source>动态链接库</source>
+        <translation>Dynamic-link library</translation>
+    </message>
+    <message>
         <source>勾上后&quot;1:1 / 长按看原图&quot;按文件自带 DPI 换算(屏幕DPI ÷ 图像DPI),
 显示的是标称物理尺寸;文件没写 DPI 时仍按纯像素 1:1。
 不勾 = 1 图像像素 : 1 屏幕像素(#95 口径,默认)。</source>
@@ -840,6 +1160,10 @@ Unchecked: reuse the pane switches from the last exit (requires a saved layout o
     <message>
         <source>取消</source>
         <translation>Cancel</translation>
+    </message>
+    <message>
+        <source>取消颜色标记</source>
+        <translation>Clear Color Label</translation>
     </message>
     <message>
         <source>取消颜色标记  (Ctrl+0 / D)</source>
@@ -1100,6 +1424,10 @@ Click once to select the whole path, click again to place the caret</translation
         <translation>Copy to...</translation>
     </message>
     <message>
+        <source>复制到...</source>
+        <translation>Copy to...</translation>
+    </message>
+    <message>
         <source>复制失败</source>
         <translation>Copy failed</translation>
     </message>
@@ -1144,6 +1472,10 @@ Click once to select the whole path, click again to place the caret</translation
         <translation>Substring or wildcards * ?; separate multiple words with spaces, any match counts</translation>
     </message>
     <message>
+        <source>完成</source>
+        <translation>Done</translation>
+    </message>
+    <message>
         <source>宽</source>
         <translation>Width</translation>
     </message>
@@ -1170,6 +1502,10 @@ Click once to select the whole path, click again to place the caret</translation
         <translation>Restore all settings to their defaults?</translation>
     </message>
     <message>
+        <source>将视频拆帧保存到当前目录？</source>
+        <translation>Extract the video into frames and save them to the current folder?</translation>
+    </message>
+    <message>
         <source>尚未生效:该功能还没有实现,此项当前不影响程序行为</source>
         <translation>Not yet effective: this feature is not implemented; this option currently has no effect</translation>
     </message>
@@ -1184,6 +1520,10 @@ Click once to select the whole path, click again to place the caret</translation
     <message>
         <source>属性</source>
         <translation>Properties</translation>
+    </message>
+    <message>
+        <source>属性..</source>
+        <translation>Properties...</translation>
     </message>
     <message>
         <source>工具(&amp;T)</source>
@@ -1296,14 +1636,26 @@ or in system Settings → Apps → Default apps → Gaze → &apos;Set default&a
         <translation>Start with files</translation>
     </message>
     <message>
+        <source>帧提取失败</source>
+        <translation>Frame extraction failed</translation>
+    </message>
+    <message>
         <source>帧提取完成:
 </source>
         <translation>Frame extraction finished:
 </translation>
     </message>
     <message>
+        <source>帮助(&amp;H)</source>
+        <translation>&amp;Help</translation>
+    </message>
+    <message>
         <source>常规</source>
         <translation>General</translation>
+    </message>
+    <message>
+        <source>应用程序</source>
+        <translation>Application</translation>
     </message>
     <message>
         <source>开:切换查看器标签、以及退回浏览器时,把文件列表的选中项挪到那个文件上,
@@ -1350,6 +1702,14 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
         <translation>Shortcuts</translation>
     </message>
     <message>
+        <source>快捷键帮助</source>
+        <translation>Keyboard Shortcuts</translation>
+    </message>
+    <message>
+        <source>快捷键帮助(&amp;K)</source>
+        <translation>&amp;Keyboard Shortcuts</translation>
+    </message>
+    <message>
         <source>快进/快退秒数</source>
         <translation>Seek step (seconds)</translation>
     </message>
@@ -1390,6 +1750,10 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
         <translation>Print...</translation>
     </message>
     <message>
+        <source>打印...(Ctrl+P)</source>
+        <translation>Print... (Ctrl+P)</translation>
+    </message>
+    <message>
         <source>打印尺寸</source>
         <translation>Print size</translation>
     </message>
@@ -1406,6 +1770,18 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
         <translation>Print range</translation>
     </message>
     <message>
+        <source>打开</source>
+        <translation>Open</translation>
+    </message>
+    <message>
+        <source>打开全部选中文件</source>
+        <translation>Open All Selected Files</translation>
+    </message>
+    <message>
+        <source>打开方式</source>
+        <translation>Open With</translation>
+    </message>
+    <message>
         <source>打开系统&quot;默认应用程序&quot;设置</source>
         <translation>Open system &quot;Default apps&quot; settings</translation>
     </message>
@@ -1420,6 +1796,10 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
     <message>
         <source>扫描文件头</source>
         <translation>Scan file headers</translation>
+    </message>
+    <message>
+        <source>拆帧保存</source>
+        <translation>Extract Frames</translation>
     </message>
     <message>
         <source>拖动多选(原行为)</source>
@@ -1526,6 +1906,10 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
         <translation>Playback &amp; performance</translation>
     </message>
     <message>
+        <source>播放实况视频</source>
+        <translation>Play Motion Video</translation>
+    </message>
+    <message>
         <source>放大</source>
         <translation>Zoom in</translation>
     </message>
@@ -1556,6 +1940,10 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
     <message>
         <source>文件 %1 KB，仅读取前 %2 KB</source>
         <translation>File is %1 KB; only the first %2 KB is read</translation>
+    </message>
+    <message>
+        <source>文件(&amp;F)</source>
+        <translation>&amp;File</translation>
     </message>
     <message>
         <source>文件不存在:
@@ -1620,6 +2008,10 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
         <translation>Folder name</translation>
     </message>
     <message>
+        <source>文件夹名:</source>
+        <translation>Folder name:</translation>
+    </message>
+    <message>
         <source>文件夹总是按字母序排列</source>
         <translation>Folders always sort alphabetically</translation>
     </message>
@@ -1664,8 +2056,16 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
         <translation>Text</translation>
     </message>
     <message>
+        <source>文本文档</source>
+        <translation>Text document</translation>
+    </message>
+    <message>
         <source>文档</source>
         <translation>Documents</translation>
+    </message>
+    <message>
+        <source>新名称:</source>
+        <translation>New name:</translation>
     </message>
     <message>
         <source>新建</source>
@@ -1714,6 +2114,10 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
     <message>
         <source>无法加载图片</source>
         <translation>Cannot load image</translation>
+    </message>
+    <message>
+        <source>无法启动 %1(不在 PATH?)</source>
+        <translation>Cannot start %1 (not on PATH?)</translation>
     </message>
     <message>
         <source>无法启动 Python 解释器:%1 —— 检查 设置 → 以文搜图</source>
@@ -2074,6 +2478,10 @@ Try a different selection (a bit larger and farther from the edges).</translatio
         <translation>Add to Explorer context menu</translation>
     </message>
     <message>
+        <source>添加颜色标记</source>
+        <translation>Add Color Label</translation>
+    </message>
+    <message>
         <source>清理</source>
         <translation>Clean up</translation>
     </message>
@@ -2186,6 +2594,10 @@ Try a different selection (a bit larger and farther from the edges).</translatio
         <translation>Move</translation>
     </message>
     <message>
+        <source>移动到..</source>
+        <translation>Move to...</translation>
+    </message>
+    <message>
         <source>移动到...</source>
         <translation>Move to...</translation>
     </message>
@@ -2272,6 +2684,10 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     <message>
         <source>系统文件夹 %APPDATA%(下次启动生效)</source>
         <translation>System folder %APPDATA% (effective after restart)</translation>
+    </message>
+    <message>
+        <source>系统里没有已安装的打印机:装好驱动,或添加一个&quot;Microsoft Print to PDF&quot;再来。</source>
+        <translation>No printer is installed: install a driver, or add a &quot;Microsoft Print to PDF&quot; printer and try again.</translation>
     </message>
     <message>
         <source>系统集成</source>
@@ -2620,6 +3036,10 @@ Continue?</translation>
         <translation>The startup folder no longer exists</translation>
     </message>
     <message>
+        <source>超过 %1 秒未完成,已终止</source>
+        <translation>Not finished within %1 s, terminated</translation>
+    </message>
+    <message>
         <source>跟随上次窗口状态</source>
         <translation>Follow last window state</translation>
     </message>
@@ -2662,6 +3082,10 @@ Continue?</translation>
     <message>
         <source>输入路径,回车跳转</source>
         <translation>Type a path and press Enter to navigate</translation>
+    </message>
+    <message>
+        <source>输出文件为空: %1</source>
+        <translation>Output file is empty: %1</translation>
     </message>
     <message>
         <source>边框粗细</source>
@@ -2798,6 +3222,10 @@ Continue?</translation>
     <message>
         <source>重命名(&amp;R)</source>
         <translation>&amp;Rename</translation>
+    </message>
+    <message>
+        <source>重命名...</source>
+        <translation>Rename...</translation>
     </message>
     <message>
         <source>重命名失败</source>

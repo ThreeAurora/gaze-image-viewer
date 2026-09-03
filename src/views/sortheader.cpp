@@ -1,5 +1,6 @@
 #include "sortheader.h"
 #include "constants.h"
+#include "i18n.h"
 #include <QLabel>
 #include <QMenu>
 #include <QContextMenuEvent>
@@ -14,13 +15,13 @@ SortHeader::SortHeader(QWidget* parent) : QWidget(parent) {
     m_layout->setSpacing(0);
 
     struct { int id; QString text; } cols[] = {
-        {SORT_NAME,   "文件名"},
-        {SORT_SIZE,   "大小"},
-        {SORT_TYPE,   "类型"},
-        {SORT_EXT,    "扩展名"},
-        {SORT_CDATE,  "创建日期"},
-        {SORT_MDATE,  "修改日期"},
-        {SORT_EXIF,   "EXIF日期"},
+        {SORT_NAME,   gazeTr("文件名")},
+        {SORT_SIZE,   gazeTr("大小")},
+        {SORT_TYPE,   gazeTr("类型")},
+        {SORT_EXT,    gazeTr("扩展名")},
+        {SORT_CDATE,  gazeTr("创建日期")},
+        {SORT_MDATE,  gazeTr("修改日期")},
+        {SORT_EXIF,   gazeTr("EXIF日期")},
     };
 
     QString btnStyle =

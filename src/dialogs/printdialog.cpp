@@ -357,7 +357,7 @@ void PrintDialog::loadPrinters() {
     m_printerCb->blockSignals(false);
 
     if (printers.isEmpty()) {
-        m_statusNote = QString::fromUtf8(
+        m_statusNote = gazeTr(
             "系统里没有已安装的打印机:装好驱动,或添加一个\"Microsoft Print to PDF\"再来。");
         m_copiesLbl->setVisible(false);
         m_copiesSpn->setVisible(false);

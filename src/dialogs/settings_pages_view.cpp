@@ -60,17 +60,17 @@ QWidget* SettingsDialog::pageViewer() {
     fZoom->addRow(gazeTr("缩放率"),
         combo("Viewer/zoomMode", {gazeTr("固定"), gazeTr("变动")}, 1));
     fZoom->addRow(gazeTr("缩小抗锯齿"),
-        combo("Viewer/outZoomFilter", {"无", "Bilinear", "Bicubic", "Spline 16",
+        combo("Viewer/outZoomFilter", {gazeTr("无"), "Bilinear", "Bicubic", "Spline 16",
             "Spline 36", "Lanczos 3", "Lanczos 4"}, 1));
     fZoom->addRow(gazeTr("放大抗锯齿"),
-        combo("Viewer/inZoomFilter", {"无", "Bilinear", "Bicubic", "Spline 16",
+        combo("Viewer/inZoomFilter", {gazeTr("无"), "Bilinear", "Bicubic", "Spline 16",
             "Spline 36", "Lanczos 3", "Lanczos 4"}, 1));
     fZoom->addRow(chk("Viewer/hidpiPixel", gazeTr("在 HiDPI 屏幕上缩放:1 图像像素 = 1 屏幕像素"), false));
     fZoom->addRow(gazeTr("像素比"),
-        combo("Viewer/pixelRatio", {"1.00 正方形", "0.91 D1/DV NTSC", "0.95 D4/D16 Standard",
+        combo("Viewer/pixelRatio", {gazeTr("1.00 正方形"), "0.91 D1/DV NTSC", "0.95 D4/D16 Standard",
             "1.09 D1/DV PAL", "1.20 D1/DV NTSC Widescreen", "1.33 HDV 1080/DVCPRO HD 720",
-            "1.46 D1/DV PAL Widescreen", "1.50 DVCPRO HD 1080", "1.90 D4/D16 非变形",
-            "2.00 变形"}, 0));
+            "1.46 D1/DV PAL Widescreen", "1.50 DVCPRO HD 1080", gazeTr("1.90 D4/D16 非变形"),
+            gazeTr("2.00 变形")}, 0));
     root->addWidget(group(gazeTr("缩放"), fZoom));
 
     // 分组"背景与界面元素"

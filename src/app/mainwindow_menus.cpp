@@ -72,13 +72,13 @@ void MainWindow::createMenubar() {
         .arg(C_MENUBAR, C_TEXT, C_SEPARATOR, C_CARD_HOVER, C_ACCENT));
 
     // ── 文件(F) ──
-    auto *fileMenu = mb->addMenu("文件(&F)");
-    fileMenu->addAction(IconLib::appIcon("cmd_open"), "打开",
+    auto *fileMenu = mb->addMenu(gazeTr("文件(&F)"));
+    fileMenu->addAction(IconLib::appIcon("cmd_open"), gazeTr("打开"),
         QKeySequence("Ctrl+O"), this, [this]() {
             auto paths = m_fileGrid->selectedPaths();
             if (!paths.isEmpty()) openWithSystem(paths.first());
         });
-    auto *recentMenu = fileMenu->addMenu(IconLib::appIcon("cmd_browse"), "最近的文件");
+    auto *recentMenu = fileMenu->addMenu(IconLib::appIcon("cmd_browse"), gazeTr("最近的文件"));
     connect(recentMenu, &QMenu::aboutToShow, this, [this, recentMenu]() {
         rebuildRecentMenu(recentMenu);
     });
@@ -241,10 +241,10 @@ void MainWindow::createMenubar() {
     // #123:原「批量重命名...」菜单项已删 —— 该功能在 TODO_ALL §9 否决清单(@153611)。
 
     // ── 帮助(H) ──
-    auto *helpMenu = mb->addMenu("帮助(&H)");
-    helpMenu->addAction("快捷键帮助(&K)", this, [](){
-        QMessageBox::information(nullptr, "快捷键帮助",
-            "C / ← / ↑ — 上一个\n"
+    auto *helpMenu = mb->addMenu(gazeTr("帮助(&H)"));
+    helpMenu->addAction(gazeTr("快捷键帮助(&K)"), this, [](){
+        QMessageBox::information(nullptr, gazeTr("快捷键帮助"),
+            gazeTr("C / ← / ↑ — 上一个\n"
             "V / → / ↓ — 下一个\n"
             "空格 — 播放/暂停\n"
             "Ctrl+PgUp/PgDn — 快退/快进(秒数见设置→键盘)\n"
@@ -262,17 +262,17 @@ void MainWindow::createMenubar() {
             "Enter — 切换查看器/浏览器(设置→键盘)\n"
             "Ctrl+A — 全选  Ctrl+I — 反选\n"
             "Esc — 退出全屏\n"
-            "拖放 — 移动到文件夹  Ctrl+拖放 — 复制(设置→文件操作可关确认弹窗)");
+            "拖放 — 移动到文件夹  Ctrl+拖放 — 复制(设置→文件操作可关确认弹窗)"));
     });
-    helpMenu->addAction("关于(&A)", this, [](){
-        QMessageBox::about(nullptr, "关于 Gaze",
-            "Gaze\n通用图片/文件资源管理器\n\n"
+    helpMenu->addAction(gazeTr("关于(&A)"), this, [](){
+        QMessageBox::about(nullptr, gazeTr("关于 Gaze"),
+            gazeTr("Gaze\n通用图片/文件资源管理器\n\n"
             "主要功能:\n"
             "· 图库浏览(文件夹树 + 缩略图网格 + 预览面板)\n"
             "· Live Photo / Motion Photo 动态照片自动播放\n"
             "· 图片/视频/音频预览,颜色标记与筛选\n"
             "· 图片查看器模式(Ctrl+滚轮缩放细节)\n\n"
-            "版本 1.0 — C++ + Qt6");
+            "版本 1.0 — C++ + Qt6"));
     });
 
     // ── 语言(2026-09-03 国际化)──

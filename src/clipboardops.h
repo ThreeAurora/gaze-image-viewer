@@ -2,6 +2,7 @@
 // 剪贴板文件复制/剪切/粘贴 —— 右键菜单与 FileGrid Ctrl+C/X/V 共用一份实现,
 // 此前这套逻辑只存在于 contextmenu.cpp 的 lambda 里,网格快捷键无法复用。
 #include <QApplication>
+#include "i18n.h"
 #include <QClipboard>
 #include <QDir>
 #include <QFile>
@@ -105,17 +106,17 @@ inline bool copyPathsTo(const QStringList& paths, const QString& dstDir,
     for (const auto& p : paths) {
         const QFileInfo fi(p);
         if (!fi.exists()) {
-            if (errors) *errors << QStringLiteral("%1:源已不存在").arg(p);
+            if (errors) *errors << gazeTr("%1:源已不存在").arg(p);
             continue;
         }
         if (isInside(dstDir, fi.absoluteFilePath())) {
-            if (errors) *errors << QStringLiteral("%1:不能复制进自己的子目录").arg(fi.fileName());
+            if (errors) *errors << gazeTr("%1:不能复制进自己的子目录").arg(fi.fileName());
             continue;
         }
         const QString dst = uniqueDest(dstDir, fi.fileName());
         const bool ok = fi.isDir() ? copyTree(p, dst) : QFile::copy(p, dst);
         if (ok) ++done;
-        else if (errors) *errors << QStringLiteral("%1:复制失败").arg(fi.fileName());
+        else if (errors) *errors << gazeTr("%1:复制失败").arg(fi.fileName());
     }
     if (doneOut) *doneOut = done;
     return done > 0;
@@ -131,11 +132,11 @@ inline bool movePathsTo(const QStringList& paths, const QString& dstDir,
     for (const auto& p : paths) {
         const QFileInfo fi(p);
         if (!fi.exists()) {
-            if (errors) *errors << QStringLiteral("%1:源已不存在").arg(p);
+            if (errors) *errors << gazeTr("%1:源已不存在").arg(p);
             continue;
         }
         if (isInside(dstDir, fi.absoluteFilePath())) {
-            if (errors) *errors << QStringLiteral("%1:不能移动到子目录中").arg(fi.fileName());
+            if (errors) *errors << gazeTr("%1:不能移动到子目录中").arg(fi.fileName());
             continue;
         }
         const QString dst = uniqueDest(dstDir, fi.fileName());
@@ -143,13 +144,13 @@ inline bool movePathsTo(const QStringList& paths, const QString& dstDir,
         // 跨卷/权限差异 → rename 失败,复制一份再把源清掉
         const bool copied = fi.isDir() ? copyTree(p, dst) : QFile::copy(p, dst);
         if (!copied) {
-            if (errors) *errors << QStringLiteral("%1:移动失败").arg(fi.fileName());
+            if (errors) *errors << gazeTr("%1:移动失败").arg(fi.fileName());
             continue;
         }
         const bool removed = fi.isDir() ? QDir(p).removeRecursively()
                                        : QFile::remove(p);
         if (!removed && errors)
-            *errors << QStringLiteral("%1:已复制到目标,但源未能删除(留下副本)").arg(fi.fileName());
+            *errors << gazeTr("%1:已复制到目标,但源未能删除(留下副本)").arg(fi.fileName());
         ++done;
     }
     if (doneOut) *doneOut = done;

@@ -187,17 +187,17 @@ static void runProcessAsync(const QString& program, const QStringList& args,
             const bool fileGood = outFile.isEmpty() || QFileInfo(outFile).size() > 0;
             QString why;
             if (!codeGood)        why = QStringLiteral("exit=%1").arg(code);
-            else if (!fileGood)   why = QStringLiteral("输出文件为空: %1").arg(outFile);
+            else if (!fileGood)   why = gazeTr("输出文件为空: %1").arg(outFile);
             finish(codeGood && fileGood, why);
         });
     QObject::connect(proc, &QProcess::errorOccurred, proc,
         [finish, program](QProcess::ProcessError e) {
             if (e != QProcess::FailedToStart) return;   // 读写错误由退出码兜住
-            finish(false, QStringLiteral("无法启动 %1(不在 PATH?)").arg(program));
+            finish(false, gazeTr("无法启动 %1(不在 PATH?)").arg(program));
         });
     QObject::connect(timer, &QTimer::timeout, proc, [finish, proc, timeoutMs]() {
         proc->kill();
-        finish(false, QStringLiteral("超过 %1 秒未完成,已终止")
+        finish(false, gazeTr("超过 %1 秒未完成,已终止")
                          .arg(timeoutMs / 1000.0, 0, 'g', 3));
     });
     proc->start(program, args);
@@ -296,10 +296,10 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
     }
 
     // ── 打开组 ──
-    addAction(IconLib::appIcon("cmd_open"), "打开", this, [this]() {
+    addAction(IconLib::appIcon("cmd_open"), gazeTr("打开"), this, [this]() {
         QDesktopServices::openUrl(QUrl::fromLocalFile(m_filePath));
     });
-    addAction("全屏", this, [this]() {
+    addAction(gazeTr("全屏"), this, [this]() {
         // 通知主窗口:导航到该文件所在目录并进入全屏
         // 查找用 indexOfMethod:openFullscreen 是 Q_INVOKABLE 方法而非槽
         QObject* mw = this;
@@ -308,23 +308,23 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
         if (mw)
             QMetaObject::invokeMethod(mw, "openFullscreen", Q_ARG(QString, m_filePath));
     });
-    addAction(IconLib::appIcon("cmd_openWith"), "打开方式", this, [this]() {
+    addAction(IconLib::appIcon("cmd_openWith"), gazeTr("打开方式"), this, [this]() {
         openWithDialog(m_filePath);
     });
     // 用系统默认文件管理器打开所在目录(尊重 Directory Opus 等接管:
     // ShellExecute "open" 目录会走注册的 open command,不用写死 explorer)
-    addAction("在资源管理器中显示", this, [this]() {
+    addAction(gazeTr("在资源管理器中显示"), this, [this]() {
         QDesktopServices::openUrl(QUrl::fromLocalFile(
             QFileInfo(m_filePath).absolutePath()));
     });
-    addAction("打开全部选中文件", this, [sel]() {
+    addAction(gazeTr("打开全部选中文件"), this, [sel]() {
         for (const auto& p : sel)
             QDesktopServices::openUrl(QUrl::fromLocalFile(p));
     });
     // 查看器标签:浏览器侧唯一"另起一张标签"的入口。没有它,标签表永远只有一张,
     // Interface/multiViewerTabs 与 oneViewerTab 两个开关就没有任何可观测差别。
     if (!QFileInfo(m_filePath).isDir()) {
-        addAction("在新标签卡中打开", this, [this]() {
+        addAction(gazeTr("在新标签卡中打开"), this, [this]() {
             QObject* mw = this;
             while (mw && mw->metaObject()->indexOfMethod("openViewerTab(QString)") < 0)
                 mw = mw->parent();
@@ -337,52 +337,52 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
     // ── 剪贴板组 ──
     // 对话框父窗口用网格:本菜单是弹出窗口,弹出结束即销毁,当父窗口会让
     // 提示跟着一起消失(删除提示因此看不见)
-    addAction(IconLib::appIcon("cmd_cut"), "剪切", this, [sel]() { clipboardSetFiles(sel, true); });
-    addAction(IconLib::appIcon("cmd_copy"), "复制", this, [sel]() { clipboardSetFiles(sel, false); });
-    addAction("粘贴", this, [this, grid]() {
+    addAction(IconLib::appIcon("cmd_cut"), gazeTr("剪切"), this, [sel]() { clipboardSetFiles(sel, true); });
+    addAction(IconLib::appIcon("cmd_copy"), gazeTr("复制"), this, [sel]() { clipboardSetFiles(sel, false); });
+    addAction(gazeTr("粘贴"), this, [this, grid]() {
         QDir target = QFileInfo(m_filePath).isDir()
             ? QDir(m_filePath) : QFileInfo(m_filePath).dir();
         QStringList errs;
         if (!clipboardPasteInto(target, &errs)) {
             if (!errs.isEmpty())
-                QMessageBox::warning(grid, "粘贴失败", errs.join(QLatin1Char('\n')));
+                QMessageBox::warning(grid, gazeTr("粘贴失败"), errs.join(QLatin1Char('\n')));
             return;
         }
         if (!errs.isEmpty())
-            QMessageBox::warning(grid, "部分项目未能粘贴", errs.join(QLatin1Char('\n')));
+            QMessageBox::warning(grid, gazeTr("部分项目未能粘贴"), errs.join(QLatin1Char('\n')));
         if (grid) grid->refreshCurrentDir();
     });
     addSeparator();
 
     // 复制到... / 移动到..:交给 clipboardops 的公共实现。
     // 旧写法对文件夹只做 mkpath,一个有几万张照片的文件夹粘过去只剩空壳。
-    addAction(IconLib::appIcon("cmd_copyTo"), "复制到...", this, [sel, grid]() {
+    addAction(IconLib::appIcon("cmd_copyTo"), gazeTr("复制到..."), this, [sel, grid]() {
         QString dst = QFileDialog::getExistingDirectory(
-            grid, "复制到...", QString());
+            grid, gazeTr("复制到..."), QString());
         if (dst.isEmpty()) return;
         QStringList errs;
         if (!copyPathsTo(sel, dst, nullptr, &errs) && !errs.isEmpty())
-            QMessageBox::warning(grid, "复制失败", errs.join(QLatin1Char('\n')));
+            QMessageBox::warning(grid, gazeTr("复制失败"), errs.join(QLatin1Char('\n')));
         else if (!errs.isEmpty())
-            QMessageBox::warning(grid, "部分项目未能复制", errs.join(QLatin1Char('\n')));
+            QMessageBox::warning(grid, gazeTr("部分项目未能复制"), errs.join(QLatin1Char('\n')));
         if (grid) grid->refreshCurrentDir();
     });
-    addAction(IconLib::appIcon("min_moveTo"), "移动到..", this, [sel, grid]() {
+    addAction(IconLib::appIcon("min_moveTo"), gazeTr("移动到.."), this, [sel, grid]() {
         QString dst = QFileDialog::getExistingDirectory(
-            grid, "移动到...", QString());
+            grid, gazeTr("移动到..."), QString());
         if (dst.isEmpty()) return;
         QStringList errs;
         if (!movePathsTo(sel, dst, nullptr, &errs) && !errs.isEmpty())
-            QMessageBox::warning(grid, "移动失败", errs.join(QLatin1Char('\n')));
+            QMessageBox::warning(grid, gazeTr("移动失败"), errs.join(QLatin1Char('\n')));
         else if (!errs.isEmpty())
-            QMessageBox::warning(grid, "部分项目未能移动", errs.join(QLatin1Char('\n')));
+            QMessageBox::warning(grid, gazeTr("部分项目未能移动"), errs.join(QLatin1Char('\n')));
         if (grid) grid->refreshCurrentDir();
     });
-    addAction(IconLib::appIcon("cmd_delete"), "删除  (Del)", [sel, grid]() {
+    addAction(IconLib::appIcon("cmd_delete"), gazeTr("删除  (Del)"), [sel, grid]() {
         if (!deleteWithSettings(sel, grid)) return;
         if (grid) grid->reloadAfterDelete(sel);
     });
-    addAction(IconLib::appIcon("cmd_rename"), "重命名...", this, [this, grid]() {
+    addAction(IconLib::appIcon("cmd_rename"), gazeTr("重命名..."), this, [this, grid]() {
         // FileOps/renameDialog:开=弹对话框(默认,既有行为);关=在卡片上就地改
         if (!AppSettings::instance().get("FileOps/renameDialog", true).toBool()) {
             if (grid) grid->beginInlineRename();   // 普通方法,元调用够不着(见 #89)
@@ -390,12 +390,12 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
         }
         QFileInfo fi(m_filePath);
         QWidget* par = grid;   // 挂到网格:菜单一关就没了,不能当对话框父窗口
-        QString name = QInputDialog::getText(par, "重命名",
-            "新名称:", QLineEdit::Normal, fi.fileName()).trimmed();
+        QString name = QInputDialog::getText(par, gazeTr("重命名"),
+            gazeTr("新名称:"), QLineEdit::Normal, fi.fileName()).trimmed();
         if (name.isEmpty() || name == fi.fileName()) return;
         // 分隔符进名字 = QFile::rename 把文件搬去别处,界面上一切如常。必须先挡。
         if (const QString why = invalidNameReason(name); !why.isEmpty()) {
-            QMessageBox::warning(par, "重命名", why);
+            QMessageBox::warning(par, gazeTr("重命名"), why);
             return;
         }
         QString np = QDir(fi.absolutePath()).filePath(name);
@@ -406,7 +406,7 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
         // #214:改名目标若正被预览播放,句柄不放 rename 会失败
         releaseGazeFileLocks({m_filePath});
         if (!QFile::rename(m_filePath, np)) {
-            QMessageBox::warning(par, "重命名失败", m_filePath);
+            QMessageBox::warning(par, gazeTr("重命名失败"), m_filePath);
             return;
         }
         if (grid) grid->setPreferPath(np);
@@ -442,34 +442,34 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
         }
         if (grid) { grid->setPreferPath(target); grid->refreshCurrentDir(); }
     });
-    addAction(IconLib::appIcon("cmd_newFolder"), "新建文件夹", this, [this, grid]() {
+    addAction(IconLib::appIcon("cmd_newFolder"), gazeTr("新建文件夹"), this, [this, grid]() {
         QString base = QFileInfo(m_filePath).isDir()
             ? m_filePath : QFileInfo(m_filePath).absolutePath();
         QWidget* par = grid;
-        QString name = QInputDialog::getText(par, "新建文件夹", "文件夹名:",
-                                             QLineEdit::Normal, "新建文件夹").trimmed();
+        QString name = QInputDialog::getText(par, gazeTr("新建文件夹"), gazeTr("文件夹名:"),
+                                             QLineEdit::Normal, gazeTr("新建文件夹")).trimmed();
         if (name.isEmpty()) return;
         // mkpath 会照输入把整条路径逐层建出来:"a/b" 一次冒两个目录,
         // 校验 + mkdir(单层)才是"在这里建一个文件夹"的语义
         if (const QString why = invalidNameReason(name); !why.isEmpty()) {
-            QMessageBox::warning(par, "新建文件夹", why);
+            QMessageBox::warning(par, gazeTr("新建文件夹"), why);
             return;
         }
         QString full = QDir(base).filePath(name);
         if (QFileInfo::exists(full)) {
-            QMessageBox::warning(par, "新建文件夹",
+            QMessageBox::warning(par, gazeTr("新建文件夹"),
                 gazeTr("同名文件夹已存在:\n") + full);
             return;
         }
         if (!QDir().mkdir(full)) {
-            QMessageBox::warning(par, "新建文件夹", gazeTr("创建失败:\n") + full);
+            QMessageBox::warning(par, gazeTr("新建文件夹"), gazeTr("创建失败:\n") + full);
             return;
         }
         if (grid) { grid->setPreferPath(full); grid->refreshCurrentDir(); }
     });
     addSeparator();
 
-    addAction(IconLib::appIcon("cmd_print"), "打印...(Ctrl+P)", this, [grid, sel]() {
+    addAction(IconLib::appIcon("cmd_print"), gazeTr("打印...(Ctrl+P)"), this, [grid, sel]() {
         PrintDialog::printImages(grid, sel);
     });
 
@@ -635,9 +635,9 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
     }
 
     // ── 颜色标记子菜单 ──
-    auto* labelMenu = addMenu(IconLib::appIcon("label_item"), "添加颜色标记");
+    auto* labelMenu = addMenu(IconLib::appIcon("label_item"), gazeTr("添加颜色标记"));
     struct { int c; QString name; } colors[] = {
-        {1, "红色"}, {2, "橙色"}, {3, "黄色"}, {4, "绿色"}, {5, "蓝色"},
+        {1, gazeTr("红色")}, {2, gazeTr("橙色")}, {3, gazeTr("黄色")}, {4, gazeTr("绿色")}, {5, gazeTr("蓝色")},
     };
     for (auto& c : colors) {
         QPixmap pix(12, 12);
@@ -647,31 +647,31 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
         });
     }
     labelMenu->addSeparator();
-    labelMenu->addAction("取消颜色标记", this, [grid]() {
+    labelMenu->addAction(gazeTr("取消颜色标记"), this, [grid]() {
         if (grid) grid->applyColorLabelToSelection(0);
     });
 
     addSeparator();
     // #123:原「批量重命名...」占位项已删 —— 批量重命名在 TODO_ALL §9 否决清单(@153611),
     // 菜单里挂一个"即将支持"的入口等于承诺用户永远不会来的功能。
-    addAction(IconLib::appIcon("cmd_openProperties"), "属性..", this, [this]() {
+    addAction(IconLib::appIcon("cmd_openProperties"), gazeTr("属性.."), this, [this]() {
         showShellProperties(m_filePath);
     });
 
     // Live Photo 附加项
     if (m_isLive && !m_liveInfo.value("embedded").toBool()) {
         addSeparator();
-        addAction("播放实况视频", this, [this]() {
+        addAction(gazeTr("播放实况视频"), this, [this]() {
             QString vp = m_liveInfo.value("video_path").toString();
             if (!vp.isEmpty())
                 QDesktopServices::openUrl(QUrl::fromLocalFile(vp));
         });
     }
     if (m_isLive) {
-        addAction("拆帧保存", this, [this]() {
+        addAction(gazeTr("拆帧保存"), this, [this]() {
             auto answer = QMessageBox::question(
-                nullptr, "拆帧保存",
-                "将视频拆帧保存到当前目录？",
+                nullptr, gazeTr("拆帧保存"),
+                gazeTr("将视频拆帧保存到当前目录？"),
                 QMessageBox::Yes | QMessageBox::No);
             if (answer == QMessageBox::Yes) {
                 extractFrames(m_liveInfo.value("video_path").toString());
@@ -694,8 +694,8 @@ void FileContextMenu::extractFrames(const QString& videoPath) {
     // 改成后台跑 + 认退出码;工具定位走 #113 同一份 vendor/ffmpeg 优先。
     const QString ff = locateFfmpegTool(QStringLiteral("ffmpeg"));
     if (ff.isEmpty()) {
-        QMessageBox::warning(nullptr, QStringLiteral("帧提取失败"),
-            QStringLiteral("ffmpeg 未找到(exe旁 ffmpeg/ 与 PATH 均无)。\n") + outDir);
+        QMessageBox::warning(nullptr, gazeTr("帧提取失败"),
+            gazeTr("ffmpeg 未找到(exe旁 ffmpeg/ 与 PATH 均无)。\n") + outDir);
         return;
     }
     runProcessAsync(ff,
@@ -703,9 +703,9 @@ void FileContextMenu::extractFrames(const QString& videoPath) {
         QString(), 120000,
         [outDir](bool ok, const QString& why) {
             if (ok)
-                QMessageBox::information(nullptr, "完成",
+                QMessageBox::information(nullptr, gazeTr("完成"),
                     gazeTr("帧提取完成:\n") + outDir);
             else
-                QMessageBox::warning(nullptr, "帧提取失败", why + "\n" + outDir);
+                QMessageBox::warning(nullptr, gazeTr("帧提取失败"), why + "\n" + outDir);
         });
 }

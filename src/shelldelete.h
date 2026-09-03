@@ -118,7 +118,7 @@ inline bool deleteWithSettings(const QStringList& paths, QWidget* parent) {
     if (confirm) {
         const QString what = paths.size() == 1
             ? QFileInfo(paths.first()).fileName()
-            : QString::number(paths.size()) + QStringLiteral(" 个项目");
+            : QString::number(paths.size()) + gazeTr(" 个项目");
         QString text;
         if (paths.size() == 1 && dirCount == 1)
             text = gazeTr("你确认要删除文件夹吗？\n");

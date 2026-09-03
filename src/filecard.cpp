@@ -88,10 +88,10 @@ void FileCard::setup(const FileEntry& entry, int size, int viewMode, int height)
         QDateTime mod = entry.mtime > 0
             ? QDateTime::fromSecsSinceEpoch(static_cast<qint64>(entry.mtime)) : QDateTime();
         QString tip = entry.name + "\n"
-            + "创建: " + (birth.isValid()
+            + gazeTr("创建: ") + (birth.isValid()
                 ? birth.toString("yyyy/MM/dd - HH:mm:ss")
                 : gazeTr("—")) + "\n"
-            + "修改: " + (mod.isValid()
+            + gazeTr("修改: ") + (mod.isValid()
                 ? mod.toString("yyyy/MM/dd - HH:mm:ss")
                 : gazeTr("—")) + "\n"
             + cardSizeText(entry.size);

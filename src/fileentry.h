@@ -6,6 +6,7 @@
 #include <QColor>
 #include <QFileInfo>
 #include <QDateTime>
+#include "i18n.h"
 #include <QImageReader>
 #include <QApplication>
 #include <QStyle>
@@ -232,7 +233,7 @@ inline QString formatDate(double timestamp) {
 }
 
 inline QString mimeType(const QString& ext) {
-    static const std::unordered_map<QString, QString> map = {
+    static const std::unordered_map<QString, const char*> map = {
         {".jpg","JPEG 图片"},{".jpeg","JPEG 图片"},{".png","PNG 图片"},
         {".gif","GIF 图片"},{".bmp","BMP 图片"},{".webp","WebP 图片"},
         {".heic","HEIC 图片"},{".heif","HEIF 图片"},{".hif","HEIF 图片"},
@@ -263,8 +264,8 @@ inline QString mimeType(const QString& ext) {
         {".exe","应用程序"},{".dll","动态链接库"},
     };
     auto it = map.find(ext);
-    if (it != map.end()) return it->second;
-    return ext.mid(1).toUpper() + " 文件";
+    if (it != map.end()) return gazeTr(it->second);
+    return ext.mid(1).toUpper() + gazeTr(" 文件");
 }
 
 // ═══════════════════════════════════════════

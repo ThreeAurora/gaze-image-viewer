@@ -135,7 +135,7 @@ void SettingsDialog::populatePages() {
     QTreeWidgetItem* parent = nullptr;
     for (const auto& nd : nodes) {
         // indentation=0(选中蓝条全宽),二级缩进由文本前缀空格模拟(加大层级差)
-        QString label = QString::fromUtf8(nd.title);
+        QString label = gazeTr(nd.title);
         if (nd.level > 0) label.prepend(QString(8, ' '));
         auto* item = new QTreeWidgetItem(QStringList() << label);
         if (nd.level == 0) {

@@ -222,7 +222,7 @@ void MainWindow::updateStatus() {
     int fc = m_fileGrid->fileCount();
     int sc = m_fileGrid->selectedCount();
     qint64 ss = m_fileGrid->selectedSize();
-    QString text = QString("%1 项").arg(fc); // 项
+    QString text = gazeTr("%1 项").arg(fc);
     // 单选文件夹:目录条目没有 size 字段,照旧会显示 [0 B]。这里对目录递归
     // 快速估算大小,截断时补 "≈" 前缀;合计与单行详情共用这一次结果。
     QString approx;
@@ -236,7 +236,7 @@ void MainWindow::updateStatus() {
         }
     }
     if (sc > 0) {
-        text += QString("  ·  已选 %1 项 · [%2%3]")
+        text += gazeTr("  ·  已选 %1 项 · [%2%3]")
                     .arg(sc).arg(approx).arg(formatSize(ss));
         auto paths = m_fileGrid->selectedPaths();
         if (!paths.isEmpty()) {
