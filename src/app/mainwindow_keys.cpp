@@ -101,7 +101,11 @@ bool MainWindow::dropTargetMeaningful(const QPoint& pos, const QDropEvent* e) co
         const QString hit = m_folderTree->pathAt(m_folderTree->mapFrom(this, pos));
         if (!hit.isEmpty() && QFileInfo(hit).isDir()) dropInto = hit;
     }
-    if (dropInto.isEmpty()) return internal;   // 外部拖入放行(空白=导航);内部拖入禁止
+    // 语义(注释即是意图,2026-09-03 夜修复:此前写成 return internal 恰好相反,
+    // 导致内部起拖落在文件页空白被放行(不显示禁止光标),外部拖入空白反被禁止):
+    //   内部起拖(源=网格)→ 空白=目标即当前目录,自己移自己 → 禁止
+    //   外部拖入     → 空白=导航过去(原语义) → 放行
+    if (dropInto.isEmpty()) return !internal;
 
     // 任一被拖文件就躺在目标文件夹里(自己移到自己),或目标就是被拖目录本身
     // (把 A 夹挪进 A 夹),无论内外部拖入一律禁止
