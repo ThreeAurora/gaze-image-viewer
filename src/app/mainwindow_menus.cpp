@@ -50,6 +50,7 @@
 #include <QClipboard>
 #include <QPair>
 #include <QProcess>
+#include <QTimer>
 #include "iconlib.h"
 #include "i18n.h"
 #include <QLabel>
@@ -310,10 +311,16 @@ void MainWindow::createMenubar() {
                     this, gazeTr("切换界面语言"),
                     gazeTr("界面语言将在重启后生效。立即重启吗？"),
                     QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
-                if (rb == QMessageBox::Yes)
+                if (rb == QMessageBox::Yes) {
                     QProcess::startDetached(
                         QCoreApplication::applicationFilePath(),
                         {QStringLiteral("--restart")});
+                    // 2026-09-03 夜补漏:只启新进程不退出自己,会堆出多个
+                    // Gaze 并存(旧窗口还留在任务栏)。先拉起新进程再退自己 ——
+                    // 新进程 --restart 跳过单实例握手直接开窗,无竞态。
+                    QTimer::singleShot(0, QCoreApplication::instance(),
+                                       &QCoreApplication::quit);
+                }
             });
         }
     }

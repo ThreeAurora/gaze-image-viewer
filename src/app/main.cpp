@@ -25,6 +25,7 @@
 #include <QTranslator>
 #include <QLocale>
 #include <QLibraryInfo>
+#include <QDateTime>
 #include <QAbstractNativeEventFilter>
 #include <windows.h>
 #include "mainwindow.h"
@@ -137,7 +138,14 @@ class StartupWindowGuard : public QAbstractNativeEventFilter {
 public:
     bool nativeEventFilter(const QByteArray&, void* message, qintptr*) override {
         auto* msg = static_cast<MSG*>(message);
+        // 2026-09-03 夜补漏:只在启动头 3 秒内钳(防启动闪现),此后语言切换
+        // 等模态对话框弹出时不再误伤其图标小窗 —— 此前全程钳制导致"隐形
+        // 模态窗盖住点击、任务栏关不掉"。
         if (!msg || msg->message != WM_WINDOWPOSCHANGING || !msg->hwnd)
+            return false;
+        static const qint64 startMs
+            = QDateTime::currentMSecsSinceEpoch();
+        if (QDateTime::currentMSecsSinceEpoch() - startMs > 3000)
             return false;
         wchar_t cls[64];
         const int n = GetClassNameW(msg->hwnd, cls, 64);
