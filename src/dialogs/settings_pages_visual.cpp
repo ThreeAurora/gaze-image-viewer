@@ -84,16 +84,7 @@ QWidget* SettingsDialog::pageAppearance() {
     connect(themeCombo, &QComboBox::currentIndexChanged, this, [](int v) {
         AppSettings::instance().set("Appearance/theme", v == 1 ? QStringLiteral("light")
                                                                : QStringLiteral("dark"));
-        Theme::init();                                   // 重读双档标志
-        Theme::notifyChanged();                          // 重灌内联样式/缓存色(全量即时)
-        if (QApplication* app = qobject_cast<QApplication*>(QApplication::instance()))
-            app->setStyleSheet(Theme::appQss());         // 全局样式表即时切换
-#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
-        for (QWidget* w : QApplication::topLevelWidgets())
-            w->update();                                 // 触发全窗口重绘刷新 T() 取色
-#else
-        Q_UNUSED(app)
-#endif
+        Theme::applyLive();   // init+notifyChanged+全局QSS+重绘,完整协议一步走
     });
     form->addRow(gazeTr("主题(立即生效)"), themeCombo);
     form->addRow(gazeTr("自定义缩略图尺寸 - 宽"),

@@ -2,6 +2,9 @@
 #include "constants.h"
 #include "settings.h"
 
+#include <QApplication>
+#include <QWidget>
+
 namespace Theme {
 
 namespace {
@@ -22,6 +25,15 @@ void addChangeHandler(ChangeHandler h) {
 
 void notifyChanged() {
     for (const auto& h : g_handlers) h();
+}
+
+void applyLive() {
+    init();                                   // 重读双档标志
+    notifyChanged();                          // 重灌内联样式/缓存色(全量即时)
+    if (QApplication* app = qobject_cast<QApplication*>(QApplication::instance()))
+        app->setStyleSheet(appQss());         // 全局样式表即时切换
+    for (QWidget* w : QApplication::topLevelWidgets())
+        w->update();                          // 触发全窗口重绘刷新 T() 取色
 }
 
 QString appQss() {

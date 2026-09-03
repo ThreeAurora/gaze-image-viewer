@@ -7,6 +7,7 @@
 #include "infopanel.h"
 #include "shelldelete.h"   // showDeleteToast:拖放复制成功的左下角提示
 #include "sortheader.h"
+#include "theme.h"         // applyLive:查看→主题 与 设置→外观 同一条即时链
 #include "fileentry.h"
 #include "livephoto.h"
 #include "constants.h"
@@ -347,27 +348,25 @@ void MainWindow::createViewMenu() {
             if (m_paneActs[i]) m_paneActs[i]->setChecked(m_panesOn.contains(all[i]));
     });
 
-    // 主题深/浅(#159):与 设置→外观 同一键(Appearance/theme)。Theme::init 只在
-    // 启动读一次,运行中切换不会重刷已构造的样式表 —— 这里如实只落 ini+弹窗
-    // 告知重启,不装即时生效
+    // 主题深/浅(#159):与 设置→外观 同一键(Appearance/theme),同一即时链
+    // (Theme::applyLive:重读标志+重灌缓存色+全局QSS+重绘),不需要重启
     vm->addSeparator();
     auto* themeMenu = vm->addMenu(gazeTr("主题"));
     auto* thDark = themeMenu->addAction(gazeTr("深色"));
     auto* thLight = themeMenu->addAction(gazeTr("浅色"));
     thDark->setCheckable(true);
     thLight->setCheckable(true);
-    auto switchTheme = [this](const QString& v, const QString& label) {
+    auto switchTheme = [](const QString& v) {
         AppSettings& st = AppSettings::instance();
         if (st.get("Appearance/theme", QStringLiteral("dark")).toString() == v) return;
         st.set("Appearance/theme", v);
-        QMessageBox::information(this, gazeTr("主题"),
-            gazeTr("已选「%1」，重启 Gaze 后生效。").arg(label));
+        Theme::applyLive();
     };
     connect(thDark, &QAction::triggered, this, [switchTheme]() {
-        switchTheme(QStringLiteral("dark"), gazeTr("深色"));
+        switchTheme(QStringLiteral("dark"));
     });
     connect(thLight, &QAction::triggered, this, [switchTheme]() {
-        switchTheme(QStringLiteral("light"), gazeTr("浅色"));
+        switchTheme(QStringLiteral("light"));
     });
     connect(themeMenu, &QMenu::aboutToShow, this, [thDark, thLight]() {
         const bool light =

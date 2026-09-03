@@ -11,7 +11,7 @@
 //   视频封面是纯黑 letterbox,衬底改灰会露出两层颜色
 // #96:每个令牌 = Theme::T(深色值, 浅色值)。深色值逐字保持已验收调色板;
 //   浅色档为 2026-08-31 新增,由外到内逐层变亮(菜单栏 > 工具条 > 树 > 列表 > 预览),
-//   内容区纯白。切换走 Appearance/theme,重启生效。
+//   内容区纯白。切换走 Appearance/theme,即时生效(Theme::applyLive)。
 #define C_WIN_BG        Theme::T("#212126", "#F3F3F5")   // 窗体底
 #define C_MENUBAR       Theme::T("#191919", "#F9F9FB")   // 菜单栏(2026-09-03 用户定版 rgb(25,25,25),原 #31313A=rgb(49,49,58))
 #define C_TOOLBAR       Theme::T("#2A2A31", "#ECECEF")   // 工具条/地址栏/列表表头

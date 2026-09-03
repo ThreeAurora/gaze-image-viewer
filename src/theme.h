@@ -32,4 +32,9 @@ using ChangeHandler = std::function<void()>;
 void addChangeHandler(ChangeHandler h);
 void notifyChanged();
 
+// 主题切换完整协议一步走(设置→外观 与 查看→主题 两个入口共用):
+// init 重读双档标志 → notifyChanged 重灌各处缓存色 → 全局 QSS 重设 →
+// 顶层窗体重绘刷新 T() 取色。调用前先把 Appearance/theme 落进 ini。
+void applyLive();
+
 } // namespace Theme
