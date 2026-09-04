@@ -106,6 +106,17 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
         }
         const QString p = tabPath(i);
         if (p.isEmpty()) return;
+        // #219(2026-09-04 用户报):浏览器态点文件标签没反应 —— 旧代码只把图解进
+        // 预览,人还留在浏览器(文件标签之间能互跳,是因为那已经身在查看器)。
+        // 现在浏览器态点文件标签 = 直接跳进查看器看它。m_viewerNoSync:目的地就是
+        // 这张已选中的标签自己,进查看器不许再激活/追加/覆写任何标签。
+        if (!m_viewerMode) {
+            m_currentFile = p;
+            m_viewerNoSync = true;
+            toggleViewer();
+            m_viewerNoSync = false;
+            if (!m_viewerMode) return;
+        }
         // Interface/syncBrowser:切标签时把浏览器选中项挪过去(它会一路 loadFile)
         if (AppSettings::instance().get("Interface/syncBrowser", false).toBool())
             m_fileGrid->selectByPath(p);
