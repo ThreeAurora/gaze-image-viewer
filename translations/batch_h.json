@@ -1,0 +1,20 @@
+{
+  "标记": "Labels",
+  "体积": "Size",
+  "体积(MB)": "Size (MB)",
+  "同步文件夹": "Sync folders",
+  "重新定位": "Relocate",
+  "导出清单": "Export inventory",
+  "CSV 文件 (*.csv)": "CSV files (*.csv)",
+  "\n…等 %1 个目录": "\n…and %1 more folders",
+  "删除所选 %1 个目录的全部缓存条目?\n%2\n(浏览时会自动重建)": "Delete all cache entries for the %1 selected folder(s)?\n%2\n(They will be rebuilt while browsing)",
+  "先在列表中选中要同步的目录。": "Select folders in the list first.",
+  "清除所选目录中源文件已不存在的缩略图与标记条目?继续?": "Remove thumbnail and label entries whose source files no longer exist in the selected folders? Continue?",
+  "已清除失效缩略图 %1 条、失效标记 %2 条。": "Removed %1 stale thumbnail(s) and %2 stale label(s).",
+  "请选中恰好一行目录。": "Select exactly one folder row.",
+  "把目录 %1 的缓存记录搬到新路径:": "Relocate cache records of folder %1 to a new path:",
+  "把 %1 下的缓存记录改挂到 %2?\n(只改数据库记录,不搬动任何文件)": "Repoint cache records from %1 to %2?\n(Only database records change; no files are moved)",
+  "新路径不能与原路径相同或位于原路径之下。": "The new path must differ from the original and cannot be inside it.",
+  "无法写入文件。": "Cannot write the file.",
+  "数据库:%1  ·  目录:%2  ·  缓存条目:%3  ·  标记:%4  ·  缩略图合计:%5": "Database: %1 · folders: %2 · cache entries: %3 · labels: %4 · thumbnails total: %5"
+}

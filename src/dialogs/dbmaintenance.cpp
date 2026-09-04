@@ -10,10 +10,38 @@
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QSqlError>
-#include <QCoreApplication>
+#include <QDir>
+#include <QFile>
+#include <QTextStream>
+#include <QFileDialog>
+#include <QInputDialog>
+#include <QLineEdit>
 #include <QFileInfo>
 #include <QMessageBox>
 #include <QHeaderView>
+#include <QItemSelectionModel>
+#include <algorithm>
+
+namespace {
+// 体积列:显示 MB 文本、按真实字节数排序(直接存字符串会让 9.9 排在 10.2 后面)
+class BytesItem : public QTableWidgetItem {
+public:
+    explicit BytesItem(qint64 bytes) : m_bytes(bytes) {
+        setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
+    }
+    QVariant data(int role) const override {
+        return role == Qt::DisplayRole
+            ? QVariant(QString::asprintf("%.2f MB", m_bytes / 1024.0 / 1024.0))
+            : QTableWidgetItem::data(role);
+    }
+    bool operator<(const QTableWidgetItem& o) const override {
+        const auto* rhs = dynamic_cast<const BytesItem*>(&o);
+        return rhs ? m_bytes < rhs->m_bytes : QTableWidgetItem::operator<(o);
+    }
+private:
+    qint64 m_bytes;
+};
+}
 
 static QSqlDatabase maintenanceDb() {
     const QString conn = QStringLiteral("maint_db");
@@ -42,12 +70,16 @@ DbMaintenanceDialog::DbMaintenanceDialog(QWidget* parent) : QDialog(parent) {
     m_summary = new QLabel;
     root->addWidget(m_summary);
 
-    m_table = new QTableWidget(0, 3);
+    m_table = new QTableWidget(0, 5);
     m_table->setHorizontalHeaderLabels({gazeTr("缓存目录"),
-        gazeTr("文件数"), gazeTr("缩略图体积")});
+        gazeTr("文件数"), gazeTr("标记"), gazeTr("缩略图"), gazeTr("体积")});
     m_table->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+    for (int c = 1; c < 5; ++c)
+        m_table->horizontalHeader()->setSectionResizeMode(c, QHeaderView::ResizeToContents);
     m_table->setSelectionBehavior(QAbstractItemView::SelectRows);
+    m_table->setSelectionMode(QAbstractItemView::ExtendedSelection);
     m_table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    m_table->verticalHeader()->setVisible(false);
     root->addWidget(m_table, 1);
 
     auto* btns = new QHBoxLayout;
@@ -56,24 +88,12 @@ DbMaintenanceDialog::DbMaintenanceDialog(QWidget* parent) : QDialog(parent) {
         connect(b, &QPushButton::clicked, this, slot);
         btns->addWidget(b);
     };
-    addBtn(gazeTr("删除选中目录条目"), [this]() {
-        auto sel = m_table->selectedItems();
-        if (sel.isEmpty()) return;
-        QString dir = m_table->item(sel.first()->row(), 0)->text();
-        // 与"删除全部""重建缩略图"对齐:破坏性动作一律先问一句
-        //(空格/回车误触这个按钮时,过去是静默 DELETE)
-        if (QMessageBox::question(this, gazeTr("删除条目"),
-            gazeTr("删除该目录的全部缩略图缓存条目?\n%1\n(浏览时会自动重建)").arg(dir))
-            != QMessageBox::Yes) return;
-        QSqlDatabase d = maintenanceDb();
-        QSqlQuery q(d);
-        q.prepare("DELETE FROM thumbs WHERE key LIKE ? ESCAPE '\\'");
-        q.addBindValue(likePrefixPattern(dir));
-        q.exec();
-        reload();
-    });
-    addBtn(gazeTr("重建缩略图"), [this]() { rebuildThumbs(); });
+    addBtn(gazeTr("删除选中目录条目"), [this]() { deleteSelected(); });
+    addBtn(gazeTr("同步文件夹"), [this]() { syncSelected(); });
+    addBtn(gazeTr("重新定位"), [this]() { relocateSelected(); });
+    addBtn(gazeTr("导出清单"), [this]() { exportCsv(); });
     addBtn(gazeTr("删除全部"), [this]() { deleteAll(); });
+    addBtn(gazeTr("重建缩略图"), [this]() { rebuildThumbs(); });
     btns->addStretch();
     auto* closeBtn = new QPushButton(gazeTr("关闭"));
     // 显式默认:不设时 Enter 与"空格=确认"都落在**创建最早**的按钮上,而那是
@@ -88,51 +108,260 @@ DbMaintenanceDialog::DbMaintenanceDialog(QWidget* parent) : QDialog(parent) {
 
 void DbMaintenanceDialog::reload() {
     QSqlDatabase d = maintenanceDb();
-    m_allPaths.clear();
     m_byDir.clear();
     qint64 totalBytes = 0;
-    int total = 0;
+    int totalThumbs = 0;
+    int totalLabels = 0;
 
+    auto dirOf = [](const QString& path) {
+        int slash = path.lastIndexOf('/');
+        if (slash < 0) slash = path.lastIndexOf('\\');
+        return slash > 0 ? path.left(slash + 1) : path;
+    };
+
+    // 缩略图键 = 媒体路径|尺寸|代际后缀;Windows 文件名不可能含 '|',首个 '|' 前即路径
     QSqlQuery q(d);
     if (q.exec("SELECT key, LENGTH(png) FROM thumbs")) {
         while (q.next()) {
-            QString p = q.value(0).toString();
-            qint64 bytes = q.value(1).toLongLong();
-            m_allPaths << p;
+            const QString key = q.value(0).toString();
+            const qint64 bytes = q.value(1).toLongLong();
+            const int bar = key.indexOf('|');
+            const QString file = bar > 0 ? key.left(bar) : key;
+            DirStat& rec = m_byDir[dirOf(file)];
+            rec.files.insert(file);
+            rec.thumbs += 1;
+            rec.bytes += bytes;
             totalBytes += bytes;
-            ++total;
-            // 目录提取(最后一个 '/' 前)
-            int slash = p.lastIndexOf('/');
-            if (slash < 0) slash = p.lastIndexOf('\\');
-            QString dir = slash > 0 ? p.left(slash + 1) : p;
-            auto& rec = m_byDir[dir];
-            rec.first += 1;
-            rec.second += bytes;
+            ++totalThumbs;
+        }
+    }
+    if (q.exec("SELECT path FROM labels")) {
+        while (q.next()) {
+            const QString file = q.value(0).toString();
+            DirStat& rec = m_byDir[dirOf(file)];
+            rec.files.insert(file);
+            rec.labels += 1;
+            ++totalLabels;
         }
     }
 
-    // 数据库文件大小
     QFileInfo fi(d.databaseName());
     qint64 dbSize = fi.size();
     m_summary->setText(gazeTr(
-        "数据库:%1  ·  缓存条目:%2  ·  缩略图合计:%3")
+        "数据库:%1  ·  目录:%2  ·  缓存条目:%3  ·  标记:%4  ·  缩略图合计:%5")
         .arg(fi.fileName() + QString(" (%1 MB)").arg(dbSize / 1024 / 1024))
-        .arg(total)
+        .arg(m_byDir.size())
+        .arg(totalThumbs)
+        .arg(totalLabels)
         .arg(QString::asprintf("%.2f MB", totalBytes / 1024.0 / 1024.0)));
 
-    // 按体积降序填表
-    QVector<QPair<QString, QPair<int, qint64>>> rows;
-    for (auto it = m_byDir.constBegin(); it != m_byDir.constEnd(); ++it)
-        rows.append({it.key(), {it.value().first, it.value().second}});
-    std::sort(rows.begin(), rows.end(),
-              [](auto& a, auto& b) { return a.second.second > b.second.second; });
+    // 按目录名升序填表;填表期间关排序,否则 sortByColumn 会边插边搬行
+    m_table->setSortingEnabled(false);
+    QList<QString> dirs = m_byDir.keys();
+    std::sort(dirs.begin(), dirs.end());
+    auto numItem = [](qint64 v) {
+        auto* it = new QTableWidgetItem;
+        it->setData(Qt::DisplayRole, v);   // 数值型 variant,点表头按数值排
+        it->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
+        return it;
+    };
+    m_table->setRowCount(dirs.size());
+    for (int i = 0; i < dirs.size(); ++i) {
+        const DirStat& rec = m_byDir[dirs[i]];
+        m_table->setItem(i, 0, new QTableWidgetItem(dirs[i]));
+        m_table->setItem(i, 1, numItem(rec.files.size()));
+        m_table->setItem(i, 2, numItem(rec.labels));
+        m_table->setItem(i, 3, numItem(rec.thumbs));
+        m_table->setItem(i, 4, new BytesItem(rec.bytes));
+    }
+    m_table->setSortingEnabled(true);
+}
 
-    m_table->setRowCount(rows.size());
-    for (int i = 0; i < rows.size(); ++i) {
-        m_table->setItem(i, 0, new QTableWidgetItem(rows[i].first));
-        m_table->setItem(i, 1, new QTableWidgetItem(QString::number(rows[i].second.first)));
-        m_table->setItem(i, 2, new QTableWidgetItem(
-            QString::asprintf("%.2f MB", rows[i].second.second / 1024.0 / 1024.0)));
+QStringList DbMaintenanceDialog::selectedDirs() const {
+    QStringList out;
+    const auto rows = m_table->selectionModel()->selectedRows(0);
+    for (const auto& idx : rows) out << idx.data().toString();
+    return out;
+}
+
+void DbMaintenanceDialog::deleteSelected() {
+    const QStringList dirs = selectedDirs();
+    if (dirs.isEmpty()) return;
+    // 与"删除全部""重建缩略图"对齐:破坏性动作一律先问一句
+    QString preview = dirs.size() <= 5
+        ? dirs.join(QLatin1Char('\n'))
+        : dirs.mid(0, 5).join(QLatin1Char('\n')) +
+              gazeTr("\n…等 %1 个目录").arg(dirs.size());
+    if (QMessageBox::question(this, gazeTr("删除条目"),
+        gazeTr("删除所选 %1 个目录的全部缓存条目?\n%2\n(浏览时会自动重建)")
+            .arg(dirs.size()).arg(preview))
+        != QMessageBox::Yes) return;
+    QSqlDatabase d = maintenanceDb();
+    for (const QString& dir : dirs) {
+        const QString bare = dir.endsWith('/') ? dir.left(dir.size() - 1) : dir;
+        QSqlQuery q(d);
+        q.prepare("DELETE FROM thumbs WHERE key LIKE ? ESCAPE '\\'");
+        q.addBindValue(likePrefixPattern(dir));
+        q.exec();
+        q.prepare("DELETE FROM labels WHERE path LIKE ? ESCAPE '\\'");
+        q.addBindValue(likePrefixPattern(dir));
+        q.exec();
+        // dirsize 落盘形态(带不带尾斜杠)未定,精确+前缀双句兜底
+        q.prepare("DELETE FROM dirsize WHERE path = ?");
+        q.addBindValue(bare);
+        q.exec();
+        q.prepare("DELETE FROM dirsize WHERE path LIKE ? ESCAPE '\\'");
+        q.addBindValue(likePrefixPattern(dir));
+        q.exec();
+    }
+    reload();
+}
+
+void DbMaintenanceDialog::syncSelected() {
+    const QStringList dirs = selectedDirs();
+    if (dirs.isEmpty()) {
+        QMessageBox::information(this, gazeTr("同步文件夹"),
+            gazeTr("先在列表中选中要同步的目录。"));
+        return;
+    }
+    if (QMessageBox::question(this, gazeTr("同步文件夹"),
+        gazeTr("清除所选目录中源文件已不存在的缩略图与标记条目?继续?"))
+        != QMessageBox::Yes) return;
+
+    QSqlDatabase d = maintenanceDb();
+    QStringList deadThumbs, deadLabels;
+    for (const QString& dir : dirs) {
+        QSqlQuery q(d);
+        q.prepare("SELECT key FROM thumbs WHERE key LIKE ? ESCAPE '\\'");
+        q.addBindValue(likePrefixPattern(dir));
+        q.exec();
+        while (q.next()) {
+            const QString key = q.value(0).toString();
+            const int bar = key.indexOf('|');
+            if (bar > 0 && !QFileInfo::exists(key.left(bar)))
+                deadThumbs << key;
+        }
+        q.prepare("SELECT path FROM labels WHERE path LIKE ? ESCAPE '\\'");
+        q.addBindValue(likePrefixPattern(dir));
+        q.exec();
+        while (q.next()) {
+            const QString path = q.value(0).toString();
+            if (!QFileInfo::exists(path)) deadLabels << path;
+        }
+    }
+
+    if (!d.transaction()) return;
+    QSqlQuery del(d);
+    del.prepare("DELETE FROM thumbs WHERE key = ?");
+    for (const QString& key : deadThumbs) { del.addBindValue(key); del.exec(); }
+    del.prepare("DELETE FROM labels WHERE path = ?");
+    for (const QString& path : deadLabels) { del.addBindValue(path); del.exec(); }
+    d.commit();
+
+    reload();
+    QMessageBox::information(this, gazeTr("同步文件夹"),
+        gazeTr("已清除失效缩略图 %1 条、失效标记 %2 条。")
+            .arg(deadThumbs.size()).arg(deadLabels.size()));
+}
+
+void DbMaintenanceDialog::relocateSelected() {
+    const QStringList dirs = selectedDirs();
+    if (dirs.size() != 1) {
+        QMessageBox::information(this, gazeTr("重新定位"),
+            gazeTr("请选中恰好一行目录。"));
+        return;
+    }
+    const QString oldDir = dirs.first();
+    bool ok = false;
+    const QString input = QInputDialog::getText(this, gazeTr("重新定位"),
+        gazeTr("把目录 %1 的缓存记录搬到新路径:").arg(oldDir),
+        QLineEdit::Normal, oldDir, &ok);
+    if (!ok) return;
+    QString newDir = QDir::fromNativeSeparators(input.trimmed());
+    if (!newDir.isEmpty() && !newDir.endsWith('/')) newDir += '/';
+    // 搬移实现是"复制到新键再删旧键",新路径在原路径之下会自吞刚搬入的记录
+    if (newDir.isEmpty() || newDir == oldDir || newDir.startsWith(oldDir)) {
+        QMessageBox::warning(this, gazeTr("重新定位"),
+            gazeTr("新路径不能与原路径相同或位于原路径之下。"));
+        return;
+    }
+    if (QMessageBox::question(this, gazeTr("重新定位"),
+        gazeTr("把 %1 下的缓存记录改挂到 %2?\n(只改数据库记录,不搬动任何文件)")
+            .arg(oldDir).arg(newDir))
+        != QMessageBox::Yes) return;
+
+    QSqlDatabase d = maintenanceDb();
+    if (!d.transaction()) return;
+    QSqlQuery q(d);
+    // thumbs:键=路径|尺寸|后缀,整串前缀替换;撞新键时 REPLACE 保留新档
+    q.prepare("INSERT OR REPLACE INTO thumbs(key,png,mtime,atime) "
+              "SELECT ?||substr(key,?),png,mtime,atime FROM thumbs "
+              "WHERE key LIKE ? ESCAPE '\\'");
+    q.addBindValue(newDir);
+    q.addBindValue(oldDir.size() + 1);
+    q.addBindValue(likePrefixPattern(oldDir));
+    q.exec();
+    q.prepare("DELETE FROM thumbs WHERE key LIKE ? ESCAPE '\\'");
+    q.addBindValue(likePrefixPattern(oldDir));
+    q.exec();
+    // labels:path 即媒体路径;UPDATE 撞主键时 REPLACE 落新删旧
+    q.prepare("UPDATE OR REPLACE labels SET path = ?||substr(path,?) "
+              "WHERE path LIKE ? ESCAPE '\\'");
+    q.addBindValue(newDir);
+    q.addBindValue(oldDir.size() + 1);
+    q.addBindValue(likePrefixPattern(oldDir));
+    q.exec();
+    // dirsize 两种落盘形态分别搬:前缀形(带尾斜杠子目录)+ 精确形(裸目录本身)
+    q.prepare("INSERT OR REPLACE INTO dirsize(path,size,basis,computed) "
+              "SELECT ?||substr(path,?),size,basis,computed FROM dirsize "
+              "WHERE path LIKE ? ESCAPE '\\'");
+    q.addBindValue(newDir);
+    q.addBindValue(oldDir.size() + 1);
+    q.addBindValue(likePrefixPattern(oldDir));
+    q.exec();
+    const QString oldBare = oldDir.left(oldDir.size() - 1);
+    q.prepare("UPDATE OR REPLACE dirsize SET path = ?||substr(path,?) "
+              "WHERE path = ?");
+    q.addBindValue(newDir);
+    q.addBindValue(oldBare.size() + 1);
+    q.addBindValue(oldBare);
+    q.exec();
+    q.prepare("DELETE FROM dirsize WHERE path LIKE ? ESCAPE '\\'");
+    q.addBindValue(likePrefixPattern(oldDir));
+    q.exec();
+    q.prepare("DELETE FROM dirsize WHERE path = ?");
+    q.addBindValue(oldBare);
+    q.exec();
+    if (!d.commit()) d.rollback();
+
+    reload();
+}
+
+void DbMaintenanceDialog::exportCsv() {
+    const QString path = QFileDialog::getSaveFileName(this, gazeTr("导出清单"),
+        QStringLiteral("db_inventory.csv"), gazeTr("CSV 文件 (*.csv)"));
+    if (path.isEmpty()) return;
+    QFile f(path);
+    if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        QMessageBox::warning(this, gazeTr("导出清单"), gazeTr("无法写入文件。"));
+        return;
+    }
+    QTextStream ts(&f);
+    ts.setGenerateByteOrderMark(true);   // BOM:Excel 双击直开不乱码
+    auto csvField = [](QString s) {
+        s.replace('"', QLatin1String("\"\""));
+        return '"' + s + '"';
+    };
+    ts << csvField(gazeTr("缓存目录")) << ',' << csvField(gazeTr("文件数")) << ','
+       << csvField(gazeTr("标记")) << ',' << csvField(gazeTr("缩略图")) << ','
+       << csvField(gazeTr("体积(MB)")) << "\r\n";
+    QList<QString> dirs = m_byDir.keys();
+    std::sort(dirs.begin(), dirs.end());
+    for (const QString& dir : dirs) {
+        const DirStat& rec = m_byDir[dir];
+        ts << csvField(dir) << ',' << rec.files.size() << ',' << rec.labels
+           << ',' << rec.thumbs << ','
+           << QString::asprintf("%.2f", rec.bytes / 1024.0 / 1024.0) << "\r\n";
     }
 }
 

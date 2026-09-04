@@ -23,6 +23,12 @@
     </message>
     <message>
         <source>
+…等 %1 个目录</source>
+        <translation>
+…and %1 more folders</translation>
+    </message>
+    <message>
+        <source>
 其中 %1 张读不到文件,纸上已按占格画叉。</source>
         <translation>
 %1 of them could not be read and are drawn as crossed placeholders.</translation>
@@ -338,6 +344,10 @@ Drag &amp; drop — Move to folder  Ctrl+drag — Copy (confirmation dialog can 
 勾选=数值直接反演(通常偏亮),仅供对比,切文件自动复位。</source>
         <translation>CMYK press image (no embedded color profile): converted by print standard by default — matches thumbnails/printing/Windows Photos.
 Check = direct numeric inversion (usually too bright), for comparison only; resets when you switch files.</translation>
+    </message>
+    <message>
+        <source>CSV 文件 (*.csv)</source>
+        <translation>CSV files (*.csv)</translation>
     </message>
     <message>
         <source>DDS 图片</source>
@@ -806,6 +816,14 @@ Current settings were copied there (existing files are not overwritten).</transl
         <translation>Low quality - High quality (WebP)</translation>
     </message>
     <message>
+        <source>体积</source>
+        <translation>Size</translation>
+    </message>
+    <message>
+        <source>体积(MB)</source>
+        <translation>Size (MB)</translation>
+    </message>
+    <message>
         <source>你确认要删除文件夹吗？
 </source>
         <translation>Are you sure you want to delete the folder?
@@ -928,6 +946,10 @@ Next start will restore:
     <message>
         <source>元数据</source>
         <translation>Metadata</translation>
+    </message>
+    <message>
+        <source>先在列表中选中要同步的目录。</source>
+        <translation>Select folders in the list first.</translation>
     </message>
     <message>
         <source>全屏</source>
@@ -1128,6 +1150,14 @@ Next start will restore:
         <translation>Delete layout...</translation>
     </message>
     <message>
+        <source>删除所选 %1 个目录的全部缓存条目?
+%2
+(浏览时会自动重建)</source>
+        <translation>Delete all cache entries for the %1 selected folder(s)?
+%2
+(They will be rebuilt while browsing)</translation>
+    </message>
+    <message>
         <source>删除提示停留时长</source>
         <translation>Delete notice duration</translation>
     </message>
@@ -1324,6 +1354,10 @@ e.g. psd, ai, raw, cr2, nef</translation>
     <message>
         <source>同时搜索文件夹</source>
         <translation>Search folders as well</translation>
+    </message>
+    <message>
+        <source>同步文件夹</source>
+        <translation>Sync folders</translation>
     </message>
     <message>
         <source>同步文件夹...</source>
@@ -1582,6 +1616,10 @@ Click once to select the whole path, click again to place the caret</translation
         <translation>Width (pixels):</translation>
     </message>
     <message>
+        <source>导出清单</source>
+        <translation>Export inventory</translation>
+    </message>
+    <message>
         <source>将 %1 %2到
 %3 ?
 
@@ -1698,6 +1736,10 @@ or in system Settings → Apps → Default apps → Gaze → &apos;Set default&a
     <message>
         <source>已添加右键菜单,资源管理器中即时生效。</source>
         <translation>Context menu added; takes effect in Explorer immediately.</translation>
+    </message>
+    <message>
+        <source>已清除失效缩略图 %1 条、失效标记 %2 条。</source>
+        <translation>Removed %1 stale thumbnail(s) and %2 stale label(s).</translation>
     </message>
     <message>
         <source>已移至回收站</source>
@@ -1926,6 +1968,16 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
         <translation>Scan file headers</translation>
     </message>
     <message>
+        <source>把 %1 下的缓存记录改挂到 %2?
+(只改数据库记录,不搬动任何文件)</source>
+        <translation>Repoint cache records from %1 to %2?
+(Only database records change; no files are moved)</translation>
+    </message>
+    <message>
+        <source>把目录 %1 的缓存记录搬到新路径:</source>
+        <translation>Relocate cache records of folder %1 to a new path:</translation>
+    </message>
+    <message>
         <source>拆帧保存</source>
         <translation>Extract Frames</translation>
     </message>
@@ -2060,6 +2112,10 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
     <message>
         <source>数据库 [目录:%1  →  元数据:%2  →  缩略图:%3]</source>
         <translation>Database [dirs: %1 → metadata: %2 → thumbnails: %3]</translation>
+    </message>
+    <message>
+        <source>数据库:%1  ·  目录:%2  ·  缓存条目:%3  ·  标记:%4  ·  缩略图合计:%5</source>
+        <translation>Database: %1 · folders: %2 · cache entries: %3 · labels: %4 · thumbnails total: %5</translation>
     </message>
     <message>
         <source>数据库:%1  ·  缓存条目:%2  ·  缩略图合计:%3</source>
@@ -2220,6 +2276,10 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
         <translation>New files are appended to the end of the list</translation>
     </message>
     <message>
+        <source>新路径不能与原路径相同或位于原路径之下。</source>
+        <translation>The new path must differ from the original and cannot be inside it.</translation>
+    </message>
+    <message>
         <source>方向</source>
         <translation>Direction</translation>
     </message>
@@ -2242,6 +2302,10 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
     <message>
         <source>无损 - ZIP 压缩</source>
         <translation>Lossless - ZIP compression</translation>
+    </message>
+    <message>
+        <source>无法写入文件。</source>
+        <translation>Cannot write the file.</translation>
     </message>
     <message>
         <source>无法加载动画</source>
@@ -2466,6 +2530,10 @@ Try a different selection (a bit larger and farther from the edges).</translatio
 </translation>
     </message>
     <message>
+        <source>标记</source>
+        <translation>Labels</translation>
+    </message>
+    <message>
         <source>标题栏</source>
         <translation>Title bar</translation>
     </message>
@@ -2664,6 +2732,10 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     <message>
         <source>清除</source>
         <translation>Clear</translation>
+    </message>
+    <message>
+        <source>清除所选目录中源文件已不存在的缩略图与标记条目?继续?</source>
+        <translation>Remove thumbnail and label entries whose source files no longer exist in the selected folders? Continue?</translation>
     </message>
     <message>
         <source>清除筛选</source>
@@ -3236,6 +3308,10 @@ Continue?</translation>
         <translation>Enter a name condition</translation>
     </message>
     <message>
+        <source>请选中恰好一行目录。</source>
+        <translation>Select exactly one folder row.</translation>
+    </message>
+    <message>
         <source>起始文件夹已不存在</source>
         <translation>The startup folder no longer exists</translation>
     </message>
@@ -3442,6 +3518,10 @@ Continue?</translation>
     <message>
         <source>重建缩略图</source>
         <translation>Rebuild thumbnails</translation>
+    </message>
+    <message>
+        <source>重新定位</source>
+        <translation>Relocate</translation>
     </message>
     <message>
         <source>锐化缩略图</source>
