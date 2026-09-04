@@ -3,6 +3,7 @@
 #include "filegrid.h"
 #include "previewpanel.h"
 #include "imgsearchdialog.h"
+#include "dialogs/aboutdialog.h"
 #include "printdialog.h"
 #include "infopanel.h"
 #include "shelldelete.h"   // showDeleteToast:拖放复制成功的左下角提示
@@ -315,17 +316,9 @@ void MainWindow::createMenubar() {
         mb->show();
     });
     helpMenu->addAction(gazeTr("关于(&A)"), this, [this](){
-        auto* mb = new QMessageBox(QMessageBox::Information, gazeTr("关于 Gaze"),
-            gazeTr("Gaze\n通用图片/文件资源管理器\n\n"
-            "主要功能:\n"
-            "· 图库浏览(文件夹树 + 缩略图网格 + 预览面板)\n"
-            "· Live Photo / Motion Photo 动态照片自动播放\n"
-            "· 图片/视频/音频预览,颜色标记与筛选\n"
-            "· 图片查看器模式(Ctrl+滚轮缩放细节)\n\n"
-            "版本 1.0 — C++ + Qt6"),
-            QMessageBox::Ok, this);
-        connect(mb, &QDialog::finished, mb, &QDialog::deleteLater);
-        mb->show();
+        auto* dlg = new AboutDialog(this);
+        connect(dlg, &QDialog::finished, dlg, &QDialog::deleteLater);
+        dlg->show();
     });
 
     // ── 语言(2026-09-03 国际化)──

@@ -5,6 +5,9 @@
 #include <unordered_set>
 #include "theme.h"
 
+// ── 版本号单一来源(与 CMakeLists project VERSION 保持同步)──
+inline constexpr const char* GAZE_VERSION = "1.0.0";
+
 // ── 设计令牌:深色分层调色板(对标 XnView MP 的灰阶层级,不再全纯黑) ──
 //   由外到内逐层变暗:菜单栏 > 工具条 > 树 > 列表 > 预览
 //   缩略图/画布仍保持近黑:图看久了不偏色,且 thumbnails.db 里已烘焙的

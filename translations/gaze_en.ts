@@ -230,6 +230,26 @@ Extracting embedded camera preview…</translation>
         <translation>7Z archive</translation>
     </message>
     <message>
+        <source>&lt;b&gt;FFmpeg&lt;/b&gt; — LGPL v3 · 视频/音频解码、缩略图与动态照片提取</source>
+        <translation>&lt;b&gt;FFmpeg&lt;/b&gt; — LGPL v3 · video/audio decoding, thumbnails and motion-photo extraction</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Ghostscript&lt;/b&gt; — AGPL · PDF 渲染</source>
+        <translation>&lt;b&gt;Ghostscript&lt;/b&gt; — AGPL · PDF rendering</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;LibRaw&lt;/b&gt; — LGPL-2.1 / CDDL · RAW 相机格式解码</source>
+        <translation>&lt;b&gt;LibRaw&lt;/b&gt; — LGPL-2.1 / CDDL · RAW camera decoding</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Qt %1&lt;/b&gt; — LGPL v3 · 界面框架</source>
+        <translation>&lt;b&gt;Qt %1&lt;/b&gt; — LGPL v3 · UI framework</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;jpegtran&lt;/b&gt;（libjpeg-turbo）— 类 BSD 许可 · 无损旋转/镜像</source>
+        <translation>&lt;b&gt;jpegtran&lt;/b&gt; (libjpeg-turbo) — BSD-style license · lossless rotate/mirror</translation>
+    </message>
+    <message>
         <source>&lt;p style=&apos;color:#C0C0C6&apos;&gt;无法读取文件&lt;/p&gt;</source>
         <translation>&lt;p style=&apos;color:#C0C0C6&apos;&gt;Cannot read file&lt;/p&gt;</translation>
     </message>
@@ -400,6 +420,10 @@ Version 1.0 — C++ + Qt6</translation>
     <message>
         <source>Gaze 媒体</source>
         <translation>Gaze media</translation>
+    </message>
+    <message>
+        <source>Gaze 的界面形态与交互对标 XnView MP —— 本项目受其启发，以现代化技术栈重新实现，旨在作为一款轻量的开源替代方案（a poor man&apos;s XnView MP）。</source>
+        <translation>Gaze&apos;s interface and interaction model follow XnView MP — this project re-implements that idea on a modern stack as a lightweight open alternative (a poor man&apos;s XnView MP).</translation>
     </message>
     <message>
         <source>HEIC 图片</source>
@@ -1714,6 +1738,10 @@ Off (default): a file occupies one tab; opening it again just switches to the ex
 Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the cap below.</translation>
     </message>
     <message>
+        <source>开源致谢</source>
+        <translation>Open-source credits</translation>
+    </message>
+    <message>
         <source>引擎默认</source>
         <translation>Engine default</translation>
     </message>
@@ -2320,6 +2348,10 @@ Try a different selection (a bit larger and farther from the edges).</translatio
         <translation>ImageSeek project not found: %1/main.py — change the folder in Settings → Image search by text</translation>
     </message>
     <message>
+        <source>本地媒体查看器与文件浏览器 —— 图片、视频、RAW、PDF，一个窗口全搞定。</source>
+        <translation>A local media viewer and file browser — images, videos, RAW, PDF, all in one window.</translation>
+    </message>
+    <message>
         <source>本构建未编入 RAW 解码器（thirdparty/LibRaw 缺失）</source>
         <translation>This build has no RAW decoder compiled in (thirdparty/LibRaw missing)</translation>
     </message>
@@ -2568,6 +2600,10 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     <message>
         <source>版式</source>
         <translation>Layout</translation>
+    </message>
+    <message>
+        <source>版本 %1 · C++17 + Qt %2</source>
+        <translation>Version %1 · C++17 + Qt %2</translation>
     </message>
     <message>
         <source>状态栏</source>
