@@ -52,7 +52,8 @@ void ArrowStyle::drawPrimitive(PrimitiveElement element, const QStyleOption* opt
             QRect r = option->rect;
             int cx = r.center().x();
             int cy = r.center().y();
-            int sz = 4;
+            // 2026-09-04 用户令:倒三角上下太高,压窄一档(4→3,收起态高 8→6px)
+            int sz = 3;
 
             painter->save();
             painter->setRenderHint(QPainter::Antialiasing, true);
