@@ -135,6 +135,30 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     connect(m_rawFullBtn, &QPushButton::clicked, this, [this]() { decodeRawAsync(); });
     m_rawFullBtn->hide();
 
+    // 悬浮 CMYK 切换钮(#243):不进布局,盖在预览右上角。CMYK 印刷 JPG 未内嵌
+    // 色彩配置时两套解码器颜色解释不同:默认 WIC 印刷口径(与缩略图/打印/系统
+    // 照片一致);勾选=Qt 数值直接反演(通常偏亮),仅供对比,切文件自动复位。
+    m_cmykBtn = new QPushButton(QStringLiteral("CMYK"), this);
+    m_cmykBtn->setCursor(Qt::PointingHandCursor);
+    m_cmykBtn->setCheckable(true);
+    m_cmykBtn->setStyleSheet(QString::fromUtf8(
+        "QPushButton{background:%1;color:#FFFFFF;border:none;border-radius:6px;"
+        "padding:4px 10px;font-size:11px;}"
+        "QPushButton:hover{background:%2;}"
+        "QPushButton:checked{background:%3;}")
+        .arg(C_TEXT_FAINT, C_ACCENT, C_ACCENT_DOWN));
+    m_cmykBtn->setToolTip(gazeTr(
+        "CMYK 印刷图（未内嵌色彩配置）:默认按印刷标准转换,与缩略图/打印/系统照片一致。\n"
+        "勾选=数值直接反演(通常偏亮),仅供对比,切文件自动复位。"));
+    connect(m_cmykBtn, &QPushButton::clicked, this, [this]() {
+        m_cmykAlt = m_cmykBtn->isChecked();
+        if (m_mode != "image" || m_filePath.isEmpty()) return;
+        ++m_imgReqGen;                  // 走与切文件同一套异步解码:旧画面保持,就绪即替换
+        if (!m_fullBusy) decodeFullAsync(m_filePath, m_imgReqGen);
+        // fullBusy:在飞任务完成后 onFullDecoded 自动补发最新代号(带新口径)
+    });
+    m_cmykBtn->hide();
+
     // txt 文本预览(等宽字体,只读,深色底)
     m_textEdit = new QTextEdit;
     m_textEdit->setReadOnly(true);
@@ -487,6 +511,8 @@ void PreviewPanel::loadFile(const QString& path) {
     ++m_imgReqGen;
     m_rawFromImage = false;         // 新装载:上一文件的"从图片发起全解"标记作废
     if (m_rawFullBtn) m_rawFullBtn->hide();
+    if (m_cmykBtn) m_cmykBtn->hide();   // #243:CMYK 对比口径只属于"正在看的那一个文件"
+    m_cmykAlt = false;
     // 波形跟文件走:换文件即停旧解码(选中图片时上一音频不该在后台白烧 CPU;
     // 若这次又落在音频上,showAudio 的 start 会带新代次重新起解)
     if (m_waveWorker)

@@ -186,6 +186,11 @@ void PreviewPanel::showImage(const QString& path) {
     m_imgSpace->hide();
     if (m_liveBadge) m_liveBadge->hide();
 
+    // #243:CMYK 对比口径只属于"正在看的那一个文件",切文件即回印刷口径;
+    // CMYK JPEG 在此识别并亮出右上角切换钮(GIF 早退分支也在其后,判定照常)
+    m_cmykAlt = false;
+    updateCmykBtn();
+
     // GIF 动画:几何与静态图同源(第一帧定尺寸,动画帧只换像素)
     if (path.toLower().endsWith(".gif")) {
         showGif(path);
@@ -237,9 +242,10 @@ void PreviewPanel::decodeFullAsync(const QString& path, quint64 gen) {
     m_fullBusy = true;
     m_issuedGen = gen;
     const bool exifRotate = pp_impl::s_bool("General/exifRotate", true);   // GUI 线程取值
+    const bool cmykWic = !m_cmykAlt;   // #243:切换态在 GUI 线程快照(worker 里读成员不安全)
     QPointer<PreviewPanel> self(this);
-    QThreadPool::globalInstance()->start([self, path, gen, exifRotate]() {
-        QImage img = ImgProc::decodeFull(path, exifRotate);
+    QThreadPool::globalInstance()->start([self, path, gen, exifRotate, cmykWic]() {
+        QImage img = ImgProc::decodeFull(path, exifRotate, cmykWic);
         auto holder = std::make_shared<QImage>(std::move(img));
         // 队列投递回 GUI 线程;若面板已析构,事件自动丢弃,shared_ptr 兜底释放内存
         QMetaObject::invokeMethod(self, [self, holder, path, gen]() {
@@ -266,6 +272,32 @@ void PreviewPanel::applyImage(const QImage& img) {
     m_navigating = false;           // 缩放已定型,后续 fitAuto 属"重排"而非"切文件"
     applyViewerChrome();
     updateRawFullBtn();             // #140b:RAW 的图片形态(内嵌图/全解结果)亮悬浮全解钮
+    updateCmykBtn();                // #243:重排后 CMYK 切换钮跟着重定位(与 RAW 钮互斥,不会同时亮)
+}
+
+// ── #243 CMYK 切换钮:显隐+右上角定位,与 m_rawFullBtn 同一套悬浮机制 ──
+// RAW 与 CMYK 互斥(相机 RAW 与印刷 JPG 没有交集),同位不撞。缩略图/直方图/
+// 打印始终走印刷口径,不受本切换影响 —— 它只是预览区里的临时对比。
+void PreviewPanel::updateCmykBtn() {
+    if (!m_cmykBtn) return;
+    if (m_mode != "image" || m_filePath.isEmpty() || !isCmykJpegPath(m_filePath)) {
+        m_cmykBtn->hide();
+        return;
+    }
+    m_cmykBtn->setChecked(m_cmykAlt);
+    m_cmykBtn->raise();
+    m_cmykBtn->adjustSize();
+    m_cmykBtn->move(width() - m_cmykBtn->width() - 12, 12);
+    m_cmykBtn->show();
+}
+
+// SOF 段组件数 4 → CMYK/YCCK 印刷图;只对 JPEG 家族后缀真正读文件头
+bool PreviewPanel::isCmykJpegPath(const QString& p) {
+    const QString suf = QFileInfo(p).suffix().toLower();
+    if (suf != QLatin1String("jpg") && suf != QLatin1String("jpeg")
+        && suf != QLatin1String("jpe"))
+        return false;
+    return WicDecode::isFourChannelJpeg(p);
 }
 
 void PreviewPanel::onFullDecoded(std::shared_ptr<QImage> img, const QString& path, quint64 gen) {

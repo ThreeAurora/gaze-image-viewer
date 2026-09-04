@@ -215,7 +215,11 @@ inline QImage decodeCmykCached(const QString& path, int maxSide) {
 //   需要 DPI 的调用方必须传 maxSide=0。
 // ⚠ exifRotate 必须由 GUI 线程 caller 快照后传入:worker 里读 AppSettings/QSettings
 //   属跨线程访问(未加锁),表现偶发但真存在崩溃/脏读。
-inline QImage decodeScaled(const QString& path, bool exifRotate, int maxSide) {
+// cmykWic(#243):false = 跳过 CMYK 的 WIC 印刷口径,落回 QImageReader 数值反演。
+//   仅预览面板的"切换色彩解释"对比按钮会传 false;缩略图/直方图/打印不受影响,
+//   全应用 CMYK 出像素的正式口径仍只有 decodeCmykCached 这一个。
+inline QImage decodeScaled(const QString& path, bool exifRotate, int maxSide,
+                           bool cmykWic = true) {
     // ── 策略0.4: Qt 原生读不了的格式(#116)先行分流 ──
     // AVIF/JXL/HEIF 等 → 随 Gaze 的 ffmpeg 子进程;#8 起 HEIC/HEIF/HIF 也由
     // ffmpeg 自带解码(不依赖系统"HEIF 图像扩展"),ffmpeg 空图才回退 WIC。
@@ -230,7 +234,7 @@ inline QImage decodeScaled(const QString& path, bool exifRotate, int maxSide) {
             if (!wic.isNull()) return wic;
         }
     }
-    if (WicDecode::isFourChannelJpeg(path)) {
+    if (cmykWic && WicDecode::isFourChannelJpeg(path)) {
         // #206:大图走 4096 副本缓存(首次 WIC 解码落盘,之后毫秒级);WIC 不做
         // EXIF 转正的口径不变(副本与直解都不转正),表现与缩略图一致。
         QImage wic = decodeCmykCached(path, maxSide);
@@ -249,8 +253,8 @@ inline QImage decodeScaled(const QString& path, bool exifRotate, int maxSide) {
     return r.read();
 }
 
-inline QImage decodeFull(const QString& path, bool exifRotate) {
-    return decodeScaled(path, exifRotate, 0);
+inline QImage decodeFull(const QString& path, bool exifRotate, bool cmykWic = true) {
+    return decodeScaled(path, exifRotate, 0, cmykWic);
 }
 
 } // namespace ImgProc

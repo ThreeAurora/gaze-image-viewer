@@ -81,6 +81,7 @@ An **exhaustive list** of what Gaze can actually do, compiled from: the full dev
 | Executables (12) | exe bat cmd ps1 sh msi com scr vbs jar py pl rb |
 
 - Routed decode pipeline: AVIF/JXL → ffmpeg (libdav1d/libjxl); HEIC/HEIF/HIF → WIC; CMYK JPEG → WIC color-managed decode; everything else native Qt
+- CMYK press JPEGs: a floating "CMYK" toggle in the preview's top-right corner (only lights up for CMYK JPEG); print-standard interpretation by default (matches thumbnails/printing/Windows Photos), checked = direct numeric inversion for comparison (usually too bright), resets on file switch; thumbnails/histogram/printing unaffected (#243)
 - File-header sniffing (AVIF ftyp brands, JXL magic), identify by extension or by scanning headers
 - RAW whitelist kept out of thumbnail/read-ahead pipelines entirely; LibRaw 0.21.4 statically linked (real CR2 sample: 3881 ms to 6264×4180)
 - Icon-type thumbnails (exe/ico etc.): shell canvases with a small icon pasted in the top-left corner get their transparent border trimmed and the icon recentered at original size (#242)

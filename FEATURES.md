@@ -81,6 +81,7 @@
 | 可执行 12 | exe bat cmd ps1 sh msi com scr vbs jar py pl rb |
 
 - 分流解码管线：AVIF/JXL → ffmpeg（libdav1d/libjxl）；HEIC/HEIF/HIF → WIC；CMYK JPEG → WIC 色彩管理解码；其余 Qt 原生
+- CMYK 印刷 JPG：预览区右上角悬浮「CMYK」切换钮（只对 CMYK JPEG 亮），默认印刷标准口径（与缩略图/打印/系统照片一致），勾选=数值直接反演对比（通常偏亮），切文件自动复位；缩略图/直方图/打印不受影响（#243）
 - 文件头嗅探识别（avif ftyp brand、JXL 双魔数），按扩展名或扫文件头识别开关
 - RAW 独立白名单：绝不进缩略图/预读管线，LibRaw 0.21.4 静态编入（真实 CR2 样本 3881ms 解出 6264×4180）
 - exe/ico 等图标型缩略图：shell 把小档位图标贴画布左上角的原样自动裁透明边、原大小居中回贴（#242）

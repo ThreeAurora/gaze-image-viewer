@@ -93,6 +93,7 @@ void PreviewPanel::resizeEvent(QResizeEvent* event) {
     if (m_liveBadge && m_liveBadge->isVisible())
         m_liveBadge->move(m_videoWidget ? m_videoWidget->width() - m_liveBadge->width() - 12 : 0, 12);
     updateRawFullBtn();      // #140b:悬浮 RAW 钮贴右上角,面板缩放跟着挪
+    updateCmykBtn();         // #243:CMYK 切换钮同机制
 }
 
 void PreviewPanel::mousePressEvent(QMouseEvent* event) {

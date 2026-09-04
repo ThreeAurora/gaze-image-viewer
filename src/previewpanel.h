@@ -122,6 +122,8 @@ private:
     void updateRawFullBtn();
     void setRawBtnBusy(bool busy);
     static bool isRawPath(const QString& p);
+    void updateCmykBtn();                       // #243 CMYK 切换钮显隐+定位(与 rawFullBtn 同机制)
+    static bool isCmykJpegPath(const QString& p);
     // #82:Markdown 以渲染后的 HTML 展示;PDF 走 Ghostscript 渲染 + 页导航
     void showMarkdown(const QString& path);
     void showPdf(const QString& path);
@@ -213,6 +215,9 @@ private:
                                                 // 内嵌预览正看着时 rawBox 已藏,全解入口靠它
     bool m_rawBusy = false;                     // RAW 全解进行中(结果可能被代次作废)
     bool m_rawFromImage = false;                // 本次全解发起自图片形态(内嵌图/上一次全解结果)
+    QPushButton *m_cmykBtn = nullptr;           // 悬浮右上角的 CMYK 切换钮(#243):只对 CMYK JPEG 亮,
+                                                // 勾选=Qt 数值反演口径对比;不勾=印刷口径(默认)
+    bool m_cmykAlt = false;                     // CMYK 对比口径的临时态,切文件复位
     QLabel *m_placeholder = nullptr;   // 空态占位
     QTextEdit *m_textEdit = nullptr;   // txt 文本预览
     QImageReader* m_gifReader = nullptr; // GIF 解码器(2026-08-30 弃 QMovie:跳帧卡死解码器)
