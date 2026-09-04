@@ -552,11 +552,15 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
                     // 这里保留带守卫的硬编码,好让 F2 在文本框/弹窗里不抢键 —— Qt 的
                     // QAction shortcut 不经过 forText 三道闸,菜单裸键会吞文本框的照删键。
                     if (ke->key() == Qt::Key_F2) { renameFocused(); return true; }
-                    // F3 = 预览面板开关(2026-09-02 用户定版):浏览器形态下切"预览"面板显隐;
-                    // 查看器/全屏形态预览面板本就隐藏,不响应。
+                    // #245(2026-09-04 用户令):F3 = 用默认应用打开;文件夹=资源
+                    // 管理器打开该目录(QDesktopServices 对目录本就落 Explorer)。
+                    // 原「预览面板开关」让位,面板显隐仍走视图菜单。
                     if (ke->key() == Qt::Key_F3 && !m_viewerMode && !m_fullView) {
-                        setPaneVisible("preview", !paneVisible("preview"));
-                        return true;
+                        const auto sel = m_fileGrid->selectedPaths();
+                        if (!sel.isEmpty()) {
+                            QDesktopServices::openUrl(QUrl::fromLocalFile(sel.first()));
+                            return true;
+                        }
                     }
                 }
             }
