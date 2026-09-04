@@ -380,6 +380,20 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
             m_addrBar->backspace();
             return true;
         }
+        // #239(2026-09-04 用户令):地址栏空文本回车 = 死键,什么都不做。
+        // 根因:QLineEdit 发出 returnPressed 后对回车事件 ignore,事件冒泡到
+        // 主窗再进下方 Enter 路由 → requestSwitchMode → 给当前选中项(常是
+        // 自动选中的第一项文件夹)开出查看器签,看起来就是"空栏回车开了个
+        // 文件夹标签页"。文本非空时 gotoTypedPath 正常跳转且 m_lastAddrJumpMs
+        // 宽限(#128②)吸收冒泡,无需这里管;只截空文本这一种。
+        if (obj == m_addrBar
+            && (ke->key() == Qt::Key_Return || ke->key() == Qt::Key_Enter)
+            && ke->modifiers() == Qt::NoModifier) {
+            QString raw = m_addrBar->text().trimmed();
+            while (raw.size() >= 2 && raw.startsWith('"') && raw.endsWith('"'))
+                raw = raw.mid(1, raw.size() - 2).trimmed();
+            if (raw.isEmpty()) return true;
+        }
         // 路由只看"这个键送给了谁",不看 QApplication::focusWidget():焦点在别处、
         // 键却发给弹窗的情况(QMenu/下拉列表都不是 QDialog)旧写法会整段吞掉 Enter/Esc。
         // main.cpp 的对话框过滤器装得更早、先触发,这里是第二道闸。

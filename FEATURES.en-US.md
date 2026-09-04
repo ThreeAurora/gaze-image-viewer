@@ -12,7 +12,8 @@ An **exhaustive list** of what Gaze can actually do, compiled from: the full dev
 - Multi-tab: viewer-mode top tab bar; persistent "Browser" tab; 32px thumbnail per tab; Ctrl+W closes; closing the last image tab returns to the browser; multi-tab / single-tab / cap (default 20) per file configurable
 - Back / forward navigation (Alt+←/→, greyed at the ends); going up auto-selects the child folder just left
 - F5 refresh (same-folder reload keeps scroll position); scroll resets to top when changing folders
-- Address bar: click selects all, second click places the caret, Enter jumps to a folder or file, quoted paths accepted, jumps locate and select the target with edge-snapping scroll, a 500 ms Enter grace period prevents accidental viewer opens, Alt+Backspace deletes a character, Ctrl+Backspace a word, path history dropdown
+- Address bar: click selects all, second click places the caret, Enter jumps to a folder or file, quoted paths accepted, file:/// link form recognized (%20 decoding included), jumps locate and select the target with edge-snapping scroll, a 500 ms Enter grace period prevents accidental viewer opens, Enter on an empty bar does nothing, Alt+Backspace deletes a character, Ctrl+Backspace a word, path history dropdown
+- Grid Enter: files follow the switch-mode setting; a single selected folder is entered (same as double-click) instead of opening a folder viewer tab
 - Entering a folder pre-selects the first item and syncs the preview; selected rows auto-scroll into view
 - Fast-scroll rendering optimizations; files must never be half-visible
 - Two-way auto-sync between the tree and the current folder; tree scrolls the current item into view

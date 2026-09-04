@@ -75,6 +75,16 @@ void MainWindow::requestSwitchMode(const QString& triggerKey) {
         if (!paths.isEmpty()) openWithSystem(paths.first());
         return;
     }
+    // #239(2026-09-04 用户令):回车选中的是文件夹 = 进入文件夹(与双击目录卡
+    // 同义),不给文件夹开查看器签。只对回车生效,双击/中键触发器不借道;
+    // 查看器/全屏形态网格藏着, Enter 是退出/还原键,不做导航。
+    if (triggerKey == "SwitchMode/enterKey" && !m_viewerMode && !m_fullView) {
+        const auto paths = m_fileGrid->selectedPaths();
+        if (paths.size() == 1 && QFileInfo(paths.first()).isDir()) {
+            navigateTo(paths.first());
+            return;
+        }
+    }
     cycleMode(spec);
 }
 

@@ -150,6 +150,17 @@ void MainWindow::gotoTypedPath() {
     QString raw = m_addrBar->text().trimmed();
     while (raw.size() >= 2 && raw.startsWith('"') && raw.endsWith('"'))
         raw = raw.mid(1, raw.size() - 2).trimmed();
+    // #239(2026-09-04 用户令):file:///G:/1-media/2-shots 这类 URL 形态照常
+    // 进入 —— 浏览器/网盘"复制链接"粘贴时常见。QUrl::toLocalFile 顺带解 %20
+    // 等转义;file://G:/...(盘符被当 host 的残缺形态)解不出,剥前缀兜底。
+    if (raw.startsWith("file:", Qt::CaseInsensitive)) {
+        QString local = QUrl(raw).toLocalFile();
+        if (local.isEmpty()) {
+            const int p = raw.indexOf("://");
+            if (p >= 0) local = raw.mid(p + 3);
+        }
+        if (!local.isEmpty()) raw = local.trimmed();
+    }
     if (raw.isEmpty()) return;
     m_lastAddrJumpMs = QDateTime::currentMSecsSinceEpoch();   // #128②:见 Enter 宽限
     if (navigateTo(raw)) return;
