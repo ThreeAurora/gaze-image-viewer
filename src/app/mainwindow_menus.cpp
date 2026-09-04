@@ -308,12 +308,14 @@ void MainWindow::createMenubar() {
     });
 
     // ── 语言(2026-09-03 国际化)──
-    // 常驻菜单栏最右:老外一眼可及,不依赖"先找到设置"。三项单选,切换写入
-    // General/language 并征询重启;重启用 --restart 自启动(绕过单实例握手,
-    // 见 main.cpp)。选中项即当前生效意图;中文系统默认=跟随系统→中文照旧。
+    // 2026-09-04 用户令:「语言」要排在「帮助」左边(insertMenu),不再最右;
+    // 后建的布局菜单照旧追加在末尾。三项单选,切换写入 General/language 并
+    // 征询重启;重启用 --restart 自启动(绕过单实例握手,见 main.cpp)。
+    // 选中项即当前生效意图;中文系统默认=跟随系统→中文照旧。
     {
-        auto *langMenu = mb->addMenu(gazeTr("语言(&G)"));
+        auto *langMenu = new QMenu(gazeTr("语言(&G)"), this);
         langMenu->setToolTip(gazeTr("界面语言(切换后重启生效)"));
+        mb->insertMenu(helpMenu->menuAction(), langMenu);
         auto *langGroup = new QActionGroup(langMenu);
         langGroup->setExclusive(true);
         // 菜单项文字直接以字面量出现在 gazeTr() 里(提取器只认字面量,
