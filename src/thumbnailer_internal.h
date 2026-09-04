@@ -19,6 +19,7 @@
 #include <QString>
 #include <QImage>
 #include <QThread>
+#include <QPainter>
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QMutex>
@@ -123,6 +124,42 @@ inline QImage windowsShellThumb(const QString& filePath, int size) {
 
     if (needUninit) CoUninitialize();
     return img;
+}
+
+// #242:exe/ico 一类的 shell"缩略图"其实就是图标本身。个别 exe 的图标资源档位
+// 小,shell 会把小图标画在请求画布的左上角、其余全透明 —— 入库后显示成
+// "左上角一小块"。把不透明内容的边界框裁出来:已基本铺满画布(真缩略图,
+// 或轻微透明留白)原样返回;只有明显偏居一隅的才按原大小居中回贴
+// (图标再放大只会糊,不采用放缩填满)。
+inline QImage trimPadCenter(QImage img) {
+    if (img.isNull() || img.format() != QImage::Format_ARGB32
+        || !img.hasAlphaChannel())
+        return img;
+    int minX = img.width(), minY = img.height(), maxX = -1, maxY = -1;
+    for (int y = 0; y < img.height(); ++y) {
+        const QRgb* line = reinterpret_cast<const QRgb*>(img.constScanLine(y));
+        for (int x = 0; x < img.width(); ++x) {
+            if (qAlpha(line[x]) > 8) {
+                if (x < minX) minX = x;
+                if (x > maxX) maxX = x;
+                if (y < minY) minY = y;
+                if (y > maxY) maxY = y;
+            }
+        }
+    }
+    if (maxX < 0) return img;                       // 整幅全透明,原样交给后处理
+    const int cw = maxX - minX + 1, ch = maxY - minY + 1;
+    // 内容已贴边或铺满 ≥75% 线性尺寸:真缩略图/贴边构图,不动
+    if (minX == 0 && minY == 0
+        && cw * 4 >= img.width() * 3 && ch * 4 >= img.height() * 3)
+        return img;
+    QImage out(img.size(), QImage::Format_ARGB32);
+    out.fill(Qt::transparent);
+    QPainter p(&out);
+    p.drawImage((img.width() - cw) / 2, (img.height() - ch) / 2,
+                img.copy(minX, minY, cw, ch));
+    p.end();
+    return out;
 }
 
 } // namespace th_impl

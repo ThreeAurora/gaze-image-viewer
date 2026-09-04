@@ -230,7 +230,15 @@ QImage Thumbnailer::generate(const QString& filePath, int size, bool isVideo) {
         // Shell 缓存清晰档位只到 256;更大的请求它会把 256 缓存放大到精确尺寸
         // 返回,embedFallback 的"小于目标"检查拦不住 → 大卡片发糊。
         // >256 一律从原图自解码,质量有保证且落库后同样秒开。
-        if (useReady && size <= 256) pix = th_impl::windowsShellThumb(filePath, size);
+        if (useReady && size <= 256) {
+            pix = th_impl::windowsShellThumb(filePath, size);
+            // #242:exe/ico 一类的"缩略图"=图标本身,小档位图标会被 shell 贴在
+            // 画布左上角,入库后显示成"左上角一小块" —— 裁透明边后原大小居中
+            const QString suf = fi.suffix().toLower();
+            if (suf == "exe" || suf == "dll" || suf == "ico" || suf == "scr"
+                || suf == "msi" || suf == "cpl" || suf == "lnk" || suf == "ocx")
+                pix = th_impl::trimPadCenter(pix);
+        }
         // Thumbs/embedFallback:现成缩略图比目标尺寸小 → 视为不合格,从原图重做
         if (pix.isNull()
             || (p.embedFallback && (pix.width() < size && pix.height() < size))) {

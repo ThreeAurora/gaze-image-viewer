@@ -43,11 +43,12 @@ An **exhaustive list** of what Gaze can actually do, compiled from: the full dev
 - Auto-fit profiles for normal and fullscreen, reset-on-navigate toggle, separate in/out scaling filters, 10 pixel-ratio entries, HiDPI 1px=1px, gamma correction, sharpening, two-pass rendering, read-ahead one image / keep current
 - Viewer appearance: background color, checkerboard padding, borders, scrollbars, pan tool, selection overlay, color-label display
 - Three fullscreen layers: F11 fullscreen UI / G fullscreen preview (image only, exact layout restore on exit) / in-viewer fullscreen; floating toolbar, hide cursor, info badge (size/zoom%), playbar/toolbar/scrollbar visibility, dual-monitor choice — an independent fullscreen config group; preview context menu gains "Fullscreen Preview  (G)" for images/videos/audio alike (#224); G fullscreen film strip = every file in the folder participates (not just images; thumbnail-less cells draw the file name; RAW counts as image but never enters the thumbnail queue), three check buttons on the right — images/videos/audio — toggle categories on/off (all on by default, persisted in ini, #225/#226)
-- Text preview: txt toggle + auto-truncation for long files
+- Text preview: txt / MD toggles + auto-truncation for long files (three gates: 256 KB / 1000 lines / 2000 chars per line, keeps old machines fast); truncation notice at both top and bottom; word-wrap toggle (Settings → Browser → Preview, or preview context menu); Markdown switchable between "rendered style / plain text" (settings or context menu, #240)
 - Markdown rendered preview (custom renderer: headings, bold/italic/strike, inline & fenced code, quotes, lists, task lists, links, images, rules, tables, autolinks)
 - PDF preview: bundled Ghostscript (vendor/gs, AGPL license included)
-- RAW preview: placeholder + "Load original RAW" button, background-thread LibRaw full decode, stale-generation abort when switching files, full zoom/pan/viewer takeover on success
+- RAW preview: placeholder + "Load original RAW" button, background-thread LibRaw full decode, stale-generation abort when switching files, full zoom/pan/viewer takeover on success; once the embedded preview loads, the button docks into the preview's top-right corner as a floating control (#140b)
 - Mouse wheel over preview text switches files (never scrolls the text)
+- Status-bar folder size: a single selected folder shows "Counting…" and grows in the background to the exact value (no more ≈ estimates, #241)
 - Info panel (F9): file properties + image dimensions + grouped EXIF tree; RGB histogram (three channels blended + luma line, background sampling)
 - Video switch flash eliminated: native video surface hidden until the first frame arrives
 
@@ -82,6 +83,7 @@ An **exhaustive list** of what Gaze can actually do, compiled from: the full dev
 - Routed decode pipeline: AVIF/JXL → ffmpeg (libdav1d/libjxl); HEIC/HEIF/HIF → WIC; CMYK JPEG → WIC color-managed decode; everything else native Qt
 - File-header sniffing (AVIF ftyp brands, JXL magic), identify by extension or by scanning headers
 - RAW whitelist kept out of thumbnail/read-ahead pipelines entirely; LibRaw 0.21.4 statically linked (real CR2 sample: 3881 ms to 6264×4180)
+- Icon-type thumbnails (exe/ico etc.): shell canvases with a small icon pasted in the top-left corner get their transparent border trimmed and the icon recentered at original size (#242)
 - Every decode dependency ships with the program: vendor/ffmpeg, vendor/gs, vendor/jpegtran, thirdparty/LibRaw — no preinstalled components assumed
 
 ## 7. File Management & Deletion
