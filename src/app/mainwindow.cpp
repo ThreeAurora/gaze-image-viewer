@@ -186,6 +186,14 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     // 树点击导航经包装函数:标记来源,让 navigateTo 不把焦点从树抢回网格
     connect(m_folderTree, &FolderTree::folderSelected, this, &MainWindow::onTreeFolderSelected);
     tv->addWidget(m_folderTree, 1);
+    // #236/#247 实测定案:挂树这笔账不可省——推迟到首帧后挂,firstPaint 无净
+    // 收益(快档 749ms vs 基线 751ms),因为基线记在挂树名下的 337~635ms 并不是
+    // 挂树本身(QSplitter::addWidget 推迟后实测仅 7~11ms),而是**恰好在此触发的
+    // 一次性全局初始化**:QLineEdit 首次创建的 Windows 输入法(TSF)初始化
+    // (实测 326~758ms)+ QSS 引擎热身等。推迟挂载只是让这笔账改记到地址栏
+    // QLineEdit 头上,总账不变;且树在挂载前无父,applyPaneVisibility 的
+    // setVisible(true) 会把它当独立顶层窗口 show(原生窗口创建 196~272ms,
+    // 即 #207 记录过的无父闪窗病)。见 todo.md §8.ak 全套分账数据。
     m_splitter->addWidget(treePane);
     Logger::boot("ctor:tree");
 

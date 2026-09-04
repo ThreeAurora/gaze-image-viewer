@@ -117,7 +117,9 @@ FolderTree::FolderTree(QWidget* parent) : QTreeWidget(parent) {
     // 一次性 0.5~1.1s(ft.ss.set1=1139ms,同串第二次 2ms;字库/shell图标/裸控件构造
     // 均已排除)。两者都推迟到首帧后 100ms:快档 ctor:tree 492→360ms,窗口可见
     // 963→724ms;独立启动直进查看器时树整个藏着,零可见差异。焦点事件里的重设
-    // 不受影响(机制已热,2ms)。剩余大头=QSplitter 挂载一次性 318ms,代码不可省。
+    // 不受影响(机制已热,2ms)。剩余大头=挂树时点的一次性初始化账单(#247 实测
+    // 归因:并非挂树本身——推迟挂载 QSplitter::addWidget 仅 7~11ms;该账实为
+    // QLineEdit 首创的 TSF 输入法初始化 326~758ms,推迟只会改名不消失,定案保留同步挂载)。
     auto* arrowStyle = new ArrowStyle;
     arrowStyle->setParent(this);
     QTimer::singleShot(100, this, [this, arrowStyle] {
