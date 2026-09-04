@@ -172,7 +172,6 @@ private:
     // ── 设置活接线:查看器/全屏的界面元素 ──
     void applyViewerChrome();              // 改设置/换文件后统一刷新下列元素
     void updateOverlayScrollbars();        // Viewer|Fullscreen/showScrollbar
-    void updateInfoBar(const QPoint* cursor = nullptr);  // Fullscreen/showInfo;2026-09-02:光标到顶才浮现
     void updateFloatBar(const QPoint* cursor = nullptr); // Fullscreen/showToolbar + floatView
     void updatePanTool();                  // Viewer/panTool 平移导航小窗
     void updateSelectionHighlight();       // Viewer/showBorder 白框;蓝框已删(2026-08-30)
@@ -308,9 +307,6 @@ private:
     // ── 查看器/全屏界面元素(全部由对应设置项控制显隐) ──
     QScrollBar* m_hScroll   = nullptr;     // Viewer|Fullscreen/showScrollbar
     QScrollBar* m_vScroll   = nullptr;
-    QLabel*     m_infoLabel = nullptr;     // Fullscreen/showInfo
-    QString     m_infoFileKey;             // 信息条文件部分缓存键
-    QString     m_infoBase;                // 信息条"文件名 WxH 体积"缓存
     QWidget*    m_floatBar  = nullptr;     // Fullscreen/showToolbar + floatView
     bool        m_gFullView = false;       // G 全屏预览时工具条让位给胶片条(#209)
     QWidget*    m_panTool   = nullptr;     // Viewer/panTool

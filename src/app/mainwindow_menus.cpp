@@ -285,7 +285,7 @@ void MainWindow::createMenubar() {
             "F3 — 预览面板开关\n"
             "Del / S — 删除选中  X — 新建文件夹\n"
             "Enter — 切换查看器/浏览器(设置→键盘)\n"
-            "Ctrl+A — 全选  Ctrl+I — 反选  Ctrl+W — 关标签\n"
+            "Ctrl+A — 全选  Ctrl+I — 反选  Ctrl+W — 关标签(全屏中=只退全屏)\n"
             "Ctrl+Shift+T — 恢复刚关的标签页\n"
             "Esc — 退出全屏\n"
             "拖放 — 移动到文件夹  Ctrl+拖放 — 复制(设置→文件操作可关确认弹窗)"),

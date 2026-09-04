@@ -124,7 +124,6 @@ QWidget* SettingsDialog::pageFullscreen() {
             gazeTr("适应窗口大小 (仅大图片)"), gazeTr("适应窗口宽度"),
             gazeTr("适应窗口高度"), gazeTr("适应窗口宽或高")}, 2));
     fShow->addRow(chk("Fullscreen/showPlaybar", gazeTr("显示播放条"), true));
-    fShow->addRow(chk("Fullscreen/showInfo", gazeTr("显示信息"), true));
     fShow->addRow(chk("Fullscreen/showScrollbar", gazeTr("显示滚动条"), false));
     fShow->addRow(chk("Fullscreen/showToolbar", gazeTr("显示工具栏"), false));
     fShow->addRow(chk("Fullscreen/hideCursor", gazeTr("隐藏鼠标箭头"), true));

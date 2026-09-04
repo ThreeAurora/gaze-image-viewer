@@ -6,6 +6,7 @@
 #include "thumbnailer.h"
 #include "constants.h"
 #include "settings.h"
+#include "fileentry.h"   // #230:题注 formatSize
 #include "i18n.h"
 
 #include <QLabel>
@@ -22,11 +23,14 @@
 
 namespace {
 constexpr int kThumbW  = 72;
-constexpr int kThumbH  = 96;      // #220:用户令"上下宽一点",64 → 96
+constexpr int kThumbH  = 72;      // #230:用户令"缩短",96 → 72(#220 的加高回撤)
 constexpr int kGap     = 4;
-constexpr int kCaptionH = 24;     // #220:题注行随条加高放宽,20 → 24
+constexpr int kCaptionH = 26;     // #230:题注改 13px 纯白大字,行高放宽一档
 constexpr int kPanThresh = 6;     // 按住位移超过这个像素才算拖
 constexpr int kBtnZone   = 160;   // 右端按钮区宽(#226:图片/视频/音频三勾选钮+退出)
+// #230:非当前项图像画在格子的这个占比,当前项吃满格子 —— 不改格子尺寸,
+// centerRow/滚动数学零变动,视觉上"当前项比其余大"
+constexpr double kIdleShrink = 0.84;
 // 类别判定(#225):图(含 RAW)/视频/音频/其他。RAW 独立于 IMAGE_EXTS
 // (它不进缩略图管线),但归"图片"按钮管 —— 用户眼里它就是图。
 enum Cat { CatImage, CatVideo, CatAudio, CatOther };
@@ -96,14 +100,24 @@ public:
         p->setRenderHint(QPainter::Antialiasing, true);
         const bool cur = idx.row() == m_view->currentRow();
         const bool hov = idx.row() == m_view->hoverRow();
-        p->setPen(cur ? QPen(QColor(0, 120, 215), 2)
+        // #230:当前项蓝框加粗到 3px;其余描边照旧
+        p->setPen(cur ? QPen(QColor(0, 120, 215), 3)
                 : hov ? QPen(QColor(C_TEXT), 1)
                       : QPen(QColor(C_SEPARATOR), 1));
         p->setBrush(QColor(0x26, 0x26, 0x2B));
         p->drawRoundedRect(opt.rect.adjusted(0, 0, -1, -1), 4, 4);
         const QImage img = idx.data(FilmStripModel::ThumbRole).value<QImage>();
         if (!img.isNull()) {
-            const QRect ir = opt.rect.adjusted(3, 3, -3, -3);
+            // #230 当前项放大醒目:当前项图像吃满格子(边距 1px),非当前项
+            // 缩到 kIdleShrink 居中 —— "放大"不靠改格子尺寸,滚动/居中数学零变动
+            const int inset = cur ? 1 : 3;
+            QRect ir = opt.rect.adjusted(inset, inset, -inset, -inset);
+            if (!cur) {
+                const int dw = int(ir.width() * kIdleShrink);
+                const int dh = int(ir.height() * kIdleShrink);
+                ir.adjust((ir.width() - dw) / 2, (ir.height() - dh) / 2,
+                          -(ir.width() - dw) / 2, -(ir.height() - dh) / 2);
+            }
             const QImage sc = img.scaled(ir.size(), Qt::KeepAspectRatio,
                                          Qt::SmoothTransformation);
             p->drawImage(ir.x() + (ir.width() - sc.width()) / 2,
@@ -180,16 +194,17 @@ FilmStrip::FilmStrip(QWidget* parent)
 
     // ── 右端按钮区(#209 并入条;#220 只留退出;#226 用户令:加 图片/视频/音频
     // 三个勾选钮,勾哪类多显示哪类、ini 持久化;退出全屏照旧最右)──
+    // #230:三钮与退出钮统一观感 —— 同排等高 32px、勾选态淡蓝不再整块糊底
     m_btnBar = new QWidget(this);
     m_btnBar->setStyleSheet(QString::fromUtf8(
         "QToolButton{background:transparent;border:none;border-radius:4px;"
-        "padding:2px 5px;font-size:10px;color:#B9B9C2;}"
+        "padding:2px 6px;font-size:11px;color:#9A9AA4;}"
         "QToolButton:hover{background:#3A3A42;color:#FFFFFF;}"
-        "QToolButton:checked{background:#0078D7;color:#FFFFFF;}"
+        "QToolButton:checked{background:rgba(0,120,215,80);color:#FFFFFF;}"
         "QToolButton#filmClose{padding:0;}"));
     auto* grid = new QGridLayout(m_btnBar);
     grid->setContentsMargins(0, 0, 0, 0);
-    grid->setSpacing(0);
+    grid->setSpacing(2);
     AppSettings& st = AppSettings::instance();
     m_showImg = st.get("FilmStrip/showImages", true).toBool();
     m_showVid = st.get("FilmStrip/showVideos", true).toBool();
@@ -201,6 +216,7 @@ FilmStrip::FilmStrip(QWidget* parent)
         b->setToolTip(tip);
         b->setCheckable(true);
         b->setChecked(*flag);
+        b->setFixedSize(34, 32);   // #230:与退出钮同排等高,一排看起来是一组
         b->setFocusPolicy(Qt::NoFocus);   // 不吃焦点:方向键继续归全屏键位
         connect(b, &QToolButton::toggled, this, [this, key, flag](bool on) {
             *flag = on;
@@ -229,8 +245,9 @@ FilmStrip::FilmStrip(QWidget* parent)
 
     m_caption = new QLabel(this);
     m_caption->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+    // #230:题注改纯白大字(原 #8A8A94 11px 太暗太小),文件名·大小·序号一起看
     m_caption->setStyleSheet(QString::fromUtf8(
-        "QLabel{background:transparent;color:#8A8A94;font-size:11px;}"));
+        "QLabel{background:transparent;color:#FFFFFF;font-size:13px;font-weight:600;}"));
     m_caption->hide();
 
     connect(horizontalScrollBar(), &QScrollBar::valueChanged, this, [this](int) {
@@ -333,8 +350,11 @@ void FilmStrip::updateGeometries() {
 void FilmStrip::updateCaption() {
     const int n = m_model->rowCount();
     if (m_currentRow < 0 || n <= 0) { m_caption->hide(); return; }
-    m_caption->setText(gazeTr("%1 · %2 / %3")
-        .arg(QFileInfo(m_model->pathAt(m_currentRow)).fileName())
+    const QString p = m_model->pathAt(m_currentRow);
+    // #230:题注带上文件大小(单次 stat,只在当前项变化时发生一次)
+    m_caption->setText(gazeTr("%1 · %2 · %3 / %4")
+        .arg(QFileInfo(p).fileName())
+        .arg(formatSize(QFileInfo(p).size()))
         .arg(m_currentRow + 1).arg(n));
     m_caption->show();
 }

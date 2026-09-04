@@ -135,7 +135,6 @@ void PreviewPanel::applyBackdrop() {
 // ═══════════════════════════════════════════
 void PreviewPanel::applyViewerChrome() {
     updateOverlayScrollbars();
-    updateInfoBar();
     updateFloatBar();
     updatePanTool();
     updateSelectionHighlight();
@@ -171,38 +170,6 @@ void PreviewPanel::updateOverlayScrollbars() {
         m_vScroll->setValue(qBound(0, -m_imgLabel->y(), ih - bh));
         m_vScroll->show();
     } else m_vScroll->hide();
-}
-
-// Fullscreen/showInfo:全屏时左上角显示文件名/尺寸/缩放 —— **仅光标移到
-// 窗口顶端时才浮现**(2026-09-02 用户令:全屏默认零装饰,信息不该常驻)。
-// 文件名/尺寸/体积按文件缓存(QFileInfo::size() 是 stat 系统调用,拖动窗口时
-// resize 每帧都进来,不能反复问磁盘),缩放百分比单独拼
-void PreviewPanel::updateInfoBar(const QPoint* cursor) {
-    const bool on = inFullscreen() && pp_impl::s_bool("Fullscreen/showInfo", true)
-                    && !m_filePath.isEmpty();
-    if (!on) { if (m_infoLabel->isVisible()) m_infoLabel->hide(); return; }
-    const int edge = 48;
-    const bool nearTop = cursor && cursor->y() <= edge;
-    if (!nearTop) { if (m_infoLabel->isVisible()) m_infoLabel->hide(); return; }
-    if (m_infoFileKey != m_filePath) {
-        m_infoFileKey = m_filePath;
-        QFileInfo fi(m_filePath);
-        m_infoBase = fi.fileName()
-                   + (m_origPix ? QString("  %1x%2")
-                          .arg(m_origPix->width()).arg(m_origPix->height())
-                                : QString())
-                   + "  " + formatSize(fi.size());
-    }
-    // #208:鼠标移动事件现在全屏都到得齐(子件开了 tracking),这里必须按
-    // "状态没变就一个字节不碰控件"收口 —— 旧实现每帧 setText+adjustSize+
-    // move+raise,raise 是对全屏顶层窗口的置顶操作,连续 move 时就是"有点卡"
-    const QString txt = gazeTr("%1  %2%").arg(m_infoBase).arg(int(m_scale * 100));
-    if (m_infoLabel->isVisible() && m_infoLabel->text() == txt) return;
-    m_infoLabel->setText(txt);
-    m_infoLabel->adjustSize();
-    m_infoLabel->move(12, 12);
-    m_infoLabel->raise();
-    m_infoLabel->show();
 }
 
 // Fullscreen/showToolbar(常显) + Fullscreen/floatView(鼠标移到顶侧/右侧才浮现)
@@ -432,7 +399,6 @@ void PreviewPanel::render() {
     m_lastScale = m_scale;
     updateOverlayScrollbars();
     updatePanTool();
-    updateInfoBar();
 }
 
 // m_videoWidget 的子件(vw/cover)不随布局自动重排,而 videoWidget 自身的矩形

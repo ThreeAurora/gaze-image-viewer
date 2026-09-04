@@ -364,14 +364,9 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     connect(m_hScroll, &QScrollBar::valueChanged, this, scrollTo);
     connect(m_vScroll, &QScrollBar::valueChanged, this, scrollTo);
 
-    // ── Fullscreen/showInfo:左上角文件信息条 ──
-    m_infoLabel = new QLabel(this);
-    m_infoLabel->setStyleSheet(
-        "QLabel{background:rgba(10,10,14,190);color:#E0E0E0;font-size:12px;"
-        "padding:6px 10px;border-radius:4px;}");
-    m_infoLabel->hide();
-
     // ── Fullscreen/showToolbar:全屏浮动工具条(上一/下一/适应/1:1/退出) ──
+    // (#230:旧左上角信息条 m_infoLabel 整链删除 —— 文件名/大小信息由 G 全屏
+    // 胶片条题注承担,"全屏只留画面"不再有第二处文字)
     m_floatBar = new QWidget(this);
     m_floatBar->setStyleSheet(
         "QWidget{background:rgba(18,18,22,225);border:1px solid #3A3A42;border-radius:6px;}");

@@ -454,12 +454,15 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
                     // Ctrl+W = 关闭当前标签卡(2026-09-01 用户令)。落在「浏览器」
                     // 标签或浏览器模式时没有可关的内容标签,按键落空 —— 浏览器
                     // 标签是回标准模式的出口,不是内容;关到最后一张图片标签时
-                    // closeViewerTab 自己会退回浏览器
-                    if (ke->key() == Qt::Key_W && m_viewerMode && m_viewerTabs
-                        && !isBrowserTab(m_viewerTabs->currentIndex())) {
-                        if (m_fullView) exitFullView();   // #221:全屏里关签先回正常布局
-                        closeViewerTab(m_viewerTabs->currentIndex());
-                        return true;
+                    // closeViewerTab 自己会退回浏览器。
+                    // #230:全屏里 Ctrl+W 只退全屏、不接着关签 —— 与双击同语义
+                    // (#227 只关最上一层),想关签退全屏后再按
+                    if (ke->key() == Qt::Key_W && m_viewerMode && m_viewerTabs) {
+                        if (m_fullView) { exitFullView(); return true; }
+                        if (!isBrowserTab(m_viewerTabs->currentIndex())) {
+                            closeViewerTab(m_viewerTabs->currentIndex());
+                            return true;
+                        }
                     }
                 } else if (ke->modifiers() == Qt::ShiftModifier) {
                     // #221:快退/快进自 Ctrl+PgUp/PgDn 挪来(那对键改切标签页),
