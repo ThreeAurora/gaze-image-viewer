@@ -58,27 +58,7 @@
 #include "settings.h"
 #include <QDirIterator>
 #include <QElapsedTimer>
-
-// ── 文件夹大小快速估算(信息栏用) ──
-// 全量递归对巨目录(几十万条目)会卡 UI,故设两道闸:**条目硬顶**与**时间片**,
-// 谁先到都停手 —— 状态栏只展示个量级,截断时加 "≈" 前缀。"≈" 是诚实的:
-// 文件夹大小本来就没有瞬时精确值,超过 30ms 就没必要为它继续占住事件循环。
-// 返回 true = 全量算完(精确值);false = 被闸截断(约值,调用方加 ≈)。
-static bool quickDirSize(const QString& dir, qint64* sizeOut, qint64* countOut) {
-    *sizeOut = 0; *countOut = 0;
-    QDirIterator it(dir, QDir::Files | QDir::NoDotAndDotDot,
-                    QDirIterator::Subdirectories);
-    QElapsedTimer t; t.start();
-    enum { kHardCap = 200000 };        // 防极端:再大也只算前面一部分
-    constexpr qint64 kBudgetMs = 30;   // 状态栏量级估算的时间预算
-    while (it.hasNext()) {
-        it.next();
-        const QFileInfo fi = it.fileInfo();
-        if (fi.isFile()) { *sizeOut += fi.size(); ++(*countOut); }
-        if (*countOut > kHardCap || t.elapsed() > kBudgetMs) return false;  // 截断
-    }
-    return true;
-}
+#include <QThreadPool>
 
 #include "mainwindow_internal.h"
 
@@ -223,26 +203,42 @@ void MainWindow::updateStatus() {
     int sc = m_fileGrid->selectedCount();
     qint64 ss = m_fileGrid->selectedSize();
     QString text = gazeTr("%1 项").arg(fc);
-    // 单选文件夹:目录条目没有 size 字段,照旧会显示 [0 B]。这里对目录递归
-    // 快速估算大小,截断时补 "≈" 前缀;合计与单行详情共用这一次结果。
-    QString approx;
+    // #241(2026-09-04 用户令):单选文件夹的大小不再给「≈」约值 —— 约等于易误导。
+    // 后台线程全量递归,过程显示「统计中…」+ 已累计字节(数字随统计推进越来越大),
+    // 算完即精确值。同目录已有精确值则直接用(会话内缓存,切换回来不重算)。
+    QString sizeText;
     if (sc == 1) {
         const auto paths = m_fileGrid->selectedPaths();
         if (!paths.isEmpty() && QFileInfo(paths.first()).isDir()) {
-            qint64 sz = 0, cnt = 0;
-            if (!quickDirSize(paths.first(), &sz, &cnt))
-                approx = gazeTr("≈ ");   // ≈ 
-            ss = sz;
+            const QString dp = paths.first();
+            if (m_dirSizeDone && m_dirSizeTarget == dp) {
+                ss = m_dirSizeValue;
+                sizeText = formatSize(ss);
+            } else {
+                if (m_dirSizeRunning && m_dirSizeTarget == dp) {
+                    ss = m_dirSizePartial;
+                } else {
+                    startDirSizeRun(dp);   // 首次见到该目录:发起后台统计
+                    ss = 0;
+                }
+                sizeText = ss > 0 ? gazeTr("统计中… %1").arg(formatSize(ss))
+                                  : gazeTr("统计中…");
+            }
+        } else if (m_dirSizeRunning) {
+            cancelDirSizeRun();   // 选中项不是(单个)目录:停掉旧统计
         }
+    } else if (m_dirSizeRunning) {
+        cancelDirSizeRun();
     }
     if (sc > 0) {
-        text += gazeTr("  ·  已选 %1 项 · [%2%3]")
-                    .arg(sc).arg(approx).arg(formatSize(ss));
+        text += gazeTr("  ·  已选 %1 项 · [%2]")
+                    .arg(sc)
+                    .arg(sizeText.isEmpty() ? formatSize(ss) : sizeText);
         auto paths = m_fileGrid->selectedPaths();
         if (!paths.isEmpty()) {
             QFileInfo fi(paths.first());
             const QString oneSize = (fi.isDir() && sc == 1)
-                                  ? approx + formatSize(ss)
+                                  ? sizeText
                                   : formatSize(fi.size());
             text += "  " + fi.fileName()
                   + "  " + oneSize
@@ -251,6 +247,71 @@ void MainWindow::updateStatus() {
     }
     m_statusLabel->setText(text);
     m_pathLabel->setText(m_addrBar->text());
+}
+
+// ── #241 文件夹大小后台精确统计 ──
+// 旧 quickDirSize 只有 30ms 时间片,超了就截断报「≈」约值;现把递归整体挪进
+// 线程池:GUI 零阻塞,每 ~24ms 上报一次累计值,状态栏「统计中… x GB」随之增长,
+// 算完出精确值。协同取消:选择一变 stop 旗置位,旧线程下一轮循环即弃;
+// 迟到的中途/收尾上报按 runId 作废。
+void MainWindow::startDirSizeRun(const QString& path) {
+    if (m_dirSizeRunning) m_dirSizeStop->store(true);   // 取消旧一轮
+    m_dirSizeStop = std::make_shared<std::atomic_bool>(false);
+    auto stop = m_dirSizeStop;
+    const quint64 runId = ++m_dirSizeRunId;
+    m_dirSizeRunning = true;
+    m_dirSizeDone    = false;
+    m_dirSizeTarget  = path;
+    m_dirSizePartial = 0;
+    QPointer<MainWindow> self(this);
+    QThreadPool::globalInstance()->start([self, path, stop, runId]() {
+        qint64 sz = 0;
+        QElapsedTimer t; t.start();
+        qint64 lastPost = 0;
+        bool stopped = false;
+        QDirIterator it(path, QDir::Files | QDir::NoDotAndDotDot,
+                        QDirIterator::Subdirectories);
+        while (it.hasNext()) {
+            if (stop->load()) { stopped = true; break; }
+            it.next();
+            const QFileInfo fi = it.fileInfo();
+            if (fi.isFile()) sz += fi.size();
+            if (t.elapsed() - lastPost >= 24) {   // 状态栏滚动的更新节奏
+                lastPost = t.elapsed();
+                QMetaObject::invokeMethod(self, [self, path, runId, sz]() {
+                    if (self) self->applyDirSizeProgress(path, runId, sz);
+                }, Qt::QueuedConnection);
+            }
+        }
+        QMetaObject::invokeMethod(self, [self, path, runId, sz, stopped]() {
+            if (self && !stopped) self->applyDirSizeDone(path, runId, sz);
+        }, Qt::QueuedConnection);
+    });
+}
+
+void MainWindow::cancelDirSizeRun() {
+    if (!m_dirSizeRunning) return;
+    m_dirSizeStop->store(true);   // 线程下一轮循环即弃
+    ++m_dirSizeRunId;             // 迟到的上报一律作废
+    m_dirSizeRunning = false;
+}
+
+void MainWindow::applyDirSizeProgress(const QString& path, quint64 runId,
+                                      qint64 bytes) {
+    if (runId != m_dirSizeRunId || !m_dirSizeRunning || m_dirSizeTarget != path)
+        return;
+    m_dirSizePartial = bytes;
+    updateStatus();   // 用新累计值重排状态栏(「统计中… x GB」)
+}
+
+void MainWindow::applyDirSizeDone(const QString& path, quint64 runId,
+                                  qint64 bytes) {
+    if (runId != m_dirSizeRunId || !m_dirSizeRunning || m_dirSizeTarget != path)
+        return;
+    m_dirSizeRunning = false;
+    m_dirSizeDone    = true;
+    m_dirSizeValue   = bytes;
+    updateStatus();
 }
 
 void MainWindow::onSelectionChanged(const QString &path) {

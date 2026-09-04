@@ -13,7 +13,6 @@
  "[%1%2] ": "[%1%2] ",
  "×": "×",
  "—": "—",
- "≈ ": "≈ ",
  "▼": "▼",
  "%1 · 相机 RAW 原始文件（%2）\n全解为可视图像需数秒；解码途中切换文件会立即放弃。": "%1 · camera RAW file (%2)\nFull decode takes seconds; switching files mid-decode aborts it immediately.",
  "%1 · 相机 RAW 原始文件（%2）\n正在提取相机内嵌预览…": "%1 · camera RAW file (%2)\nExtracting embedded camera preview…",
@@ -48,5 +47,13 @@
  "名称/时间为本地重排(服务端只保证相关性顺序)": "Name/date sorting happens locally (the server only guarantees relevance order)",
  "输入自然语言、文件名或图片中的文字,如:海边的日落 / IMG_2022 / 发票": "Type natural language, a file name, or text in the image, e.g. sunset by the sea / IMG_2022 / invoice",
  "鼠标：滚轮 = 上一个/下一个文件；Ctrl+滚轮 或 按住右键+滚轮 = 放大/缩小；左键拖动 = 移动画面；右键 = 上下文菜单；中键动作见「切换模式」页。": "Mouse: wheel = previous/next file; Ctrl+wheel or hold right button + wheel = zoom in/out; left-drag = pan; right-click = context menu; middle button — see the \"Toggle mode\" page.",
- "点击切换 已播/剩余时间": "Click to toggle elapsed / remaining time"
+ "点击切换 已播/剩余时间": "Click to toggle elapsed / remaining time",
+ "统计中…": "Counting…",
+ "统计中… %1": "Counting… %1",
+ "自动换行": "Word wrap",
+ "以 Markdown 样式展示": "Render as Markdown",
+ "文本预览自动换行(关闭则长行横向滚动)": "Word-wrap text previews (off: long lines scroll horizontally)",
+ "Markdown 按渲染样式展示(关闭则当纯文本)": "Render Markdown files styled (off: show as plain text)",
+ "⚠ 文本较长,以下仅是部分展示:%1\n\n": "⚠ Long text — only a partial preview is shown:%1\n\n",
+ "解码失败": "Decode failed"
 }

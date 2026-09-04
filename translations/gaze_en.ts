@@ -62,8 +62,8 @@ Fetching images…</translation>
         <translation>  (default)</translation>
     </message>
     <message>
-        <source>  ·  已选 %1 项 · [%2%3]</source>
-        <translation>  ·  %1 selected · [%2%3]</translation>
+        <source>  ·  已选 %1 项 · [%2]</source>
+        <translation>  ·  %1 selected · [%2]</translation>
     </message>
     <message>
         <source> · %1 %2</source>
@@ -440,6 +440,10 @@ Version 1.0 — C++ + Qt6</translation>
         <translation>MPEG-2 video</translation>
     </message>
     <message>
+        <source>Markdown 按渲染样式展示(关闭则当纯文本)</source>
+        <translation>Render Markdown files styled (off: show as plain text)</translation>
+    </message>
+    <message>
         <source>OGG 音频</source>
         <translation>OGG audio</translation>
     </message>
@@ -534,16 +538,20 @@ Version 1.0 — C++ + Qt6</translation>
         <translation>&quot;%1&quot; is a reserved layout name; choose another</translation>
     </message>
     <message>
-        <source>≈ </source>
-        <translation>≈ </translation>
-    </message>
-    <message>
         <source>▼</source>
         <translation>▼</translation>
     </message>
     <message>
         <source>◀ 上一页</source>
         <translation>◀ Prev page</translation>
+    </message>
+    <message>
+        <source>⚠ 文本较长,以下仅是部分展示:%1
+
+</source>
+        <translation>⚠ Long text — only a partial preview is shown:%1
+
+</translation>
     </message>
     <message>
         <source>✓ 存在</source>
@@ -714,6 +722,10 @@ Current settings were copied there (existing files are not overwritten).</transl
     <message>
         <source>以 MD 格式预览 Markdown 文件(超长自动截断)</source>
         <translation>Preview Markdown files rendered as MD (long files truncated)</translation>
+    </message>
+    <message>
+        <source>以 Markdown 样式展示</source>
+        <translation>Render as Markdown</translation>
     </message>
     <message>
         <source>以文搜图</source>
@@ -2064,6 +2076,10 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
         <translation>Text document</translation>
     </message>
     <message>
+        <source>文本预览自动换行(关闭则长行横向滚动)</source>
+        <translation>Word-wrap text previews (off: long lines scroll horizontally)</translation>
+    </message>
+    <message>
         <source>文档</source>
         <translation>Documents</translation>
     </message>
@@ -2734,6 +2750,14 @@ Try a different selection (a bit larger and farther from the edges).</translatio
         <translation>Paper</translation>
     </message>
     <message>
+        <source>统计中…</source>
+        <translation>Counting…</translation>
+    </message>
+    <message>
+        <source>统计中… %1</source>
+        <translation>Counting… %1</translation>
+    </message>
+    <message>
         <source>维护</source>
         <translation>Maintenance</translation>
     </message>
@@ -2860,6 +2884,10 @@ Once set manually, thumbnails scale to the pane edge when resizing, but the colu
         <translation>Auto</translation>
     </message>
     <message>
+        <source>自动换行</source>
+        <translation>Word wrap</translation>
+    </message>
+    <message>
         <source>自动播放(视频)</source>
         <translation>Autoplay (video)</translation>
     </message>
@@ -2978,6 +3006,10 @@ Once set manually, thumbnails scale to the pane edge when resizing, but the colu
     <message>
         <source>视频提取帧位置(%,0=第 1 秒)</source>
         <translation>Video frame grab position (%, 0 = second 1)</translation>
+    </message>
+    <message>
+        <source>解码失败</source>
+        <translation>Decode failed</translation>
     </message>
     <message>
         <source>解码失败：内置解码器不支持该 RAW 或文件已损坏</source>

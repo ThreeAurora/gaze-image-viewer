@@ -418,6 +418,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     Logger::boot("ctor:done");
 }
 
+MainWindow::~MainWindow() {
+    cancelDirSizeRun();   // #241:文件夹大小统计还在后台跑的话让它立刻收手,
+                          // 免得线程池收尾等它数完几十万条目才放行退出
+}
+
 // 启动收尾:主窗口首帧显示后恢复上次选中文件(Start/rememberFilename)。
 // 构造期做这件事会闪框:预览 loadFile → QVideoWindow(独立顶层 HWND)在主窗
 // show 之前落位,屏幕上孤立映射视频第一帧、随即消失 —— 就是用户看到的

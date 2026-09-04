@@ -11,6 +11,8 @@
 #include <QFileInfo>
 #include <QPoint>
 #include <QPointer>
+#include <atomic>
+#include <memory>
 
 class QVBoxLayout;
 class QDialog;
@@ -30,6 +32,7 @@ class MainWindow : public QMainWindow {
     Q_OBJECT
 public:
     explicit MainWindow(QWidget *parent = nullptr);
+    ~MainWindow() override;   // 停掉可能在跑的后台统计线程,免拖慢退出
     Q_INVOKABLE bool navigateTo(const QString &path);  // false=目标不存在/非目录,什么都没改
     Q_INVOKABLE void openFullscreen(const QString &path);  // 右键"全屏":导航到文件并全屏
     Q_INVOKABLE void revealFile(const QString &path);      // 以文搜图结果:定位到目录并选中
@@ -99,6 +102,11 @@ private:
     // 本函数按新色重设各面板/工具栏/状态栏样式 + 让子树重建缓存色。
     void applyThemeSurfaces();
     void updateStatus();
+    // ── #241 文件夹大小后台精确统计(updateStatus 单选目录时驱动) ──
+    void startDirSizeRun(const QString& path);   // 发起后台递归(自动取消旧一轮)
+    void cancelDirSizeRun();                     // 不再看单目录时停旧统计
+    void applyDirSizeProgress(const QString& path, quint64 runId, qint64 bytes);  // 线程中途上报
+    void applyDirSizeDone(const QString& path, quint64 runId, qint64 bytes);      // 线程收尾
     void onSelectionChanged(const QString &path);
     // 注:onGridDirSelected(文件页单选目录卡→树镜像)已按用户 2026-09-03 裁决移除,
     // 单击目录卡不再动树;树只在 navigateTo(双击打开/地址栏/历史/上级)里同步。
@@ -192,6 +200,14 @@ private:
     qint64  m_lastAddrJumpMs = 0;
     QLabel *m_statusLabel = nullptr;
     QLabel *m_pathLabel = nullptr;
+    // ── #241 文件夹大小:后台精确统计的状态(全部 GUI 线程独占,stop 旗除外) ──
+    QString m_dirSizeTarget;                          // 正在统计/已有精确值的目录
+    std::shared_ptr<std::atomic_bool> m_dirSizeStop;  // 本轮取消旗(线程协同停)
+    quint64 m_dirSizeRunId   = 0;    // 轮次;旧线程的迟到上报按代作废
+    bool    m_dirSizeRunning = false;
+    bool    m_dirSizeDone    = false;  // target 已有精确值(会话内缓存)
+    qint64  m_dirSizeValue   = 0;    // 精确总字节
+    qint64  m_dirSizePartial = 0;    // 统计中的累计值(状态栏随之增长)
     QStringList m_history;   // 目录导航历史
     int m_histIdx = -1;
     bool m_histNav = false;  // 历史跳转中,不再入栈
