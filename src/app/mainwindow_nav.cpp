@@ -1,3 +1,7 @@
+#include "thumbnailer_internal.h"   // 必须最先:#244 threadDb+dirsize 表;它带 windows.h,
+                                    // 若晚于 fileentry.h(_WIN32_IE 钉 0x0600)进来,
+                                    // shobjidl 的 SHCreateItemFromParsingName 声明就被
+                                    // IE70 版本门挡掉(thumbnailer*.cpp 不含 fileentry 故无此病)
 #include "mainwindow.h"
 #include "foldertree.h"
 #include "filegrid.h"
@@ -43,6 +47,74 @@
 #include <QSettings>
 #include <QDesktopServices>
 #include <QUrl>
+#include <QSqlDatabase>
+#include <QSqlQuery>
+#include <QSqlError>
+#include <QDateTime>
+#include "thumbnailer_internal.h"   // #244:th_impl::threadDb(每线程连接)+dirsize 表
+
+// ── #244 文件夹大小缓存库(thumbnails.db 的 dirsize 表) ──
+// 与 #241 后台精确统计配套:库里命中且失效键未变 → 状态栏瞬间出精确值,
+// 不再每次选中都「统计中」;深层文件变动(不动父目录 mtime 的)由 10 分钟
+// 的静默重校验兜底 —— 先显旧值,算完悄悄替换。失效键=目录 mtime|直接子项
+// 数|直接子项字节和:Windows 下直接子项增删/改名/变尺寸都会打翻它,是比
+// 单看 mtime 强一档的"便宜哨兵";只列一层,成本与递归差一个量级。
+// 单 TU 私有 helper(依 thumbnailer_internal.h 的规矩不进共享头)。
+namespace {
+
+constexpr qint64 kDirSizeRevalidateMs = 10 * 60 * 1000;   // 10 分钟强制复核
+
+QString dirSizeBasisKey(const QString& dirPath) {
+    const QFileInfoList kids = QDir(dirPath).entryInfoList(
+        QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
+    qint64 bytes = 0;
+    for (const QFileInfo& fi : kids)
+        if (fi.isFile()) bytes += fi.size();
+    return QString::number(QFileInfo(dirPath).lastModified().toMSecsSinceEpoch())
+         + QLatin1Char('|') + QString::number(kids.size())
+         + QLatin1Char('|') + QString::number(bytes);
+}
+
+struct DirSizeRow {
+    bool    ok       = false;
+    qint64  size     = 0;
+    QString basis;
+    qint64  computed = 0;
+};
+
+DirSizeRow dirSizeLookup(const QString& dirPath) {
+    DirSizeRow r;
+    QSqlDatabase db = th_impl::threadDb(
+        AppSettings::instance().get("Cache/dbCacheMB", 64).toInt());
+    if (!db.isOpen()) return r;
+    QSqlQuery q(db);
+    q.prepare("SELECT size, basis, computed FROM dirsize WHERE path = ?");
+    q.addBindValue(dirPath);
+    if (q.exec() && q.next()) {
+        r.ok       = true;
+        r.size     = q.value(0).toLongLong();
+        r.basis    = q.value(1).toString();
+        r.computed = q.value(2).toLongLong();
+    }
+    return r;
+}
+
+void dirSizeStore(const QString& dirPath, qint64 bytes, const QString& basis) {
+    QSqlDatabase db = th_impl::threadDb(
+        AppSettings::instance().get("Cache/dbCacheMB", 64).toInt());
+    if (!db.isOpen()) return;
+    QSqlQuery q(db);
+    q.prepare("INSERT OR REPLACE INTO dirsize(path, size, basis, computed) "
+              "VALUES(?, ?, ?, ?)");
+    q.addBindValue(dirPath);
+    q.addBindValue(bytes);
+    q.addBindValue(basis);
+    q.addBindValue(QDateTime::currentMSecsSinceEpoch());
+    q.exec();
+}
+
+} // namespace
+
 #include <QTextEdit>
 #include <QAbstractSpinBox>
 #include <QDragEnterEvent>
@@ -222,18 +294,41 @@ void MainWindow::updateStatus() {
         const auto paths = m_fileGrid->selectedPaths();
         if (!paths.isEmpty() && QFileInfo(paths.first()).isDir()) {
             const QString dp = paths.first();
-            if (m_dirSizeDone && m_dirSizeTarget == dp) {
+            if (m_dirSizeRunning && m_dirSizeTarget == dp) {
+                if (m_dirSizeStale) {
+                    // #244 静默重校验:稳定显旧值,中途进度不惊动状态栏
+                    ss = m_dirSizeStaleValue;
+                    sizeText = formatSize(ss);
+                } else {
+                    ss = m_dirSizePartial;
+                    sizeText = ss > 0 ? gazeTr("统计中… %1").arg(formatSize(ss))
+                                      : gazeTr("统计中…");
+                }
+            } else if (m_dirSizeDone && m_dirSizeTarget == dp) {
                 ss = m_dirSizeValue;
                 sizeText = formatSize(ss);
             } else {
-                if (m_dirSizeRunning && m_dirSizeTarget == dp) {
-                    ss = m_dirSizePartial;
+                // #244 缓存库路径:失效键未变且 <10 分钟 → 瞬间精确值;
+                // 有旧值但可疑(键变/超龄) → 旧值先行+静默重算;
+                // 无记录 → 走 #241 的「统计中」增长
+                const DirSizeRow row = dirSizeLookup(dp);
+                const bool fresh = row.ok
+                    && row.basis == dirSizeBasisKey(dp)
+                    && QDateTime::currentMSecsSinceEpoch() - row.computed
+                           < kDirSizeRevalidateMs;
+                if (fresh) {
+                    ss = row.size;
+                    sizeText = formatSize(ss);
                 } else {
-                    startDirSizeRun(dp);   // 首次见到该目录:发起后台统计
-                    ss = 0;
+                    startDirSizeRun(dp, row.ok ? row.size : -1);
+                    if (row.ok) {
+                        ss = row.size;
+                        sizeText = formatSize(ss);   // 旧值先行,算完悄悄替换
+                    } else {
+                        ss = 0;
+                        sizeText = gazeTr("统计中…");
+                    }
                 }
-                sizeText = ss > 0 ? gazeTr("统计中… %1").arg(formatSize(ss))
-                                  : gazeTr("统计中…");
             }
         } else if (m_dirSizeRunning) {
             cancelDirSizeRun();   // 选中项不是(单个)目录:停掉旧统计
@@ -265,17 +360,22 @@ void MainWindow::updateStatus() {
 // 线程池:GUI 零阻塞,每 ~24ms 上报一次累计值,状态栏「统计中… x GB」随之增长,
 // 算完出精确值。协同取消:选择一变 stop 旗置位,旧线程下一轮循环即弃;
 // 迟到的中途/收尾上报按 runId 作废。
-void MainWindow::startDirSizeRun(const QString& path) {
+// #244:staleSeed ≥ 0 = 缓存库有旧值但失效键可疑,本轮是静默重校验 —— 状态栏
+// 稳定显旧值,线程侧不上报中途进度,只收尾;算完 applyDirSizeDone 悄悄换新值。
+void MainWindow::startDirSizeRun(const QString& path, qint64 staleSeed) {
     if (m_dirSizeRunning) m_dirSizeStop->store(true);   // 取消旧一轮
     m_dirSizeStop = std::make_shared<std::atomic_bool>(false);
     auto stop = m_dirSizeStop;
     const quint64 runId = ++m_dirSizeRunId;
+    const bool quiet = staleSeed >= 0;
     m_dirSizeRunning = true;
     m_dirSizeDone    = false;
     m_dirSizeTarget  = path;
-    m_dirSizePartial = 0;
+    m_dirSizeStale   = quiet;
+    m_dirSizeStaleValue = quiet ? qMax<qint64>(0, staleSeed) : 0;
+    m_dirSizePartial = quiet ? m_dirSizeStaleValue : 0;
     QPointer<MainWindow> self(this);
-    QThreadPool::globalInstance()->start([self, path, stop, runId]() {
+    QThreadPool::globalInstance()->start([self, path, stop, runId, quiet]() {
         qint64 sz = 0;
         QElapsedTimer t; t.start();
         qint64 lastPost = 0;
@@ -287,7 +387,8 @@ void MainWindow::startDirSizeRun(const QString& path) {
             it.next();
             const QFileInfo fi = it.fileInfo();
             if (fi.isFile()) sz += fi.size();
-            if (t.elapsed() - lastPost >= 24) {   // 状态栏滚动的更新节奏
+            // 静默重校验不报中途进度:旧值还在状态栏稳稳挂着,免得数字跳回「统计中」
+            if (!quiet && t.elapsed() - lastPost >= 24) {
                 lastPost = t.elapsed();
                 QMetaObject::invokeMethod(self, [self, path, runId, sz]() {
                     if (self) self->applyDirSizeProgress(path, runId, sz);
@@ -305,6 +406,7 @@ void MainWindow::cancelDirSizeRun() {
     m_dirSizeStop->store(true);   // 线程下一轮循环即弃
     ++m_dirSizeRunId;             // 迟到的上报一律作废
     m_dirSizeRunning = false;
+    m_dirSizeStale = false;
 }
 
 void MainWindow::applyDirSizeProgress(const QString& path, quint64 runId,
@@ -321,7 +423,10 @@ void MainWindow::applyDirSizeDone(const QString& path, quint64 runId,
         return;
     m_dirSizeRunning = false;
     m_dirSizeDone    = true;
+    m_dirSizeStale   = false;
     m_dirSizeValue   = bytes;
+    // #244:算完顺手入库(带当下失效键),下次选中同目录直接命中
+    dirSizeStore(path, bytes, dirSizeBasisKey(path));
     updateStatus();
 }
 

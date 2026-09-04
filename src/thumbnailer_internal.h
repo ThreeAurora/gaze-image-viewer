@@ -68,6 +68,11 @@ inline QSqlDatabase threadDb(int cacheMB) {
                 q.exec("CREATE TABLE IF NOT EXISTS thumbs "
                        "(key TEXT PRIMARY KEY, png BLOB, mtime REAL, atime REAL DEFAULT 0)");
                 q.exec("CREATE INDEX IF NOT EXISTS idx_atime ON thumbs(atime)");
+                // #244 文件夹大小缓存库:路径→精确总大小+失效键+统计时刻。
+                // 失效键=目录 mtime|直接子项数|直接子项字节和(读写双方都用
+                // 同一算法算,不用建索引——主键 path 就是唯一入口)
+                q.exec("CREATE TABLE IF NOT EXISTS dirsize "
+                       "(path TEXT PRIMARY KEY, size INTEGER, basis TEXT, computed INTEGER)");
             }
         }
     }

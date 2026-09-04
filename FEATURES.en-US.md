@@ -49,7 +49,7 @@ An **exhaustive list** of what Gaze can actually do, compiled from: the full dev
 - PDF preview: bundled Ghostscript (vendor/gs, AGPL license included)
 - RAW preview: placeholder + "Load original RAW" button, background-thread LibRaw full decode, stale-generation abort when switching files, full zoom/pan/viewer takeover on success; once the embedded preview loads, the button docks into the preview's top-right corner as a floating control (#140b)
 - Mouse wheel over preview text switches files (never scrolls the text)
-- Status-bar folder size: a single selected folder shows "Counting…" and grows in the background to the exact value (no more ≈ estimates, #241)
+- Status-bar folder size: a single selected folder shows "Counting…" and grows in the background to the exact value (no more ≈ estimates, #241); results are cached in the thumbnails.db dirsize table — unchanged invalidation key (dir mtime | direct child count | direct child bytes) within 10 minutes = instant exact value on reselect; when the key looks stale the old value stays visible while a silent background re-check quietly replaces it (#244)
 - Info panel (F9): file properties + image dimensions + grouped EXIF tree; RGB histogram (three channels blended + luma line, background sampling)
 - Video switch flash eliminated: native video surface hidden until the first frame arrives
 

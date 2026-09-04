@@ -103,7 +103,9 @@ private:
     void applyThemeSurfaces();
     void updateStatus();
     // ── #241 文件夹大小后台精确统计(updateStatus 单选目录时驱动) ──
-    void startDirSizeRun(const QString& path);   // 发起后台递归(自动取消旧一轮)
+    // #244:staleSeed ≥ 0 = 缓存库有旧值,本轮是静默重校验(不报中途进度,
+    // 状态栏稳定显旧值,收尾悄悄替换)
+    void startDirSizeRun(const QString& path, qint64 staleSeed = -1);
     void cancelDirSizeRun();                     // 不再看单目录时停旧统计
     void applyDirSizeProgress(const QString& path, quint64 runId, qint64 bytes);  // 线程中途上报
     void applyDirSizeDone(const QString& path, quint64 runId, qint64 bytes);      // 线程收尾
@@ -208,6 +210,9 @@ private:
     bool    m_dirSizeDone    = false;  // target 已有精确值(会话内缓存)
     qint64  m_dirSizeValue   = 0;    // 精确总字节
     qint64  m_dirSizePartial = 0;    // 统计中的累计值(状态栏随之增长)
+    // #244 缓存库重校验态:库里有旧值,先显旧值、后台静默重算,算完悄悄替换
+    bool    m_dirSizeStale      = false;
+    qint64  m_dirSizeStaleValue = 0;
     QStringList m_history;   // 目录导航历史
     int m_histIdx = -1;
     bool m_histNav = false;  // 历史跳转中,不再入栈
