@@ -55,8 +55,16 @@
 #include "filegrid_internal.h"
 
 bool FileGrid::selectByPath(const QString& path) {
+    // 盘根目录的条目路径是 "X://name" 形(canonicalPath 对盘根保留尾斜杠的连锁),
+    // 外部传入的(argv 启动/地址栏文件跳转/上次文件恢复)是常规形 "X:/name",
+    // 直接 == 永远失配 → 静默落空选错图。先精确比(内部调用零开销),
+    // 整体失配再按 cleanPath 归一比一次。
+    const QString want = QDir::cleanPath(path);
+    auto matches = [&](const FileEntry& e) {
+        return e.path == path || QDir::cleanPath(e.path) == want;
+    };
     for (int i = 0; i < static_cast<int>(m_entries.size()); ++i) {
-        if (m_entries[i].path == path) {
+        if (matches(m_entries[i])) {
             selectIndex(i);
             return true;
         }
@@ -65,7 +73,7 @@ bool FileGrid::selectByPath(const QString& path) {
     if (m_filterMode != FILTER_ALL) {
         setFilterMode(FILTER_ALL);
         for (int i = 0; i < static_cast<int>(m_entries.size()); ++i) {
-            if (m_entries[i].path == path) { selectIndex(i); return true; }
+            if (matches(m_entries[i])) { selectIndex(i); return true; }
         }
     }
     return false;

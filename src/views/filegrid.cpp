@@ -408,8 +408,12 @@ void FileGrid::loadDirectory(const QString& dirPath) {
         // 默认选中第一个;reloadAfterDelete 可用 m_preferPath 指定落点
         int idx = 0;
         if (!m_preferPath.isEmpty()) {
+            // 盘根条目是 "X://name" 形,外部来源的落点(重命名/移动/新文件,
+            // "X:/new")精确 == 失配 → 同 selectByPath 的 cleanPath 归一兜底
+            const QString want = QDir::cleanPath(m_preferPath);
             for (int i = 0; i < static_cast<int>(m_entries.size()); ++i)
-                if (m_entries[i].path == m_preferPath) { idx = i; break; }
+                if (m_entries[i].path == m_preferPath
+                    || QDir::cleanPath(m_entries[i].path) == want) { idx = i; break; }
         }
         // FileList/autoSelectNew:有新文件则优先落到第一个新文件上
         if (m_preferPath.isEmpty() && !freshPaths.isEmpty()
