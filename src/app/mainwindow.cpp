@@ -513,6 +513,7 @@ void MainWindow::applyThemeSurfaces() {
     if (m_fileGrid)   m_fileGrid->refreshThemeColors();
     if (m_preview)    m_preview->refreshThemeColors();
     if (m_folderTree) m_folderTree->refreshThemeColors();
+    if (m_info)       m_info->applyTheme();   // #248:信息面板此前无刷新钩子
 }
 
 void MainWindow::closeEvent(QCloseEvent* event) {

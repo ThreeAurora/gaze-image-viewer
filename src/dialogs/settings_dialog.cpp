@@ -50,7 +50,7 @@ QWidget* wrapTitled(const QString& title, QLayout* lay) {
     auto* page = new QWidget;
     page->setAutoFillBackground(true);
     QPalette pal = page->palette();
-    pal.setColor(QPalette::Window, QColor("#1E1E1E"));
+    pal.setColor(QPalette::Window, QColor(Theme::T("#1E1E1E", "#FFFFFF")));
     page->setPalette(pal);
     auto* v = new QVBoxLayout(page);
     // #148:全局紧凑(2026-09-01 用户令,此前 #108 只收紧异常空隔不够)

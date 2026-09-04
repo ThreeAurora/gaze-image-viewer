@@ -699,7 +699,8 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
     auto* sep2 = new QFrame;
     sep2->setFrameShape(QFrame::VLine);
     sep2->setFixedHeight(18);
-    sep2->setStyleSheet("color:#2A2A2E;");
+    sep2->setStyleSheet(QString::fromUtf8("color:%1;")
+                            .arg(Theme::T("#2A2A2E", "#C9C9D1")));
     b2->addWidget(sep2);
 
     // 缩略图列数:自动 + 1-16(手动指定后缩放窗口时缩略图贴边缩放但列数不变)
@@ -746,7 +747,8 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
     auto* fmtSep = new QFrame;
     fmtSep->setFrameShape(QFrame::VLine);
     fmtSep->setFixedHeight(18);
-    fmtSep->setStyleSheet("color:#2A2A2E;");
+    fmtSep->setStyleSheet(QString::fromUtf8("color:%1;")
+                              .arg(Theme::T("#2A2A2E", "#C9C9D1")));
     b2->addWidget(fmtSep);
 
     m_formatFilterCombo = new QComboBox;
@@ -775,7 +777,7 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
     m_formatFilterCombo->setStyleSheet(QString::fromUtf8(
         "QComboBox{background:%1;color:%2;border:1px solid %3;"
         "border-radius:4px;padding:2px 10px;font-size:12px;min-height:22px;}"
-        "QComboBox:hover{border-color:#4A4A56;}"
+        "QComboBox:hover{border-color:%9;}"
         "QComboBox:focus{border-color:%4;}"
         "QComboBox::drop-down{width:18px;border:none;background:transparent;"
         "subcontrol-origin:padding;subcontrol-position:top right;}"
@@ -785,7 +787,8 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
         "outline:none;}"
         "QComboBox QAbstractItemView::item{min-height:24px;padding:2px 8px;}")
         .arg(C_TOOLBAR, C_TEXT, C_SEPARATOR, C_ACCENT,
-             C_CONTENT, C_TEXT, C_SEPARATOR, C_ACCENT));
+             C_CONTENT, C_TEXT, C_SEPARATOR, C_ACCENT,
+             Theme::T("#4A4A56", "#9A9AA4")));
     auto* comboArrow = new QLabel(gazeTr("▼"), m_formatFilterCombo);
     comboArrow->setStyleSheet(QString::fromUtf8(
         "color:%1;background:transparent;font-size:9px;").arg(C_SB_ARROW));

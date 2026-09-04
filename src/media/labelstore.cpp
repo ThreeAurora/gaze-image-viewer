@@ -108,6 +108,7 @@ namespace {
 struct LCCache {
     QHash<QString, QColor> map;
     QColor fallback = QColor("#191919");
+    bool fallbackExplicit = false;   // 用户在颜色编辑器显式设过默认色则双主题都用它
     bool enabled = true;
     bool loaded = false;
 };
@@ -115,8 +116,13 @@ LCCache& lc() { static LCCache c; return c; }
 void ensureLoaded() {
     if (lc().loaded) return;
     lc().loaded = true;
-    lc().fallback = QColor(AppSettings::instance().get(
-        "LabelColors/fallback", QStringLiteral("#191919")).toString());
+    // 空默认探测:ini 无此键=未显式设置,查询时随主题取值(#248 浅色下名字条
+    // 不再是黑底);有键=用户显式选的颜色,深浅两主题都尊重
+    const QString fb = AppSettings::instance().get(
+        "LabelColors/fallback", QString()).toString();
+    lc().fallbackExplicit = !fb.isEmpty();
+    if (lc().fallbackExplicit)
+        lc().fallback = QColor(fb);
     lc().enabled = AppSettings::instance().get("Appearance/formatColor", true).toBool();
     const QString s = AppSettings::instance().get(
         QStringLiteral("LabelColors/map"), QString()).toString();
@@ -145,17 +151,24 @@ static void saveLabelColors() {
 
 QColor LabelColors::colorForExt(const QString& extNoDot) {
     ensureLoaded();
-    return lc().map.value(extNoDot.toLower(), lc().fallback);
+    const QString k = extNoDot.toLower();
+    // 未显式设置时随主题走:深色保持已验收的 #191919,浅色给白底(与卡片底同色,
+    // 名字条自然消隐);绘制期求值,切换主题即查即变,无需注册刷新钩子
+    if (!lc().fallbackExplicit && !lc().map.contains(k))
+        return QColor(Theme::T("#191919", "#FFFFFF"));
+    return lc().map.value(k, lc().fallback);
 }
 
 QColor LabelColors::fallbackColor() {
     ensureLoaded();
-    return lc().fallback;
+    return lc().fallbackExplicit ? lc().fallback
+                                 : QColor(Theme::T("#191919", "#FFFFFF"));
 }
 
 void LabelColors::setFallbackColor(const QColor& c) {
     ensureLoaded();
     lc().fallback = c;
+    lc().fallbackExplicit = true;
     AppSettings::instance().set("LabelColors/fallback", c.name(QColor::HexRgb));
 }
 

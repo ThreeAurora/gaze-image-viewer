@@ -43,7 +43,6 @@ public:
         m_hist = new QLabel;
         m_hist->setFixedHeight(110);
         m_hist->setAlignment(Qt::AlignCenter);
-        m_hist->setStyleSheet("QLabel{background:#141418;border-bottom:1px solid #2A2A31;}");
         root->addWidget(m_hist);
 
         m_tree = new QTreeWidget;
@@ -53,15 +52,28 @@ public:
         // #119:关掉隔行换色。开交替色时 Qt 用 palette AlternateBase(白)画偶数行,
         // 与样式表的深色底一起形成"一黑一白"斑马纹 —— 用户要的是整块统一底色。
         m_tree->setAlternatingRowColors(false);
-        m_tree->setStyleSheet(QString::fromUtf8(
-            "QTreeWidget{background:%1;color:#DCDCE2;border:none;font-size:12px;}"
-            "QTreeWidget::item{padding:2px 0;}"
-            "QTreeWidget::item:selected{background:#2F65C5;color:#FFFFFF;}"
-            "QHeaderView::section{background:#232329;color:#C8C8CE;"
-            "border:none;padding:4px 6px;font-size:12px;}").arg(C_CONTENT));
         m_tree->setColumnWidth(0, 150);
         m_tree->setIndentation(14);
         root->addWidget(m_tree, 1);
+        applyTheme();
+    }
+
+    // #248:构造期样式表按主题求值一次,切主题时由 MainWindow::applyThemeSurfaces
+    // 调用重灌(此前没有刷新钩子,浅色下信息面板整块仍是深色)
+    void applyTheme() {
+        m_hist->setStyleSheet(QString::fromUtf8(
+            "QLabel{background:%1;border-bottom:1px solid %2;}")
+            .arg(C_PREVIEW_BG, Theme::T("#2A2A31", "#D9D9E0")));
+        m_tree->setStyleSheet(QString::fromUtf8(
+            "QTreeWidget{background:%1;color:%2;border:none;font-size:12px;}"
+            "QTreeWidget::item{padding:2px 0;}"
+            "QTreeWidget::item:selected{background:#2F65C5;color:#FFFFFF;}"
+            "QHeaderView::section{background:%3;color:%4;"
+            "border:none;padding:4px 6px;font-size:12px;}")
+            .arg(C_CONTENT,
+                 Theme::T("#DCDCE2", "#1F1F26"),
+                 Theme::T("#232329", "#ECECEF"),
+                 Theme::T("#C8C8CE", "#44444C")));
     }
 
     // 换文件:立刻清掉旧内容(避免张冠李戴),再后台算新的
@@ -220,6 +232,8 @@ private:
         }
 
         QImage out(512, H * 2, QImage::Format_ARGB32);
+        // 画布双主题恒深:三通道用 Plus 叠加模式,叠满趋白,浅底上会全被钳成白
+        // (同视频 letterbox 的"入库不可回改"逻辑,浅色主题也不改)
         out.fill(QColor(20, 20, 24));
         QPainter p(&out);
         p.setRenderHint(QPainter::Antialiasing, false);

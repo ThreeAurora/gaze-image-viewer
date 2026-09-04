@@ -204,9 +204,9 @@ void FileGrid::paintCard(QPainter& p, int idx, const QRect& r) {
         p.drawRect(hug);
     }
 
-    // ── Appearance/borderSize 卡片边框 ──
+    // ── Appearance/borderSize 卡片边框(#248 浅色档给浅灰,深色逐字保留) ──
     if (m_border > 0) {
-        p.setPen(QPen(QColor("#3A3A42"), m_border));
+        p.setPen(QPen(QColor(Theme::T("#3A3A42", "#D9D9E0")), m_border));
         p.setBrush(Qt::NoBrush);
         p.drawRect(QRectF(r.x() + m_border / 2.0, r.y() + m_border / 2.0,
                           r.width() - m_border, r.height() - m_border));

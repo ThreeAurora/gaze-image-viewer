@@ -348,7 +348,7 @@ void FileCard::paintEvent(QPaintEvent* event) {
 
     // Appearance/borderSize:卡片边框(默认 0 = 无,保持当前无边框观感)
     if (s_border > 0) {
-        p.setPen(QPen(QColor("#3A3A42"), s_border));
+        p.setPen(QPen(QColor(Theme::T("#3A3A42", "#D9D9E0")), s_border));
         p.setBrush(Qt::NoBrush);
         p.drawRect(QRectF(s_border / 2.0, s_border / 2.0,
                           width() - s_border, height() - s_border));

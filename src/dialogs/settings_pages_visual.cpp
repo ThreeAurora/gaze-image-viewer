@@ -231,14 +231,15 @@ QWidget* SettingsDialog::pageLabelColors() {
             if (ext == selExt) list->setCurrentItem(it);
         }
         list->blockSignals(false);
-        QColor cur = selExt.isEmpty() ? QColor("#191919")
+        QColor cur = selExt.isEmpty() ? LabelColors::fallbackColor()
                    : LabelColors::colorForExt(selExt);
         colorBtn->setStyleSheet(QString("background:%1;border:1px solid %2;")
                                     .arg(cur.name(), C_SEPARATOR));
     };
     auto syncColorBtn = [list, colorBtn]() {
         QListWidgetItem* it = list->currentItem();
-        QColor cur = it ? LabelColors::colorForExt(it->text()) : QColor("#191919");
+        QColor cur = it ? LabelColors::colorForExt(it->text())
+                        : LabelColors::fallbackColor();
         colorBtn->setStyleSheet(QString("background:%1;border:1px solid %2;")
                                     .arg(cur.name(), C_SEPARATOR));
     };

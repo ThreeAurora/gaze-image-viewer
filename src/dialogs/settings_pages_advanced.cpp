@@ -59,7 +59,8 @@ QWidget* SettingsDialog::pageMaintenance() {
 
     // 数据库统计行
     auto* summary = new QLabel;
-    summary->setStyleSheet("color:#D0D0D0;background:transparent;");
+    summary->setStyleSheet(QString::fromUtf8("color:%1;background:transparent;")
+                               .arg(Theme::T("#D0D0D0", "#44444C")));
     root->addWidget(summary);
 
     // 筛选框

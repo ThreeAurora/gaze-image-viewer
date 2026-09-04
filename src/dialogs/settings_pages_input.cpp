@@ -122,7 +122,8 @@ QWidget* SettingsDialog::pageShortcuts() {
         "左键拖动 = 移动画面；右键 = 上下文菜单；中键动作见「切换模式」页。"));
     mouseTip->setWordWrap(true);
     mouseTip->setStyleSheet(
-        QStringLiteral("color:#B8B8C0;font-size:12px;background:transparent;"));
+        QString::fromUtf8("color:%1;font-size:12px;background:transparent;")
+            .arg(Theme::T("#B8B8C0", "#77777F")));
     root->addWidget(mouseTip);
 
     // ── 数据填充 ──

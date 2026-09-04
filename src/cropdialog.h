@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <cmath>
 #include "i18n.h"
+#include "constants.h"
 
 // 刻意不加 Q_OBJECT:这是纯头文件类,不进 AUTOMOC(加了会缺 vtable)。
 // 本类不声明任何信号/槽/属性,连的都是 QDialog 已有的槽,不需要元对象。
@@ -40,12 +41,15 @@ public:
         m_view = new QLabel;
         m_view->setAlignment(Qt::AlignCenter);
         m_view->setMinimumSize(400, 300);
-        m_view->setStyleSheet("QLabel{background:#141418;}");
+        m_view->setStyleSheet(QString::fromUtf8("QLabel{background:%1;}")
+                                  .arg(Theme::T("#141418", "#E9E9ED")));
         m_view->setCursor(Qt::CrossCursor);
         root->addWidget(m_view, 1);
 
         m_info = new QLabel;
-        m_info->setStyleSheet("QLabel{color:#C8C8CE;font-size:12px;padding:2px 6px;}");
+        m_info->setStyleSheet(QString::fromUtf8(
+            "QLabel{color:%1;font-size:12px;padding:2px 6px;}")
+            .arg(Theme::T("#C8C8CE", "#44444C")));
         root->addWidget(m_info);
 
         auto* bar = new QHBoxLayout;

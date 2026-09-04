@@ -391,7 +391,8 @@ void FolderTree::paintEvent(QPaintEvent* event) {
     if (!r.isValid()) return;
     QPainter p(viewport());
     p.setRenderHint(QPainter::Antialiasing, false);
-    p.setPen(QPen(QColor("#FFFFFF"), 1.5));
+    // #248:白描边在浅色树上不可见,浅色档改用选中蓝
+    p.setPen(QPen(QColor(Theme::T("#FFFFFF", "#0078D7")), 1.5));
     p.setBrush(Qt::NoBrush);
     p.drawRect(r.adjusted(1, 1, -1, -1));
 }

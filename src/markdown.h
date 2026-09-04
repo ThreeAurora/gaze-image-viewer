@@ -13,6 +13,7 @@
 #include <QRegularExpression>
 #include <QFile>
 #include "textlimit.h"
+#include "theme.h"
 
 namespace Md {
 
@@ -226,31 +227,49 @@ inline QString render(const QString& src) {
     closeList();
     if (inCode) html += QStringLiteral("</code></pre>\n");
 
-    // 包一层带样式的壳(自持深底:浅色主题下 MD 仍是暗底阅读面,如同代码块)
-    return QStringLiteral(
-        "<html><head><meta charset=\"utf-8\"><style>"
+    // 包一层带样式的壳(#248:阅读面随主题。浅色=白底黑字的标准阅读面;
+    // 深色逐字保留原已验收暗底。旧注释「浅色下 MD 仍是暗底」已按用户
+    // 2026-09-04 纯黑清零令作废)。MD 每次渲染重新生成 CSS,无缓存即无刷新钩子
+    const QString css = QStringLiteral(
         "body{font-family:'Microsoft YaHei','Segoe UI',sans-serif;font-size:13px;"
-        "background:#000000;color:#E0E0E0;line-height:1.7;margin:0;padding:0;}"
-        "h1,h2,h3,h4,h5,h6{color:#FFFFFF;margin:18px 0 8px;line-height:1.35;}"
-        "h1{font-size:22px;border-bottom:1px solid #3A3A42;padding-bottom:6px;}"
-        "h2{font-size:19px;border-bottom:1px solid #3A3A42;padding-bottom:5px;}"
-        "h3{font-size:16px;} h4{font-size:14px;} h5,h6{font-size:13px;color:#C8C8CE;}"
+        "background:%1;color:%2;line-height:1.7;margin:0;padding:0;}"
+        "h1,h2,h3,h4,h5,h6{color:%3;margin:18px 0 8px;line-height:1.35;}"
+        "h1{font-size:22px;border-bottom:1px solid %4;padding-bottom:6px;}"
+        "h2{font-size:19px;border-bottom:1px solid %4;padding-bottom:5px;}"
+        "h3{font-size:16px;} h4{font-size:14px;} h5,h6{font-size:13px;color:%5;}"
         "p{margin:8px 0;}"
-        "a{color:#6BA6F5;text-decoration:none;} a:hover{text-decoration:underline;}"
-        "code{background:#2A2A31;color:#F0C674;padding:1px 5px;border-radius:3px;"
+        "a{color:%6;text-decoration:none;} a:hover{text-decoration:underline;}"
+        "code{background:%7;color:%8;padding:1px 5px;border-radius:3px;"
         "font-family:'Consolas','Courier New',monospace;font-size:12px;}"
-        "pre{background:#1C1C22;border:1px solid #34343C;border-radius:5px;"
+        "pre{background:%9;border:1px solid %10;border-radius:5px;"
         "padding:10px 12px;overflow:auto;margin:10px 0;}"
-        "pre code{background:none;color:#D8D8DC;padding:0;font-size:12px;}"
-        "blockquote{border-left:3px solid #5A5A66;background:#232329;margin:10px 0;"
-        "padding:6px 12px;color:#B8B8C0;}"
+        "pre code{background:none;color:%11;padding:0;font-size:12px;}"
+        "blockquote{border-left:3px solid %12;background:%13;margin:10px 0;"
+        "padding:6px 12px;color:%14;}"
         "ul,ol{margin:8px 0;padding-left:24px;}"
         "li{margin:3px 0;}"
-        "table{border-color:#3A3A42;margin:10px 0;font-size:12px;}"
-        "th{background:#2A2A31;color:#FFFFFF;} td,th{padding:5px 10px;}"
-        "hr{border:none;border-top:1px solid #3A3A42;margin:16px 0;}"
-        "img{max-width:100%;}"
-        "</style></head><body>%1</body></html>").arg(html);
+        "table{border-color:%4;margin:10px 0;font-size:12px;}"
+        "th{background:%7;color:%3;} td,th{padding:5px 10px;}"
+        "hr{border:none;border-top:1px solid %4;margin:16px 0;}"
+        "img{max-width:100%;}")
+        .arg(Theme::T("#000000", "#FFFFFF"))   // %1 页底
+        .arg(Theme::T("#E0E0E0", "#1F1F26"))   // %2 正文
+        .arg(Theme::T("#FFFFFF", "#1F1F26"))   // %3 标题/表头文字
+        .arg(Theme::T("#3A3A42", "#D9D9E0"))   // %4 分隔线/表格框
+        .arg(Theme::T("#C8C8CE", "#44444C"))   // %5 h5/h6
+        .arg(Theme::T("#6BA6F5", "#2F6FE0"))   // %6 链接
+        .arg(Theme::T("#2A2A31", "#F2F2F5"))   // %7 行内代码底/表头底
+        .arg(Theme::T("#F0C674", "#9A6B00"))   // %8 行内代码字
+        .arg(Theme::T("#1C1C22", "#F6F6F8"))   // %9 代码块底
+        .arg(Theme::T("#34343C", "#D9D9E0"))   // %10 代码块框
+        .arg(Theme::T("#D8D8DC", "#33333B"))   // %11 代码块字
+        .arg(Theme::T("#5A5A66", "#B6B6BF"))   // %12 引用条
+        .arg(Theme::T("#232329", "#F3F3F5"))   // %13 引用底
+        .arg(Theme::T("#B8B8C0", "#55555E"));  // %14 引用字
+    // 双参一次替换:正文含 %N 字样(用户文档里写占位符)也不会被误替换
+    return QStringLiteral(
+        "<html><head><meta charset=\"utf-8\"><style>%1</style></head><body>%2"
+        "</body></html>").arg(css, html);
 }
 
 inline QString renderFile(const QString& path) {
