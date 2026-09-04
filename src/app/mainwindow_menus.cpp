@@ -159,12 +159,11 @@ void MainWindow::createMenubar() {
     auto* fullAct = viewMenu->addAction(gazeTr("全屏预览\tG"), this, [this]() {
         toggleFullView();
     });
-    fullAct->setCheckable(true);
-    // #154:全屏=窗口铺满(浏览器态),全屏预览=只铺画面 —— 弹出瞬间按实态重勾
+    // 2026-09-04 用户令:全屏预览不打勾框——普通动作项(进没进全屏,屏幕本身就是反馈);
+    // 界面全屏仍保留勾选态。弹出瞬间按实态重勾 + #234:右列键位跟着热键表走
+    //(设置→快捷键改键/清空后菜单仍说真话)
     connect(viewMenu, &QMenu::aboutToShow, this, [this, fsAct, fullAct]() {
         fsAct->setChecked(isFullScreen() && !m_fullView);
-        fullAct->setChecked(m_fullView);
-        // #234:右列键位跟着热键表走(设置→快捷键改键/清空后菜单仍说真话)
         const QString v = AppSettings::instance().get(
             QStringLiteral("ViewerShortcut/全屏预览"), QStringLiteral("G")).toString();
         fullAct->setText(gazeTr("全屏预览")
@@ -331,15 +330,14 @@ void MainWindow::createMenubar() {
 
     // ── 语言(2026-09-03 国际化)──
     // 2026-09-04 用户令:「语言」要排在「帮助」左边(insertMenu),不再最右;
-    // 后建的布局菜单照旧追加在末尾。三项单选,切换写入 General/language 并
-    // 征询重启;重启用 --restart 自启动(绕过单实例握手,见 main.cpp)。
-    // 选中项即当前生效意图;中文系统默认=跟随系统→中文照旧。
+    // 后建的布局菜单照旧追加在末尾。切换写入 General/language 并征询重启;
+    // 重启用 --restart 自启动(绕过单实例握手,见 main.cpp)。
+    // 2026-09-04 用户令:三项不打勾框(原 setCheckable+互斥组已拆)——当前语言
+    // 改用加粗字体提示;语言切换必须重启,构造期定稿一次即可,无需动态刷新。
     {
         auto *langMenu = new QMenu(gazeTr("语言"), this);
         langMenu->setToolTip(gazeTr("界面语言(切换后重启生效)"));
         mb->insertMenu(helpMenu->menuAction(), langMenu);
-        auto *langGroup = new QActionGroup(langMenu);
-        langGroup->setExclusive(true);
         // 菜单项文字直接以字面量出现在 gazeTr() 里(提取器只认字面量,
         // "间接传变量"的串扫不到);简体中文/English 两语言恒等,无需译文。
         struct { QString key; QString label; } langs[] = {
@@ -351,10 +349,12 @@ void MainWindow::createMenubar() {
             AppSettings::instance().get("General/language", "system").toString();
         for (auto& it : langs) {
             QAction* a = langMenu->addAction(it.label);
-            a->setCheckable(true);
             a->setData(it.key);
-            a->setChecked(cur == it.key);
-            langGroup->addAction(a);
+            if (cur == it.key) {
+                QFont f = a->font();
+                f.setBold(true);
+                a->setFont(f);
+            }
             connect(a, &QAction::triggered, this,
                     [this, key = it.key]() {
                 if (AppSettings::instance()
