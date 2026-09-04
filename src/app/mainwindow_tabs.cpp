@@ -350,25 +350,13 @@ void MainWindow::restoreClosedViewerTab() {
 }
 
 // 预览区双击(非 Ctrl)按态分流(previewpanel 只管把事件送到这):
-//   浏览器态 = 开一个查看器标签并选中(2026-09-02 原语义不变);
-//   查看器态 = 关闭当前文件标签回到浏览器 —— 用户令,与浏览器态双击=开签
-//     正好互为逆操作;
-//   G 全屏   = 先退出全屏;人在查看器接着关签,在浏览器就停在那里
-//     (浏览器+全屏的双击只退全屏,不凭空开签)。
+//   #227(2026-09-04 用户令):双击只"关掉当前最上层的一层" —— G 全屏里退全屏
+//     就停(人在查看器还是查看器、人在浏览器还是浏览器),查看器里退回浏览器。
+//     全程不开签、不关签:旧写法全屏里退完还接着开签/关签切页,用户明令改掉。
+//   浏览器态(无全屏)= 开一个查看器标签并选中(2026-09-02 语义不变);
+//   Ctrl 双击 = 后台开签,不变。
 void MainWindow::previewDoubleClicked() {
-    if (m_fullView) exitFullView();
-    if (!m_viewerMode) {
-        if (!m_fullView) openTabForeground();
-        return;
-    }
-    const int cur = m_viewerTabs ? m_viewerTabs->currentIndex() : -1;
-    if (cur < 0 || isBrowserTab(cur)) return;
-    // 直摘不走 closeViewerTab:后者关到非末张时 currentChanged 会把预览拽去
-    // 解相邻一张,马上又要 toggleViewer 退回浏览器,白解一遍还挪浏览器选中。
-    // 挡住信号;toggleViewer 的退浏览器分支自己会把高亮挪回「浏览器」标签。
-    pushClosedTab(tabPath(cur));
-    m_viewerTabs->blockSignals(true);
-    m_viewerTabs->removeTab(cur);
-    m_viewerTabs->blockSignals(false);
-    toggleViewer();
+    if (m_fullView) { exitFullView(); return; }
+    if (!m_viewerMode) { openTabForeground(); return; }
+    toggleViewer();   // 退出不碰标签表:标签全保留,高亮回「浏览器」签(toggleViewer 内)
 }
