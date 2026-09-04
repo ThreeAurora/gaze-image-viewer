@@ -39,6 +39,8 @@ public:
     void releaseFileLocks(const QStringList& paths);
     void togglePlayPause();
     void seekDelta(int seconds);
+    // #228:预览当前是不是媒体页(视频/音频)—— Ctrl+PgUp/PgDn 归进度条的判据
+    bool showingMedia() const { return m_mode == "video" || m_mode == "audio"; }
     // 相邻预读:切换方向键时预解码下一张/上一张,命中则零等待显示(mainwindow 调用)
     void preload(const QString& prev, const QString& next);
     // 面板身份:浏览器预览窗格 ↔ 独立查看器(背景色各用一个设置项)

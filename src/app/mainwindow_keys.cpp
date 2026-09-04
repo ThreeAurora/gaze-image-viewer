@@ -423,11 +423,14 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
                         return true;
                     }
                     // #221(2026-09-04 用户令):Ctrl+PgUp/PgDn = 切换左/右标签页
-                    // (顶替原快退/快进,seek 挪 Shift+PgUp/PgDn)。到头钳住不回绕;
+                    // (顶替原快退/快进,seek 挪 Shift+PgUp/PgDn)。#228(同日用户令):
+                    // 预览正在放视频/音频("视频页")时这对键改回快退/快进 —— 进度
+                    // 条调整优先于切签,图片页维持切签。到头钳住不回绕;
                     // G 全屏里标签条收着、没有可切的样子,落回下面的快退快进。
                     // 切到「浏览器」标签时 currentChanged 自己会退回浏览器(#105)
                     if (m_viewerTabs && !m_fullView && m_viewerTabs->count() > 1
                         && (ke->modifiers() & Qt::ShiftModifier) == 0
+                        && !m_preview->showingMedia()
                         && (ke->key() == Qt::Key_PageUp || ke->key() == Qt::Key_PageDown)) {
                         const int dir = ke->key() == Qt::Key_PageUp ? -1 : 1;
                         const int nxt = qBound(0, m_viewerTabs->currentIndex() + dir,
