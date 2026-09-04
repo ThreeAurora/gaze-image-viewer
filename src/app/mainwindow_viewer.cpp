@@ -189,7 +189,8 @@ void MainWindow::createLayoutMenu() {
 //   否则进一次查看器就会被误存成"用户关掉了文件列表"
 // ═══════════════════════════════════════════
 // "info" = #80 元数据面板+直方图,默认不打开(见 kPanesDefault)
-static const char* const kPanes[] = { "tree", "preview", "addr", "tool", "status", "info" };
+// "favorites" = #243 收藏夹面板(挂在树栏下半),默认不打开(Interface/favPanelSeen)
+static const char* const kPanes[] = { "tree", "preview", "addr", "tool", "status", "info", "favorites" };
 static const int kPaneCount = int(sizeof(kPanes) / sizeof(kPanes[0]));
 
 QStringList MainWindow::paneIds() const {
@@ -249,6 +250,7 @@ void MainWindow::applyPaneVisibility() {
         if (m_addrRow)     m_addrRow->hide();
         if (m_toolRow)     m_toolRow->hide();
         if (m_infoPane)    m_infoPane->hide();
+        if (m_favPane)     m_favPane->hide();
         statusBar()->hide();
         return;
     }
@@ -265,6 +267,13 @@ void MainWindow::applyPaneVisibility() {
         // 打开即记"见过":下次启动不再强制剔除
         if (on && !AppSettings::instance().get("Interface/infoPanelSeen", false).toBool())
             AppSettings::instance().set("Interface/infoPanelSeen", true);
+    }
+    // 收藏夹容器是树栏的孩子:查看器/全屏下树栏整栏隐藏,这里只在浏览器态有意义
+    if (m_favPane) {
+        const bool on = paneOn("favorites");
+        m_favPane->setVisible(on && !m_viewerMode);
+        if (on && !AppSettings::instance().get("Interface/favPanelSeen", false).toBool())
+            AppSettings::instance().set("Interface/favPanelSeen", true);
     }
 }
 
@@ -319,6 +328,7 @@ void MainWindow::createViewMenu() {
         { "tool",    "工具栏", "" },                 // 工具栏
         { "status",  "状态栏", "" },                 // 状态栏
         { "info",    "信息面板", "F9" },     // 信息面板(元数据+直方图)
+        { "favorites", "收藏夹面板", "" },   // 收藏夹(默认无快捷键,同预览面板)
     };
     const QStringList all = paneIds();
     // kPanes / m_paneActs / items 是三张手工并行维护的表。飘了的后果不是"菜单

@@ -746,6 +746,13 @@ void FolderTree::showContextMenu(const QPoint& pos) {
     menu.addAction(IconLib::appIcon("cmd_rename"), gazeTr("重命名"),
                    this, [this, base]() { renameItem(itemForPath(base)); })
         ->setEnabled(!hasRoot && !multi);   // 多项改名语义不明,资源管理器同样禁用
+    // #243:收藏夹入口 —— 多选时整个选择集一起收。主窗口 Q_INVOKABLE
+    // addFavorite 经元调用进来,与 pruneDeadViewerTabs 同款 window() 跳转
+    if (QWidget* w = window())
+        menu.addAction(gazeTr("添加到收藏夹"), this, [w, paths]() {
+            for (const auto& p : paths)
+                QMetaObject::invokeMethod(w, "addFavorite", Q_ARG(QString, p));
+        });
     menu.addSeparator();
     // ── 复制到.. / 移动到...:整个选择集一起走 ──
     menu.addAction(IconLib::appIcon("cmd_copyTo"), gazeTr("复制到.."),

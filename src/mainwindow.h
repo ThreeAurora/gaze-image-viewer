@@ -22,6 +22,7 @@ class FolderTree;
 class FileGrid;
 class PreviewPanel;
 class InfoPanel;
+class FavoritesPanel;
 class SortHeader;
 class FilmStrip;
 class SettingsDialog;      // #218 长驻工具窗(非模态单例)
@@ -36,6 +37,7 @@ public:
     Q_INVOKABLE bool navigateTo(const QString &path);  // false=目标不存在/非目录,什么都没改
     Q_INVOKABLE void openFullscreen(const QString &path);  // 右键"全屏":导航到文件并全屏
     Q_INVOKABLE void revealFile(const QString &path);      // 以文搜图结果:定位到目录并选中
+    Q_INVOKABLE void addFavorite(const QString &path);     // #243 右键"添加到收藏夹"(网格/树菜单经元调用进来)
     void enterFullscreen();          // Fullscreen/dualMonitor:可选落到第二显示器
     void renameCurrent();            // F2:按 FileOps/renameDialog 决定对话框/就地改
     // #136:F2/F3 的统一入口 —— 焦点在文件树就改树里那一行,否则改文件页选中项
@@ -161,6 +163,7 @@ private:
     QStringList paneIds() const;                  // 全部面板 id(顺序稳定)
     bool   paneOn(const QString& id) const;       // m_panesOn 查询
     void   applyPaneVisibility();                // 意图 + 查看器模式 → 实际 setVisible
+    void   saveFavorites();                      // #243 收藏夹落盘(Favorites/paths)
     void   addRecentFile(const QString& path);   // 内存操作 + 防抖合批写盘
     void   flushRecentFiles();                   // 把内存列表写回 ini(closeEvent 也调用)
     void   ensureRecentLoaded();                 // 懒加载内存副本(ini 只读一次)
@@ -253,15 +256,18 @@ private:
     QWidget* m_previewHdr = nullptr;  // 预览标题条(查看器模式下隐藏,单图不需要)
     QWidget* m_infoPane  = nullptr;  // #80 信息面板容器(含标题条,挂在预览栏内)
     InfoPanel* m_info    = nullptr;  // #80 元数据表 + 直方图
+    QWidget* m_favPane   = nullptr;  // #243 收藏夹面板容器(含标题条,挂在树栏下半)
+    FavoritesPanel* m_favs = nullptr;  // #243 收藏夹列表(数据真源=m_favPaths)
     // 各面板标题条(createPaneHeader 产出;主题切换时重灌内联样式)
     QList<QWidget*> m_paneHdrs;
     QWidget* m_addrRow = nullptr;     // 地址栏行(视图菜单可隐藏)
     QWidget* m_toolRow = nullptr;     // 工具栏第二行(视图菜单可隐藏)
     // 面板开关 action(视图菜单),与 m_panesOn 同步 ✓
-    QAction* m_paneActs[6] = {};   // 容量须 >= kPaneCount(新增 info 面板后为 6)
+    QAction* m_paneActs[7] = {};   // 容量须 >= kPaneCount(新增 favorites 面板后为 7)
     // 用户意图:当前应显示的面板 id 列表(顺序同 paneIds)。
     // 查看器模式的临时隐藏不改这里,避免污染持久化状态
     QStringList m_panesOn;
+    QStringList m_favPaths;           // #243 收藏夹真源(canonical 形,启动从 ini 读,改动即写)
     // 最近文件:内存列表为唯一真源,定时合批写盘(连续切换不再每次同步落盘)
     QStringList m_recentList;         // 内存副本(首次用到时从 ini 懒加载)
     bool        m_recentLoaded = false;

@@ -754,6 +754,10 @@ Current settings were copied there (existing files are not overwritten).</transl
         <translation>Never</translation>
     </message>
     <message>
+        <source>从收藏夹移除</source>
+        <translation>Remove from favorites</translation>
+    </message>
+    <message>
         <source>以 MD 格式预览 Markdown 文件(超长自动截断)</source>
         <translation>Preview Markdown files rendered as MD (long files truncated)</translation>
     </message>
@@ -1446,6 +1450,10 @@ Click once to select the whole path, click again to place the caret</translation
         <translation>Open in a new tab</translation>
     </message>
     <message>
+        <source>在浏览器中定位</source>
+        <translation>Locate in browser</translation>
+    </message>
+    <message>
         <source>在视频缩略图中显示4张缩略图(替代1张)</source>
         <translation>Show 4 thumbnails in video thumbnails (instead of 1)</translation>
     </message>
@@ -1612,6 +1620,10 @@ Click once to select the whole path, click again to place the caret</translation
         <translation>Snapped to the 16px lossless boundary (JPEG uses jpegtran -perfect)</translation>
     </message>
     <message>
+        <source>已在收藏夹中</source>
+        <translation>Already in favorites</translation>
+    </message>
+    <message>
         <source>已截断：%1</source>
         <translation>Truncated: %1</translation>
     </message>
@@ -1642,6 +1654,10 @@ or in system Settings → Apps → Default apps → Gaze → &apos;Set default&a
 系统设置→应用→默认应用→Gaze→&quot;设为默认&quot;一并绑定媒体类型。</source>
         <translation>Registered. Right-click any video/audio → &apos;Open with&apos; → Gaze;
 or in system Settings → Apps → Default apps → Gaze → &apos;Set default&apos; binds media types as well.</translation>
+    </message>
+    <message>
+        <source>已添加到收藏夹</source>
+        <translation>Added to favorites</translation>
     </message>
     <message>
         <source>已添加右键菜单,资源管理器中即时生效。</source>
@@ -1976,6 +1992,14 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
     <message>
         <source>播放实况视频</source>
         <translation>Play Motion Video</translation>
+    </message>
+    <message>
+        <source>收藏夹</source>
+        <translation>Favorites</translation>
+    </message>
+    <message>
+        <source>收藏夹面板</source>
+        <translation>Favorites panel</translation>
     </message>
     <message>
         <source>放大</source>
@@ -2570,12 +2594,20 @@ Try a different selection (a bit larger and farther from the edges).</translatio
         <translation>Add to Explorer context menu</translation>
     </message>
     <message>
+        <source>添加到收藏夹</source>
+        <translation>Add to favorites</translation>
+    </message>
+    <message>
         <source>添加颜色标记</source>
         <translation>Add Color Label</translation>
     </message>
     <message>
         <source>清理</source>
         <translation>Clean up</translation>
+    </message>
+    <message>
+        <source>清空收藏夹</source>
+        <translation>Clear favorites</translation>
     </message>
     <message>
         <source>清空缓存后,下次浏览文件夹时将按当前设置自动重建缩略图。继续?</source>
@@ -2678,6 +2710,10 @@ Try a different selection (a bit larger and farther from the edges).</translatio
 </translation>
     </message>
     <message>
+        <source>确定要移除全部收藏吗?</source>
+        <translation>Remove all favorites?</translation>
+    </message>
+    <message>
         <source>确认清空全部缩略图缓存?(浏览时会自动重建)</source>
         <translation>Clear the entire thumbnail cache? (rebuilt automatically while browsing)</translation>
     </message>
@@ -2716,6 +2752,10 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     <message>
         <source>程序文件夹(便携)</source>
         <translation>Program folder (portable)</translation>
+    </message>
+    <message>
+        <source>空。右键文件或文件夹 → 添加到收藏夹</source>
+        <translation>Empty. Right-click a file or folder → Add to favorites</translation>
     </message>
     <message>
         <source>空格</source>

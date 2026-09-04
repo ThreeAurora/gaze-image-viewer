@@ -6,6 +6,7 @@
 #include "imgsearch.h"     // ImgSearch::servicePid/killStartedService:退出时按设置回收自启服务
 #include "printdialog.h"
 #include "infopanel.h"
+#include "favoritespanel.h"
 #include "shelldelete.h"   // showDeleteToast:拖放复制成功的左下角提示
 #include "sortheader.h"
 #include "fileentry.h"
@@ -79,6 +80,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     if (AppSettings::instance().get("Interface/infoPanelSeen", false).toBool() == false
         && !mw_impl::appSettings().contains("Layout/last/panes"))
         m_panesOn.removeAll(QStringLiteral("info"));
+    // #243:收藏夹面板同款处理 —— 新装用户不白给一块空面板,想用再开
+    if (AppSettings::instance().get("Interface/favPanelSeen", false).toBool() == false
+        && !mw_impl::appSettings().contains("Layout/last/panes"))
+        m_panesOn.removeAll(QStringLiteral("favorites"));
 
     createMenubar();
     Logger::boot("ctor:menubar");
@@ -186,6 +191,46 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     // 树点击导航经包装函数:标记来源,让 navigateTo 不把焦点从树抢回网格
     connect(m_folderTree, &FolderTree::folderSelected, this, &MainWindow::onTreeFolderSelected);
     tv->addWidget(m_folderTree, 1);
+
+    // ── #243 收藏夹面板:树栏下半部(同信息面板手法,塞进既有分栏,不动三段存档)──
+    //   数据真源 = m_favPaths(Favorites/paths),面板只管显示与交互
+    m_favPane = new QWidget;
+    m_favPane->setStyleSheet(QString("background:%1;border:none;").arg(C_SIDEBAR));
+    auto* fvl = new QVBoxLayout(m_favPane);
+    fvl->setContentsMargins(0, 0, 0, 0);
+    fvl->setSpacing(0);
+    fvl->addWidget(createPaneHeader(gazeTr("收藏夹"), "favorites"));
+    m_favs = new FavoritesPanel;
+    fvl->addWidget(m_favs, 1);
+    m_favPane->setMinimumHeight(120);
+    m_favPane->setVisible(paneOn("favorites"));   // 构造期先对齐意图,restorePanes 稍后统一重算
+    tv->addWidget(m_favPane);
+    m_favPaths = AppSettings::instance().get("Favorites/paths", QStringList()).toStringList();
+    m_favs->setPaths(m_favPaths);
+    connect(m_favs, &FavoritesPanel::openRequested, this, [this](const QString& p) {
+        if (QFileInfo(p).isDir()) { navigateTo(p); return; }
+        if (navigateTo(QFileInfo(p).absolutePath())) m_fileGrid->selectByPath(p);
+    });
+    connect(m_favs, &FavoritesPanel::locateRequested, this, [this](const QString& p) {
+        if (QFileInfo(p).isDir()) { navigateTo(p); return; }
+        if (navigateTo(QFileInfo(p).absolutePath())) m_fileGrid->selectByPath(p);
+    });
+    connect(m_favs, &FavoritesPanel::removeRequested, this, [this](const QString& p) {
+        m_favPaths.removeAll(p);
+        saveFavorites();
+        m_favs->setPaths(m_favPaths);
+    });
+    connect(m_favs, &FavoritesPanel::clearRequested, this, [this]() {
+        if (m_favPaths.isEmpty()) return;
+        // 破坏性确认:默认按钮落 No(空格/回车手滑不清库)
+        if (QMessageBox::question(this, gazeTr("清空收藏夹"),
+                gazeTr("确定要移除全部收藏吗?"),
+                QMessageBox::Yes | QMessageBox::No, QMessageBox::No) != QMessageBox::Yes)
+            return;
+        m_favPaths.clear();
+        saveFavorites();
+        m_favs->setPaths(m_favPaths);
+    });
     // #236/#247 实测定案:挂树这笔账不可省——推迟到首帧后挂,firstPaint 无净
     // 收益(快档 749ms vs 基线 751ms),因为基线记在挂树名下的 337~635ms 并不是
     // 挂树本身(QSplitter::addWidget 推迟后实测仅 7~11ms),而是**恰好在此触发的
@@ -535,6 +580,30 @@ void MainWindow::applyThemeSurfaces() {
     if (m_preview)    m_preview->refreshThemeColors();
     if (m_folderTree) m_folderTree->refreshThemeColors();
     if (m_info)       m_info->applyTheme();   // #248:信息面板此前无刷新钩子
+    if (m_favPane)
+        m_favPane->setStyleSheet(QString("background:%1;border:none;").arg(C_SIDEBAR));
+    if (m_favs)       m_favs->applyTheme();   // #243:收藏夹列表同款重灌
+}
+
+// ── #243 收藏夹:数据真源 = m_favPaths,改动即写 Favorites/paths ──
+void MainWindow::saveFavorites() {
+    AppSettings::instance().set("Favorites/paths", m_favPaths);
+}
+
+void MainWindow::addFavorite(const QString& path) {
+    if (path.isEmpty()) return;
+    // 落库前归一到 canonical 形:网格条目在盘根是 "X://name" 连体形,树行
+    // 可能是反斜杠形 —— 不归一,同一文件夹会被收成两条
+    const QString cp = mw_impl::canonicalPath(path);
+    if (m_favPaths.contains(cp)) {
+        showDeleteToast(this, gazeTr("已在收藏夹中"));
+        return;
+    }
+    m_favPaths.append(cp);
+    saveFavorites();
+    m_favs->setPaths(m_favPaths);
+    // 面板若关着不代开(免得"加个收藏还自己弹面板"),左下角 toast 给反馈
+    showDeleteToast(this, gazeTr("已添加到收藏夹"));
 }
 
 void MainWindow::closeEvent(QCloseEvent* event) {

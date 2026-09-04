@@ -332,6 +332,18 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
                 QMetaObject::invokeMethod(mw, "openViewerTab", Q_ARG(QString, m_filePath));
         });
     }
+    // #243:收藏夹入口 —— 整个选择集一起收(目录/文件都行)。主窗口
+    // Q_INVOKABLE addFavorite 经元调用进来,不引主窗口头文件
+    {
+        QObject* mw = this;
+        while (mw && mw->metaObject()->indexOfMethod("addFavorite(QString)") < 0)
+            mw = mw->parent();
+        if (mw)
+            addAction(gazeTr("添加到收藏夹"), this, [mw, sel]() {
+                for (const auto& p : sel)
+                    QMetaObject::invokeMethod(mw, "addFavorite", Q_ARG(QString, p));
+            });
+    }
     addSeparator();
 
     // ── 剪贴板组 ──
