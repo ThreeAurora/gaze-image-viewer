@@ -51,17 +51,18 @@ QString appQss() {
         "QMenu::item { padding: 6px 28px; border-radius: 4px; }"
         "QMenu::item:selected { background: %5; color: #FFF; }"
         "QMenu::separator { height: 1px; background: %4; margin: 4px 8px; }"
-        // ── 菜单勾选指示器(2026-09-04 用户令:打勾框要更明显,得让人看出"能勾")──
-        // 原生 windowsvista 的对勾在深色菜单上几乎隐形;未勾=空框(预告可勾),
-        // 勾中=主题色实心框+白对勾(两主题都读得出)。image 用编译进 qrc 的
-        // menu_check.png(自有资产,不碰 assets/icons-48 的 XnView 图)。
-        "QMenu::indicator { width: 15px; height: 15px; margin-left: 5px; }"
+        // ── 菜单勾选指示器(2026-09-04 用户令:先要"能看出可勾";随后 #246 再令:
+        // 小一点、直角、更扁平)──原生 windowsvista 的对勾在深色菜单上几乎隐形;
+        // 未勾=直角细描边空框(预告可勾),勾中=主题色纯色方块+白对勾,无描边无圆角
+        // (扁平=没有任何立体/包边装饰)。image 用编译进 qrc 的 menu_check.png
+        // (自有资产,不碰 assets/icons-48 的 XnView 图)。
+        "QMenu::indicator { width: 13px; height: 13px; margin-left: 6px; }"
         "QMenu::indicator:unchecked {"
-        "  border: 1px solid %11; border-radius: 4px; background: transparent;"
+        "  border: 1px solid %11; border-radius: 0px; background: transparent;"
         "}"
-        "QMenu::indicator:disabled { border: 1px solid %4; border-radius: 4px; }"
+        "QMenu::indicator:disabled { border: 1px solid %4; border-radius: 0px; }"
         "QMenu::indicator:checked {"
-        "  background: %5; border: 1px solid %5; border-radius: 4px;"
+        "  background: %5; border: none;"
         "  image: url(:/menu_check.png);"
         "}"
         // ── 滚动条:轨道 + 滑块 + 两端箭头按钮(Windows/XnView 式) ──
