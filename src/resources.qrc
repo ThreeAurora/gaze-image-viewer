@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file>Gaze.png</file>
+        <file>menu_check.png</file>
     </qresource>
 </RCC>
