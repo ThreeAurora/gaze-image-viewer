@@ -50,6 +50,16 @@ enum NameOrder {
     NameNormal,        // 系统排序规则(区域设置 collator,不启用数字模式)
 };
 
+// #242 分类筛选器面板:第二层筛选(单模式 filter 之后再收一道,两道相与)。
+// 颜色与类型两个维度;维度内多选=任一命中,维度间按 andMode 与/或。
+// 目录行不参与条件判定恒显示(递归范围下目录行是导航骨架,筛没了没法下钻)。
+struct MultiFilterSpec {
+    QSet<int> colors;    // 颜色标记 1红~5蓝,空=该维不参与
+    QSet<int> cats;      // 类型 0图像(含RAW) 1视频 2音频 3文档 4可执行 5压缩,空=该维不参与
+    bool andMode = false;   // false=任一维度命中即显示(OR) true=两个维度都要命中(AND)
+    bool active  = false;   // colors+cats 全空=不生效
+};
+
 class FileGrid : public QScrollArea {
     Q_OBJECT
 public:
@@ -74,6 +84,13 @@ public:
     int  nameOrder() const { return m_nameOrder; }
     void setFilterMode(int mode);            // FilterMode
     int  filterMode() const { return m_filterMode; }
+    // #242 分类筛选器:第二层筛选(与单模式 filter 相与)。条件变化=只重筛;
+    // clearMultiFilter=面板关闭,清条件并把范围复位 0(需要时重扫当前目录)
+    void setMultiFilter(const MultiFilterSpec& spec);
+    void clearMultiFilter();
+    // 范围 0=当前目录 1=当前目录(递归) 2=全局标记库;改变条目宇宙,需重扫
+    void setMultiFilterScope(int scope);
+    int  multiFilterScope() const { return m_mfScope; }
     // 文件夹树右键"显示子文件夹中的文件":目录行仍只列本层,文件向下递归展开。
     // 真源在这里,FolderTree 只持有镜像用于画 ✓。持久化 FileList/showSubFolders。
     void setShowSubFolders(bool on);
@@ -213,6 +230,11 @@ private:
     bool   m_sortAsc      = true;
     int    m_nameOrder    = NameNatural;
     int    m_filterMode   = FILTER_ALL;
+    // #242 第二层筛选:条件 + 范围(0本层 1递归 2全局标记库)
+    MultiFilterSpec m_mf;
+    int    m_mfScope      = 0;
+    bool   mfMatch(const FileEntry& e) const;   // 单条目判命中(类型维含目录行的豁免在调用侧)
+    void   refilterForMulti();                  // 条件/范围变化后的重筛收尾(对齐 setFilterMode 尾段)
     QHash<QString, int> m_colorLabels;  // path → 颜色标记(目录加载时批量读入)
     // 文件列表规则(FileList/*;设置改动时刷新,逐条目路径不再读 ini)
     bool m_showHidden  = true;

@@ -7,6 +7,7 @@
 #include "printdialog.h"
 #include "infopanel.h"
 #include "favoritespanel.h"
+#include "filterpanel.h"
 #include "shelldelete.h"   // showDeleteToast:拖放复制成功的左下角提示
 #include "sortheader.h"
 #include "fileentry.h"
@@ -84,6 +85,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     if (AppSettings::instance().get("Interface/favPanelSeen", false).toBool() == false
         && !mw_impl::appSettings().contains("Layout/last/panes"))
         m_panesOn.removeAll(QStringLiteral("favorites"));
+    // #242:分类筛选器面板同款处理
+    if (AppSettings::instance().get("Interface/filterPanelSeen", false).toBool() == false
+        && !mw_impl::appSettings().contains("Layout/last/panes"))
+        m_panesOn.removeAll(QStringLiteral("filter"));
 
     createMenubar();
     Logger::boot("ctor:menubar");
@@ -231,6 +236,28 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
         saveFavorites();
         m_favs->setPaths(m_favPaths);
     });
+
+    // ── #242 分类筛选器面板:树栏下半(收藏夹之下),同信息面板手法 ──
+    //   条件真源 = 面板勾选;显隐推拉在 applyPaneVisibility 的 filter 分支
+    m_filterPane = new QWidget;
+    m_filterPane->setStyleSheet(QString("background:%1;border:none;").arg(C_SIDEBAR));
+    auto* kvl = new QVBoxLayout(m_filterPane);
+    kvl->setContentsMargins(0, 0, 0, 0);
+    kvl->setSpacing(0);
+    kvl->addWidget(createPaneHeader(gazeTr("分类筛选器"), "filter"));
+    m_filterPnl = new FilterPanel;
+    kvl->addWidget(m_filterPnl);
+    m_filterPane->setMinimumHeight(120);
+    m_filterPane->setVisible(paneOn("filter"));   // 构造期先对齐意图,restorePanes 稍后统一重算
+    tv->addWidget(m_filterPane);
+    // 勾选变化 → 网格:范围不同先切范围(重扫),再压条件(重筛)。
+    // 面板组装先于 m_fileGrid 创建,lambda 里经 this 取,发射时都已就位
+    connect(m_filterPnl, &FilterPanel::conditionsChanged, this, [this](int scope) {
+        if (!m_fileGrid) return;
+        if (m_fileGrid->multiFilterScope() != scope)
+            m_fileGrid->setMultiFilterScope(scope);
+        m_fileGrid->setMultiFilter(m_filterPnl->spec());
+    });
     // #236/#247 实测定案:挂树这笔账不可省——推迟到首帧后挂,firstPaint 无净
     // 收益(快档 749ms vs 基线 751ms),因为基线记在挂树名下的 337~635ms 并不是
     // 挂树本身(QSplitter::addWidget 推迟后实测仅 7~11ms),而是**恰好在此触发的
@@ -273,6 +300,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     setAcceptDrops(true);
     connect(m_sortHeader, &SortHeader::sortChanged, m_fileGrid, &FileGrid::sort);
     connect(m_fileGrid, &FileGrid::fileCountChanged, this, &MainWindow::updateStatus);
+    // #242 命中计数:网格每次重筛/换目录都发 fileCountChanged,筛选面板跟着刷新
+    connect(m_fileGrid, &FileGrid::fileCountChanged, this, [this]() {
+        if (m_filterPnl) m_filterPnl->setHitCount(m_fileGrid->fileCount());
+    });
     connect(m_fileGrid, &FileGrid::selectionChanged, this, &MainWindow::onSelectionChanged);
     // 反向同步:任何入口(筛选菜单/红标循环/键盘)改了 filterMode,下拉框跟着走。
     // 这个框只列 8 种"格式",而筛选菜单/红标三态键还会给出 图像(+目录)、
@@ -583,6 +614,9 @@ void MainWindow::applyThemeSurfaces() {
     if (m_favPane)
         m_favPane->setStyleSheet(QString("background:%1;border:none;").arg(C_SIDEBAR));
     if (m_favs)       m_favs->applyTheme();   // #243:收藏夹列表同款重灌
+    if (m_filterPane)
+        m_filterPane->setStyleSheet(QString("background:%1;border:none;").arg(C_SIDEBAR));
+    if (m_filterPnl)  m_filterPnl->applyTheme();   // #242:筛选面板同款重灌
 }
 
 // ── #243 收藏夹:数据真源 = m_favPaths,改动即写 Favorites/paths ──

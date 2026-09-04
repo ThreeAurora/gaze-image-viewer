@@ -15,6 +15,7 @@ public:
     void        setColor(const QString& path, int color);
     int         colorFor(const QString& path);            // 无记录返回 0
     QHash<QString,int> colorsForDir(const QString& dir);  // 目录前缀批量加载
+    QHash<QString,int> allColored();                      // 全表(分类筛选器"全局"范围的候选宇宙)
     void        removePaths(const QStringList& paths);    // 文件删除时清理
 
     static QColor colorValue(int color);

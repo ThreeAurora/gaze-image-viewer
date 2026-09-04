@@ -55,15 +55,17 @@
 // ═══════════════════════════════════════════
 // 筛选:按 m_filterMode 从 m_allEntries 生成 m_entries
 // ═══════════════════════════════════════════
+// 压缩档集合:单模式 FILTER_ARCHIVES 与 #242 多筛选的类型维共用(口径必须一致)
+static const std::set<QString> kArchiveExts = {
+    ".zip", ".rar", ".7z", ".gz", ".tar", ".tgz", ".cbz", ".cbr"
+};
+
 void FileGrid::applyFilter() {
     auto isImg = [](const FileEntry& e) { return IMAGE_EXTS.count(e.ext) > 0; };
     auto isVid = [](const FileEntry& e) { return VIDEO_EXTS.count(e.ext) > 0; };
     auto isAud = [](const FileEntry& e) { return AUDIO_EXTS.count(e.ext) > 0; };
     auto isDoc = [](const FileEntry& e) { return DOCUMENT_EXTS.count(e.ext) > 0; };
     auto isExe = [](const FileEntry& e) { return EXECUTABLE_EXTS.count(e.ext) > 0; };
-    static const std::set<QString> archives = {
-        ".zip", ".rar", ".7z", ".gz", ".tar", ".tgz", ".cbz", ".cbr"
-    };
     // #125 自定义筛选:ini "Browser/customExts" 是用户自己的扩展名清单,
     //   逗号/分号/空格分隔、点可带可不带、大小写不敏感。只在这里解析一次 ——
     //   逐条目读 ini 是 #75 那一类卡顿的老路。
@@ -97,7 +99,7 @@ void FileGrid::applyFilter() {
         case FILTER_VIDEOS:       ok = !e.isDir && isVid(e); break;
         case FILTER_VIDEOS_DIRS:  ok = e.isDir || isVid(e); break;
         case FILTER_AUDIO:        ok = !e.isDir && isAud(e); break;
-        case FILTER_ARCHIVES:     ok = !e.isDir && archives.count(e.ext) > 0; break;
+        case FILTER_ARCHIVES:     ok = !e.isDir && kArchiveExts.count(e.ext) > 0; break;
         case FILTER_DOCUMENTS:    ok = !e.isDir && isDoc(e); break;
         case FILTER_EXECUTABLES:  ok = !e.isDir && isExe(e); break;
         case FILTER_FOLDERS:      ok = e.isDir; break;
@@ -109,6 +111,8 @@ void FileGrid::applyFilter() {
         case FILTER_UNRED:        ok = e.colorLabel != 1; break;
         case FILTER_CUSTOM:       ok = !e.isDir && custom.count(e.ext) > 0; break;
         }
+        // #242 第二层筛选:目录行不参与条件判定恒显示(递归范围下目录行是导航骨架)
+        if (ok && m_mf.active && !e.isDir) ok = mfMatch(e);
         if (ok) m_entries.push_back(e);
     }
     m_geomDirty = true;      // 内容变了,几何待重建
@@ -137,6 +141,88 @@ void FileGrid::setFilterMode(int mode) {
         emit selectionChanged({});
     }
     emit filterModeChanged(mode);
+}
+
+// ═══════════════════════════════════════════
+// #242 分类筛选器:第二层筛选(与单模式 filter 相与)
+// ═══════════════════════════════════════════
+
+// 单条目判命中。颜色维/类型维各自"任一勾选命中";两维全空不会走到这
+// (active=false 时 applyFilter 不调)。OR=任一维命中;AND=每个有勾选的维都要命中。
+bool FileGrid::mfMatch(const FileEntry& e) const {
+    auto catOf = [](const FileEntry& fe) -> int {
+        // 0=图像(含 RAW:筛选器面向"找图",RAW 也是图,有意与单模式 FILTER_IMAGES 不同)
+        if (IMAGE_EXTS.count(fe.ext) || RAW_EXTS.count(fe.ext)) return 0;
+        if (VIDEO_EXTS.count(fe.ext))      return 1;
+        if (AUDIO_EXTS.count(fe.ext))      return 2;
+        if (DOCUMENT_EXTS.count(fe.ext))   return 3;
+        if (EXECUTABLE_EXTS.count(fe.ext)) return 4;
+        if (kArchiveExts.count(fe.ext))    return 5;
+        return -1;
+    };
+    const bool colorHit = m_mf.colors.contains(e.colorLabel);
+    bool catHit = false;
+    if (!m_mf.cats.isEmpty()) {
+        const int c = catOf(e);
+        catHit = (c >= 0 && m_mf.cats.contains(c));
+    }
+    if (m_mf.andMode) {
+        if (!m_mf.colors.isEmpty() && !colorHit) return false;
+        if (!m_mf.cats.isEmpty() && !catHit) return false;
+        return true;
+    }
+    return colorHit || catHit;
+}
+
+// 条件变化后的重筛收尾 —— 与 setFilterMode 尾段同款(清选中→筛→排→清缓存→
+// 重排→发计数→选首项),但不落盘、不发 filterModeChanged(单模式没有动)
+void FileGrid::refilterForMulti() {
+    m_selected.clear();
+    m_lastClicked = -1;
+    applyFilter();
+    sort(m_sortCol, m_sortAsc);
+    m_thumbCache.clear();
+    m_thumbOrder.clear();
+    m_fitCache.clear();
+    m_hoverIdx = -1;
+    updateLayout();
+    requestVisibleThumbs();
+    emit fileCountChanged();
+    if (!m_entries.empty()) {
+        m_selected.insert(0);
+        m_lastClicked = 0;
+        emit selectionChanged(m_entries[0].path);
+    } else {
+        emit selectionChanged({});
+    }
+}
+
+void FileGrid::setMultiFilter(const MultiFilterSpec& spec) {
+    MultiFilterSpec s = spec;
+    s.active = !s.colors.isEmpty() || !s.cats.isEmpty();
+    if (s.colors == m_mf.colors && s.cats == m_mf.cats
+        && s.andMode == m_mf.andMode && s.active == m_mf.active) return;
+    m_mf = s;
+    refilterForMulti();
+}
+
+void FileGrid::clearMultiFilter() {
+    if (m_mf.colors.isEmpty() && m_mf.cats.isEmpty() && m_mfScope == 0) return;
+    m_mf = MultiFilterSpec{};
+    if (m_mfScope == 0) { refilterForMulti(); return; }
+    m_mfScope = 0;   // 范围复位:全局/递归注入的条目要重扫掉
+    const QString dir = m_currentDir;
+    m_currentDir.clear();
+    if (!dir.isEmpty()) loadDirectory(dir);
+}
+
+void FileGrid::setMultiFilterScope(int scope) {
+    scope = qBound(0, scope, 2);
+    if (scope == m_mfScope) return;
+    m_mfScope = scope;   // 0本层 1递归 2全局:条目宇宙变了,按换目录重扫
+    const QString dir = m_currentDir;
+    m_currentDir.clear();
+    if (!dir.isEmpty()) loadDirectory(dir);
 }
 
 // ═══════════════════════════════════════════

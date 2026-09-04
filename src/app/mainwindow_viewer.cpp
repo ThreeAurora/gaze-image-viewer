@@ -5,6 +5,8 @@
 #include "imgsearchdialog.h"
 #include "printdialog.h"
 #include "infopanel.h"
+#include "favoritespanel.h"
+#include "filterpanel.h"
 #include "shelldelete.h"   // showDeleteToast:拖放复制成功的左下角提示
 #include "sortheader.h"
 #include "theme.h"         // applyLive:查看→主题 与 设置→外观 同一条即时链
@@ -190,7 +192,8 @@ void MainWindow::createLayoutMenu() {
 // ═══════════════════════════════════════════
 // "info" = #80 元数据面板+直方图,默认不打开(见 kPanesDefault)
 // "favorites" = #243 收藏夹面板(挂在树栏下半),默认不打开(Interface/favPanelSeen)
-static const char* const kPanes[] = { "tree", "preview", "addr", "tool", "status", "info", "favorites" };
+// "filter" = #242 分类筛选器面板(挂在树栏下半收藏夹之下),默认不打开(Interface/filterPanelSeen)
+static const char* const kPanes[] = { "tree", "preview", "addr", "tool", "status", "info", "favorites", "filter" };
 static const int kPaneCount = int(sizeof(kPanes) / sizeof(kPanes[0]));
 
 QStringList MainWindow::paneIds() const {
@@ -251,6 +254,7 @@ void MainWindow::applyPaneVisibility() {
         if (m_toolRow)     m_toolRow->hide();
         if (m_infoPane)    m_infoPane->hide();
         if (m_favPane)     m_favPane->hide();
+        if (m_filterPane)  m_filterPane->hide();
         statusBar()->hide();
         return;
     }
@@ -274,6 +278,24 @@ void MainWindow::applyPaneVisibility() {
         m_favPane->setVisible(on && !m_viewerMode);
         if (on && !AppSettings::instance().get("Interface/favPanelSeen", false).toBool())
             AppSettings::instance().set("Interface/favPanelSeen", true);
+    }
+    // #242 分类筛选器:容器在树栏下半(收藏夹之下),浏览器态才有意义。
+    // 开=把面板当前条件推给网格(重开恢复上次勾选);关=清掉第二层筛选(范围复位回本层)
+    if (m_filterPane) {
+        const bool on = paneOn("filter");
+        m_filterPane->setVisible(on && !m_viewerMode);
+        if (on && !AppSettings::instance().get("Interface/filterPanelSeen", false).toBool())
+            AppSettings::instance().set("Interface/filterPanelSeen", true);
+        if (m_filterPnl && m_fileGrid) {
+            if (on) {
+                const int sc = m_filterPnl->scope();
+                if (m_fileGrid->multiFilterScope() != sc)
+                    m_fileGrid->setMultiFilterScope(sc);
+                m_fileGrid->setMultiFilter(m_filterPnl->spec());
+            } else {
+                m_fileGrid->clearMultiFilter();
+            }
+        }
     }
 }
 
@@ -329,6 +351,7 @@ void MainWindow::createViewMenu() {
         { "status",  "状态栏", "" },                 // 状态栏
         { "info",    "信息面板", "F9" },     // 信息面板(元数据+直方图)
         { "favorites", "收藏夹面板", "" },   // 收藏夹(默认无快捷键,同预览面板)
+        { "filter",  "分类筛选器面板", "" }, // 分类筛选器(默认无快捷键,同收藏夹)
     };
     const QStringList all = paneIds();
     // kPanes / m_paneActs / items 是三张手工并行维护的表。飘了的后果不是"菜单

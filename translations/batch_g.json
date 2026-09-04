@@ -1,0 +1,15 @@
+{
+  "分类筛选器": "Category filters",
+  "分类筛选器面板": "Category filter panel",
+  "任一": "Any",
+  "任一:颜色或类型条件命中其一即显示": "Any: show files matching either the color or the type condition",
+  "全部:颜色和类型条件须同时命中": "All: files must match both the color and the type conditions",
+  "清除筛选": "Clear filter",
+  "取消全部勾选(范围保持不变)": "Uncheck all (scope unchanged)",
+  "当前目录": "Current folder",
+  "当前目录(递归)": "Current folder (recursive)",
+  "全部标记文件": "All labeled files",
+  "全部标记文件 = 在整个颜色标记库中搜索(跨目录);格式条件在其结果上生效": "All labeled files = search the whole color-label database (across folders); type conditions apply to its results",
+  "显示 %1 项": "Showing %1 items",
+  "可执行": "Executable"
+}

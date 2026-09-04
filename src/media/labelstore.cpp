@@ -78,6 +78,18 @@ QHash<QString,int> LabelStore::colorsForDir(const QString& dir) {
     return out;
 }
 
+QHash<QString,int> LabelStore::allColored() {
+    QHash<QString,int> out;
+    QSqlDatabase d = db();
+    if (!d.isOpen()) return out;
+    QSqlQuery q(d);
+    if (q.exec("SELECT path, color FROM labels WHERE color > 0")) {
+        while (q.next())
+            out.insert(q.value(0).toString(), q.value(1).toInt());
+    }
+    return out;
+}
+
 void LabelStore::removePaths(const QStringList& paths) {
     QSqlDatabase d = db();
     if (!d.isOpen()) return;

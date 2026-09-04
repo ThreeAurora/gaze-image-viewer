@@ -31,6 +31,7 @@
 #include <QContextMenuEvent>
 #include <QToolTip>
 #include <QFileInfo>
+#include <QDateTime>
 #include <QDir>
 #include <QDesktopServices>
 #include <QUrl>
@@ -320,10 +321,43 @@ void FileGrid::loadDirectory(const QString& dirPath) {
 
     m_allEntries = fastScanDir(dirPath);
 
-    // ── FileList/showSubFolders(树右键"显示子文件夹中的文件")──
+    // ── #242 分类筛选器范围 2=全局:候选宇宙=标签库全表,只列其中仍存在、
+    //   非目录的文件。本层扫描结果整个丢弃 —— 全局语义就是"跨目录找标记过的
+    //   文件",混进本层未标记文件会让三档范围的边界含糊。已删除路径静默忽略。
+    QHash<QString,int> globalColored;   // 全表色(下方直接复用,免二次查询)
+    if (m_mfScope == 2) {
+        PerfLog::Scope probe("loadDir.multiGlobal", 50);
+        globalColored = LabelStore::instance().allColored();
+        m_allEntries.clear();
+        m_allEntries.reserve(globalColored.size());
+        QSet<QString> seen;
+        seen.reserve(globalColored.size());
+        for (auto it = globalColored.constBegin(); it != globalColored.constEnd(); ++it) {
+            const QString clean = QDir::cleanPath(it.key());
+            if (seen.contains(clean)) continue;
+            seen.insert(clean);
+            QFileInfo fi(clean);
+            if (!fi.exists() || fi.isDir()) continue;
+            FileEntry fe;
+            fe.name = fi.fileName();
+            fe.path = clean;
+            const int dot = fe.name.lastIndexOf(QLatin1Char('.'));
+            fe.ext = (dot > 0) ? fe.name.mid(dot).toLower() : QString();
+            fe.hidden = fi.isHidden();
+            fe.size = fi.size();
+            const QDateTime lm = fi.lastModified();
+            const QDateTime bt = fi.birthTime();
+            fe.mtime = lm.isValid() ? double(lm.toSecsSinceEpoch()) : 0.0;
+            fe.ctime = bt.isValid() ? double(bt.toSecsSinceEpoch()) : 0.0;
+            fe.colorLabel = it.value();
+            m_allEntries.push_back(fe);
+        }
+    }
+    // ── FileList/showSubFolders(树右键"显示子文件夹中的文件")/
+    //   #242 范围1=当前目录(递归):两者共用同一条递归铺开 ──
     // 目录行仍只列本层,只有文件向下递归铺开。整棵子树的枚举代价由探针记账,
     // 逛巨型仓库时慢在哪一眼可见,不用靠猜。
-    if (m_showSubFolders) {
+    else if (m_showSubFolders || m_mfScope == 1) {
         QStringList subDirs;
         subDirs.reserve(static_cast<int>(m_allEntries.size()));
         for (const auto& e : m_allEntries)
@@ -338,8 +372,10 @@ void FileGrid::loadDirectory(const QString& dirPath) {
     // ── FileList/recognizeByExt(默认开)= 只看扩展名 ──
     // 关掉时按文件头魔数判定真实格式(扩展名被改错/缺失仍能正确归类);
     // 是否允许读头由 FileList/scanHeader 按卷类型决定(软盘/光盘默认不读,
-    // 免得逐文件寻道把 removable 介质拖垮)
-    if (!AppSettings::instance().get("FileList/recognizeByExt", true).toBool()
+    // 免得逐文件寻道把 removable 介质拖垮)。#242 全局范围不读:条目可能散在
+    // 几万个路径上,逐个开门读头是数万次 IO,且这些文件扩展名即真源
+    if (m_mfScope != 2
+        && !AppSettings::instance().get("FileList/recognizeByExt", true).toBool()
         && headerScanAllowed(dirPath)) {
         for (auto& e : m_allEntries) {
             if (e.isDir) continue;
@@ -351,8 +387,9 @@ void FileGrid::loadDirectory(const QString& dirPath) {
     m_selected.clear();
     m_lastClicked = -1;
 
-    // 颜色标记批量加载(目录前缀查询,一次 SQL)
-    m_colorLabels = LabelStore::instance().colorsForDir(dirPath);
+    // 颜色标记批量加载(目录前缀查询,一次 SQL);#242 范围2的全表色已在上文取好
+    m_colorLabels = (m_mfScope == 2)
+        ? globalColored : LabelStore::instance().colorsForDir(dirPath);
     for (auto& e : m_allEntries)
         e.colorLabel = m_colorLabels.value(e.path, 0);
 

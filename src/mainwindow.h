@@ -23,6 +23,7 @@ class FileGrid;
 class PreviewPanel;
 class InfoPanel;
 class FavoritesPanel;
+class FilterPanel;
 class SortHeader;
 class FilmStrip;
 class SettingsDialog;      // #218 长驻工具窗(非模态单例)
@@ -258,12 +259,14 @@ private:
     InfoPanel* m_info    = nullptr;  // #80 元数据表 + 直方图
     QWidget* m_favPane   = nullptr;  // #243 收藏夹面板容器(含标题条,挂在树栏下半)
     FavoritesPanel* m_favs = nullptr;  // #243 收藏夹列表(数据真源=m_favPaths)
+    QWidget* m_filterPane = nullptr; // #242 分类筛选器容器(含标题条,树栏下半收藏夹之下)
+    FilterPanel* m_filterPnl = nullptr; // #242 条件真源(勾选即落盘 Filter/*)
     // 各面板标题条(createPaneHeader 产出;主题切换时重灌内联样式)
     QList<QWidget*> m_paneHdrs;
     QWidget* m_addrRow = nullptr;     // 地址栏行(视图菜单可隐藏)
     QWidget* m_toolRow = nullptr;     // 工具栏第二行(视图菜单可隐藏)
     // 面板开关 action(视图菜单),与 m_panesOn 同步 ✓
-    QAction* m_paneActs[7] = {};   // 容量须 >= kPaneCount(新增 favorites 面板后为 7)
+    QAction* m_paneActs[8] = {};   // 容量须 >= kPaneCount(新增 filter 面板后为 8)
     // 用户意图:当前应显示的面板 id 列表(顺序同 paneIds)。
     // 查看器模式的临时隐藏不改这里,避免污染持久化状态
     QStringList m_panesOn;

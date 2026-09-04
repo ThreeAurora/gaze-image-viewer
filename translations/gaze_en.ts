@@ -778,6 +778,14 @@ Current settings were copied there (existing files are not overwritten).</transl
         <translation>Image search by text...</translation>
     </message>
     <message>
+        <source>任一</source>
+        <translation>Any</translation>
+    </message>
+    <message>
+        <source>任一:颜色或类型条件命中其一即显示</source>
+        <translation>Any: show files matching either the color or the type condition</translation>
+    </message>
+    <message>
         <source>份数</source>
         <translation>Copies</translation>
     </message>
@@ -966,6 +974,18 @@ Next start will restore:
         <translation>All</translation>
     </message>
     <message>
+        <source>全部:颜色和类型条件须同时命中</source>
+        <translation>All: files must match both the color and the type conditions</translation>
+    </message>
+    <message>
+        <source>全部标记文件</source>
+        <translation>All labeled files</translation>
+    </message>
+    <message>
+        <source>全部标记文件 = 在整个颜色标记库中搜索(跨目录);格式条件在其结果上生效</source>
+        <translation>All labeled files = search the whole color-label database (across folders); type conditions apply to its results</translation>
+    </message>
+    <message>
         <source>共 %1 项</source>
         <translation>%1 items in total</translation>
     </message>
@@ -1006,6 +1026,14 @@ Next start will restore:
 </source>
         <translation>Failed to write file:
 </translation>
+    </message>
+    <message>
+        <source>分类筛选器</source>
+        <translation>Category filters</translation>
+    </message>
+    <message>
+        <source>分类筛选器面板</source>
+        <translation>Category filter panel</translation>
     </message>
     <message>
         <source>切换文件夹(扫过即进入)</source>
@@ -1224,6 +1252,10 @@ Unchecked: reuse the pane switches from the last exit (requires a saved layout o
         <translation>Cancel</translation>
     </message>
     <message>
+        <source>取消全部勾选(范围保持不变)</source>
+        <translation>Uncheck all (scope unchanged)</translation>
+    </message>
+    <message>
         <source>取消颜色标记</source>
         <translation>Clear Color Label</translation>
     </message>
@@ -1254,6 +1286,10 @@ e.g. psd, ai, raw, cr2, nef</translation>
     <message>
         <source>可从回收站恢复。</source>
         <translation>It can be restored from the Recycle Bin.</translation>
+    </message>
+    <message>
+        <source>可执行</source>
+        <translation>Executable</translation>
     </message>
     <message>
         <source>可执行文件</source>
@@ -1770,6 +1806,14 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
         <translation>Current file</translation>
     </message>
     <message>
+        <source>当前目录</source>
+        <translation>Current folder</translation>
+    </message>
+    <message>
+        <source>当前目录(递归)</source>
+        <translation>Current folder (recursive)</translation>
+    </message>
+    <message>
         <source>循环文件列表</source>
         <translation>Loop file list</translation>
     </message>
@@ -2266,6 +2310,10 @@ Try a different selection (a bit larger and farther from the edges).</translatio
         <translation>Show</translation>
     </message>
     <message>
+        <source>显示 %1 项</source>
+        <translation>Showing %1 items</translation>
+    </message>
+    <message>
         <source>显示/隐藏图片</source>
         <translation>Show/hide images</translation>
     </message>
@@ -2616,6 +2664,10 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     <message>
         <source>清除</source>
         <translation>Clear</translation>
+    </message>
+    <message>
+        <source>清除筛选</source>
+        <translation>Clear filter</translation>
     </message>
     <message>
         <source>清除缩略图</source>
