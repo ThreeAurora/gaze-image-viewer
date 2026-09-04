@@ -171,6 +171,13 @@ inline void killStartedService() {
 inline void ensureRunningAsync(QObject* ctx, std::function<void(QString)> onReady) {
     pingAsync(ctx, [ctx, onReady = std::move(onReady)](bool alive) {
         if (alive) { onReady({}); return; }
+        // #222(2026-09-04 用户令):默认绝不自动拉起万象图搜服务;开关打开才
+        // 按需启动(该功能后期还要大改,此处只做最小开关,不建预热/常驻逻辑)
+        if (!AppSettings::instance().get("ImgSearch/autoStart", false).toBool()) {
+            onReady(gazeTr(
+                "万象图搜服务未运行。可手动运行 main.py,或在 设置 → 以文搜图 打开自动启动"));
+            return;
+        }
         const QString dir = AppSettings::instance().get(
             "ImgSearch/dir", defaultDir()).toString();
         const QString py = AppSettings::instance().get(

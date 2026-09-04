@@ -390,7 +390,7 @@ QWidget* SettingsDialog::pageIntegration() {
 }
 
 // ── 以文搜图:万象图搜(imgseek)服务位置/生命周期/测试连接 ──
-// 键:ImgSearch/dir python port killOnExit(消费方在 imgsearch.h 与
+// 键:ImgSearch/dir python port autoStart killOnExit(消费方在 imgsearch.h 与
 // mainwindow closeEvent;改动即时落 ini)
 QWidget* SettingsDialog::pageImgSearch() {
     auto* root = new QVBoxLayout;
@@ -468,10 +468,14 @@ QWidget* SettingsDialog::pageImgSearch() {
     // 分组"服务生命周期"
     auto* fLife = new QFormLayout;
     fLife->setVerticalSpacing(6);
+    // #222(2026-09-04 用户令):默认不自动拉起服务;开关只管"搜索时按需启动"
+    fLife->addRow(chk("ImgSearch/autoStart",
+        gazeTr("服务未运行时,搜索前自动启动万象图搜服务"), false));
     fLife->addRow(chk("ImgSearch/killOnExit",
         gazeTr("退出 Gaze 时结束由 Gaze 拉起的图搜服务"), false));
     auto* lifeNote = new QLabel(gazeTr(
-        "只回收由 Gaze 自动拉起的服务实例;手动启动的不受影响。"));
+        "默认由你手动运行 main.py;自动启动关闭时,以文搜图只会报\"服务未运行\"。"
+        "\"退出时结束\"只回收由 Gaze 自动拉起的服务实例,手动启动的不受影响。"));
     lifeNote->setStyleSheet(
         QString("background:transparent;color:%1;").arg(C_TEXT_FAINT));
     fLife->addRow(lifeNote);

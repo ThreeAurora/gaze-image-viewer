@@ -108,7 +108,7 @@ An **exhaustive list** of what Gaze can actually do, compiled from: the full dev
 - Toolbar filter dropdown with indicator sync
 - Inline search Ctrl+F: search-as-you-type, previous/next, highlight, greyed when empty
 - Name search dialog: include/exclude regexes, recursive, include hidden, include folders; time-budgeted scanning never freezes the UI, results stream in, depth/hit caps reported honestly
-- Search images by text (wanxiang-imgseek client, Ctrl+Shift+F): auto-starts the backend, model switching (Chinese/English CLIP), sorting, result grid with per-source score badges, right-click locate/open/copy path, double-click reveals in the main window, service lifecycle management
+- Search images by text (wanxiang-imgseek client, Ctrl+Shift+F): backend service is NOT auto-started by default (enable auto-start in Settings → Search images by text), model switching (Chinese/English CLIP), sorting, result grid with per-source score badges, right-click locate/open/copy path, double-click reveals in the main window, service lifecycle management
 
 ## 9. Settings (~166 keys + 3 composite groups, 20 category pages)
 
@@ -124,7 +124,7 @@ Per-key status in [SETTINGS_MATRIX.md](SETTINGS_MATRIX.md). Group overview:
 - **Interface**: multi/single tab & cap, sync viewer to browser, startup panes, recent files cap & cleanup, title templates ×2, slideshow interval
 - **LabelColors**: extension→name-background mapping + fallback color
 - **Print**: 15 fully persisted print-dialog keys (printer/paper/copies/landscape/per-page/fit/margins/gaps/caption/font size/grayscale/background/border/subset/range)
-- **ImgSearch**: port / directory / python / kill-on-exit
+- **ImgSearch**: port / directory / python / auto-start / kill-on-exit
 - **Integration**: Explorer context-menu integration (incl. directory background), portable vs %APPDATA% ini location migration
 - **Layout/Fullscreen**: layout-scheme group; independent fullscreen group
 - **Shortcuts**: every browser menu action with a shortcut is rebindable + 8 viewer actions

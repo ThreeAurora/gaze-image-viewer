@@ -578,6 +578,10 @@ Version 1.0 — C++ + Qt6</translation>
         <translation>One viewer tab per file</translation>
     </message>
     <message>
+        <source>万象图搜服务未运行。可手动运行 main.py,或在 设置 → 以文搜图 打开自动启动</source>
+        <translation>ImageSeek service is not running. Run main.py manually, or enable auto-start in Settings → Image search by text</translation>
+    </message>
+    <message>
         <source>三分法</source>
         <translation>Rule of thirds</translation>
     </message>
@@ -1176,10 +1180,6 @@ Unchecked: reuse the pane switches from the last exit (requires a saved layout o
     <message>
         <source>变动</source>
         <translation>Changes</translation>
-    </message>
-    <message>
-        <source>只回收由 Gaze 自动拉起的服务实例;手动启动的不受影响。</source>
-        <translation>Only service instances launched by Gaze are shut down; ones started manually are untouched.</translation>
     </message>
     <message>
         <source>只在上一项勾选时参与:X/Y DPI 不等时横轴按各自 DPI 换算,
@@ -2244,6 +2244,10 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     <message>
         <source>服务无响应(连接失败或超时)</source>
         <translation>Service not responding (connection failed or timed out)</translation>
+    </message>
+    <message>
+        <source>服务未运行时,搜索前自动启动万象图搜服务</source>
+        <translation>Start the ImageSeek service automatically before searching when it is not running</translation>
     </message>
     <message>
         <source>服务生命周期</source>
@@ -3382,6 +3386,10 @@ Continue?</translation>
     <message>
         <source>默认</source>
         <translation>Default</translation>
+    </message>
+    <message>
+        <source>默认由你手动运行 main.py;自动启动关闭时,以文搜图只会报&quot;服务未运行&quot;。&quot;退出时结束&quot;只回收由 Gaze 自动拉起的服务实例,手动启动的不受影响。</source>
+        <translation>main.py runs manually by default; with auto-start off, image search just reports &quot;service not running&quot;. &quot;Stop on exit&quot; only reclaims service instances started by Gaze — manually started ones are unaffected.</translation>
     </message>
     <message>
         <source>默认颜色</source>
