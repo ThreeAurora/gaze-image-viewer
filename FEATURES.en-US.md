@@ -20,7 +20,7 @@ An **exhaustive list** of what Gaze can actually do, compiled from: the full dev
 - Show "Desktop" in tree; show hidden items
 - Drag & drop: navigate / move from Explorer, Ctrl+drop copies, optional confirmation; forbidden cursor when dropping outside the grid/tree
 - Window title templates: separate browser/viewer templates with {folder}/{filename} placeholders
-- Startup behavior: with file / without file / specific folder, remember filename, restore last folder/file, open list + preview at start
+- Startup behavior: with-file (five modes: viewer / fullscreen-viewer / browser / browser-fullscreen / fullscreen preview, #233) / without file / specific folder, remember filename, restore last folder/file, open list + preview at start
 - Single instance: relaunching raises the existing window via IPC and passes the path; CLI file arguments open directly
 
 ## 2. Thumbnails
@@ -42,7 +42,7 @@ An **exhaustive list** of what Gaze can actually do, compiled from: the full dev
 - Zoom: Ctrl+wheel cursor-centered zoom, long-press for true 1:1 pixels (cursor-focused), drag panning, navigator mini-map with draggable blue frame
 - Auto-fit profiles for normal and fullscreen, reset-on-navigate toggle, separate in/out scaling filters, 10 pixel-ratio entries, HiDPI 1px=1px, gamma correction, sharpening, two-pass rendering, read-ahead one image / keep current
 - Viewer appearance: background color, checkerboard padding, borders, scrollbars, pan tool, selection overlay, color-label display
-- Three fullscreen layers: F11 fullscreen UI / G fullscreen preview (image only, exact layout restore on exit) / in-viewer fullscreen; floating toolbar, hide cursor, playbar/toolbar/scrollbar visibility, dual-monitor choice (#230: the top-left info badge is gone; name/size moved to the film-strip caption) — an independent fullscreen config group; preview context menu gains "Fullscreen Preview  (G)" for images/videos/audio alike (#224); G fullscreen film strip = every file in the folder participates (not just images; thumbnail-less cells draw the file name; RAW counts as image but never enters the thumbnail queue), three check buttons on the right — images/videos/audio — toggle categories on/off (all on by default, persisted in ini, #225/#226); #230 polish: slimmer strip (cell height 96→72), current item image fills its cell with a 3px blue frame (others shrink to 84%), caption in bold 13px pure white with file size, top-left info badge removed (Fullscreen/showInfo chain dropped; name/size now live in the caption), the three toggles match the exit button height in one mellow-blue group, and Ctrl+W in fullscreen only exits fullscreen without closing the tab
+- Three fullscreen layers: F11 fullscreen UI / G fullscreen preview (image only, exact layout restore on exit) / in-viewer fullscreen; floating toolbar, hide cursor, playbar/toolbar/scrollbar visibility, dual-monitor choice (#230: the top-left info badge is gone; name/size moved to the film-strip caption) — an independent fullscreen config group; preview context menu gains "Fullscreen Preview" with a right-aligned key column for images/videos/audio alike (#224; the key value follows the viewer hotkey table, rebindable under Settings → Shortcuts → Viewer, #234); G fullscreen film strip = every file in the folder participates (not just images; thumbnail-less cells draw the file name; RAW counts as image but never enters the thumbnail queue), three check buttons on the right — images/videos/audio — toggle categories on/off (all on by default, persisted in ini, #225/#226); #230 polish: slimmer strip (cell height 96→72), current item image fills its cell with a 3px blue frame (others shrink to 84%), caption in bold 13px pure white with file size, top-left info badge removed (Fullscreen/showInfo chain dropped; name/size now live in the caption), the three toggles match the exit button height in one mellow-blue group, and Ctrl+W in fullscreen only exits fullscreen without closing the tab
 - Text preview: txt / MD toggles + auto-truncation for long files (three gates: 256 KB / 1000 lines / 2000 chars per line, keeps old machines fast); truncation notice at both top and bottom; word-wrap toggle (Settings → Browser → Preview, or preview context menu); Markdown switchable between "rendered style / plain text" (settings or context menu, #240)
 - Markdown rendered preview (custom renderer: headings, bold/italic/strike, inline & fenced code, quotes, lists, task lists, links, images, rules, tables, autolinks)
 - PDF preview: bundled Ghostscript (vendor/gs, AGPL license included)
@@ -143,7 +143,7 @@ Per-key status in [SETTINGS_MATRIX.md](SETTINGS_MATRIX.md). Group overview:
 
 ## 11. Shortcuts (full table)
 
-C/←/↑ previous · V/→/↓ next · Space play/pause · Ctrl+PgUp/PgDn switch left/right tab · Shift+PgUp/PgDn seek · hold right button + wheel zoom · double-click preview area open tab (browser) / close tab (viewer) · F5 refresh · F11 fullscreen UI · G fullscreen preview · ESC back · Alt+←/→ back/forward · Backspace up · Alt+Backspace address-bar delete · Ctrl+1~5 color labels · Ctrl+0/D clear · F red label · F2/F3 rename · Del/S delete · X new folder · Enter/double-click viewer · Ctrl+A select all · Ctrl+I invert · Ctrl+F inline search · Ctrl+W close tab · Ctrl+Shift+T reopen closed tab · Ctrl+P print · Ctrl+O open · Ctrl+C/X/V clipboard · Ctrl+Shift+F image search · F12 settings · F9 info panel · Space confirms dialogs · bare keys never hijack text edits
+C/←/↑ previous · V/→/↓ next · Space play/pause · Ctrl+PgUp/PgDn switch left/right tab · Shift+PgUp/PgDn seek · hold right button + wheel zoom · double-click preview area open tab (browser) / close tab (viewer) · F5 refresh · F11 fullscreen UI · G fullscreen preview (key = viewer hotkey table ViewerShortcut/, rebindable, #234) · ESC back · Alt+←/→ back/forward · Backspace up · Alt+Backspace address-bar delete · Ctrl+1~5 color labels · Ctrl+0/D clear · F red label · F2/F3 rename · Del/S delete · X new folder · Enter/double-click viewer · Ctrl+A select all · Ctrl+I invert · Ctrl+F inline search · Ctrl+W close tab · Ctrl+Shift+T reopen closed tab · Ctrl+P print · Ctrl+O open · Ctrl+C/X/V clipboard · Ctrl+Shift+F image search · F12 settings · F9 info panel · Space confirms dialogs · bare keys never hijack text edits
 
 ## 12. Print · Edit · Metadata
 
@@ -163,7 +163,7 @@ C/←/↑ previous · V/→/↓ next · Space play/pause · Ctrl+PgUp/PgDn switc
 ## 14. Misc
 
 - Portable: Gaze.ini + thumbnails.db inside the program directory, no registry writes; migration = copying the folder
-- System integration: Explorer directory/background context menu "Browse with Gaze", Open With registration
+- System integration: Explorer directory/background context menu "Browse with Gaze", Open With registration, two independent file-association buttons (image+RAW / video+audio Gaze.Media group, #237), direct link to system default-apps page (#237 fixed the ms-settings URI that failed to open)
 - Build: CMake + Qt 6.8.3 MinGW, POST_BUILD syncs assets/vendor
 
 ## Appendix: Claims & Boundaries (honest notes)

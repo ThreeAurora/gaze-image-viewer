@@ -14,6 +14,9 @@ namespace Integration {
 
 // 文件关联(#204,2026-09-04 用户令)统一指向的 ProgId。
 inline const QString kAssocProgId = QStringLiteral("Gaze.Image");
+// #237:视频/音频组 ProgId —— #204 当时媒体刻意不绑(用户通常有专门播放器),
+// 同日用户主动要了独立按钮,愿绑自绑,与图片组互不相扰
+inline const QString kMediaProgId = QStringLiteral("Gaze.Media");
 
 inline QString exeNative() {
     return QDir::toNativeSeparators(QCoreApplication::applicationFilePath());
@@ -80,12 +83,12 @@ inline bool isBrowseMenuInstalled() {
 }
 
 // ── 文件关联(#204):ProgId + 应用能力 + 逐扩展名登记 ──
-// 关联范围 = IMAGE_EXTS ∪ RAW_EXTS(Gaze 能预览的静态图像全量)。视频刻意
-// 不进:用户通常有专门播放器,绑走双击会惊扰(用户要就再加)。
+// 两组范围(#237):①图片+RAW(IMAGE_EXTS ∪ RAW_EXTS,Gaze 能预览的静态图像全量);
+// ②视频+音频(VIDEO_EXTS ∪ AUDIO_EXTS,#204 当时刻意不绑,#237 用户主动要独立按钮)。
 // Windows 10 起"真正的默认"存在 FileExts\<ext>\UserChoice,带防篡改哈希,
 // 程序直写无官方通路、第三方哈希破解一次系统更新就废 —— 绝不碰。微软钦定
 // 的正路是下面三步,之后"默认"由 Windows 自己(带哈希)落笔:
-//   ① ProgId Gaze.Image:默认值/图标/打开命令;
+//   ① ProgId Gaze.Image / Gaze.Media:默认值/图标/打开命令;
 //   ② Software\Gaze\Capabilities + RegisteredApplications:Gaze 进入
 //     系统设置→应用→默认应用 列表,"设为默认"一键绑全部类型;
 //   ③ 每扩展名 OpenWithProgids:右键→打开方式 立即可选 Gaze(不等设默认)。
@@ -97,17 +100,28 @@ inline QStringList assocExtensions() {
     return out;
 }
 
-inline bool registerFileAssociations() {
+inline QStringList mediaAssocExtensions() {
+    QStringList out;
+    out.reserve(static_cast<int>(VIDEO_EXTS.size() + AUDIO_EXTS.size()));
+    for (const QString& e : VIDEO_EXTS) out << e;
+    for (const QString& e : AUDIO_EXTS) out << e;
+    return out;
+}
+
+// 一组扩展名的完整登记(幂等;Capabilities/RegisteredApplications 全应用一份,
+// 两组各自重写同值,后写覆盖前写无冲突)
+inline bool registerAssocGroup(const QString& progId, const QString& typeName,
+                               const QStringList& exts) {
     const QString exe = exeNative();
-    QSettings p("HKEY_CURRENT_USER\\Software\\Classes\\Gaze.Image",
+    QSettings p("HKEY_CURRENT_USER\\Software\\Classes\\" + progId,
                 QSettings::NativeFormat);
-    p.setValue(".", gazeTr("Gaze 图片"));
-    p.setValue("FriendlyTypeName", gazeTr("Gaze 图片"));
-    QSettings ic("HKEY_CURRENT_USER\\Software\\Classes\\Gaze.Image\\DefaultIcon",
+    p.setValue(".", typeName);
+    p.setValue("FriendlyTypeName", typeName);
+    QSettings ic("HKEY_CURRENT_USER\\Software\\Classes\\" + progId + "\\DefaultIcon",
                  QSettings::NativeFormat);
     ic.setValue(".", exe + ",0");
-    QSettings cm("HKEY_CURRENT_USER\\Software\\Classes\\Gaze.Image\\shell\\open\\command",
-                 QSettings::NativeFormat);
+    QSettings cm("HKEY_CURRENT_USER\\Software\\Classes\\" + progId
+                 + "\\shell\\open\\command", QSettings::NativeFormat);
     cm.setValue(".", "\"" + exe + "\" \"%1\"");
     bool ok = p.status() == QSettings::NoError
            && ic.status() == QSettings::NoError
@@ -116,11 +130,10 @@ inline bool registerFileAssociations() {
     QSettings cap("HKEY_CURRENT_USER\\Software\\Gaze\\Capabilities",
                   QSettings::NativeFormat);
     cap.setValue("ApplicationName", QStringLiteral("Gaze"));
-    cap.setValue("ApplicationDescription", gazeTr("轻量图片浏览器与管理器"));
+    cap.setValue("ApplicationDescription", gazeTr("轻量图片/视频浏览器与管理器"));
     cap.setValue("ApplicationIcon", exe + ",0");
-    const QStringList exts = assocExtensions();
     for (const QString& e : exts)
-        cap.setValue("FileAssociations/" + e, kAssocProgId);
+        cap.setValue("FileAssociations/" + e, progId);
     ok = ok && cap.status() == QSettings::NoError;
 
     QSettings ra("HKEY_CURRENT_USER\\Software\\RegisteredApplications",
@@ -131,17 +144,28 @@ inline bool registerFileAssociations() {
     for (const QString& e : exts) {
         QSettings ow("HKEY_CURRENT_USER\\Software\\Classes\\" + e
                      + "\\OpenWithProgids", QSettings::NativeFormat);
-        ow.setValue(kAssocProgId, QString());
+        ow.setValue(progId, QString());
         ok = ok && ow.status() == QSettings::NoError;
     }
 
     return ok;
 }
 
-// 只撤 Gaze 自己写入的登记:ProgId/Capabilities/RegisteredApplications 值
-// /各扩展名下 Gaze.Image 这一条;扩展名键本身是系统的,一个都不删。
+inline bool registerFileAssociations() {
+    return registerAssocGroup(kAssocProgId, gazeTr("Gaze 图片"), assocExtensions());
+}
+
+// #237:媒体组独立按钮入口(愿绑自绑;不影响图片组已有登记)
+inline bool registerMediaFileAssociations() {
+    return registerAssocGroup(kMediaProgId, gazeTr("Gaze 媒体"), mediaAssocExtensions());
+}
+
+// 只撤 Gaze 自己写入的登记:两个 ProgId/Capabilities/RegisteredApplications 值
+// /各扩展名下 Gaze.Image 与 Gaze.Media 这两条;扩展名键本身是系统的,一个都不删。
 inline bool removeFileAssociations() {
     QSettings("HKEY_CURRENT_USER\\Software\\Classes\\Gaze.Image",
+              QSettings::NativeFormat).remove("");
+    QSettings("HKEY_CURRENT_USER\\Software\\Classes\\Gaze.Media",
               QSettings::NativeFormat).remove("");
     QSettings("HKEY_CURRENT_USER\\Software\\Gaze",
               QSettings::NativeFormat).remove("");
@@ -149,12 +173,17 @@ inline bool removeFileAssociations() {
                  QSettings::NativeFormat);
     ra.remove("Gaze");
     bool ok = ra.status() == QSettings::NoError;
-    for (const QString& e : assocExtensions()) {
-        QSettings ow("HKEY_CURRENT_USER\\Software\\Classes\\" + e
-                     + "\\OpenWithProgids", QSettings::NativeFormat);
-        ow.remove(kAssocProgId);
-        ok = ok && ow.status() == QSettings::NoError;
-    }
+    const auto clearGroup = [&ok](const QStringList& exts) {
+        for (const QString& e : exts) {
+            QSettings ow("HKEY_CURRENT_USER\\Software\\Classes\\" + e
+                         + "\\OpenWithProgids", QSettings::NativeFormat);
+            ow.remove(kAssocProgId);
+            ow.remove(kMediaProgId);
+            ok = ok && ow.status() == QSettings::NoError;
+        }
+    };
+    clearGroup(assocExtensions());
+    clearGroup(mediaAssocExtensions());
     return ok;
 }
 

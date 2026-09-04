@@ -18,8 +18,8 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QMessageBox>
-#include <QProcess>
-#include <QMessageBox>
+#include <QDesktopServices>
+#include <QUrl>
 #include <QTableWidget>
 #include <QHeaderView>
 #include <QKeySequenceEdit>
@@ -342,9 +342,20 @@ QWidget* SettingsDialog::pageIntegration() {
     fAssoc->addRow(unassocBtn);
     auto* defAppBtn = new QPushButton(gazeTr("打开系统\"默认应用程序\"设置"));
     connect(defAppBtn, &QPushButton::clicked, this, []() {
-        QProcess::startDetached("ms-settings:defaultapps");
+        // #237:ms-settings: 是 URI 协议不是可执行文件,QProcess::startDetached
+        // 起不来(静默失败);协议跳转的官方通路是 QDesktopServices::openUrl
+        QDesktopServices::openUrl(QUrl("ms-settings:defaultapps"));
     });
     fAssoc->addRow(defAppBtn);
+    // #237:媒体组(视频+音频)独立按钮 —— #204 当时刻意不绑媒体,同日用户主动要
+    auto* mediaBtn = new QPushButton(gazeTr("注册文件关联(视频+音频 扩展名)"));
+    connect(mediaBtn, &QPushButton::clicked, this, []() {
+        bool ok = Integration::registerMediaFileAssociations();
+        QMessageBox::information(nullptr, gazeTr("文件关联"),
+            ok ? gazeTr("已注册。视频/音频右键→\"打开方式\"可选 Gaze;\n系统设置→应用→默认应用→Gaze→\"设为默认\"一并绑定媒体类型。")
+               : gazeTr("注册文件关联失败(注册表写入被拒)。"));
+    });
+    fAssoc->addRow(mediaBtn);
     root->addWidget(group(gazeTr("文件关联"), fAssoc));
 
     // 分组"配置文件"

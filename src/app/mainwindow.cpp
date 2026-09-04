@@ -354,6 +354,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
                 m_fileGrid->selectByPath(fi.absoluteFilePath());
                 if (mode == 0 || mode == 1) toggleViewer();
                 if (mode == 1 || mode == 3) enterFullscreen();
+                // #233 新选项"全屏预览":G 全屏(只铺画面),不进查看器不碰标签
+                if (mode == 4) toggleFullView();
             }
         } else {
             QString dir;

@@ -102,8 +102,8 @@ Fetching images…</translation>
         <translation>Page %1 / %2</translation>
     </message>
     <message>
-        <source>%1 · %2 / %3</source>
-        <translation>%1 · %2 / %3</translation>
+        <source>%1 · %2 · %3 / %4</source>
+        <translation>%1 · %2 · %3 / %4</translation>
     </message>
     <message>
         <source>%1 · 相机 RAW 原始文件（%2）
@@ -283,7 +283,7 @@ F2 — 重命名(文件树与文件页都可用,改谁看焦点;可在设置→�
 F3 — 预览面板开关
 Del / S — 删除选中  X — 新建文件夹
 Enter — 切换查看器/浏览器(设置→键盘)
-Ctrl+A — 全选  Ctrl+I — 反选  Ctrl+W — 关标签
+Ctrl+A — 全选  Ctrl+I — 反选  Ctrl+W — 关标签(全屏中=只退全屏)
 Ctrl+Shift+T — 恢复刚关的标签页
 Esc — 退出全屏
 拖放 — 移动到文件夹  Ctrl+拖放 — 复制(设置→文件操作可关确认弹窗)</source>
@@ -304,7 +304,7 @@ F2 — Rename (works in the folder tree and the file grid; target follows focus;
 F3 — Toggle preview panel
 Del / S — Delete selected  X — New folder
 Enter — Switch viewer/browser (Settings → Keyboard)
-Ctrl+A — Select all  Ctrl+I — Invert selection  Ctrl+W — Close tab
+Ctrl+A — Select all  Ctrl+I — Invert selection  Ctrl+W — Close tab (in fullscreen: exit fullscreen only)
 Ctrl+Shift+T — Reopen closed tab
 Esc — Exit fullscreen
 Drag &amp; drop — Move to folder  Ctrl+drag — Copy (confirmation dialog can be turned off in Settings → File Operations)</translation>
@@ -312,6 +312,12 @@ Drag &amp; drop — Move to folder  Ctrl+drag — Copy (confirmation dialog can 
     <message>
         <source>CLIP 语义模型;引擎默认由服务端自选</source>
         <translation>CLIP semantic model; the engine picks a default automatically</translation>
+    </message>
+    <message>
+        <source>CMYK 印刷图（未内嵌色彩配置）:默认按印刷标准转换,与缩略图/打印/系统照片一致。
+勾选=数值直接反演(通常偏亮),仅供对比,切文件自动复位。</source>
+        <translation>CMYK press image (no embedded color profile): converted by print standard by default — matches thumbnails/printing/Windows Photos.
+Check = direct numeric inversion (usually too bright), for comparison only; resets when you switch files.</translation>
     </message>
     <message>
         <source>DDS 图片</source>
@@ -390,6 +396,10 @@ Version 1.0 — C++ + Qt6</translation>
     <message>
         <source>Gaze 图片浏览器</source>
         <translation>Gaze Image Browser</translation>
+    </message>
+    <message>
+        <source>Gaze 媒体</source>
+        <translation>Gaze media</translation>
     </message>
     <message>
         <source>HEIC 图片</source>
@@ -892,8 +902,12 @@ Next start will restore:
         <translation>Fullscreen - Viewer</translation>
     </message>
     <message>
-        <source>全屏预览  (G)</source>
-        <translation>Full-screen preview  (G)</translation>
+        <source>全屏预览</source>
+        <translation>Full-screen preview</translation>
+    </message>
+    <message>
+        <source>全屏预览	G</source>
+        <translation>Full-screen preview	G</translation>
     </message>
     <message>
         <source>全选</source>
@@ -1186,8 +1200,8 @@ Unchecked: reuse the pane switches from the last exit (requires a saved layout o
         <translation>Clear Color Label</translation>
     </message>
     <message>
-        <source>取消颜色标记  (Ctrl+0 / D)</source>
-        <translation>Clear color label  (Ctrl+0 / D)</translation>
+        <source>取消颜色标记	Ctrl+0 / D</source>
+        <translation>Clear color label	Ctrl+0 / D</translation>
     </message>
     <message>
         <source>变动</source>
@@ -1598,6 +1612,12 @@ or in system Settings → Apps → Default apps → Gaze → &apos;Set default&a
     <message>
         <source>已注册。右键文件 → 打开方式 中可选 Gaze。</source>
         <translation>Registered. Gaze is now available under right-click → Open with.</translation>
+    </message>
+    <message>
+        <source>已注册。视频/音频右键→&quot;打开方式&quot;可选 Gaze;
+系统设置→应用→默认应用→Gaze→&quot;设为默认&quot;一并绑定媒体类型。</source>
+        <translation>Registered. Right-click any video/audio → &apos;Open with&apos; → Gaze;
+or in system Settings → Apps → Default apps → Gaze → &apos;Set default&apos; binds media types as well.</translation>
     </message>
     <message>
         <source>已添加右键菜单,资源管理器中即时生效。</source>
@@ -2366,8 +2386,8 @@ Try a different selection (a bit larger and farther from the edges).</translatio
         <translation>Orange</translation>
     </message>
     <message>
-        <source>橙色  (Ctrl+2)</source>
-        <translation>Orange  (Ctrl+2)</translation>
+        <source>橙色	Ctrl+2</source>
+        <translation>Orange	Ctrl+2</translation>
     </message>
     <message>
         <source>正在准备打印…</source>
@@ -2444,6 +2464,10 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     <message>
         <source>注册文件关联(图片+RAW 全部扩展名)</source>
         <translation>Register file associations (all image + RAW extensions)</translation>
+    </message>
+    <message>
+        <source>注册文件关联(视频+音频 扩展名)</source>
+        <translation>Register file associations (video + audio extensions)</translation>
     </message>
     <message>
         <source>注册文件关联失败(注册表写入被拒)。</source>
@@ -2738,8 +2762,8 @@ Try a different selection (a bit larger and farther from the edges).</translatio
         <translation>Red</translation>
     </message>
     <message>
-        <source>红色  (Ctrl+1)</source>
-        <translation>Red  (Ctrl+1)</translation>
+        <source>红色	Ctrl+1</source>
+        <translation>Red	Ctrl+1</translation>
     </message>
     <message>
         <source>纵向</source>
@@ -2774,8 +2798,8 @@ Try a different selection (a bit larger and farther from the edges).</translatio
         <translation>Green</translation>
     </message>
     <message>
-        <source>绿色  (Ctrl+4)</source>
-        <translation>Green  (Ctrl+4)</translation>
+        <source>绿色	Ctrl+4</source>
+        <translation>Green	Ctrl+4</translation>
     </message>
     <message>
         <source>缓存数据库</source>
@@ -2964,8 +2988,8 @@ Once set manually, thumbnails scale to the pane edge when resizing, but the colu
         <translation>Blue</translation>
     </message>
     <message>
-        <source>蓝色  (Ctrl+5)</source>
-        <translation>Blue  (Ctrl+5)</translation>
+        <source>蓝色	Ctrl+5</source>
+        <translation>Blue	Ctrl+5</translation>
     </message>
     <message>
         <source>行数超过 %1，仅显示前 %2 行</source>
@@ -3116,8 +3140,8 @@ Continue?</translation>
         <translation>Convert to grayscale</translation>
     </message>
     <message>
-        <source>轻量图片浏览器与管理器</source>
-        <translation>Lightweight image viewer and manager</translation>
+        <source>轻量图片/视频浏览器与管理器</source>
+        <translation>Lightweight image/video viewer and manager</translation>
     </message>
     <message>
         <source>输入关键词后回车;服务未运行时会自动拉起</source>
@@ -3416,8 +3440,8 @@ Continue?</translation>
         <translation>Yellow</translation>
     </message>
     <message>
-        <source>黄色  (Ctrl+3)</source>
-        <translation>Yellow  (Ctrl+3)</translation>
+        <source>黄色	Ctrl+3</source>
+        <translation>Yellow	Ctrl+3</translation>
     </message>
     <message>
         <source>黄金分割(Phi)</source>

@@ -130,17 +130,20 @@ void MainWindow::createMenubar() {
     editMenu->addSeparator();
     auto *labelMenu = editMenu->addMenu(IconLib::appIcon("label_item"),
                                         gazeTr("设置颜色标签"));
+    // #234:键位不再用"括号尾巴"写进标题,改用标题里的 \t —— QMenu 会把 \t 后的
+    // 内容画成右对齐快捷键列。同样不挂 QAction::setShortcut:真挂上会连文本框里
+    // 的键一起吞掉(#61),实际响应在 qApp 事件过滤器(那里有"该不该给文本框"的判断)
     struct { int c; QString name; } colors[] = {
-        {1, gazeTr("红色  (Ctrl+1)")},
-        {2, gazeTr("橙色  (Ctrl+2)")},
-        {3, gazeTr("黄色  (Ctrl+3)")},
-        {4, gazeTr("绿色  (Ctrl+4)")},
-        {5, gazeTr("蓝色  (Ctrl+5)")},
+        {1, gazeTr("红色\tCtrl+1")},
+        {2, gazeTr("橙色\tCtrl+2")},
+        {3, gazeTr("黄色\tCtrl+3")},
+        {4, gazeTr("绿色\tCtrl+4")},
+        {5, gazeTr("蓝色\tCtrl+5")},
     };
     for (auto& c : colors)
         labelMenu->addAction(c.name, this, [this, c](){ applyColorLabel(c.c); });
     labelMenu->addSeparator();
-    labelMenu->addAction(gazeTr("取消颜色标记  (Ctrl+0 / D)"), this, [this](){ applyColorLabel(0); });
+    labelMenu->addAction(gazeTr("取消颜色标记\tCtrl+0 / D"), this, [this](){ applyColorLabel(0); });
 
     // ── 查看(V) ──
     auto *viewMenu = mb->addMenu(gazeTr("查看(&V)"));
@@ -150,9 +153,9 @@ void MainWindow::createMenubar() {
             if (isFullScreen()) showNormal(); else enterFullscreen();
         });
     fsAct->setCheckable(true);
-    // 键位写在标题里而不挂 QAction::setShortcut:菜单裸键会连文本框里的 G 一起吞掉(#61),
-    // 实际响应在 qApp 事件过滤器里(那里有"这个键是不是该给文本框"的判断)
-    auto* fullAct = viewMenu->addAction(gazeTr("全屏预览  (G)"), this, [this]() {
+    // #234:全屏预览的 G 键用 \t 右对齐列显示(不挂 setShortcut——真挂上会连文本框
+    // 里的 G 一起吞掉,#61;实际响应在 qApp 事件过滤器,那里有"该不该给文本框"的判断)
+    auto* fullAct = viewMenu->addAction(gazeTr("全屏预览\tG"), this, [this]() {
         toggleFullView();
     });
     fullAct->setCheckable(true);
@@ -160,6 +163,11 @@ void MainWindow::createMenubar() {
     connect(viewMenu, &QMenu::aboutToShow, this, [this, fsAct, fullAct]() {
         fsAct->setChecked(isFullScreen() && !m_fullView);
         fullAct->setChecked(m_fullView);
+        // #234:右列键位跟着热键表走(设置→快捷键改键/清空后菜单仍说真话)
+        const QString v = AppSettings::instance().get(
+            QStringLiteral("ViewerShortcut/全屏预览"), QStringLiteral("G")).toString();
+        fullAct->setText(gazeTr("全屏预览")
+                         + (v.isEmpty() ? QString() : QLatin1Char('\t') + v));
     });
     viewMenu->addSeparator();
     viewMenu->addMenu(createViewModeMenu(viewMenu))->setIcon(IconLib::appIcon("viewas"));

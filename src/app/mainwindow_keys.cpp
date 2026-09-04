@@ -360,8 +360,11 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
             || insideDialog(tgt)
             || QApplication::activePopupWidget()     // 有弹窗开着,键盘归弹窗
             // 查看器的键归查看器表:默认表里"适应窗口"就是 F，而浏览器 F=红标，
-            // 不让路的话设置页那张表配了什么都会被浏览器键位吞掉
-            || (m_viewerMode && m_preview->claimsHotkey(ke));
+            // 不让路的话设置页那张表配了什么都会被浏览器键位吞掉。
+            // #234 例外:"全屏预览"虽在表里,执行端是主窗(toggleFullView 不归面板),
+            // 不让路 —— 否则查看器态按 G 被让走后没人执行
+            || (m_viewerMode && m_preview->claimsHotkey(ke)
+                && !m_preview->triggersAction(ke, "全屏预览"));
         if (!bypass) {
             // 键盘就是这些控件的输入手段,字母/Space/Enter/Esc 一律不抢
             const bool forText = textInputWidget(tgt);
@@ -480,8 +483,12 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
                     // G=全屏预览(#154):直接铺满只留画面,不进查看器不碰标签;
                     // 再按 G/ESC 完全回到按 G 前的布局。走这道过滤器而不是菜单
                     // QAction 的 shortcut:上面那几层 forText/弹窗判断才是"裸键
-                    // 不该抢文本框"的防线(#61)
-                    if (ke->key() == Qt::Key_G) { toggleFullView(); return true; }
+                    // 不该抢文本框"的防线(#61)。
+                    // #234:键位改由查看器热键表驱动(ViewerShortcut/全屏预览,默认
+                    // G)——设置→快捷键可改,主窗/预览右键菜单右列跟着同一张表
+                    if (m_preview->triggersAction(ke, "全屏预览")) {
+                        toggleFullView(); return true;
+                    }
                     // 回车:按 SwitchMode/enterKey 切换模式
                     if ((ke->key() == Qt::Key_Return || ke->key() == Qt::Key_Enter)
                         && !forActivation) {

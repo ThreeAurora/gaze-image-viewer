@@ -70,7 +70,8 @@ QWidget* SettingsDialog::pageStartup() {
     form->setVerticalSpacing(6);
     form->addRow(gazeTr("带文件启动"),
         combo("Start/withFile", {gazeTr("查看器"), gazeTr("全屏 - 查看器"),
-                                 gazeTr("浏览器"), gazeTr("浏览器 - 全屏")}, 0));
+                                 gazeTr("浏览器"), gazeTr("浏览器 - 全屏"),
+                                 gazeTr("全屏预览")}, 0));
     auto* wof = combo("Start/withoutFile", {gazeTr("无"), gazeTr("上次使用的目录"),
                                             gazeTr("指定目录")}, 1);
     form->addRow(gazeTr("不带文件启动"), wof);

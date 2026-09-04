@@ -290,9 +290,16 @@ void PreviewPanel::contextMenuEvent(QContextMenuEvent* event) {
     }
     // #224(2026-09-04 用户令):G 全屏预览进右键菜单 —— 图片/视频/音频统一
     // 都有本地入口(进查看器后网格那份右键够不着,G 键也不总在手边)
-    menu.addAction(gazeTr("全屏预览  (G)"), this, [this]() {
-        invokeOnWindow(this, "toggleFullView()");
-    });
+    // #234:键位列读热键表实际值(改键后菜单不再骗人;清空就不显示)
+    {
+        const QString v = AppSettings::instance().get(
+            QStringLiteral("ViewerShortcut/全屏预览"), QStringLiteral("G")).toString();
+        menu.addAction(gazeTr("全屏预览")
+                           + (v.isEmpty() ? QString() : QLatin1Char('\t') + v),
+                       this, [this]() {
+            invokeOnWindow(this, "toggleFullView()");
+        });
+    }
     menu.addSeparator();
     menu.addAction(gazeTr("用系统默认程序打开"), this, [this]() {
         QDesktopServices::openUrl(QUrl::fromLocalFile(m_filePath));
@@ -352,6 +359,13 @@ QString PreviewPanel::hotkeyAction(QKeyEvent* e) const {
 bool PreviewPanel::claimsHotkey(QKeyEvent* e) {
     ensureHotkeys();
     return !hotkeyAction(e).isEmpty();
+}
+
+// #234:"全屏预览"进查看器热键表后,主窗过滤器用这个判 G——与"适应窗口"F 同一
+// 机制(表驱动可配置),但执行仍在 MainWindow(toggleFullView 是主窗动作,不归面板)
+bool PreviewPanel::triggersAction(QKeyEvent* e, const char* actionUtf8) {
+    ensureHotkeys();
+    return hotkeyAction(e) == QString::fromUtf8(actionUtf8);
 }
 
 // 浏览器态媒体键(2026-09-03):预览面板正在显示媒体(视频/音频/GIF)时,

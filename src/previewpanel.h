@@ -48,6 +48,9 @@ public:
     // 该键事件是否命中 ViewerShortcut/* 表。主窗口的应用级过滤器用它让路:
     // 查看器里默认表和浏览器键位撞车("适应窗口"=F，浏览器 F=红标)
     bool claimsHotkey(QKeyEvent* e);
+    // #234:该键是否命中表里的指定动作(动作名=viewerhotkeys.h 的 name 原文)。
+    // "全屏预览"进表后,主窗过滤器改由这里判 G——键位可配置,执行点仍唯一
+    bool triggersAction(QKeyEvent* e, const char* actionUtf8);
     // 浏览器态媒体键:预览正在显示媒体(视频/音频/GIF)时,查看器表的
     // "播放/暂停""停止"在浏览器里同样生效(如选中视频自动播放后按 T 停止)。
     // 命中并执行返回 true;其余情况 false 交回调用方继续路由。
