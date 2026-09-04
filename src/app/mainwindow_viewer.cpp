@@ -385,7 +385,12 @@ void MainWindow::toggleViewer() {
     m_preview->setViewerMode(m_viewerMode);   // 让面板按 Viewer/* 还是 Fullscreen/* 取设置
     if (m_viewerMode) {
         m_preview->setMinimumWidth(400);
-        m_savedSplitter = m_splitter->sizes();   // 记住进入前布局(拖过的分栏不丢)
+        // 快照只信可见态:构造期直进查看器(独立双击图片启动)时窗口还没 show,
+        // sizes() 是布局前的假值 —— 快照它,退出就会把浏览器拖回假布局(真存档
+        // 已在构造期 applyLastLayout 应用过)。构造期进入=没有"进入前布局"可言,
+        // 清空让退出走存档恢复(见退出分支)
+        if (isVisible()) m_savedSplitter = m_splitter->sizes();
+        else             m_savedSplitter.clear();
         QList<int> sz { 0, 0, width() };
         m_splitter->setSizes(sz);
         // 进查看器:标签表跨退出保留,先丢掉文件已经不在的那几张(在浏览器里删过的)。
@@ -420,11 +425,27 @@ void MainWindow::toggleViewer() {
             if (!isBrowserTab(m_viewerTabs->currentIndex()))
                 m_viewerTabs->setCurrentIndex(0);
         }
-        // 恢复进入前的实际布局(硬编码重置会让用户拖好的分栏变掉)
-        if (m_savedSplitter.size() == 3)
+        // 恢复进入前的实际布局(硬编码重置会让用户拖好的分栏变掉)。
+        // 没有可信快照(构造期直进查看器,见进入分支)时不落硬编码默认:
+        // 按启动时会选的同一份存档恢复(followLast=Layout/last,否则 active 布局),
+        // 独立双击图片退回浏览器,分栏就是用户保存的那套
+        if (m_savedSplitter.size() == 3) {
             m_splitter->setSizes(m_savedSplitter);
-        else
-            m_splitter->setSizes(mw_impl::defaultSplitterSizes());
+        } else {
+            QSettings s = mw_impl::appSettings();
+            const bool followLast = s.value("Layout/followLast", true).toBool();
+            const QString active = s.value("Layout/active").toString();
+            const QStringList names = s.value("Layout/names").toStringList();
+            const bool useNamed = !followLast && !active.isEmpty()
+                                  && names.contains(active);
+            const QList<int> sz = mw_impl::parseSplitterSizes(s.value(
+                useNamed ? "Layout/" + active + "/splitter"
+                         : "Layout/last/splitter").toString());
+            if (mw_impl::splitterArchiveUsable(sz))
+                m_splitter->setSizes(sz);
+            else
+                m_splitter->setSizes(mw_impl::defaultSplitterSizes());
+        }
         // 焦点必须显式还给网格:实测(cache/tmp/focus_probe.cpp)面板即使被 hide 过、
         // 即使策略降回 NoFocus，focusWidget 仍记在它身上 —— 不补这一句，
         // 退回浏览器后键还往面板送，方向键/空格看起来直接坏了(同 navigateTo 的纪律)

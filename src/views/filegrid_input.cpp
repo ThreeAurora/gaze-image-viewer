@@ -474,7 +474,11 @@ void FileGrid::endInlineRename(bool commit) {
 // 键盘导航
 // ═══════════════════════════════════════════
 void FileGrid::navigateSelection(int delta) {
-    if (m_entries.empty() || m_cols < 1) return;
+    // 只拦"没有内容"。m_cols 不拦:独立双击图片启动直进查看器时网格从未
+    // 显示过,m_layoutReady 守卫(#216)让它一直是 0 —— 按老写法滚轮/方向键
+    // 在独立查看器里整条导航链静默失灵。scrollToRow 自己有同款门禁,
+    // 隐藏态下调用它无害(不滚就是了)
+    if (m_entries.empty()) return;
     int idx = m_lastClicked + delta;
     // Viewer/loopFileList:首尾相接(默认关=到头就停,与改造前一致)
     const int n = static_cast<int>(m_entries.size());

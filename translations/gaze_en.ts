@@ -2254,6 +2254,10 @@ Try a different selection (a bit larger and farther from the edges).</translatio
         <translation>Show border</translation>
     </message>
     <message>
+        <source>显示隐藏文件</source>
+        <translation>Show hidden files</translation>
+    </message>
+    <message>
         <source>显示隐藏的文件和文件夹</source>
         <translation>Show hidden files and folders</translation>
     </message>

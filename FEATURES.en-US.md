@@ -8,7 +8,7 @@ An **exhaustive list** of what Gaze can actually do, compiled from: the full dev
 
 - Three-pane layout: directory tree / file grid / preview panel; six pane types (tree, preview, address bar, toolbar, status bar, info bar) individually toggleable and persisted
 - 8 view modes: thumbnails, thumbnails + names, + labels, + details, icons, list, details, waterfall
-- Layout schemes: follow last window state; save current layout (named, reserved-name guard); delete layouts; each stores geometry / splitter / panes
+- Layout schemes: follow last window state; save current layout (named, reserved-name guard); delete layouts; each stores geometry / splitter / panes; exiting the standalone-started viewer (Gaze invoked on an image) restores the archived splitter instead of a bogus pre-layout snapshot
 - Multi-tab: viewer-mode top tab bar; persistent "Browser" tab; 32px thumbnail per tab; Ctrl+W closes; closing the last image tab returns to the browser; multi-tab / single-tab / cap (default 20) per file configurable
 - Back / forward navigation (Alt+←/→, greyed at the ends); going up auto-selects the child folder just left
 - F5 refresh (same-folder reload keeps scroll position); scroll resets to top when changing folders
@@ -19,6 +19,7 @@ An **exhaustive list** of what Gaze can actually do, compiled from: the full dev
 - Two-way auto-sync between the tree and the current folder; tree scrolls the current item into view
 - Left-button press switches folders instantly (expand-arrow column exempt); holding and sweeping switches each folder in turn; "switch vs. drag-select" toggle
 - Show "Desktop" in tree; show hidden items
+- File-grid "Show hidden files" toggle: checkable entry in the View menu (same key FileList/showHidden as Settings → File List, re-filters instantly)
 - Drag & drop: navigate / move from Explorer, Ctrl+drop copies, optional confirmation; forbidden cursor when dropping outside the grid/tree
 - Window title templates: separate browser/viewer templates with {folder}/{filename} placeholders
 - Startup behavior: with-file (five modes: viewer / fullscreen-viewer / browser / browser-fullscreen / fullscreen preview, #233) / without file / specific folder, remember filename, restore last folder/file, open list + preview at start
@@ -39,7 +40,7 @@ An **exhaustive list** of what Gaze can actually do, compiled from: the full dev
 ## 3. Preview & Viewer
 
 - Eight preview types: images / GIF / video / audio / txt / Markdown / PDF / RAW
-- Viewer: Enter/double-click in, ESC back; double-click routing (images & videos open the viewer, other types go to the system default app, 300 ms threshold)
+- Viewer: Enter/double-click in, ESC back; double-click routing (images & videos open the viewer, other types go to the system default app, 300 ms threshold); in the standalone-started viewer (Gaze invoked on an image) wheel/arrow-key file navigation works even though the grid was never shown
 - Zoom: Ctrl+wheel cursor-centered zoom, long-press for true 1:1 pixels (cursor-focused), drag panning, navigator mini-map with draggable blue frame
 - Auto-fit profiles for normal and fullscreen, reset-on-navigate toggle, separate in/out scaling filters, 10 pixel-ratio entries, HiDPI 1px=1px, gamma correction, sharpening, two-pass rendering, read-ahead one image / keep current
 - Viewer appearance: background color, checkerboard padding, borders, scrollbars, pan tool, selection overlay, color-label display
@@ -139,6 +140,7 @@ Per-key status in [SETTINGS_MATRIX.md](SETTINGS_MATRIX.md). Group overview:
 - Layered greys: menubar > toolbar > tree > list > preview; Win-style arrowed scrollbars with 4 states
 - XnView MP-style polish throughout: sort header, context menus, playback bar, unified black background
 - Five toolbar menu buttons with ▼ indicators; column-count dropdown; all menu/toolbar check states persisted
+- Menu check indicators redrawn app-wide (pure QSS + bundled checkmark asset): unchecked = outlined empty box, checked = accent-blue solid box + white check, disabled = grey box — "checkable" is visible at a glance
 - Settings dialog: 5 pages / 20 categories, search filter, compaction, zero dead entries
 - Hover highlights, card selection, pixel-aligned blue selection frame
 
