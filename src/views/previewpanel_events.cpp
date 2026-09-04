@@ -265,6 +265,11 @@ void PreviewPanel::contextMenuEvent(QContextMenuEvent* event) {
     if (hasMedia || m_isLivePhoto) {
         menu.addAction(gazeTr("播放/暂停"), this, [this]() { togglePlayPause(); });
     }
+    // #224(2026-09-04 用户令):G 全屏预览进右键菜单 —— 图片/视频/音频统一
+    // 都有本地入口(进查看器后网格那份右键够不着,G 键也不总在手边)
+    menu.addAction(gazeTr("全屏预览  (G)"), this, [this]() {
+        invokeOnWindow(this, "toggleFullView()");
+    });
     menu.addSeparator();
     menu.addAction(gazeTr("用系统默认程序打开"), this, [this]() {
         QDesktopServices::openUrl(QUrl::fromLocalFile(m_filePath));
