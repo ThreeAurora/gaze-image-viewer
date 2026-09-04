@@ -114,10 +114,14 @@ QImage Thumbnailer::folderThumb(const QString& dirPath, int size) {
     // 视频格走进程内 libav 单帧(videoThumbFFmpeg),不 spawn 外部 ffmpeg.exe;
     // 最坏 4 格全视频也只是 4 次解码,首生成付一次,之后命中 DB/内存缓存。
     // 单封面(folder4 关)维持原样:只取本级第一个候选。
+    // #233:多备 4 个候选 —— "检测不到缩略图的图片/视频(0KB 等)不占格",
+    // 解码失败就跳过、由后续候选顶上填格。只多挑不多解:前面的都成功时,
+    // 备胎一个都不会被解码。
     const int want = p.folder4 ? 4 : 1;
     int videoCount = 0;
     QStringList picked;
     auto tryPick = [want, &picked, &videoCount](const QString& dir) {
+        const int cap = want + 4;
         QDir sub(dir);
         auto raw = sub.entryInfoList(QDir::Files | QDir::NoDotAndDotDot, QDir::Name);
         QFileInfoList list = raw;
@@ -131,7 +135,7 @@ QImage Thumbnailer::folderThumb(const QString& dirPath, int size) {
             if (!isImg && !isVid) continue;
             if (isVid) ++videoCount;
             picked << fi.absoluteFilePath();
-            if (picked.size() >= want) return true;
+            if (picked.size() >= cap) return true;
         }
         return false;
     };
@@ -156,7 +160,7 @@ QImage Thumbnailer::folderThumb(const QString& dirPath, int size) {
     //   全部可见,只是细节是真的。Shell 图退回作原图解码失败时的回退。
     //   代价:每格一次降采样解码(JPEG 走 libjpeg 的 DCT 缩放很便宜,PNG 是全解),
     //   只在生成时付一次,入库后不再有。
-    auto drawCell = [this, &pt](const QString& path, const QRectF& cell) {
+    auto drawCell = [this, &pt](const QString& path, const QRectF& cell) -> bool {
         const int cw = qMax(1, qRound(cell.width()));
         const int ch = qMax(1, qRound(cell.height()));
         const int res = qMax(256, 2 * qMax(cw, ch));
@@ -169,37 +173,46 @@ QImage Thumbnailer::folderThumb(const QString& dirPath, int size) {
             t = imageThumb(path, res);
             if (t.isNull()) t = th_impl::windowsShellThumb(path, res);
         }
-        if (t.isNull()) return;
+        if (t.isNull()) return false;   // #233:出不了图的候选不占格
         // 2x 超采样图上做居中裁切,画进 1x 格子 → 净效果是降采样,不放大不软
         const int sw = cw * 2, sh = ch * 2;
         t = t.scaled(sw, sh, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
         pt.drawImage(cell, t, QRectF((t.width() - sw) / 2.0,
                                      (t.height() - sh) / 2.0, sw, sh));
+        return true;
     };
 
-    // 图裁进内容区(圆角) → 不足 4 张时空格露后板
+    // 图裁进内容区(圆角)。#233(用户令:"子夹单缩略图只占左上小格不填满;
+    // 检测不到缩略图的图片/视频(0KB等)不占四合一格"):
+    //   · 四合一恒用 2×2 格 —— 只有 1 张时它坐左上小格,其余露后板,不再铺满;
+    //   · 解码失败的候选不占格,由排在其后的候选顶上(备胎已在 picked 里,
+    //     前面的都成功时备胎零解码)。
+    // 单封面(folder4 关)维持铺满整块:第一个成功者胜出,失败顺延。
     pt.save();
     QPainterPath clip;
     clip.addRoundedRect(f.content, f.r, f.r);
     pt.setClipPath(clip);
-    const int n = qMin(picked.size(), want);
-    if (n == 1) {
-        drawCell(picked.first(), f.content);
+    int cells = 0;
+    if (want == 1) {
+        for (const QString& path : picked)
+            if (drawCell(path, f.content)) { cells = 1; break; }
     } else {
         // 格缝 2.5%(≥2px)才够 XnView 参考图那种"黄缝可见"——1% 时 160px 卡上只有 1px,看着像贴死的
         const qreal gap = qMax<qreal>(2.0, size * 0.025);
         const qreal cw = (f.content.width() - gap) / 2;
         const qreal ch = (f.content.height() - gap) / 2;
-        for (int i = 0; i < n; ++i)
-            drawCell(picked[i], QRectF(f.content.left() + (i % 2) * (cw + gap),
-                                       f.content.top()  + (i / 2) * (ch + gap),
-                                       cw, ch));
+        for (int i = 0; i < picked.size() && cells < want; ++i) {
+            const QRectF cell(f.content.left() + (cells % 2) * (cw + gap),
+                              f.content.top()  + (cells / 2) * (ch + gap),
+                              cw, ch);
+            if (drawCell(picked[i], cell)) ++cells;
+        }
     }
     pt.restore();
 
     pt.end();
-    Logger::event(QStringLiteral("folderThumb: cells=%1 video=%2 %3ms '%4'")
-                      .arg(picked.size()).arg(videoCount)
+    Logger::event(QStringLiteral("folderThumb: cells=%1/%2 video=%3 %4ms '%5'")
+                      .arg(cells).arg(picked.size()).arg(videoCount)
                       .arg(ftClock.elapsed())
                       .arg(dirPath));
     return postProcess(sheet, size);

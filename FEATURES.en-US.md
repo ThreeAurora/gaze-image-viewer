@@ -26,8 +26,8 @@ An **exhaustive list** of what Gaze can actually do, compiled from: the full dev
 ## 2. Thumbnails
 
 - Three-tier decode pipeline: native Qt decode → Windows Shell thumbnails → external ffmpeg fallback; graceful degradation with a one-shot log hint
-- Four-in-one folder thumbnails: XnView MP style (folder silhouette with a 2×2 montage), fewer cells shown if fewer files; falls back to natural-order scanning of direct subfolders; video cells via in-process ffmpeg single-frame; each cell fetched at max(256, 2×cell) then downsampled
-- Single-cover folder mode (first candidate in folder when 4-in-1 is off)
+- Four-in-one folder thumbnails: XnView MP style (folder silhouette with a fixed 2×2 montage; a single image sits in the top-left cell only, empty cells show the backing plate); only current-level files, no subfolder scan; failed decodes don't occupy cells — the next candidate takes over; video cells via in-process ffmpeg single-frame; each cell fetched at max(256, 2×cell) then downsampled
+- Single-cover folder mode (first successful candidate in folder when 4-in-1 is off, next candidate on failure)
 - Video thumbnails: configurable frame position (default 80%), sub-second videos retry past EOF, ffprobe duration probe cached
 - HDR video thumbnails: PQ/HLG detection → zscale + tonemap second pass (zero cost for SDR)
 - Sizes: 8 presets + custom (48–1024 px), Ctrl+=/Ctrl+- or wheel zoom
