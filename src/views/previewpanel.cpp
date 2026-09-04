@@ -481,6 +481,10 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
 }
 
 PreviewPanel::~PreviewPanel() {
+    if (m_remuxProc) {   // 重封装在途就收掉,不让 ffmpeg 孤儿跑完
+        m_remuxProc->kill();
+        m_remuxProc->waitForFinished(500);
+    }
     teardownWave();   // 波形线程必须走完再拆面板(wait 2s 兜底)
     teardownPlayer();
     cleanupExtractCache();
@@ -646,10 +650,10 @@ void PreviewPanel::setupPlayer() {
         // teardownPlayer 断连后不会到此;但快速切换文件时旧信号可能迟到送达
         if (!m_player) return;
         // 媒体后端的加载/失效/卡住都会从这里过——卡死排查的关键轨迹
-        if (m_mode == "video" || m_isLivePhoto)
-            Logger::event(QStringLiteral("mediaStatus=%1 src='%2'")
-                              .arg(int(status))
-                              .arg(m_player->source().toLocalFile()));
+        // (全模式记录:#255 音频"不自动播放"这类申诉只有状态链才能归因)
+        Logger::event(QStringLiteral("mediaStatus=%1 mode='%2' src='%3'")
+                          .arg(int(status)).arg(m_mode)
+                          .arg(m_player->source().toLocalFile()));
         // 延迟 attach:源装载就绪才接视频输出并开播(showVideo 埋下 m_pendingPlay)。
         // 顺序要害:先校验 source() 再消费 pending——切换瞬间,上一路媒体的
         // LoadedMedia 会迟到送达,若先消费再校验,pending 被白白丢掉,
@@ -683,6 +687,9 @@ void PreviewPanel::setupPlayer() {
             m_pendingPlay.clear();
             // 源失效:解除布防并露出视频控件(空态),而不是永远黑着
             revealVideo();
+            // 音频源失效也走重封装自救(部分坏件后端直接报 Invalid,
+            // 而非"装载正常但位置冻结"那种,两条路都进 startAudioRemux)
+            if (m_mode == "audio") startAudioRemux();
         }
         if (status != QMediaPlayer::EndOfMedia) return;
         // setSource 已发→旧源还未完全退场:忽略过渡期 EndOfMedia,
@@ -694,6 +701,15 @@ void PreviewPanel::setupPlayer() {
             m_player->setPosition(0);
             m_player->play();
         }
+    });
+
+    // 播放器错误全模式落日志:后端拒绝解码/打不开文件时这是唯一痕迹
+    connect(m_player, &QMediaPlayer::errorOccurred,
+            this, [this](QMediaPlayer::Error err, const QString& msg) {
+        if (!m_player) return;
+        Logger::event(QStringLiteral("playerError=%1 '%2' mode='%3' src='%4'")
+                          .arg(int(err)).arg(msg).arg(m_mode)
+                          .arg(m_player->source().toLocalFile()));
     });
 
     // 注:m_btnPlay::clicked 与 m_progress::sliderMoved 已移出 setupPlayer,

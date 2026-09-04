@@ -7,6 +7,7 @@
 #include <QMediaPlayer>
 #include <QAudioOutput>
 #include <QVideoWidget>
+#include <QProcess>
 #include <QMap>
 #include <QVector>
 #include <QTimer>
@@ -111,6 +112,8 @@ private:
     // 性能红线(用户令):波形可晚出,不得拖累切文件/加载音频
     void ensureWave();
     void teardownWave();
+    void startAudioRemux();   // 音频播放卡死自救:重封装去封面副本换源重放
+    void swapAudioSource(const QString& remuxedPath);
     void renderWave();
     void setAudioChrome(bool on);   // 音频形态两件套(文件名+波形)统一显隐出口
     // RAW 按需全解(#140):RAW 不进常规解码管线,预览=内嵌 JPEG +「加载原始RAW」按钮。
@@ -209,6 +212,7 @@ private:
     QLabel *m_waveLabel = nullptr;              // 波形画布(音频形态,stretch 3)
     QThread *m_waveThread = nullptr;            // 波形解码专属线程
     Audiowave::Worker *m_waveWorker = nullptr;  // 无 parent:随所属线程 finished 收尾
+    QProcess *m_remuxProc = nullptr;            // 音频重封装在途(播放卡死自救,见 startAudioRemux)
     Audiowave::Snapshot m_waveSnap;             // 最近快照(换文件即清空重画)
     QWidget *m_rawBox = nullptr;                // RAW 占位容器(说明 + 加载按钮)
     QLabel *m_rawCaption = nullptr;

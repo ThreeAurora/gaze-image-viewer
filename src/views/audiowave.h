@@ -13,14 +13,20 @@
 #include <QAudioBuffer>
 #include <QAudioFormat>
 #include <QElapsedTimer>
+#include <QTimer>
 #include <QMetaType>
+#include <QProcess>
 #include <QUrl>
 #include <QDebug>
 #include <QVector>
 
+#include "../toolpath.h"
+#include "../logger.h"
+
 namespace Audiowave {
 
 constexpr int kBuckets = 512;   // 波形横向分辨率(整条时间轴恒定 512 桶)
+constexpr int kPcmRate = 4000;  // 兜底解码采样率:512 桶分辨率富余,数据量仅 8KB/s
 
 struct Snapshot {
     QVector<qint8> peak;    // 每桶正峰 0..127
@@ -39,10 +45,12 @@ public slots:
     void start(const QString& path, qint64 totalUs) {
         ++m_gen;
         const quint64 gen = m_gen;
+        m_path = path;
         m_totalUs = totalUs;
         m_peak.fill(0, kBuckets);
         m_trough.fill(0, kBuckets);
         m_filled = 0;
+        m_fbTries = 0;
         m_clock.restart();
         // 解码器销毁重建而非复用:setSource 换源后旧源的 bufferReady/finished
         // 残余事件仍可能压在队列里,逐个回调补代次判断不如重建干净
@@ -59,6 +67,10 @@ public slots:
         });
         connect(m_dec, &QAudioDecoder::finished, this, [this, gen] {
             if (gen != m_gen) return;
+            // FFmpeg 后端(Qt 6.8 起默认)的 QAudioDecoder 对带内嵌封面的 MP3
+            // (mjpeg attached_pic,网易云下载件常态)会零 buffer 直接 finished。
+            // 一桶未填就走 ffmpeg 管道兜底;error 同样兜(顺带扩格式覆盖)
+            if (m_filled == 0) { tryFallback(gen); return; }
             emitSnapshot(gen, false);
         });
         // Qt 6.8 的 QAudioDecoder 保留 Qt5 信号名 error(Error),与同名 getter
@@ -67,6 +79,7 @@ public slots:
                 this, [this, gen](QAudioDecoder::Error err) {
             if (gen != m_gen) return;
             qWarning() << "audiowave:" << err << (m_dec ? m_dec->errorString() : QString());
+            if (m_filled == 0) { tryFallback(gen); return; }
             emitSnapshot(gen, true);
         });
         m_dec->setSource(QUrl::fromLocalFile(path));
@@ -81,12 +94,132 @@ public slots:
     void cancel() {
         ++m_gen;
         if (m_dec) m_dec->stop();
+        stopFallback();
     }
 
 signals:
     void snapshotReady(Audiowave::Snapshot snap);
 
 private:
+    // ── ffmpeg 管道兜底 ──
+    // 随包 ffmpeg 把音频解成单声道 s16le 裸 PCM 从 stdout 渐进吐出,聚合逻辑
+    // 与 QAudioDecoder 路共用 aggregateSpan。仍在专属低优先级线程:readyRead
+    // 驱动,主线程零参与(性能红线)。找不到 ffmpeg 返回 false(诚实降级)。
+    // 兜底入口(解码器零产出时由 finished/error 调):先等桶映射分母 ——
+    // QMediaPlayer 的 durationChanged 常晚于 QAudioDecoder 的 FINISHED
+    // (媒体栈慢热),短重试等它,3.2s 仍无则诚实判"波形不可用"
+    void tryFallback(quint64 gen) {
+        if (m_ff) return;   // 兜底已在途(error/finished 双入口防重复)
+        if (m_totalUs <= 0) {
+            if (++m_fbTries > 8) {
+                Logger::event("audiowave: 兜底放弃(3.2s 内总时长未知)");
+                emitSnapshot(gen, true);
+                return;
+            }
+            QTimer::singleShot(400, this, [this, gen] {
+                if (gen == m_gen && m_filled == 0) tryFallback(gen);
+            });
+            return;
+        }
+        if (startFfmpegFallback(gen)) return;
+        emitSnapshot(gen, true);
+    }
+
+    bool startFfmpegFallback(quint64 gen) {
+        if (m_ff) return false;
+        const QString exe = locateFfmpegTool(QStringLiteral("ffmpeg"));
+        if (exe.isEmpty()) {
+            Logger::event("audiowave: ffmpeg 兜底不可用(exe旁 ffmpeg/ 与 PATH 均无)");
+            return false;
+        }
+        m_ffBytes = 0;
+        m_ff = new QProcess(this);
+        hideConsoleWindow(*m_ff);   // 控制台程序,不藏就闪黑窗
+        m_ff->setProcessChannelMode(QProcess::ForwardedErrorChannel);
+        connect(m_ff, &QProcess::readyReadStandardOutput, this, [this, gen] {
+            if (gen != m_gen || !m_ff) return;
+            const QByteArray pcm = m_ff->readAllStandardOutput();
+            if (pcm.size() < 2) return;
+            // s16le 单声道:两字节一帧;起点按已消费字节推算
+            const qint64 t0 = qint64(m_ffBytes) * 1000000 / kPcmRate;
+            aggregatePcm(pcm, t0, kPcmRate);
+            m_ffBytes += pcm.size();
+            maybeEmit(gen);
+        });
+        connect(m_ff, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+                this, [this, gen](int code, QProcess::ExitStatus) {
+            if (gen != m_gen) return;
+            const bool hadStderr = !m_ffStderr.isEmpty();
+            if (code != 0 || m_filled == 0)
+                Logger::event(QStringLiteral(
+                    "audiowave: ffmpeg 兜底退出 code=%1 filled=%2%3")
+                        .arg(code).arg(m_filled)
+                        .arg(hadStderr ? QStringLiteral(" stderr=") + m_ffStderr.left(200)
+                                       : QString()));
+            const bool ok = (code == 0 && m_filled > 0);
+            if (ok)
+                Logger::event(QStringLiteral("audiowave: 兜底完成 filled=%1/512").arg(m_filled));
+            m_ff->deleteLater(); m_ff = nullptr;
+            emitSnapshot(gen, !ok);
+        });
+        connect(m_ff, &QProcess::errorOccurred, this, [this](QProcess::ProcessError) {
+            m_ffStderr = QString::fromLocal8Bit(m_ff->readAllStandardError());
+        });
+        // 错误文本留给 finished 时的日志归因
+        connect(m_ff, &QProcess::readyReadStandardError, this, [this] {
+            m_ffStderr += QString::fromLocal8Bit(m_ff->readAllStandardError());
+            if (m_ffStderr.size() > 4096) m_ffStderr.truncate(4096);
+        });
+        m_ff->start(exe, { QStringLiteral("-v"), QStringLiteral("error"),
+                           QStringLiteral("-i"), m_path,
+                           QStringLiteral("-vn"),           // 内嵌封面流正是病根,显式丢弃
+                           QStringLiteral("-ac"), QStringLiteral("1"),
+                           QStringLiteral("-ar"), QString::number(kPcmRate),
+                           QStringLiteral("-f"), QStringLiteral("s16le"),
+                           QStringLiteral("pipe:") });
+        Logger::event(QStringLiteral(
+            "audiowave: QAudioDecoder 零产出 → ffmpeg 管道兜底 '%1'").arg(m_path));
+        return true;
+    }
+
+    void stopFallback() {
+        if (!m_ff) return;
+        QProcess* p = m_ff;
+        m_ff = nullptr;          // 先摘引用:残余回调按空指针闸掉
+        p->kill();
+        p->waitForFinished(500);
+        p->deleteLater();
+    }
+
+    // 裸 s16le PCM 聚合:chunk 覆盖 [t0, t0+字节换算的时长),极值摊进桶
+    void aggregatePcm(const QByteArray& pcm, qint64 t0, int rate) {
+        const int n = pcm.size() / 2;
+        if (n <= 0) return;
+        float mn = 0.f, mx = 0.f;
+        const auto* s = reinterpret_cast<const qint16*>(pcm.constData());
+        for (int i = 0; i < n; ++i) {
+            const float v = s[i] / 32768.f;
+            mn = qMin(mn, v); mx = qMax(mx, v);
+        }
+        aggregateSpan(mn, mx, t0, qint64(n) * 1000000 / rate);
+    }
+
+    void aggregateSpan(float mn, float mx, qint64 t0, qint64 spanUs) {
+        if (m_totalUs <= 0) return;
+        if (t0 < 0) return;
+        int b0 = int((t0 * qint64(kBuckets)) / m_totalUs);
+        int b1 = int(((t0 + spanUs) * qint64(kBuckets)) / m_totalUs);
+        b0 = qBound(0, b0, kBuckets - 1);
+        b1 = qBound(b0, b1, kBuckets - 1);
+        const qint8 pk = qint8(qBound(-1.f, mx, 1.f) * 127.f);
+        const qint8 tr = qint8(qBound(-1.f, mn, 1.f) * 127.f);
+        for (int b = b0; b <= b1; ++b) {
+            if (pk > m_peak[b])   m_peak[b] = pk;
+            if (tr < m_trough[b]) m_trough[b] = tr;
+        }
+        if (b1 + 1 > m_filled) m_filled = b1 + 1;
+    }
+
     void aggregate(const QAudioBuffer& buf) {
         if (m_totalUs <= 0) return;   // 总时长未知,桶映射无从谈起(等 durationChanged)
         const QAudioFormat fmt = buf.format();
@@ -118,17 +251,7 @@ private:
             return;   // 其余样本格式不支持:波形留空,播放照常(诚实降级)
         }
         const qint64 span = qint64(buf.frameCount()) * 1000000 / fmt.sampleRate();
-        int b0 = int((t0 * qint64(kBuckets)) / m_totalUs);
-        int b1 = int(((t0 + span) * qint64(kBuckets)) / m_totalUs);
-        b0 = qBound(0, b0, kBuckets - 1);
-        b1 = qBound(b0, b1, kBuckets - 1);
-        const qint8 pk = qint8(qBound(-1.f, mx, 1.f) * 127.f);
-        const qint8 tr = qint8(qBound(-1.f, mn, 1.f) * 127.f);
-        for (int b = b0; b <= b1; ++b) {
-            if (pk > m_peak[b])   m_peak[b] = pk;
-            if (tr < m_trough[b]) m_trough[b] = tr;
-        }
-        if (b1 + 1 > m_filled) m_filled = b1 + 1;
+        aggregateSpan(mn, mx, t0, span);
     }
 
     void maybeEmit(quint64 gen) {
@@ -154,6 +277,12 @@ private:
     QVector<qint8> m_trough;
     int m_filled = 0;
     QElapsedTimer m_clock;
+    // ffmpeg 兜底态(仅 QAudioDecoder 零产出时在途)
+    QProcess* m_ff = nullptr;
+    qint64  m_ffBytes = 0;  // 已消费的 PCM 字节(推算当前 chunk 的时间起点)
+    QString m_ffStderr;     // ffmpeg 的 stderr,退出时归因用
+    QString m_path;         // 当前解码文件(start 存,兜底管道的 -i 参数)
+    int m_fbTries = 0;      // 兜底等分母的重试计数(start 清零)
 };
 
 } // namespace Audiowave

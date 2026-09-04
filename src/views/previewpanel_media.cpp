@@ -33,6 +33,7 @@
 #include <QTimer>
 #include <QElapsedTimer>
 #include <QDesktopServices>
+#include <QStandardPaths>
 #include <QMimeData>
 #include <QMediaDevices>
 #include <QWidgetAction>
@@ -288,6 +289,80 @@ void PreviewPanel::showAudio(const QString& path) {
                                   Q_ARG(QString, path), Q_ARG(qint64, 0));
     // 布局激活是异步的:0 尺寸画的占位要在激活后重画一次
     QTimer::singleShot(0, this, [this]() { renderWave(); });
+
+    // 播放卡死自检:带内嵌封面流(mjpeg attached_pic,网易云下载件常态)的音频
+    // 会让 FFmpeg 后端装载链全正常(BufferedMedia)但播放位置永远冻结在 0。
+    // 3 秒后仍在 Playing 且 pos==0 → 判卡死,后台重封装去封面副本换源重放
+    QTimer::singleShot(3000, this, [this, path] {
+        if (m_mode != "audio" || m_filePath != path || !m_player) return;
+        if (m_player->playbackState() == QMediaPlayer::PlayingState
+            && m_player->position() <= 0)
+            startAudioRemux();
+    });
+}
+
+// ── 音频播放卡死自救:重封装去封面副本换源重放 ──
+// 探针 2026-09-04 实测(合成带封面 MP3 vs 同件剥封面):前者 pos=0 恒定,
+// 后者位置正常前进 —— 病根是内嵌封面流,不是文件本身。用随包 ffmpeg 以
+// stream copy(-map 0:a -c:a copy,不重编码,秒级)产只含音频流的副本。
+// 副本落临时目录按内容指纹命名,跨会话复用;失败/切走即弃,诚实降级。
+void PreviewPanel::startAudioRemux() {
+    if (m_remuxProc) return;   // 一单在途
+    const QString src = m_filePath;
+    if (src.isEmpty() || !m_player) return;
+    if (m_player->source() != QUrl::fromLocalFile(src)) return;   // 已换过源(重入闸)
+    const QString exe = locateFfmpegTool(QStringLiteral("ffmpeg"));
+    if (exe.isEmpty()) {
+        Logger::event("audio remux: ffmpeg 不可用(exe旁 ffmpeg/ 与 PATH 均无),放弃换源");
+        return;
+    }
+    const QFileInfo fi(src);
+    const QString ext = fi.suffix().toLower();
+    const QString key = QString::number(qHash(src) ^ qHash(fi.size())
+        ^ qHash(fi.lastModified().toMSecsSinceEpoch()), 16);
+    const QString outDir = QStandardPaths::writableLocation(QStandardPaths::TempLocation)
+                           + QStringLiteral("/gaze-audio-remux");
+    QDir().mkpath(outDir);
+    const QString out = outDir + QStringLiteral("/%1.%2")
+                            .arg(key, ext.isEmpty() ? QStringLiteral("mp3") : ext);
+    if (QFileInfo(out).size() > 0) {   // 旧副本仍在:直接换源,不再重封装
+        Logger::event(QStringLiteral("audio remux: 复用副本 %1").arg(out));
+        swapAudioSource(out);
+        return;
+    }
+    Logger::event(QStringLiteral(
+        "audio remux: 播放卡死(疑似内嵌封面流)→ 重封装 '%1'").arg(src));
+    m_remuxProc = new QProcess(this);
+    hideConsoleWindow(*m_remuxProc);   // ffmpeg 是控制台程序,不藏就闪黑窗
+    connect(m_remuxProc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+            this, [this, src, out](int code, QProcess::ExitStatus) {
+        QString errText;
+        if (m_remuxProc) errText = QString::fromLocal8Bit(m_remuxProc->readAllStandardError());
+        QProcess* p = m_remuxProc;
+        m_remuxProc = nullptr;
+        if (p) p->deleteLater();
+        if (code != 0 || QFileInfo(out).size() <= 0) {
+            Logger::event(QStringLiteral("audio remux: 失败 code=%1 %2,维持原样")
+                              .arg(code).arg(errText.left(200)));
+            return;
+        }
+        if (m_mode != "audio" || m_filePath != src) return;   // 用户已切走:只留副本下次复用
+        swapAudioSource(out);
+    });
+    m_remuxProc->start(exe, { QStringLiteral("-v"), QStringLiteral("error"),
+                              QStringLiteral("-i"), src,
+                              QStringLiteral("-map"), QStringLiteral("0:a"),
+                              QStringLiteral("-c:a"), QStringLiteral("copy"),
+                              QStringLiteral("-y"), out });
+}
+
+void PreviewPanel::swapAudioSource(const QString& out) {
+    if (!m_player) return;
+    Logger::event(QStringLiteral("audio remux: 换源重放 '%1'").arg(out));
+    m_player->setSource(QUrl::fromLocalFile(out));
+    m_player->play();
+    if (m_btnPlay)
+        m_btnPlay->setIcon(pp_impl::whiteIcon(style()->standardIcon(QStyle::SP_MediaPause)));
 }
 
 // ── 音频波形(见 audiowave.h;解码聚合全在专属线程,这里只画) ──
