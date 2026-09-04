@@ -190,10 +190,11 @@ void PreviewPanel::mouseDoubleClickEvent(QMouseEvent* event) {
     // 无符号减法:timestamp 回绕也正确
     if (event->button() == Qt::LeftButton
         && event->timestamp() - m_lastPressTs <= 300) {
-        // 2026-09-02 用户令:双击预览区 = 开一个查看器标签页(Ctrl 按住 = 后台开,
-        // 前台焦点不跳走)。已处于查看器形态时仍是浏览器↔查看器切换的既有语义。
+        // 2026-09-02 用户令:双击预览区 = 开一个查看器标签页。#221 起按态分流
+        // 在 MainWindow::previewDoubleClicked 里做(浏览器=开签,查看器=关签回
+        // 浏览器,G 全屏=先退全屏),面板自己不看模式;Ctrl 按住仍是后台开签。
         const bool ctrl = (event->modifiers() & Qt::ControlModifier) != 0;
-        invokeOnWindow(this, ctrl ? "openTabBackground()" : "openTabForeground()");
+        invokeOnWindow(this, ctrl ? "openTabBackground()" : "previewDoubleClicked()");
         return;
     }
     QWidget::mouseDoubleClickEvent(event);

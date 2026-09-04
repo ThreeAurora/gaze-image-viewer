@@ -271,9 +271,10 @@ void MainWindow::createMenubar() {
             gazeTr("C / ← / ↑ — 上一个\n"
             "V / → / ↓ — 下一个\n"
             "空格 — 播放/暂停\n"
-            "Ctrl+PgUp/PgDn — 快退/快进(秒数见设置→键盘)\n"
+            "Ctrl+PgUp/PgDn — 切换左/右标签页\n"
+            "Shift+PgUp/PgDn — 快退/快进(秒数见设置→键盘)\n"
             "按住右键+滚轮 — 缩放(等同 Ctrl+滚轮)\n"
-            "双击预览区 — 全屏\n"
+            "双击预览区 — 浏览器:开查看器标签 / 查看器:关签回浏览器\n"
             "F5 — 刷新  F11 — 界面全屏\n"
             "G — 全屏预览(只铺画面;再按 G 或 ESC 完全回到原布局)\n"
             "Alt+←/→ — 后退/前进  Backspace — 上级\n"
@@ -284,7 +285,8 @@ void MainWindow::createMenubar() {
             "F3 — 预览面板开关\n"
             "Del / S — 删除选中  X — 新建文件夹\n"
             "Enter — 切换查看器/浏览器(设置→键盘)\n"
-            "Ctrl+A — 全选  Ctrl+I — 反选\n"
+            "Ctrl+A — 全选  Ctrl+I — 反选  Ctrl+W — 关标签\n"
+            "Ctrl+Shift+T — 恢复刚关的标签页\n"
             "Esc — 退出全屏\n"
             "拖放 — 移动到文件夹  Ctrl+拖放 — 复制(设置→文件操作可关确认弹窗)"),
             QMessageBox::Ok, this);

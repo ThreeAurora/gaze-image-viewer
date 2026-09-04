@@ -58,7 +58,8 @@ QWidget* SettingsDialog::pageKeyboardMouse() {
             gazeTr("下一个文件"), gazeTr("快速幻灯片")}, 0));
     form->addRow(gazeTr("快速幻灯片间隔(毫秒)"),
         spin("Interface/slideInterval", SLIDE_MS_MIN, SLIDE_MS_MAX, SLIDE_MS_DEF));
-    // Viewer/seekSeconds:Ctrl+PgUp/PgDn 一次跳多少秒(1-3600)。
+    // Viewer/seekSeconds:Shift+PgUp/PgDn 一次跳多少秒(1-3600)—— #221 起键位
+    // 自 Ctrl+PgUp/PgDn 挪来(那对键改切标签页)。
     // 来源 @147575「右键+滚轮具体滚动多少秒…应该在设置里能体现,从1秒到3600秒」;
     // 右键+滚轮后来被用户改判为"等同于 Ctrl+滚轮缩放"(@635777),秒数落到快进快退上
     form->addRow(gazeTr("快进/快退秒数"),

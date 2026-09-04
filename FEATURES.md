@@ -55,7 +55,7 @@
 
 - 播放控制栏：播放/暂停、停止、音量按钮+数值、进度条点击/拖动跳转、时间显示自适应、剩余时间切换
 - 左键单击画面=播放/暂停；自动播放开关、循环播放开关
-- 快进/快退 Ctrl+PgUp/PgDn，步长 1–3600s 可设
+- 快进/快退 Shift+PgUp/PgDn，步长 1–3600s 可设（#221 起自 Ctrl+PgUp/PgDn 挪来，那对键改切标签页）
 - GIF 引擎：QImageReader 逐帧解码；进度条贴底、点击跳转、前后双向擦洗、片尾回卷继续播、48MB 帧缓存围绕播放头淘汰；禁用动画开关（GIF/JIF/APNG/ANI）
 - 动态照片（Motion Photo）：Apple Live Photo 外部配对视频 + Google/Samsung JPEG 内嵌 MP4 双协议四级检测；内嵌视频 faststart 修复；单击播放、播完回静态帧；右键「播放实况视频」「拆帧保存」；音频伴侣自动播放开关
 - AV1：libdav1d 版 avcodec + 拒绝故障硬解设备（二者缺一不可），满速软解
@@ -140,7 +140,7 @@
 
 ## 十一、快捷键（全表）
 
-C/←/↑ 上一个 · V/→/↓ 下一个 · 空格 播放暂停 · Ctrl+PgUp/PgDn 快退/快进 · 按住右键+滚轮 缩放 · 双击预览区 全屏 · F5 刷新 · F11 界面全屏 · G 全屏预览 · ESC 返回 · Alt+←/→ 后退前进 · Backspace 上级 · Alt+退格 地址栏删字 · Ctrl+1~5 颜色标记 · Ctrl+0/D 取消标记 · F 红标 · F2/F3 重命名 · Del/S 删除 · X 新建文件夹 · Enter/双击 查看器 · Ctrl+A 全选 · Ctrl+I 反选 · Ctrl+F 内联搜索 · Ctrl+W 关标签 · Ctrl+P 打印 · Ctrl+O 打开 · Ctrl+C/X/V 剪贴板 · Ctrl+Shift+F 以文搜图 · F12 设置 · F9 信息面板 · 全局对话框空格=确认 · 文本框内裸键不抢占
+C/←/↑ 上一个 · V/→/↓ 下一个 · 空格 播放暂停 · Ctrl+PgUp/PgDn 切左/右标签 · Shift+PgUp/PgDn 快退/快进 · 按住右键+滚轮 缩放 · 双击预览区 浏览器开签/查看器关签 · F5 刷新 · F11 界面全屏 · G 全屏预览 · ESC 返回 · Alt+←/→ 后退前进 · Backspace 上级 · Alt+退格 地址栏删字 · Ctrl+1~5 颜色标记 · Ctrl+0/D 取消标记 · F 红标 · F2/F3 重命名 · Del/S 删除 · X 新建文件夹 · Enter/双击 查看器 · Ctrl+A 全选 · Ctrl+I 反选 · Ctrl+F 内联搜索 · Ctrl+W 关标签 · Ctrl+Shift+T 恢复关签 · Ctrl+P 打印 · Ctrl+O 打开 · Ctrl+C/X/V 剪贴板 · Ctrl+Shift+F 以文搜图 · F12 设置 · F9 信息面板 · 全局对话框空格=确认 · 文本框内裸键不抢占
 
 ## 十二、打印·编辑·元数据
 

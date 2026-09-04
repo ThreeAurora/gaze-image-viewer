@@ -55,7 +55,7 @@ An **exhaustive list** of what Gaze can actually do, compiled from: the full dev
 
 - Playback bar: play/pause, stop, volume button + numeric level, click/drag seeking, adaptive time display, remaining-time toggle
 - Left-click on video toggles play/pause; autoplay and loop toggles
-- Seek Ctrl+PgUp/PgDn, step 1–3600 s configurable
+- Seek Shift+PgUp/PgDn, step 1–3600 s configurable (moved from Ctrl+PgUp/PgDn in #221; those keys now switch tabs)
 - GIF engine: QImageReader frame-by-frame decoding; bottom-anchored progress bar, click to seek, bidirectional scrubbing, end-of-clip rewind, 48 MB frame cache evicted around the playhead; animation-disable toggle (GIF/JIF/APNG/ANI)
 - Motion photos: Apple Live Photo paired videos + Google/Samsung embedded-MP4 dual protocol with four-stage detection; faststart repair for embedded videos; click to play, auto-return to still; right-click "Play live video" / "Extract frames"; audio-companion autoplay toggle
 - AV1: libdav1d-enabled avcodec + rejecting faulty hardware-decode devices (both required), full-speed software decode
@@ -140,7 +140,7 @@ Per-key status in [SETTINGS_MATRIX.md](SETTINGS_MATRIX.md). Group overview:
 
 ## 11. Shortcuts (full table)
 
-C/←/↑ previous · V/→/↓ next · Space play/pause · Ctrl+PgUp/PgDn seek · hold right button + wheel zoom · double-click preview area fullscreen · F5 refresh · F11 fullscreen UI · G fullscreen preview · ESC back · Alt+←/→ back/forward · Backspace up · Alt+Backspace address-bar delete · Ctrl+1~5 color labels · Ctrl+0/D clear · F red label · F2/F3 rename · Del/S delete · X new folder · Enter/double-click viewer · Ctrl+A select all · Ctrl+I invert · Ctrl+F inline search · Ctrl+W close tab · Ctrl+P print · Ctrl+O open · Ctrl+C/X/V clipboard · Ctrl+Shift+F image search · F12 settings · F9 info panel · Space confirms dialogs · bare keys never hijack text edits
+C/←/↑ previous · V/→/↓ next · Space play/pause · Ctrl+PgUp/PgDn switch left/right tab · Shift+PgUp/PgDn seek · hold right button + wheel zoom · double-click preview area open tab (browser) / close tab (viewer) · F5 refresh · F11 fullscreen UI · G fullscreen preview · ESC back · Alt+←/→ back/forward · Backspace up · Alt+Backspace address-bar delete · Ctrl+1~5 color labels · Ctrl+0/D clear · F red label · F2/F3 rename · Del/S delete · X new folder · Enter/double-click viewer · Ctrl+A select all · Ctrl+I invert · Ctrl+F inline search · Ctrl+W close tab · Ctrl+Shift+T reopen closed tab · Ctrl+P print · Ctrl+O open · Ctrl+C/X/V clipboard · Ctrl+Shift+F image search · F12 settings · F9 info panel · Space confirms dialogs · bare keys never hijack text edits
 
 ## 12. Print · Edit · Metadata
 

@@ -269,9 +269,10 @@ Extracting embedded camera preview…</translation>
         <source>C / ← / ↑ — 上一个
 V / → / ↓ — 下一个
 空格 — 播放/暂停
-Ctrl+PgUp/PgDn — 快退/快进(秒数见设置→键盘)
+Ctrl+PgUp/PgDn — 切换左/右标签页
+Shift+PgUp/PgDn — 快退/快进(秒数见设置→键盘)
 按住右键+滚轮 — 缩放(等同 Ctrl+滚轮)
-双击预览区 — 全屏
+双击预览区 — 浏览器:开查看器标签 / 查看器:关签回浏览器
 F5 — 刷新  F11 — 界面全屏
 G — 全屏预览(只铺画面;再按 G 或 ESC 完全回到原布局)
 Alt+←/→ — 后退/前进  Backspace — 上级
@@ -282,15 +283,17 @@ F2 — 重命名(文件树与文件页都可用,改谁看焦点;可在设置→�
 F3 — 预览面板开关
 Del / S — 删除选中  X — 新建文件夹
 Enter — 切换查看器/浏览器(设置→键盘)
-Ctrl+A — 全选  Ctrl+I — 反选
+Ctrl+A — 全选  Ctrl+I — 反选  Ctrl+W — 关标签
+Ctrl+Shift+T — 恢复刚关的标签页
 Esc — 退出全屏
 拖放 — 移动到文件夹  Ctrl+拖放 — 复制(设置→文件操作可关确认弹窗)</source>
         <translation>C / ← / ↑ — Previous
 V / → / ↓ — Next
 Space — Play/Pause
-Ctrl+PgUp/PgDn — Rewind / Fast-forward (interval in Settings → Keyboard)
+Ctrl+PgUp/PgDn — Switch left/right tab
+Shift+PgUp/PgDn — Rewind / Fast-forward (interval in Settings → Keyboard)
 Hold right button + wheel — Zoom (same as Ctrl+wheel)
-Double-click preview — Fullscreen
+Double-click preview — Browser: open viewer tab / Viewer: close tab, back to browser
 F5 — Refresh  F11 — Fullscreen UI
 G — Fullscreen preview (picture only; press G or ESC again to fully restore the layout)
 Alt+←/→ — Back / Forward  Backspace — Parent folder
@@ -301,7 +304,8 @@ F2 — Rename (works in the folder tree and the file grid; target follows focus;
 F3 — Toggle preview panel
 Del / S — Delete selected  X — New folder
 Enter — Switch viewer/browser (Settings → Keyboard)
-Ctrl+A — Select all  Ctrl+I — Invert selection
+Ctrl+A — Select all  Ctrl+I — Invert selection  Ctrl+W — Close tab
+Ctrl+Shift+T — Reopen closed tab
 Esc — Exit fullscreen
 Drag &amp; drop — Move to folder  Ctrl+drag — Copy (confirmation dialog can be turned off in Settings → File Operations)</translation>
     </message>

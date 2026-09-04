@@ -43,6 +43,11 @@ public:
     // 2026-09-02 用户令:双击预览区 = 开新标签并选中它;Ctrl+双击 = 后台开(焦点不跳走)
     Q_INVOKABLE void openTabForeground();   // 双击:进查看器 + 开新标签 + 选中
     Q_INVOKABLE void openTabBackground();   // Ctrl+双击:后台开新标签,焦点留在浏览器
+    // #221(2026-09-04 用户令):预览区双击按态分流 —— 浏览器=开签(原语义),
+    // 查看器=关当前签回浏览器,G 全屏=先退全屏再看身在何处
+    Q_INVOKABLE void previewDoubleClicked();
+    void restoreClosedViewerTab();             // Ctrl+Shift+T:恢复最近关掉的文件标签
+    void pushClosedTab(const QString& path);   // 关签时记入恢复栈(去重,留 50)
     void syncViewerTab(const QString& path);
     void updateTabBarVis();   // 标签栏显隐总闸(2026-09-03:浏览器态有图签也显示)
     void closeViewerTab(int index);              // 关闭按钮/标签右键菜单/中键
@@ -206,6 +211,7 @@ private:
     int  m_redFilterMode = 0; // 红标筛选三态:0全部 1仅红标 2仅非红标
     QToolButton* m_redBtn = nullptr; // 红标三态钮,蓝色背景指示器由 syncFilterIndicators 独家维护(#107)
     QTabBar*    m_viewerTabs = nullptr;  // 查看器标签条(浏览器态有图签也显示,见 updateTabBarVis)
+    QStringList m_closedTabs;            // #221:最近关闭的文件标签路径(新→旧,Ctrl+Shift+T 恢复)
     // ── 2026-09-02 全屏胶片条 ──
     FilmStrip*          m_filmStrip = nullptr;  // 顶部缩略图条(全屏预览,光标到顶显示)
     bool                m_filmDirty = false;    // 目录列表变了,胶片条下次显示要重建

@@ -422,6 +422,20 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
                         applyColorLabel(ke->key() - Qt::Key_0);
                         return true;
                     }
+                    // #221(2026-09-04 用户令):Ctrl+PgUp/PgDn = 切换左/右标签页
+                    // (顶替原快退/快进,seek 挪 Shift+PgUp/PgDn)。到头钳住不回绕;
+                    // G 全屏里标签条收着、没有可切的样子,落回下面的快退快进。
+                    // 切到「浏览器」标签时 currentChanged 自己会退回浏览器(#105)
+                    if (m_viewerTabs && !m_fullView && m_viewerTabs->count() > 1
+                        && (ke->modifiers() & Qt::ShiftModifier) == 0
+                        && (ke->key() == Qt::Key_PageUp || ke->key() == Qt::Key_PageDown)) {
+                        const int dir = ke->key() == Qt::Key_PageUp ? -1 : 1;
+                        const int nxt = qBound(0, m_viewerTabs->currentIndex() + dir,
+                                               m_viewerTabs->count() - 1);
+                        if (nxt != m_viewerTabs->currentIndex())
+                            m_viewerTabs->setCurrentIndex(nxt);
+                        return true;
+                    }
                     // Viewer/seekSeconds:一次跳多少秒(设置→键盘;默认 3)
                     if (ke->key() == Qt::Key_PageUp) {
                         m_preview->seekDelta(-seekSeconds()); return true;
@@ -429,14 +443,30 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
                     if (ke->key() == Qt::Key_PageDown) {
                         m_preview->seekDelta(seekSeconds()); return true;
                     }
+                    // #221:Ctrl+Shift+T = 恢复最近关掉的文件标签
+                    // (与 Ctrl+W/双击关签配套;查看器热键表的单键 T=停止不冲突)
+                    if (ke->key() == Qt::Key_T && (ke->modifiers() & Qt::ShiftModifier)) {
+                        restoreClosedViewerTab(); return true;
+                    }
                     // Ctrl+W = 关闭当前标签卡(2026-09-01 用户令)。落在「浏览器」
                     // 标签或浏览器模式时没有可关的内容标签,按键落空 —— 浏览器
                     // 标签是回标准模式的出口,不是内容;关到最后一张图片标签时
                     // closeViewerTab 自己会退回浏览器
                     if (ke->key() == Qt::Key_W && m_viewerMode && m_viewerTabs
                         && !isBrowserTab(m_viewerTabs->currentIndex())) {
+                        if (m_fullView) exitFullView();   // #221:全屏里关签先回正常布局
                         closeViewerTab(m_viewerTabs->currentIndex());
                         return true;
+                    }
+                } else if (ke->modifiers() == Qt::ShiftModifier) {
+                    // #221:快退/快进自 Ctrl+PgUp/PgDn 挪来(那对键改切标签页),
+                    // 秒数仍是 Viewer/seekSeconds。查看器热键表没有 PgUp/PgDn,
+                    // 查看器态一样走到这;全屏里也可用。
+                    if (ke->key() == Qt::Key_PageUp) {
+                        m_preview->seekDelta(-seekSeconds()); return true;
+                    }
+                    if (ke->key() == Qt::Key_PageDown) {
+                        m_preview->seekDelta(seekSeconds()); return true;
                     }
                 } else if (ke->modifiers() == Qt::NoModifier) {
                     if (ke->key() == Qt::Key_F) { applyColorLabel(1); return true; }

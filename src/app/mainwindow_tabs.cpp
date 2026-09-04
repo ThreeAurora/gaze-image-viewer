@@ -192,6 +192,7 @@ void MainWindow::setViewerTabPath(int index, const QString& path) {
 void MainWindow::closeViewerTab(int index) {
     if (!m_viewerTabs || index < 0 || index >= m_viewerTabs->count()) return;
     if (isBrowserTab(index)) return;        // #105:浏览器标签不可关(它就是出口)
+    pushClosedTab(tabPath(index));          // #221:Ctrl+Shift+T 可恢复(×/中键/Ctrl+W 同享)
     m_viewerTabs->removeTab(index);   // 索引修正和 tab 上的 × 按钮都由 QTabBar 自己收尾
     // #105:count>0 不再等价"还有图可看"——常驻标签兜着底;关到最后一张图片
     // 标签才算关完 = 退回浏览器(摘除引发 currentChanged→浏览器标签→toggleViewer
@@ -326,4 +327,48 @@ Q_INVOKABLE void MainWindow::openTabBackground() {
     m_viewerTabs->blockSignals(false);
     addViewerTab(m_currentFile);   // 追加,但不 setCurrentIndex —— 焦点留在浏览器
     updateTabBarVis();             // 浏览器态开的第一张图签:标签栏当场浮现
+}
+
+// ── #221(2026-09-04 用户令):标签页浏览器化 ──
+// 关签动作统一记路径,Ctrl+Shift+T 按最近关闭顺序恢复。去重:同一文件反复
+// 开关只记最近一次;只留 50 条,栈底自然淘汰。
+void MainWindow::pushClosedTab(const QString& path) {
+    if (path.isEmpty()) return;
+    m_closedTabs.removeAll(path);
+    m_closedTabs.prepend(path);
+    while (m_closedTabs.size() > 50) m_closedTabs.removeLast();
+}
+
+// Ctrl+Shift+T:恢复最近关掉的文件标签。文件已在外部被删/移走就跳过找更早的。
+// openViewerTab 自己按态行事:浏览器态=进查看器并选中新标签,查看器态=激活或
+// 追加 —— 恢复后人在哪由当时的态决定,与关掉前的位置无关。
+void MainWindow::restoreClosedViewerTab() {
+    while (!m_closedTabs.isEmpty()) {
+        const QString p = m_closedTabs.takeFirst();
+        if (QFileInfo::exists(p)) { openViewerTab(p); return; }
+    }
+}
+
+// 预览区双击(非 Ctrl)按态分流(previewpanel 只管把事件送到这):
+//   浏览器态 = 开一个查看器标签并选中(2026-09-02 原语义不变);
+//   查看器态 = 关闭当前文件标签回到浏览器 —— 用户令,与浏览器态双击=开签
+//     正好互为逆操作;
+//   G 全屏   = 先退出全屏;人在查看器接着关签,在浏览器就停在那里
+//     (浏览器+全屏的双击只退全屏,不凭空开签)。
+void MainWindow::previewDoubleClicked() {
+    if (m_fullView) exitFullView();
+    if (!m_viewerMode) {
+        if (!m_fullView) openTabForeground();
+        return;
+    }
+    const int cur = m_viewerTabs ? m_viewerTabs->currentIndex() : -1;
+    if (cur < 0 || isBrowserTab(cur)) return;
+    // 直摘不走 closeViewerTab:后者关到非末张时 currentChanged 会把预览拽去
+    // 解相邻一张,马上又要 toggleViewer 退回浏览器,白解一遍还挪浏览器选中。
+    // 挡住信号;toggleViewer 的退浏览器分支自己会把高亮挪回「浏览器」标签。
+    pushClosedTab(tabPath(cur));
+    m_viewerTabs->blockSignals(true);
+    m_viewerTabs->removeTab(cur);
+    m_viewerTabs->blockSignals(false);
+    toggleViewer();
 }
