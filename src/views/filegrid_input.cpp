@@ -203,6 +203,18 @@ QString FileGrid::pathAt(int idx) const {
                                                                   : QString();
 }
 
+// #225:G 全屏胶片条的数据源 —— 目录全部文件(目录行不进条;隐藏项跟
+// FileList/showHidden)。与网格筛选无关:条要"所有文件都参与进来",
+// 网格筛成"图片"时条里也得有视频/音频;点条里被筛掉的条目走 selectByPath
+// 的"切回全部再选"回退(filegrid_input.cpp)。
+QStringList FileGrid::allFilePaths() const {
+    QStringList out;
+    out.reserve(static_cast<int>(m_allEntries.size()));
+    for (const auto& e : m_allEntries)
+        if (!e.isDir && (m_showHidden || !e.hidden)) out << e.path;
+    return out;
+}
+
 void FileGrid::selectPathAdditive(const QString& path) {
     for (int i = 0; i < static_cast<int>(m_entries.size()); ++i) {
         if (m_entries[i].path != path) continue;

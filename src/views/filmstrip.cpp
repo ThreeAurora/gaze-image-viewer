@@ -5,6 +5,7 @@
 #include "views/filmstrip.h"
 #include "thumbnailer.h"
 #include "constants.h"
+#include "settings.h"
 #include "i18n.h"
 
 #include <QLabel>
@@ -25,7 +26,18 @@ constexpr int kThumbH  = 96;      // #220:用户令"上下宽一点",64 → 96
 constexpr int kGap     = 4;
 constexpr int kCaptionH = 24;     // #220:题注行随条加高放宽,20 → 24
 constexpr int kPanThresh = 6;     // 按住位移超过这个像素才算拖
-constexpr int kBtnZone   = 44;    // 右端按钮区宽(#220 只剩关闭一键,60 → 44)
+constexpr int kBtnZone   = 160;   // 右端按钮区宽(#226:图片/视频/音频三勾选钮+退出)
+// 类别判定(#225):图(含 RAW)/视频/音频/其他。RAW 独立于 IMAGE_EXTS
+// (它不进缩略图管线),但归"图片"按钮管 —— 用户眼里它就是图。
+enum Cat { CatImage, CatVideo, CatAudio, CatOther };
+Cat catOf(const QString& path) {
+    QString su = QFileInfo(path).suffix().toLower();
+    if (!su.isEmpty()) su.prepend(QLatin1Char('.'));
+    if (IMAGE_EXTS.count(su) || RAW_EXTS.count(su)) return CatImage;
+    if (VIDEO_EXTS.count(su)) return CatVideo;
+    if (AUDIO_EXTS.count(su)) return CatAudio;
+    return CatOther;
+}
 // 标准图标染白(条底是深色,原生图标是深色的看不见;与 pp_impl::whiteIcon
 // 同一套做法的本地副本 —— 那个头注明只供 previewpanel 各编译单元使用)
 QIcon whiteIcon(const QIcon& base) {
@@ -96,6 +108,40 @@ public:
                                          Qt::SmoothTransformation);
             p->drawImage(ir.x() + (ir.width() - sc.width()) / 2,
                          ir.y() + (ir.height() - sc.height()) / 2, sc);
+        } else {
+            // #225:出不了缩略图(音频/文本/可执行/RAW…)把文件名填进格子:
+            // 逐字符折行最多 3 行,末行放不下省略,块在格内垂直居中
+            QFont f = opt.font;
+            f.setPixelSize(11);
+            p->setFont(f);
+            p->setPen(QColor("#C9C9D2"));
+            const QFontMetrics fm(p->fontMetrics());
+            const QRect tr = opt.rect.adjusted(5, 5, -5, -5);
+            // 模型 ToolTipRole 本来就是文件名(见 FilmStripModel::data),直接拿来用
+            QString rest = idx.data(Qt::ToolTipRole).toString();
+            QStringList lines;
+            const int maxLines = 3;
+            for (int li = 0; li < maxLines && !rest.isEmpty(); ++li) {
+                if (li == maxLines - 1) {
+                    lines << fm.elidedText(rest, Qt::ElideRight, tr.width());
+                    break;
+                }
+                int n = 0;
+                qint64 acc = 0;
+                while (n < rest.size()
+                       && (acc += fm.horizontalAdvance(rest.at(n))) <= tr.width())
+                    ++n;
+                if (n <= 0) n = 1;   // 一个字都放不下也截一个,防死循环
+                lines << rest.left(n);
+                rest = rest.mid(n);
+            }
+            const int lh = fm.height();
+            int y = tr.y() + (tr.height() - lines.size() * lh) / 2;
+            for (const QString& ln : lines) {
+                p->drawText(QRect(tr.x(), y, tr.width(), lh),
+                            Qt::AlignLeft | Qt::AlignVCenter, ln);
+                y += lh;
+            }
         }
         p->restore();
     }
@@ -132,28 +178,54 @@ FilmStrip::FilmStrip(QWidget* parent)
     setItemDelegate(new FilmStripDelegate(this));
     setFixedHeight(preferredHeight());
 
-    // ── 右端按钮区(#209 并入条;#220 用户令:只留"退出全屏" —— 上一个/下一个
-    // 改挂屏幕左右两侧浮动钮(MainWindow::m_fullNavPrev/Next),适应窗口在
-    // 预览右键菜单与查看器键位里都有入口)──
+    // ── 右端按钮区(#209 并入条;#220 只留退出;#226 用户令:加 图片/视频/音频
+    // 三个勾选钮,勾哪类多显示哪类、ini 持久化;退出全屏照旧最右)──
     m_btnBar = new QWidget(this);
     m_btnBar->setStyleSheet(QString::fromUtf8(
-        "QToolButton{background:transparent;border:none;border-radius:4px;padding:0;}"
-        "QToolButton:hover{background:#3A3A42;}"));
+        "QToolButton{background:transparent;border:none;border-radius:4px;"
+        "padding:2px 5px;font-size:10px;color:#B9B9C2;}"
+        "QToolButton:hover{background:#3A3A42;color:#FFFFFF;}"
+        "QToolButton:checked{background:#0078D7;color:#FFFFFF;}"
+        "QToolButton#filmClose{padding:0;}"));
     auto* grid = new QGridLayout(m_btnBar);
     grid->setContentsMargins(0, 0, 0, 0);
     grid->setSpacing(0);
-    auto mkBtn = [&](QStyle::StandardPixmap sp, const QString& tip, int r, int c,
+    AppSettings& st = AppSettings::instance();
+    m_showImg = st.get("FilmStrip/showImages", true).toBool();
+    m_showVid = st.get("FilmStrip/showVideos", true).toBool();
+    m_showAud = st.get("FilmStrip/showAudios", true).toBool();
+    auto mkCat = [&](const QString& label, const QString& tip,
+                     const char* key, bool* flag, int col) {
+        auto* b = new QToolButton(m_btnBar);
+        b->setText(label);
+        b->setToolTip(tip);
+        b->setCheckable(true);
+        b->setChecked(*flag);
+        b->setFocusPolicy(Qt::NoFocus);   // 不吃焦点:方向键继续归全屏键位
+        connect(b, &QToolButton::toggled, this, [this, key, flag](bool on) {
+            *flag = on;
+            AppSettings::instance().set(QLatin1String(key), on);
+            refilter();   // 蓝框/居中/题注由 locateCurrent 对账;当前文件被滤掉就收框
+        });
+        grid->addWidget(b, 0, col);
+    };
+    mkCat(gazeTr("图片"), gazeTr("显示/隐藏图片"), "FilmStrip/showImages", &m_showImg, 0);
+    mkCat(gazeTr("视频"), gazeTr("显示/隐藏视频"), "FilmStrip/showVideos", &m_showVid, 1);
+    mkCat(gazeTr("音频"), gazeTr("显示/隐藏音频"), "FilmStrip/showAudios", &m_showAud, 2);
+    auto mkBtn = [&](QStyle::StandardPixmap sp, const QString& tip, int c,
                      auto&& fn) {
         auto* b = new QToolButton(m_btnBar);
+        b->setObjectName(QStringLiteral("filmClose"));
         b->setIcon(whiteIcon(style()->standardIcon(sp)));
         b->setIconSize(QSize(14, 14));
         b->setFixedSize(30, 32);
         b->setToolTip(tip);
         connect(b, &QToolButton::clicked, this, fn);
-        grid->addWidget(b, r, c);
+        grid->addWidget(b, 0, c);
     };
-    mkBtn(QStyle::SP_DialogCloseButton, gazeTr("退出全屏"), 0, 0,
+    mkBtn(QStyle::SP_DialogCloseButton, gazeTr("退出全屏"), 3,
           [this] { emit exitRequested(); });
+    grid->setColumnStretch(4, 1);   // 多余宽度吃在尾列:按钮组靠左贴齐
 
     m_caption = new QLabel(this);
     m_caption->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
@@ -171,25 +243,55 @@ FilmStrip::FilmStrip(QWidget* parent)
 }
 
 void FilmStrip::setEntries(const QStringList& paths, const QString& current) {
-    m_requested.clear();
-    m_pressRow = -1;
-    m_panning  = false;
-    m_hoverRow = -1;
-    m_model->reset(paths);
-    horizontalScrollBar()->setValue(0);
+    m_currentPath = current;
+    if (paths == m_allPaths) {
+        // 同一份全量表再灌一遍(网格筛选切换会触发 fileCountChanged,但条已
+        // 不跟筛选走):不做重建,只对账蓝框/居中/题注,免得滚动位置闪跳
+        locateCurrent();
+        return;
+    }
+    m_allPaths = paths;
+    refilter();
+}
+
+void FilmStrip::syncCurrent(const QString& path) {
+    m_currentPath = path;
+    if (path.isEmpty() || currentPath() == path) return;
+    locateCurrent();
+}
+
+// 在显示列表里定位当前文件;找不到(被类别勾选滤掉)就收蓝框、藏题注
+void FilmStrip::locateCurrent() {
     int row = -1;
-    if (!current.isEmpty()) {
-        for (int i = 0; i < paths.size(); ++i)
-            if (paths.at(i) == current) { row = i; break; }
+    if (!m_currentPath.isEmpty()) {
+        for (int i = 0; i < m_model->rowCount(); ++i)
+            if (m_model->pathAt(i) == m_currentPath) { row = i; break; }
     }
     applyCurrent(row, true);
     requestVisibleThumbs();
 }
 
-void FilmStrip::syncCurrent(const QString& path) {
-    if (path.isEmpty() || currentPath() == path) return;
-    for (int i = 0; i < m_model->rowCount(); ++i)
-        if (m_model->pathAt(i) == path) { applyCurrent(i, true); return; }
+// #226:按类别勾选从全量表 m_allPaths 生成显示列表。其他类型(文本/文档/
+// 可执行…)没有按钮管、始终显示 —— "所有文件都参与进来"的兜底。
+void FilmStrip::refilter() {
+    QStringList shown;
+    shown.reserve(m_allPaths.size());
+    for (const QString& p : m_allPaths) {
+        switch (catOf(p)) {
+        case CatImage: if (!m_showImg) continue; break;
+        case CatVideo: if (!m_showVid) continue; break;
+        case CatAudio: if (!m_showAud) continue; break;
+        default: break;
+        }
+        shown << p;
+    }
+    m_requested.clear();
+    m_pressRow = -1;
+    m_panning  = false;
+    m_hoverRow = -1;
+    m_model->reset(shown);
+    horizontalScrollBar()->setValue(0);
+    locateCurrent();
 }
 
 void FilmStrip::applyCurrent(int row, bool center) {
@@ -239,6 +341,8 @@ void FilmStrip::updateCaption() {
 
 // 懒取缩略图:可见区 ±1 张,按均匀条目宽从滚动值直接算行号(ScrollPerPixel 下精确,
 // 不必 indexAt 往回猜)。已入队/已缓存的不重复入队。
+// #225:音频/文本/可执行/RAW 出不了缩略图(#140 铁令:RAW 绝不进缩略图管线),
+// 不入队白耗工 —— 这些格子由 delegate 直接画文件名。
 void FilmStrip::requestVisibleThumbs() {
     const int n = m_model->rowCount();
     if (n <= 0) return;
@@ -249,10 +353,13 @@ void FilmStrip::requestVisibleThumbs() {
     for (int r = first; r <= last; ++r) {
         const QString p = m_model->pathAt(r);
         if (p.isEmpty() || m_requested.contains(p) || m_model->hasThumb(p)) continue;
+        const Cat c = catOf(p);
+        const bool thumbable = c == CatVideo
+            || (c == CatImage
+                && !RAW_EXTS.count(QFileInfo(p).suffix().toLower().prepend(QLatin1Char('.'))));
+        if (!thumbable) continue;
         m_requested.insert(p);
-        QString su = QFileInfo(p).suffix().toLower();
-        if (!su.isEmpty()) su.prepend(QLatin1Char('.'));
-        Thumbnailer::instance().enqueue(p, kThumbW, VIDEO_EXTS.count(su) > 0);
+        Thumbnailer::instance().enqueue(p, kThumbW, c == CatVideo);
     }
 }
 

@@ -2,9 +2,9 @@
 // MainWindow 全屏胶片条(filmstrip) —— #203 全面重做(2026-09-03 用户令)
 //
 // G 全屏预览:光标挪到窗口顶端 → 顶部浮现胶片条。控件本体在 src/views/
-// filmstrip.h(QListView 虚拟化):整个目录随便滚、滚到哪缩略图加载到哪、
-// 点击跳转、按住平移、底部题注"文件名 · i / n"。本文件只剩 MainWindow 一侧
-// 的三件事:建控件+接跳转、光标到顶显隐、把 FileGrid 显示列表灌进条。
+// filmstrip.h(QListView 虚拟化):目录全部文件随便滚(#225)、滚到哪缩略图
+// 加载到哪、点击跳转、按住平移、底部题注"文件名 · i / n"。本文件只剩
+// MainWindow 一侧的三件事:建控件+接跳转、光标到顶显隐、把目录全部文件灌进条。
 // 光标不在顶部 = 零装饰,与"全屏只留画面"的总原则一致。
 // ═══════════════════════════════════════════════════════════
 
@@ -151,7 +151,9 @@ void MainWindow::updateFullNavButtons(const QPoint* cursor) {
     settle(m_fullNavNext, gr, cursor->x() >= width() - kNavEdge);
 }
 
-// 把 FileGrid 当前目录的显示列表灌进条。#203:只有目录或条目数变了才重建
+// 把目录全部文件灌进条(#225:FileGrid::allFilePaths —— 目录行除外、不跟
+// 网格筛选走,网格筛成"图片"条里照样有视频/音频;点被筛掉的条目由
+// selectByPath 的"切回全部再选"回退兜住)。#203:只有目录或条目数变了才重建
 // (m_filmDirty 由 fileCountChanged 置位,目录串对账防"数没变内容换了");
 // 平时只把当前文件对进去(蓝框/居中/题注),不再像旧实现那样每拍全量重建。
 void MainWindow::refreshFilmStrip() {
@@ -163,12 +165,9 @@ void MainWindow::refreshFilmStrip() {
         m_filmStrip->syncCurrent(m_currentFile);
         return;
     }
-    QStringList paths;
-    paths.reserve(total);
-    for (int i = 0; i < total; ++i) paths << m_fileGrid->pathAt(i);
     m_filmDir = dir;
     m_filmDirty = false;
-    m_filmStrip->setEntries(paths, m_currentFile);
+    m_filmStrip->setEntries(m_fileGrid->allFilePaths(), m_currentFile);
 }
 
 // ═══════════════════════════════════════════════════════════

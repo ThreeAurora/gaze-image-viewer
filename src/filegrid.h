@@ -86,6 +86,7 @@ public:
     void selectPathAdditive(const QString& path);
     QString pathAt(int idx) const;           // 条目序号 → 路径(越界/空白返回空)
     QString currentDir() const { return m_currentDir; }   // #203 胶片条对账数据来源
+    QStringList allFilePaths() const;   // #225 胶片条数据源:目录全部文件(跳目录行,按 showHidden)
     int    hitTest(const QPoint& canvasPos);  // 画布坐标 → 条目序号(拖放落点判定)
     QString neighborOf(const QString& path, int delta) const;  // 相邻文件路径(预读用)
 

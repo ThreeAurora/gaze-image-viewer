@@ -27,6 +27,10 @@ class QMouseEvent;
 // 改挂屏幕左右浮动钮,见 MainWindow::m_fullNavPrev/Next);当前项强制居中,
 // 首尾张允许滚出边界外留白(不再贴边钳制,见 centerRow/updateGeometries)。
 // 缩略图缓存 QCache LRU(上限 2000 张),跨目录来回滚不重解。
+// #225/#226(2026-09-04 用户令):数据源改灌目录全部文件(FileGrid::
+// allFilePaths,目录行除外,不再跟随网格筛选);出不了缩略图的格子
+// (音频/文本/可执行/RAW…)由 delegate 直接画文件名;右端加 图片/视频/音频
+// 三个勾选钮(勾哪类显示哪类,ini 持久化),其余类型没有按钮管、始终显示。
 // ═══════════════════════════════════════════
 
 class FilmStripModel : public QAbstractListModel {
@@ -77,6 +81,8 @@ protected:
     void updateGeometries() override;   // #220:拉宽滚动范围,首尾张允许居中
 
 private:
+    void refilter();                     // #226:按类别勾选从全量表重建显示列表
+    void locateCurrent();                // 在显示列表里定位当前文件(找不到=收蓝框)
     void requestVisibleThumbs();
     void applyCurrent(int row, bool center);
     void centerRow(int row);                     // #220:手工算滚动值,首尾也真居中
@@ -84,11 +90,17 @@ private:
 
     FilmStripModel* m_model;
     QLabel* m_caption = nullptr;
-    QWidget* m_btnBar = nullptr;                 // 右端按钮区(只留退出全屏,#220)
+    QWidget* m_btnBar = nullptr;                 // 右端按钮区(#226:三类勾选钮+退出)
     int     m_currentRow = -1;
     int     m_hoverRow   = -1;
     QPoint  m_pressPos;
     int     m_pressRow   = -1;
     bool    m_panning    = false;
     QSet<QString> m_requested;                   // 已 enqueue 的路径(防重复入队)
+    // #225/#226:全量数据源与当前文件记账;类别勾选(ini FilmStrip/show*)
+    QStringList m_allPaths;
+    QString     m_currentPath;
+    bool        m_showImg = true;
+    bool        m_showVid = true;
+    bool        m_showAud = true;
 };

@@ -2178,6 +2178,18 @@ Try a different selection (a bit larger and farther from the edges).</translatio
         <translation>Show</translation>
     </message>
     <message>
+        <source>显示/隐藏图片</source>
+        <translation>Show/hide images</translation>
+    </message>
+    <message>
+        <source>显示/隐藏视频</source>
+        <translation>Show/hide videos</translation>
+    </message>
+    <message>
+        <source>显示/隐藏音频</source>
+        <translation>Show/hide audio</translation>
+    </message>
+    <message>
         <source>显示信息</source>
         <translation>Show info</translation>
     </message>
