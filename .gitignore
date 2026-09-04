@@ -27,3 +27,11 @@ cache/tmp/portable_test/
 __pycache__/
 *.pyc
 
+
+# ── v1.0.0 发布前收尾（历史手术后的运行时产物与磁盘孤儿归位）──
+# 过程工作区(时间线脚本/bundle/重放流/事件解析中间物)——v10 历史已整体剔除跟踪
+cache/
+# CMYK 4096 副本缓存(ImgProc::decodeCmykCached 原子写,可再生)
+build_qt68/cmykpyr/
+# moc 增量目录(已跟踪的旧快照除外,新生成目录不再冒头)
+build_qt68/Gaze_autogen/
