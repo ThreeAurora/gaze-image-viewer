@@ -643,7 +643,8 @@ void FolderTree::renameItem(QTreeWidgetItem* item) {
     if (oldPath.isEmpty() || isVolumeRoot(oldPath)) return;
     const QString oldName = QFileInfo(oldPath).fileName();
     // 2026-09-02:与文件页共用仿 XnView 的重命名对话框(带插入日期/时间)
-    const QString name = RenameDialog::getName(this, oldName);
+    // #244:树节点都是文件夹——不拆扩展名、不显示扩展名框
+    const QString name = RenameDialog::getName(this, oldName, /*isDir=*/true);
     if (name.isEmpty() || name == oldName) return;
     if (const QString why = invalidNameReason(name); !why.isEmpty()) {
         QMessageBox::warning(this, gazeTr("重命名"), why);

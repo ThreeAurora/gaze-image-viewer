@@ -175,7 +175,7 @@ void MainWindow::renameCurrent() {
         return;
     }
     QFileInfo fi(paths.first());
-    const QString name = RenameDialog::getName(this, fi.fileName());
+    const QString name = RenameDialog::getName(this, fi.fileName(), fi.isDir());
     if (name.isEmpty() || name == fi.fileName()) return;
     // 校验必须先于拼路径:"a/b" 会让下面的 rename 把文件搬到别处,界面上毫无动静
     if (const QString why = invalidNameReason(name); !why.isEmpty()) {

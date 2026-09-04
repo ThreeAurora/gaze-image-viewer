@@ -280,7 +280,7 @@ Ctrl+1~5 — 设置颜色标记(红橙黄绿蓝)
 Ctrl+0 / D — 取消颜色标记
 F — 加红色标记
 F2 — 重命名(文件树与文件页都可用,改谁看焦点;可在设置→快捷键改)
-F3 — 预览面板开关
+F3 — 用默认应用打开(文件夹=资源管理器)
 Del / S — 删除选中  X — 新建文件夹
 Enter — 切换查看器/浏览器(设置→键盘)
 Ctrl+A — 全选  Ctrl+I — 反选  Ctrl+W — 关标签(全屏中=只退全屏)
@@ -301,7 +301,7 @@ Ctrl+1~5 — Set color label (red/orange/yellow/green/blue)
 Ctrl+0 / D — Clear color label
 F — Add red label
 F2 — Rename (works in the folder tree and the file grid; target follows focus; remappable in Settings → Shortcuts)
-F3 — Toggle preview panel
+F3 — Open with default app (folder = Explorer)
 Del / S — Delete selected  X — New folder
 Enter — Switch viewer/browser (Settings → Keyboard)
 Ctrl+A — Select all  Ctrl+I — Invert selection  Ctrl+W — Close tab (in fullscreen: exit fullscreen only)
@@ -1828,6 +1828,10 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
     <message>
         <source>扩展名</source>
         <translation>Extension</translation>
+    </message>
+    <message>
+        <source>扩展名:</source>
+        <translation>Extension:</translation>
     </message>
     <message>
         <source>扫描文件头</source>
