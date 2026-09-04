@@ -92,6 +92,7 @@ void PreviewPanel::resizeEvent(QResizeEvent* event) {
     syncVideoChildren();
     if (m_liveBadge && m_liveBadge->isVisible())
         m_liveBadge->move(m_videoWidget ? m_videoWidget->width() - m_liveBadge->width() - 12 : 0, 12);
+    updateRawFullBtn();      // #140b:悬浮 RAW 钮贴右上角,面板缩放跟着挪
 }
 
 void PreviewPanel::mousePressEvent(QMouseEvent* event) {
@@ -264,6 +265,28 @@ void PreviewPanel::contextMenuEvent(QContextMenuEvent* event) {
     }
     if (hasMedia || m_isLivePhoto) {
         menu.addAction(gazeTr("播放/暂停"), this, [this]() { togglePlayPause(); });
+    }
+    // #240(2026-09-04 用户令):文本预览的两个形态开关进右键 —— 自动换行
+    // (txt/md 纯文本)与 Markdown 渲染样式(md 专属),勾选态即时生效
+    if (m_mode == "text") {
+        menu.addSeparator();
+        QAction* wrap = menu.addAction(gazeTr("自动换行"));
+        wrap->setCheckable(true);
+        wrap->setChecked(pp_impl::s_bool("Preview/textWrap", true));
+        connect(wrap, &QAction::toggled, this, [this](bool on) {
+            AppSettings::instance().set("Preview/textWrap", on);
+            m_textEdit->setWordWrapMode(on ? QTextOption::WordWrap
+                                           : QTextOption::NoWrap);
+        });
+        if (m_filePath.endsWith(QStringLiteral(".md"), Qt::CaseInsensitive)) {
+            QAction* md = menu.addAction(gazeTr("以 Markdown 样式展示"));
+            md->setCheckable(true);
+            md->setChecked(pp_impl::s_bool("Preview/mdRenderStyle", true));
+            connect(md, &QAction::toggled, this, [this](bool on) {
+                AppSettings::instance().set("Preview/mdRenderStyle", on);
+                loadFile(m_filePath);   // 重新分发:渲染样式 ↔ 纯文本
+            });
+        }
     }
     // #224(2026-09-04 用户令):G 全屏预览进右键菜单 —— 图片/视频/音频统一
     // 都有本地入口(进查看器后网格那份右键够不着,G 键也不总在手边)

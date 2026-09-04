@@ -11,12 +11,17 @@
 //     1 行   16KB →    71ms     1 行  128KB →  3705ms
 //     1 行  512KB → 62390ms(62 秒界面彻底冻死 —— 旧代码正漏在这里)
 //   单行越长代价按二次方增长(无处断词,换行片段表 O(n²));有空格时同长度仅 59ms。
-// 因此三条上限一起生效,而不是只卡行数:
-//   maxBytes 512KB(读多少)、maxLines 5000(显示多少)、maxLineChars 2000(每行显示多少)
-// 三条同时顶满的最坏组合实测:
+// 因此三条上限一起生效,而不是只卡行数(2026-09-04 用户令收紧:显示行数
+// 上限 5000→1000、读入字节 512KB→256KB;每行 2000 字符防 O(n²) 的关键
+// 上限保留 —— 1000 行 × 平均 260 字节(256KB 均摊)在本机实测 set 10ms 级,
+// 老机器即便慢 10 倍也无感):
+//   maxBytes 256KB(读多少)、maxLines 1000(显示多少)、maxLineChars 2000(每行显示多少)
+// 三条同时顶满的最坏组合实测(收紧前口径,更保守):
 //   256 行 ×2000 无空格(=512KB) → set 7ms、逐帧渲染 worst 2.0ms
 //   5000 行 ×102 无空格 (≈512KB) → set 10ms、worst 1.0ms
 //   对照未加保护的 1 行 512KB     → set 62390ms
+// 截断提示(#240 用户令"给予足够的提示"):提示行同时放**文首与文末** ——
+// 1000 行的文件用户多半读不到末尾,只在文末提示等于没说。
 // ═══════════════════════════════════════════
 #include <QString>
 #include <QStringList>
@@ -25,8 +30,8 @@
 
 namespace TextCut {
 
-constexpr qint64 maxBytes     = 512 * 1024;
-constexpr int    maxLines     = 5000;
+constexpr qint64 maxBytes     = 256 * 1024;
+constexpr int    maxLines     = 1000;
 constexpr int    maxLineChars = 2000;
 
 struct Clip {
@@ -106,11 +111,13 @@ inline QString noticeOf(const Clip& c) {
                            : gazeTr("已截断：%1").arg(notes.join(QString::fromUtf8("；")));
 }
 
-// 纯文本预览用:截断 + 末尾追加提示行
+// 纯文本预览用:截断 + 提示行(文首+文末各一条,见头部说明)
 inline QString apply(const QString& raw, bool byteCut_, qint64 totalBytes_) {
     const Clip c = clip(raw, byteCut_, totalBytes_);
     const QString n = noticeOf(c);
-    return n.isEmpty() ? c.text : c.text + QStringLiteral("\n\n—— ") + n + QStringLiteral(" ——");
+    if (n.isEmpty()) return c.text;
+    return gazeTr("⚠ 文本较长,以下仅是部分展示:%1\n\n").arg(n) + c.text
+         + QStringLiteral("\n\n—— ") + n + QStringLiteral(" ——");
 }
 
 } // namespace TextCut

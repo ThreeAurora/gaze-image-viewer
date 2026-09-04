@@ -18,12 +18,44 @@
 #include "i18n.h"
 
 #include <QFileInfo>
+#include <QPushButton>
 #include <QTextEdit>
 #include <QThreadPool>
 #include <QPointer>
+#include <QTimer>
 
 namespace {
 const QString kRawBtnText = gazeTr("加载原始 RAW");
+}
+
+// #140b:悬浮「加载原始RAW」显隐+定位 —— 只在图片形态且当前文件是 RAW 时亮。
+// 位置=预览右上角(12px 边距),与 liveBadge 同一悬浮机制
+void PreviewPanel::updateRawFullBtn() {
+    if (!m_rawFullBtn) return;
+    if (m_mode != "image" || m_filePath.isEmpty() || !isRawPath(m_filePath)) {
+        m_rawFullBtn->hide();
+        return;
+    }
+    m_rawFullBtn->raise();
+    m_rawFullBtn->adjustSize();
+    m_rawFullBtn->move(width() - m_rawFullBtn->width() - 12, 12);
+    m_rawFullBtn->show();
+}
+
+// 占位钮与悬浮钮是同一个动作的两份入口:忙/闲文案必须同步
+void PreviewPanel::setRawBtnBusy(bool busy) {
+    const QString text = busy ? gazeTr("正在解码…") : kRawBtnText;
+    for (QPushButton* btn : {m_rawBtn, m_rawFullBtn}) {
+        if (!btn) continue;
+        btn->setEnabled(!busy);
+        btn->setText(text);
+    }
+    if (!busy) updateRawFullBtn();   // 文字宽度变了,悬浮钮重新定位
+}
+
+bool PreviewPanel::isRawPath(const QString& p) {
+    const int dot = p.lastIndexOf('.');
+    return dot >= 0 && RAW_EXTS.count(p.mid(dot).toLower()) > 0;
 }
 
 void PreviewPanel::showRawPlaceholder(const QString& path) {
@@ -41,8 +73,8 @@ void PreviewPanel::showRawPlaceholder(const QString& path) {
     m_imgSpace->hide();
 
     m_rawBusy = false;
-    m_rawBtn->setEnabled(true);
-    m_rawBtn->setText(kRawBtnText);
+    m_rawFromImage = false;
+    setRawBtnBusy(false);    // 两颗按钮一起复位(含悬浮钮 hide:非图片形态)
     QFileInfo fi(path);
     m_rawCaption->setText(gazeTr(
         "%1 · 相机 RAW 原始文件（%2）\n正在提取相机内嵌预览…")
@@ -84,8 +116,8 @@ void PreviewPanel::decodeRawAsync() {
     if (m_rawBusy) return;
 #ifdef HAS_RAWDEC
     m_rawBusy = true;
-    m_rawBtn->setEnabled(false);
-    m_rawBtn->setText(gazeTr("正在解码…"));
+    m_rawFromImage = (m_mode == "image");   // #140b:从内嵌图/上一结果形态发起的全解
+    setRawBtnBusy(true);
     m_rawCaption->setText(gazeTr(
         "正在后台解码 RAW（大文件需数秒）——现在切换文件会立即放弃本次解码"));
     const quint64 gen = m_imgReqGen;   // loadFile 已为本次装载递增
@@ -106,16 +138,28 @@ void PreviewPanel::decodeRawAsync() {
 
 void PreviewPanel::onRawDecoded(const QImage& img, const QString& path, quint64 gen) {
     m_rawBusy = false;
-    // 代次/路径/形态任一对不上 = 用户已切走:直接丢弃,不碰新文件的占位状态
-    if (gen != m_imgReqGen || path != m_filePath || m_mode != "raw") return;
-    m_rawBtn->setEnabled(true);
-    m_rawBtn->setText(kRawBtnText);
+    const bool fromImage = m_rawFromImage;
+    m_rawFromImage = false;
+    // 代次/路径对不上 = 用户已切走:直接丢弃,不碰新文件的占位状态
+    if (gen != m_imgReqGen || path != m_filePath) return;
+    // 形态守卫:占位形态、或"从图片形态发起的全解"才收;其余丢弃
+    if (m_mode != "raw" && !fromImage) return;
+    setRawBtnBusy(false);
     if (img.isNull()) {
+        if (fromImage && m_mode == "image") {
+            // 内嵌图正看着,不切走:悬浮钮短暂示错后自己恢复
+            m_rawFullBtn->setText(gazeTr("解码失败"));
+            QPointer<PreviewPanel> self(this);
+            QTimer::singleShot(2500, this, [this]() {
+                if (!m_rawBusy) setRawBtnBusy(false);
+            });
+            return;
+        }
         m_rawCaption->setText(gazeTr(
             "解码失败：内置解码器不支持该 RAW 或文件已损坏"));
         return;
     }
     m_mode = "image";   // 成功 → 完整图片形态(缩放/拖动/查看器/全屏全套)
     m_rawBox->hide();
-    applyImage(img);
+    applyImage(img);    // 末尾 updateRawFullBtn:全解完成悬浮钮仍在,再点=重解一遍
 }

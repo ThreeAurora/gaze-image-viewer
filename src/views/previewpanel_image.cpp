@@ -265,6 +265,7 @@ void PreviewPanel::applyImage(const QImage& img) {
     fitAuto();
     m_navigating = false;           // 缩放已定型,后续 fitAuto 属"重排"而非"切文件"
     applyViewerChrome();
+    updateRawFullBtn();             // #140b:RAW 的图片形态(内嵌图/全解结果)亮悬浮全解钮
 }
 
 void PreviewPanel::onFullDecoded(std::shared_ptr<QImage> img, const QString& path, quint64 gen) {

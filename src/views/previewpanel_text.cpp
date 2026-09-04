@@ -63,6 +63,9 @@ void PreviewPanel::showMarkdown(const QString& path) {
     if (m_imgSpace) m_imgSpace->hide();
     if (m_pdfBar) m_pdfBar->hide();
     if (m_liveBadge) m_liveBadge->hide();
+    // #240:自动换行开关(设置→浏览器→预览;右键文本预览同样可切,即时生效)
+    m_textEdit->setWordWrapMode(pp_impl::s_bool("Preview/textWrap", true)
+        ? QTextOption::WordWrap : QTextOption::NoWrap);
 
     const QString html = Md::renderFile(path);
     m_textEdit->setHtml(html.isEmpty()
@@ -165,6 +168,9 @@ void PreviewPanel::showText(const QString& path) {
     m_controlBar->hide();
     m_imgSpace->hide();
     if (m_liveBadge) m_liveBadge->hide();
+    // #240:自动换行开关(设置→浏览器→预览;右键文本预览同样可切,即时生效)
+    m_textEdit->setWordWrapMode(pp_impl::s_bool("Preview/textWrap", true)
+        ? QTextOption::WordWrap : QTextOption::NoWrap);
 
     QFile f(path);
     if (f.open(QIODevice::ReadOnly | QIODevice::Text)) {

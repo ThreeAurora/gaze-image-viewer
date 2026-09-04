@@ -106,14 +106,15 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     // 第一行:按钮右对齐(右上角),随容器缩放保持贴边
     auto* rawBtnRow = new QHBoxLayout;
     rawBtnRow->addStretch(1);
-    m_rawBtn = new QPushButton;
-    m_rawBtn->setCursor(Qt::PointingHandCursor);
-    m_rawBtn->setStyleSheet(QString::fromUtf8(
+    const QString rawBtnQss = QString::fromUtf8(
         "QPushButton{background:%1;color:#FFFFFF;border:none;border-radius:6px;"
         "padding:6px 14px;font-size:12px;}"
         "QPushButton:hover{background:%2;}"
         "QPushButton:disabled{background:%3;border:1px solid %4;color:%5;}")
-        .arg(C_ACCENT, C_ACCENT_DOWN, C_CARD_BG, C_SEPARATOR, C_TEXT_FAINT));
+        .arg(C_ACCENT, C_ACCENT_DOWN, C_CARD_BG, C_SEPARATOR, C_TEXT_FAINT);
+    m_rawBtn = new QPushButton;
+    m_rawBtn->setCursor(Qt::PointingHandCursor);
+    m_rawBtn->setStyleSheet(rawBtnQss);
     connect(m_rawBtn, &QPushButton::clicked, this, [this]() { decodeRawAsync(); });
     rawBtnRow->addWidget(m_rawBtn);
     rawL->addLayout(rawBtnRow);
@@ -125,6 +126,14 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     rawL->addWidget(m_rawCaption);
     rawL->addStretch(1);
     layout->addWidget(m_rawBox, 1);
+
+    // 悬浮「加载原始RAW」(#140b):不进布局,盖在预览右上角。内嵌预览加载完
+    // rawBox 整体藏掉,全解入口靠它保留 —— 用户令"加载完内嵌图之后按钮加回来"
+    m_rawFullBtn = new QPushButton(gazeTr("加载原始 RAW"), this);
+    m_rawFullBtn->setCursor(Qt::PointingHandCursor);
+    m_rawFullBtn->setStyleSheet(rawBtnQss);
+    connect(m_rawFullBtn, &QPushButton::clicked, this, [this]() { decodeRawAsync(); });
+    m_rawFullBtn->hide();
 
     // txt 文本预览(等宽字体,只读,深色底)
     m_textEdit = new QTextEdit;
@@ -476,6 +485,8 @@ void PreviewPanel::setViewerMode(bool on) {
 void PreviewPanel::loadFile(const QString& path) {
     // 换文件(或清空):递增代号,作废任何在途的后台解码结果
     ++m_imgReqGen;
+    m_rawFromImage = false;         // 新装载:上一文件的"从图片发起全解"标记作废
+    if (m_rawFullBtn) m_rawFullBtn->hide();
     // 波形跟文件走:换文件即停旧解码(选中图片时上一音频不该在后台白烧 CPU;
     // 若这次又落在音频上,showAudio 的 start 会带新代次重新起解)
     if (m_waveWorker)
@@ -538,7 +549,9 @@ void PreviewPanel::loadFile(const QString& path) {
     } else if (ext == "txt" && pp_impl::s_bool("Preview/previewTxt", false)) {
         showText(path);
     } else if (ext == "md" && pp_impl::s_bool("Preview/showMd", false)) {
-        showMarkdown(path);
+        // #240:「是否以 MD 样式展示」独立开关(设置/右键可切);关=纯文本预览
+        if (pp_impl::s_bool("Preview/mdRenderStyle", true)) showMarkdown(path);
+        else showText(path);
     } else if (ext == "pdf" && pp_impl::s_bool("Preview/showPdf", false)) {
         showPdf(path);
     } else if (RAW_EXTS.count("." + ext)) {

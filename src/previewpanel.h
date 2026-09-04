@@ -117,6 +117,11 @@ private:
     void onEmbeddedRawReady(const QImage& img, const QString& path, quint64 gen); // 2026-09-02:内嵌 JPEG 预览提取完成
     void decodeRawAsync();
     void onRawDecoded(const QImage& img, const QString& path, quint64 gen);
+    // #140b:悬浮「加载原始RAW」显隐+右上角定位(图片形态且当前文件是 RAW 才亮);
+    // setRawBtnBusy 同步占位钮与悬浮钮的 忙/闲 文案
+    void updateRawFullBtn();
+    void setRawBtnBusy(bool busy);
+    static bool isRawPath(const QString& p);
     // #82:Markdown 以渲染后的 HTML 展示;PDF 走 Ghostscript 渲染 + 页导航
     void showMarkdown(const QString& path);
     void showPdf(const QString& path);
@@ -204,7 +209,10 @@ private:
     QWidget *m_rawBox = nullptr;                // RAW 占位容器(说明 + 加载按钮)
     QLabel *m_rawCaption = nullptr;
     QPushButton *m_rawBtn = nullptr;
+    QPushButton *m_rawFullBtn = nullptr;        // 悬浮右上角的「加载原始RAW」(#140b):
+                                                // 内嵌预览正看着时 rawBox 已藏,全解入口靠它
     bool m_rawBusy = false;                     // RAW 全解进行中(结果可能被代次作废)
+    bool m_rawFromImage = false;                // 本次全解发起自图片形态(内嵌图/上一次全解结果)
     QLabel *m_placeholder = nullptr;   // 空态占位
     QTextEdit *m_textEdit = nullptr;   // txt 文本预览
     QImageReader* m_gifReader = nullptr; // GIF 解码器(2026-08-30 弃 QMovie:跳帧卡死解码器)
