@@ -175,8 +175,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     // 树面板:"文件夹"标题条 + FolderTree(标题条右侧 X 关闭)
     auto* treePane = new QWidget;
     m_treePane = treePane;
-    treePane->setStyleSheet(QString("background:%1;border:none;").arg(C_SIDEBAR));
     auto* tv = new QVBoxLayout(treePane);
+    treePane->setStyleSheet(QString("background:%1;border:none;").arg(C_SIDEBAR));
     tv->setContentsMargins(0, 0, 0, 0);
     tv->setSpacing(0);
     tv->addWidget(createPaneHeader(gazeTr("文件夹"), "tree"));

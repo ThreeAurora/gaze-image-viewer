@@ -19,6 +19,7 @@
 
 #include <QHeaderView>
 #include <QDir>
+#include <QTimer>
 #include <QFileInfo>
 #include <QStandardPaths>
 #include <QStorageInfo>
@@ -111,10 +112,18 @@ FolderTree::FolderTree(QWidget* parent) : QTreeWidget(parent) {
     setFocusPolicy(Qt::ClickFocus);
     // 启用自定义展开箭头：有子文件夹才画三角，叶子目录彻底不画分支装饰
     // QWidget::setStyle 不接管所有权,显式 setParent(this) 让树销毁时一并释放
+    // ⚠ 冷启动红线(#236,PerfLog 实测):setStyle 代理 + 首次 setStyleSheet 组合,
+    // Qt 会在构造期内同步创建 QStyleSheetStyle 并拉起 QProxyStyle 的基座样式,
+    // 一次性 0.5~1.1s(ft.ss.set1=1139ms,同串第二次 2ms;字库/shell图标/裸控件构造
+    // 均已排除)。两者都推迟到首帧后 100ms:快档 ctor:tree 492→360ms,窗口可见
+    // 963→724ms;独立启动直进查看器时树整个藏着,零可见差异。焦点事件里的重设
+    // 不受影响(机制已热,2ms)。剩余大头=QSplitter 挂载一次性 318ms,代码不可省。
     auto* arrowStyle = new ArrowStyle;
     arrowStyle->setParent(this);
-    setStyle(arrowStyle);
-    applySelectionStyle();
+    QTimer::singleShot(100, this, [this, arrowStyle] {
+        setStyle(arrowStyle);
+        applySelectionStyle();
+    });
     // 用户确认不需要展开/收起动画：保持即时展开
     setAnimated(false);
 
@@ -185,6 +194,7 @@ void FolderTree::makeIcons() {
 
     // 桌面图标:Windows 系统桌面图标(SIID_DESKTOPPC)
     {
+        PerfLog::Scope _t("ft.desktopIcon", 1);
         SHSTOCKICONINFO si = {};
         si.cbSize = sizeof(si);
         if (SUCCEEDED(SHGetStockIconInfo(SIID_DESKTOPPC,
@@ -211,6 +221,7 @@ void FolderTree::makeIcons() {
 
     // 硬盘图标:用 Windows 真实磁盘图标(SHGetFileInfo on C:\)
     {
+        PerfLog::Scope _t("ft.driveIcon", 1);
         SHFILEINFOW sfi = {};
         if (SHGetFileInfoW(L"C:\\", 0, &sfi, sizeof(sfi), SHGFI_ICON | SHGFI_LARGEICON)
             && sfi.hIcon) {
