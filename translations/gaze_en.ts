@@ -275,10 +275,10 @@ Shift+PgUp/PgDn — 快退/快进(秒数见设置→键盘)
 双击预览区 — 浏览器:开查看器标签 / 查看器:关签回浏览器
 F5 — 刷新  F11 — 界面全屏
 G — 全屏预览(只铺画面;再按 G 或 ESC 完全回到原布局)
-Alt+←/→ — 后退/前进  Backspace — 上级
+Alt+←/→ / B / F — 后退/前进  Backspace — 上级
+Home/End — 第一/最后一项(焦点在文件树上作用于树,否则作用于文件页)
 Ctrl+1~5 — 设置颜色标记(红橙黄绿蓝)
 Ctrl+0 / D — 取消颜色标记
-F — 加红色标记
 F2 — 重命名(文件树与文件页都可用,改谁看焦点;可在设置→快捷键改)
 F3 — 用默认应用打开(文件夹=资源管理器)
 Del / S — 删除选中  X — 新建文件夹
@@ -296,10 +296,10 @@ Hold right button + wheel — Zoom (same as Ctrl+wheel)
 Double-click preview — Browser: open viewer tab / Viewer: close tab, back to browser
 F5 — Refresh  F11 — Fullscreen UI
 G — Fullscreen preview (picture only; press G or ESC again to fully restore the layout)
-Alt+←/→ — Back / Forward  Backspace — Parent folder
+Alt+←/→ / B / F — Back / Forward  Backspace — Parent folder
+Home/End — First/last item (acts on the folder tree when it has focus, otherwise on the file grid)
 Ctrl+1~5 — Set color label (red/orange/yellow/green/blue)
 Ctrl+0 / D — Clear color label
-F — Add red label
 F2 — Rename (works in the folder tree and the file grid; target follows focus; remappable in Settings → Shortcuts)
 F3 — Open with default app (folder = Explorer)
 Del / S — Delete selected  X — New folder
@@ -2718,12 +2718,12 @@ Try a different selection (a bit larger and farther from the edges).</translatio
 第 1 次点击 — 只显示红色标记的文件
 第 2 次点击 — 只显示未标红的文件
 第 3 次点击 — 恢复显示全部
-(用 Ctrl+1 或 F 给文件加红色标记)</source>
+(用 Ctrl+1 给文件加红色标记)</source>
         <translation>Filter by red label (3-state cycle):
 1st click — show only red-labeled files
 2nd click — show only non-red files
 3rd click — show all again
-(Label a file red with Ctrl+1 or F)</translation>
+(Label a file red with Ctrl+1)</translation>
     </message>
     <message>
         <source>筛选：</source>

@@ -299,10 +299,10 @@ void MainWindow::createMenubar() {
             "双击预览区 — 浏览器:开查看器标签 / 查看器:关签回浏览器\n"
             "F5 — 刷新  F11 — 界面全屏\n"
             "G — 全屏预览(只铺画面;再按 G 或 ESC 完全回到原布局)\n"
-            "Alt+←/→ — 后退/前进  Backspace — 上级\n"
+            "Alt+←/→ / B / F — 后退/前进  Backspace — 上级\n"
+            "Home/End — 第一/最后一项(焦点在文件树上作用于树,否则作用于文件页)\n"
             "Ctrl+1~5 — 设置颜色标记(红橙黄绿蓝)\n"
             "Ctrl+0 / D — 取消颜色标记\n"
-            "F — 加红色标记\n"
             "F2 — 重命名(文件树与文件页都可用,改谁看焦点;可在设置→快捷键改)\n"
             "F3 — 用默认应用打开(文件夹=资源管理器)\n"
             "Del / S — 删除选中  X — 新建文件夹\n"
@@ -724,7 +724,7 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
         "第 1 次点击 — 只显示红色标记的文件\n"
         "第 2 次点击 — 只显示未标红的文件\n"
         "第 3 次点击 — 恢复显示全部\n"
-        "(用 Ctrl+1 或 F 给文件加红色标记)"));
+        "(用 Ctrl+1 给文件加红色标记)"));
     m_redBtn = redBtn;   // #107:背景指示器改由 syncFilterIndicators 独家维护(原先只在 clicked 里设,别处改筛选就脱钩)
     connect(redBtn, &QToolButton::clicked, this, [this]() {
         cycleRedFilter();

@@ -33,7 +33,7 @@
  "数据库:%1  ·  缓存条目:%2  ·  缩略图合计:%3": "Database: %1 · cache entries: %2 · thumbnails total: %3",
  "只显示这些扩展名的文件(逗号分隔,不用写点):\n例:psd, ai, raw, cr2, nef": "Show only files with these extensions (comma-separated, no dots):\ne.g. psd, ai, raw, cr2, nef",
  "回车跳转到该路径(目录=进去,文件=进它的目录并选中)\n单击全选整条路径,再点一下落光标": "Enter jumps to the path (folder = enter it, file = enter its folder and select it)\nClick once to select the whole path, click again to place the caret",
- "筛选红色标记(三态循环):\n第 1 次点击 — 只显示红色标记的文件\n第 2 次点击 — 只显示未标红的文件\n第 3 次点击 — 恢复显示全部\n(用 Ctrl+1 或 F 给文件加红色标记)": "Filter by red label (3-state cycle):\n1st click — show only red-labeled files\n2nd click — show only non-red files\n3rd click — show all again\n(Label a file red with Ctrl+1 or F)",
+ "筛选红色标记(三态循环):\n第 1 次点击 — 只显示红色标记的文件\n第 2 次点击 — 只显示未标红的文件\n第 3 次点击 — 恢复显示全部\n(用 Ctrl+1 给文件加红色标记)": "Filter by red label (3-state cycle):\n1st click — show only red-labeled files\n2nd click — show only non-red files\n3rd click — show all again\n(Label a file red with Ctrl+1)",
  "缩略图列数\n手动指定后,拖动边框/缩放窗口时缩略图贴边缩放但列数不变": "Thumbnail columns\nOnce set manually, thumbnails scale to the pane edge when resizing, but the column count stays fixed",
  "裁剪区域 %1×%2  @(%3,%4)   原图 %5×%6   %7": "Crop region %1×%2 @(%3,%4)   source %5×%6   %7",
  "无法无损完成该裁剪:\n%1\n\n可换个选区(建议选区再大一点、离边缘远一点)重试。": "Cannot crop losslessly:\n%1\n\nTry a different selection (a bit larger and farther from the edges).",

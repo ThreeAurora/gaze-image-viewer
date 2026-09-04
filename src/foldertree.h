@@ -24,6 +24,8 @@ public:
     void loadDrives();
     void loadChildren(QTreeWidgetItem* item);
     void focusPath(const QString& dirPath);
+    // Home/End 键(焦点分流):选中并进入第一个/最后一个可见节点
+    void selectEdge(bool last);
     // 主题切换:重灌已加载行的前景色(加载时缓存进 item,切主题须重设)
     void refreshThemeColors();
 

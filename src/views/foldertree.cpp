@@ -475,6 +475,21 @@ void FolderTree::focusPath(const QString& dirPath) {
     scrollToItem(node, QAbstractItemView::PositionAtCenter);
 }
 
+// Home/End 键(焦点分流):与鼠标按下同一条路 —— setCurrentItem + folderSelected,
+// 不是只挪高亮(那样光标看着到了,主视图还停在旧目录)。"最后一个"沿展开链
+// 一路下钻到最末子行(可见的最后一行);占位行(未加载的网络节点等,无路径)不切。
+void FolderTree::selectEdge(bool last) {
+    QTreeWidgetItem* it = topLevelItem(last ? topLevelItemCount() - 1 : 0);
+    if (last) {
+        while (it && it->isExpanded() && it->childCount() > 0)
+            it = it->child(it->childCount() - 1);
+    }
+    if (!it || pathOf(it).isEmpty()) return;
+    setCurrentItem(it);
+    scrollToItem(it, QAbstractItemView::EnsureVisible);
+    emit folderSelected(pathOf(it));
+}
+
 void FolderTree::onItemClicked(QTreeWidgetItem* item, int /*column*/) {
     const QString path = item ? item->data(0, Qt::UserRole).toString() : QString();
     // #130:按下那一刻已经切过这个目录 → 松开时基类补发的这次 itemClicked 不能再切

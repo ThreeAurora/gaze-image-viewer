@@ -46,7 +46,7 @@ public:
     // 面板身份:浏览器预览窗格 ↔ 独立查看器(背景色各用一个设置项)
     Q_INVOKABLE void setViewerMode(bool on);
     // 该键事件是否命中 ViewerShortcut/* 表。主窗口的应用级过滤器用它让路:
-    // 查看器里默认表和浏览器键位撞车("适应窗口"=F，浏览器 F=红标)
+    // 查看器里默认表和浏览器键位撞车("适应窗口"=F，浏览器 F=历史前进)
     bool claimsHotkey(QKeyEvent* e);
     // #234:该键是否命中表里的指定动作(动作名=viewerhotkeys.h 的 name 原文)。
     // "全屏预览"进表后,主窗过滤器改由这里判 G——键位可配置,执行点仍唯一

@@ -401,7 +401,7 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
             || ke->isAutoRepeat()                    // 按住不放:不该反复刷标记、反复起幻灯片
             || insideDialog(tgt)
             || QApplication::activePopupWidget()     // 有弹窗开着,键盘归弹窗
-            // 查看器的键归查看器表:默认表里"适应窗口"就是 F，而浏览器 F=红标，
+            // 查看器的键归查看器表:默认表里"适应窗口"就是 F，而浏览器 F=历史前进，
             // 不让路的话设置页那张表配了什么都会被浏览器键位吞掉。
             // #234 例外:"全屏预览"虽在表里,执行端是主窗(toggleFullView 不归面板),
             // 不让路 —— 否则查看器态按 G 被让走后没人执行
@@ -461,7 +461,8 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
                     default: break;
                     }
                 }
-                // 颜色标记快捷键:Ctrl+0~5(0=取消)/ F=红 / D=取消;Ctrl+PgUp/PgDn 快退快进
+                // 颜色标记快捷键:Ctrl+0~5(0=取消)/ D=取消(裸 F 已让位给历史
+                // 前进);Ctrl+PgUp/PgDn 快退快进
                 if (ke->modifiers() & Qt::ControlModifier) {
                     if (ke->key() >= Qt::Key_0 && ke->key() <= Qt::Key_5) {
                         applyColorLabel(ke->key() - Qt::Key_0);
@@ -520,7 +521,30 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
                         m_preview->seekDelta(seekSeconds()); return true;
                     }
                 } else if (ke->modifiers() == Qt::NoModifier) {
-                    if (ke->key() == Qt::Key_F) { applyColorLabel(1); return true; }
+                    // B/F/Home/End 装进文件页与文件树(2026-09-04 用户令):焦点
+                    // 在文件树上时 Home/End 作用于树(选中并进入首/末节点),
+                    // 其余一律作用于文件页(首/末条目);B/F=浏览历史后退/前进,
+                    // 与工具栏后退/前进钮同一条链(Alt+Left/Right 的裸键版)。
+                    // 按当前键盘焦点自动分流,不要求先点一下目标面板。
+                    // 查看器/全屏形态不接:F 已归查看器热键表(适应窗口),
+                    // 全屏没有文件页;Home/End 也只属于浏览器两栏。
+                    if (!m_viewerMode && !m_fullView
+                        && (ke->key() == Qt::Key_B || ke->key() == Qt::Key_F
+                            || ke->key() == Qt::Key_Home || ke->key() == Qt::Key_End)) {
+                        if (ke->key() == Qt::Key_B) { goBack(); return true; }
+                        if (ke->key() == Qt::Key_F) { goForward(); return true; }
+                        const bool inTree = m_folderTree
+                            && QApplication::focusWidget()
+                            && m_folderTree->isAncestorOf(QApplication::focusWidget());
+                        if (inTree)
+                            m_folderTree->selectEdge(ke->key() == Qt::Key_End);
+                        else
+                            m_fileGrid->selectIndex(ke->key() == Qt::Key_End
+                                ? m_fileGrid->fileCount() - 1 : 0);
+                        return true;
+                    }
+                    // 裸 F 已让位给历史前进(上面),红色标记改走 Ctrl+1(0~5 通道);
+                    // D=取消标记不受影响
                     if (ke->key() == Qt::Key_D) { applyColorLabel(0); return true; }
                     // G=全屏预览(#154):直接铺满只留画面,不进查看器不碰标签;
                     // 再按 G/ESC 完全回到按 G 前的布局。走这道过滤器而不是菜单
