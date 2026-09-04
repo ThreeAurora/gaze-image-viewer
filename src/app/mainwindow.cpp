@@ -242,6 +242,13 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     // 工具栏阶段 m_fileGrid 还是空的。
     syncFilterIndicators(m_fileGrid->filterMode());
 
+    // #266:表头与网格结对(详细列表列几何 lead/tail 由 setSortHeader 打通),
+    // 查看方式变化统一走 syncViewModeUI;启动即按落盘态对齐一次
+    m_fileGrid->setSortHeader(m_sortHeader);
+    connect(m_fileGrid, &FileGrid::viewModeChanged,
+            this, &MainWindow::syncViewModeUI);
+    syncViewModeUI(m_fileGrid->viewMode());
+
     // 树右键的文件系统操作要落到网格上:removed 表示"这个目录已经没了",
     // 只有这种情况才把用户请出去,其余一律原地刷新。
     connect(m_folderTree, &FolderTree::foldersChanged, this,

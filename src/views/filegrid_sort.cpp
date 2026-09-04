@@ -18,6 +18,7 @@
 #include <numeric>
 #include <memory>
 #include <array>
+#include <QPointer>
 
 #include <QDrag>
 #include <QMimeData>
@@ -142,19 +143,59 @@ void FileGrid::setFilterMode(int mode) {
 // 排序
 // ═══════════════════════════════════════════
 
-// EXIF 拍摄日期(带进程内缓存;比较器 O(n log n) 次调用,绝不能每次读盘 64KB)
-static double exifDateCached(const FileEntry& e) {
+// EXIF 拍摄日期(缓存真源 m_exifCache,0=已知无 EXIF 不再重试;无值时 mtime 回退)。
+// 比较器 O(n log n) 次调用,绝不能每次读盘 64KB;#267 详细列表绘制同查此缓存。
+// 封顶:进程内跨目录累积不清理会一路涨。上限远大于任一正常单目录条目数,
+// 故一次 sort 内不会中途清空(不触发重复读盘),只在长期逛很多目录后回收
+double FileGrid::exifDateOf(const FileEntry& e) {
     if (e.isDir) return 0;
-    static QHash<QString, double> cache;
-    auto it = cache.find(e.path);
-    if (it != cache.end()) return *it;
-    double t = ExifDate::dateTimeOriginal(e.path);
-    if (t <= 0) t = e.mtime;   // 无 EXIF 的文件回退文件修改时间
-    // 封顶:进程内跨目录累积不清理会一路涨。上限远大于任一正常单目录条目数,
-    // 故一次 sort 内不会中途清空(不触发重复读盘),只在长期逛很多目录后回收
-    if (cache.size() > 50000) cache.clear();
-    cache.insert(e.path, t);
-    return t;
+    auto it = m_exifCache.find(e.path);
+    if (it != m_exifCache.end()) return *it > 0 ? *it : e.mtime;
+    const double t = ExifDate::dateTimeOriginal(e.path);
+    if (m_exifCache.size() > 50000) m_exifCache.clear();
+    m_exifCache.insert(e.path, t > 0 ? t : 0);
+    return t > 0 ? t : e.mtime;
+}
+
+// ── #267 详细列表 EXIF 列:后台预填视口内缺失项 ──
+// 绘制路径只查 m_exifCache(零 IO 铁律);这里排 QThreadPool 读盘,到达后
+// 按代作废(过期只清 pending 不重绘),命中行定点重绘。防悬垂同 infopanel
+// 先例:QPointer 自捕 + QueuedConnection 编组回 GUI 线程
+void FileGrid::exifPrefillVisible() {
+    if (!m_canvas || m_entries.empty()) return;
+    ensureGeometry();
+    const QRect vis(0, verticalScrollBar()->value(),
+                    viewport()->width(), viewport()->height());
+    ++m_exifGen;
+    const quint64 gen = m_exifGen;
+    int queued = 0;
+    for (int k = lowerBoundRow(vis.top() - m_maxCardH);
+         k < static_cast<int>(m_byY.size()); ++k) {
+        const int i = m_byY[k];
+        const QRect& r = m_geom[i];
+        if (r.top() > vis.bottom()) break;
+        if (r.isNull() || !r.intersects(vis)) continue;
+        const FileEntry& e = m_entries[i];
+        if (e.isDir || m_exifCache.contains(e.path)
+            || m_exifPending.contains(e.path)) continue;
+        if (++queued > 200) break;   // 单轮上限:滚动中不追读全目录,停稳后下轮补
+        m_exifPending.insert(e.path);
+        const QString path = e.path;
+        QPointer<FileGrid> self(this);
+        QThreadPool::globalInstance()->start([this, self, path, gen]() {
+            const double t = ExifDate::dateTimeOriginal(path);
+            QMetaObject::invokeMethod(this, [this, self, path, gen, t]() {
+                m_exifPending.remove(path);
+                if (!self || gen != m_exifGen) return;   // 期间换了目录/又重排了一轮
+                if (m_exifCache.size() > 50000) m_exifCache.clear();
+                m_exifCache.insert(path, t > 0 ? t : 0);
+                const int row = m_pathRow.value(path, -1);
+                if (row < 0) return;
+                ensureGeometry();   // 排序后异步重绘未 flush 前到达,别按旧几何算脏矩形
+                m_canvas->update(cardRect(row));
+            }, Qt::QueuedConnection);
+        });
+    }
 }
 
 // 通用三路比较:相等返回 0。旧实现 `return ascending ? result : !result`
@@ -206,7 +247,7 @@ void FileGrid::sort(int column, bool ascending) {
         case SORT_PATH: c = a.path.compare(b.path, Qt::CaseInsensitive); break;
         case SORT_EXIF:
         case SORT_EXIFMOD:
-            c = cmp3(exifDateCached(a), exifDateCached(b)); break;
+            c = cmp3(exifDateOf(a), exifDateOf(b)); break;
         case SORT_IMGSIZE: {
             QSize sa = a.isDir ? QSize() : imageSize(a.path);
             QSize sb = b.isDir ? QSize() : imageSize(b.path);

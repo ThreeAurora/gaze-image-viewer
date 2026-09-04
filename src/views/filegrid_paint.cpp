@@ -94,6 +94,8 @@ void FileGrid::paintCanvas(QPainter& p, const QRect& clipIn) {
 }
 
 void FileGrid::paintCard(QPainter& p, int idx, const QRect& r) {
+    // #267 详细列表走专属行绘制(整行选中/定宽列),不再借缩略图卡片形态
+    if (m_viewMode == VM_DETAILS) { paintDetailsRow(p, idx, r); return; }
     const FileEntry& e = m_entries[idx];
     const fg_impl::CardBoxes bx = fg_impl::boxesFor(r, m_viewMode, m_labelGap);
     const QFont  base  = p.font();
@@ -219,6 +221,87 @@ void FileGrid::paintCard(QPainter& p, int idx, const QRect& r) {
             p.setPen(QPen(QColor("#FFFFFF"), 1.5));
             p.setBrush(c);
             p.drawEllipse(imgR.topLeft() + QPointF(9, 9), 7, 7);
+        }
+    }
+}
+
+// ── #267 详细列表行:整行选中/悬停 + 名称纯文本 + 右锚定定宽列(XnView 形态)。
+// 与缩略图卡片形态的区别:不 hug 图片框、不画格式标签底块,列文本与排序表头
+// 逐像素对齐(updateDetailColumns 推送的 lead/尾垫片保证两处同源) ──
+void FileGrid::paintDetailsRow(QPainter& p, int idx, const QRect& r) {
+    const FileEntry& e = m_entries[idx];
+    const bool   sel   = m_selected.contains(idx);
+    // 选中色随焦点分流(与缩略图模式同一规则)
+    const QColor selBlue = hasFocus() ? QColor(0, 120, 215) : QColor(33, 100, 168);
+
+    // 整行选中/悬停底色
+    if (sel)
+        p.fillRect(r, selBlue);
+    else if (idx == m_hoverIdx)
+        p.fillRect(r, QColor(QString::fromUtf8(C_CARD_HOVER)));
+
+    // 小图标:详情列表不进缩略图管线,直接类型/文件夹图标(20px,带缓存)
+    const fg_impl::CardBoxes bx = fg_impl::boxesFor(r, m_viewMode, m_labelGap);
+    if (e.hidden) p.setOpacity(0.45);
+    p.drawPixmap(bx.img.topLeft(), iconPixmap(e, bx.img.width()));
+    if (e.hidden) p.setOpacity(1.0);
+
+    // 颜色标记圆点:放行尾,与图标列互不打架
+    if (m_showRating && e.colorLabel > 0) {
+        QColor c = LabelStore::colorValue(e.colorLabel);
+        if (c.isValid()) {
+            p.setPen(QPen(QColor("#FFFFFF"), 1.5));
+            p.setBrush(c);
+            p.drawEllipse(QPointF(r.right() - 12.0, r.center().y()), 5, 5);
+        }
+    }
+
+    QFont f = p.font();
+    f.setPixelSize(11);
+    p.setFont(f);
+
+    // 名称:纯文本(无底块),超宽右省略;选中=白字,隐藏=淡灰
+    const int nameX = r.x() + 28;
+    const int col0  = detailColX(r, 0);          // 第一可见列左缘;全部隐藏=r.right()+1
+    const int nameW = qMax(0, col0 - 6 - nameX);
+    p.setPen(sel ? QColor(QStringLiteral("#FFFFFF"))
+                 : QColor(QString::fromUtf8(e.hidden ? C_TEXT_HIDDEN : C_TEXT)));
+    p.drawText(QRect(nameX, r.y(), nameW, r.height()),
+               Qt::AlignLeft | Qt::AlignVCenter,
+               QFontMetrics(f).elidedText(e.name, Qt::ElideRight, nameW));
+
+    // 定宽列文本(全部隐藏则整段跳过)
+    if (col0 <= r.right()) {
+        p.setPen(e.hidden ? QColor(QString::fromUtf8(C_TEXT_HIDDEN))
+                          : QColor(QString::fromUtf8(C_TEXT)));
+        const QString dateFmt = QStringLiteral("yyyy/M/d HH:mm");
+        for (int i = 0; i < 6; ++i) {
+            const int w = detailColW(i);
+            if (w <= 0) continue;
+            const int x = detailColX(r, i);
+            QString txt;
+            switch (i) {
+            case 0:
+                txt = m_sizeBytes ? QString::number(e.size) + QLatin1String(" B")
+                                  : formatSize(e.size);
+                break;
+            case 1: txt = e.isDir ? gazeTr("文件夹") : mimeType(e.ext); break;
+            case 2: txt = e.ext.isEmpty() ? QString() : e.ext.mid(1).toUpper(); break;
+            case 3: txt = QDateTime::fromSecsSinceEpoch(static_cast<qint64>(e.ctime))
+                              .toString(dateFmt); break;
+            case 4: txt = QDateTime::fromSecsSinceEpoch(static_cast<qint64>(e.mtime))
+                              .toString(dateFmt); break;
+            case 5: {
+                const double t = m_exifCache.value(e.path, 0.0);
+                if (t > 0)
+                    txt = QDateTime::fromSecsSinceEpoch(static_cast<qint64>(t))
+                              .toString(dateFmt);
+                break;   // 未到/无 EXIF:留空,不拿别的日期冒充
+            }
+            }
+            if (txt.isEmpty()) continue;
+            p.drawText(QRect(x + 4, r.y(), w - 8, r.height()),
+                       Qt::AlignLeft | Qt::AlignVCenter, txt);
         }
     }
 }

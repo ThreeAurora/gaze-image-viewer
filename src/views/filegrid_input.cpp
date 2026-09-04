@@ -631,6 +631,11 @@ void FileGrid::keyPressEvent(QKeyEvent* event) {
 // 事件过滤器（Ctrl+滚轮缩放）
 // ═══════════════════════════════════════════
 bool FileGrid::eventFilter(QObject* obj, QEvent* event) {
+    // 视口自身 Resize(垂直滚动条出现/消失改视口宽,主控件 resizeEvent 不触发):
+    // 走同一个 30ms 合并定时器 → updateLayout 重排 + 详细态重推表头列几何
+    if (obj == viewport() && event->type() == QEvent::Resize) {
+        m_resizeTimer.start(30);
+    }
     // 就地改名编辑器失焦 = 提交(点别处、切目录、按 Tab 都算)
     if (m_renameEdit && obj == m_renameEdit && event->type() == QEvent::FocusOut) {
         endInlineRename(true);

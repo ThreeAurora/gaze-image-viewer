@@ -112,9 +112,14 @@ void FileGrid::setViewMode(int mode) {
     m_viewMode = mode;
     m_cols = 0;   // 强制重算列数
     AppSettings::instance().set("Browser/viewMode", m_viewMode);     // 持久化
+    // #266 切换按钮:记住"缩略图侧"模式,详细↔缩略图来回切都回到它
+    if (mode != VM_DETAILS && mode != VM_LIST)
+        AppSettings::instance().setPersist("Browser/lastThumbMode", m_viewMode);
     m_fitCache.clear();   // 成品图按盒子缓存,查看方式换了盒子形状不同
+    if (m_header) { m_header->setDetailMode(m_viewMode == VM_DETAILS); updateDetailColumns(); }
     updateLayout();
     requestVisibleThumbs();
+    emit viewModeChanged(m_viewMode);
 }
 
 // ── 模式化卡片尺寸 ──
@@ -200,6 +205,11 @@ void FileGrid::updateLayout() {
     rebuildGeometry();
     m_geomDirty = false;
     refreshView();
+    // 详细列表:列对齐几何随视口重推;EXIF 列后台预填(缺失项到达即定点重绘)
+    if (m_viewMode == VM_DETAILS) {
+        updateDetailColumns();
+        exifPrefillVisible();
+    }
     // 搜索条浮在视口上,列表重建时命中统计可能整体过时(当前项被筛掉/增删)
     if (m_findBar && m_findBar->isVisible()) findRefresh();
 }
@@ -278,6 +288,46 @@ void FileGrid::ensureGeometry() {
     rebuildGeometry();
 }
 
+// ── #267 详细列表:定宽列与表头同源对齐 ──
+int FileGrid::detailColW(int i) const {
+    const int w = SortHeader::detailColWidth(i);
+    if (!m_header || w <= 0) return w;
+    return m_header->detailColumnVisible(i) ? w : 0;
+}
+
+// 行矩形内自右向左第 i 列的左缘:隐藏列宽 0 自然压缩,列区恒贴行右缘
+int FileGrid::detailColX(const QRect& r, int i) const {
+    int x = r.right() + 1;
+    for (int k = 5; k >= i; --k) x -= detailColW(k);
+    return x;
+}
+
+// 把详细态列区两端的对齐垫片推给表头:
+//   lead = 名称文字起点对齐(28 名称偏移 + 8 MARGIN + 8 文字内缩 − 6 表头边距 − 8 按钮内边距)
+//   tail = 列区右缘吸到网格行右缘(差值随滚动条显隐/窗口宽变化,每次重推)
+void FileGrid::updateDetailColumns() {
+    if (!m_header || m_viewMode != VM_DETAILS) return;
+    m_header->setDetailLead(viewport()->x() + 30);
+    const int rowRight = viewport()->x() + MARGIN + cardW();
+    m_header->setDetailTail(rowRight - (m_header->width() - 6));
+}
+
+// 表头挂接:#107 以来表头是 MainWindow 布局里的兄弟控件,网格持有指针反向驱动。
+// 右键配置列 → detailColumnsEdited → 重推垫片 + 重绘(显隐改变列文本位置)
+void FileGrid::setSortHeader(SortHeader* h) {
+    m_header = h;
+    if (!h) return;
+    connect(h, &SortHeader::detailColumnsEdited, this, [this]() {
+        updateDetailColumns();
+        refreshView();
+    });
+    // 启动即恢复详细态(Browser/viewMode):表头构造期后才挂接,这里补形态
+    if (m_viewMode == VM_DETAILS) {
+        h->setDetailMode(true);
+        updateDetailColumns();
+    }
+}
+
 // 二分:返回第一个顶边 >= y 的窗口下标
 int FileGrid::lowerBoundRow(int y) const {
     int lo = 0, hi = static_cast<int>(m_byY.size());
@@ -293,6 +343,8 @@ int FileGrid::lowerBoundRow(int y) const {
 void FileGrid::requestVisibleThumbs() {
     if (m_entries.empty() || !m_canvas) return;
     ensureGeometry();
+    // #267:详细态走同一合并/滚动/缩放入口,只是服务内容换成 EXIF 列预填
+    if (m_viewMode == VM_DETAILS) { exifPrefillVisible(); return; }
     const QRect vis(0, verticalScrollBar()->value(),
                     viewport()->width(), viewport()->height());
     int thumbW = cardW() - 14;
@@ -335,6 +387,7 @@ void FileGrid::requestVisibleThumbs() {
 // Thumbs/wholeFolder:为当前目录全部条目排缩略图(不限视口)
 void FileGrid::requestAllThumbs() {
     if (m_entries.empty() || !m_canvas) return;
+    if (m_viewMode == VM_DETAILS) return;   // #267:详情行用类型图标,无需解码
     ensureGeometry();
     int thumbW = cardW() - 14;
     if (m_viewMode == VM_WATERFALL)                             thumbW = m_waterfallColW;

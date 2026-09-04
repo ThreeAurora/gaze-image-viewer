@@ -99,6 +99,7 @@ FileGrid::FileGrid(QWidget* parent) : QScrollArea(parent) {
 
     // Ctrl+滚轮缩放
     m_canvas->installEventFilter(this);
+    viewport()->installEventFilter(this);   // #267:滚动条显隐改变视口宽 → 重排+重推表头列
     installEventFilter(this);
 
     m_resizeTimer.setSingleShot(true);

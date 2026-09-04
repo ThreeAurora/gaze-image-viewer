@@ -66,6 +66,8 @@ public:
     int  fixedCols() const { return m_fixedCols; }
     void setViewMode(int mode);  // ViewMode
     int  viewMode() const { return m_viewMode; }
+    // #267:排序表头挂接(详细列表的定宽列布局与显隐由网格同源驱动)
+    void setSortHeader(SortHeader* h);
     int  cardW() const;       // 卡片宽度(按查看方式;#107 缩略图尺寸菜单重勾要用)
     void sort(int column, bool ascending);
     void setNameOrder(int order);   // NameOrder;持久化到 Browser/nameOrder 并重排
@@ -131,6 +133,8 @@ signals:
     // 用户裁决「选中文件夹时树应当留在原处,只有双击打开才同步」后整条链路已移除。
     // 树同步的唯一落点是 MainWindow::navigateTo 里的 FolderTree::focusPath。
     void filterModeChanged(int mode);
+    // #266:查看方式变化 → MainWindow 统一重勾两份查看方式菜单 + 切换按钮图标
+    void viewModeChanged(int mode);
 
 protected:
     void resizeEvent(QResizeEvent* event) override;
@@ -156,6 +160,11 @@ private:
     // 自绘:整个列表只有 FileCanvas 一个控件
     void  paintCanvas(QPainter& p, const QRect& clip);
     void  paintCard(QPainter& p, int idx, const QRect& rect);
+    void  paintDetailsRow(QPainter& p, int idx, const QRect& r);   // #267 详细列表行
+    // 详细列表定宽列:真源宽在 SortHeader::detailColWidth,显隐在表头按钮
+    int  detailColW(int i) const;                    // 第 i 列宽(隐藏=0)
+    int  detailColX(const QRect& r, int i) const;    // 第 i 列左缘(自右向左锚定)
+    void updateDetailColumns();    // 把 lead/尾垫片推给表头(进入详细态/缩放/列配置变化)
     void  refreshView();                    // 数据/外观变化后重绘(取代"重排卡片")
     int   indexAt(const QPoint& canvasPos);         // 画布坐标 → 条目序号;-1=空白(命中前补建几何)
     QRect cardRect(int idx) const;
@@ -198,6 +207,7 @@ private:
     int    m_fixedCols    = 0;
     bool   m_layoutReady  = false;   // #216:false=构造期,updateLayout 只标脏不真算;showEvent 放行
     int    m_viewMode     = VM_THUMBS_NAME;
+    SortHeader* m_header  = nullptr;   // #267:排序表头(详细态列布局同源驱动)
     int    m_waterfallColW = 220;   // 瀑布流列宽
     int    m_sortCol      = SORT_NAME;   // 构造函数会按 Browser/startupSort 重设(#150)
     bool   m_sortAsc      = true;
@@ -246,6 +256,14 @@ private:
     // 成品图:绘制路径只查缓存(命中即一次 blit);缩放/圆角在预建阶段完成
     QPixmap fitFor(const QString& path, const QRect& box) const;
     void    buildFit(const QString& path, const QRect& box, bool cover);
+
+    // EXIF 拍摄日期:缓存真源(0=已知无 EXIF 不重试);排序路径可同步读盘,
+    // 绘制路径只查缓存(零 IO 铁律),缺失项由 exifPrefillVisible 后台补齐
+    double exifDateOf(const FileEntry& e);   // 拍摄日期(缓存命中否则读盘,mtime 回退)
+    void   exifPrefillVisible();             // 视口内缺失项后台预读,到达定点重绘
+    QHash<QString, double> m_exifCache;
+    QSet<QString>          m_exifPending;    // 已排队读取(防重复排)
+    quint64                m_exifGen = 0;    // 轮次;过期回调只清 pending 不重绘
 
     // 绘制/命中窗口:m_geom 按顶边排序的序号 + 二分定位,
     // 让每帧成本只与"视口内条目数"有关,与目录总条目数无关

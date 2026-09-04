@@ -399,12 +399,31 @@ QMenu* MainWindow::createViewModeMenu(QWidget* parent) {
         QAction* a = m->addAction(modes[i]);
         a->setCheckable(true);
         a->setChecked(i == curMode);
-        connect(a, &QAction::triggered, this, [this, a, m, i]() {
-            for (auto* act : m->actions()) act->setChecked(act == a);
-            m_fileGrid->setViewMode(i);
-        });
+        a->setData(i);
+        m_viewModeActions.append(a);
+        // 勾选态由 syncViewModeUI 统一维护(viewModeChanged 广播,两份菜单实例同源)
+        connect(a, &QAction::triggered, this,
+                [this, i](){ m_fileGrid->setViewMode(i); });
     }
     return m;
+}
+
+// ═══════════════════════════════════════════
+// #266:查看方式变化的唯一 UI 同步口(viewModeChanged 广播到这里)
+//   两份"查看方式"菜单(菜单栏+工具栏)重勾 + 工具栏两态切换钮
+// ═══════════════════════════════════════════
+void MainWindow::syncViewModeUI(int mode) {
+    for (QAction* a : m_viewModeActions)
+        a->setChecked(a->data().toInt() == mode);
+
+    if (!m_btnViewToggle) return;
+    const bool details = (mode == VM_DETAILS);
+    m_btnViewToggle->setChecked(details);
+    // 图标表达"点了去哪":详细态时显示缩略图钮(点回),反之显示详细列表钮
+    m_btnViewToggle->setIcon(IconLib::appIcon(details ? "cmd_paneThumbs"
+                                                      : "cmd_paneIcons"));
+    m_btnViewToggle->setToolTip(gazeTr(details ? "切换到缩略图"
+                                               : "切换到详细信息列表"));
 }
 
 QMenu* MainWindow::createSortMenu(QWidget* parent) {
@@ -650,6 +669,22 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
           [this](){ refresh(); });
     // 工具栏可能建在第一跳 navigateTo 之后，这里补一次初始状态
     updateNavEnabled();
+
+    // #266:缩略图 ↔ 详细信息 两态切换按钮(仅此两态)
+    // checked=详细态;未按下=回到上次停留的缩略图类模式(Browser/lastThumbMode)
+    auto* vt = new QToolButton;
+    vt->setCheckable(true);
+    vt->setIcon(IconLib::appIcon("cmd_paneIcons"));
+    vt->setIconSize(QSize(17, 17));
+    vt->setFixedSize(28, 26);
+    connect(vt, &QToolButton::clicked, this, [this](bool checked) {
+        int back = AppSettings::instance()
+                       .get("Browser/lastThumbMode", int(VM_THUMBS_NAME)).toInt();
+        if (back == VM_DETAILS || back == VM_LIST) back = VM_THUMBS_NAME;
+        m_fileGrid->setViewMode(checked ? VM_DETAILS : back);
+    });
+    m_btnViewToggle = vt;
+    b2->addWidget(vt);
 
     auto mkMenuBtn = [&](const QIcon& ic, const QString& tip, QMenu* menu) {
         auto* btn = new QToolButton;

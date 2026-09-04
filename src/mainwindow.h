@@ -231,6 +231,9 @@ private:
     Qt::WindowStates m_preFullViewState = Qt::WindowNoState; // 进全屏预览前的窗口状态(2026-09-02:退出时恢复最大化,不再被 showNormal 打回普通)
     int  m_redFilterMode = 0; // 红标筛选三态:0全部 1仅红标 2仅非红标
     QToolButton* m_redBtn = nullptr; // 红标三态钮,蓝色背景指示器由 syncFilterIndicators 独家维护(#107)
+    QToolButton* m_btnViewToggle = nullptr; // #266:缩略图↔详细信息两态切换钮(勾选态由 syncViewModeUI 维护)
+    QList<QAction*> m_viewModeActions;      // #266:两份"查看方式"菜单的条目集合,勾选统一重勾
+    void syncViewModeUI(int mode);          // #266:查看方式变化的唯一 UI 同步口(菜单勾选+切换钮)
     QTabBar*    m_viewerTabs = nullptr;  // 查看器标签条(浏览器态有图签也显示,见 updateTabBarVis)
     QStringList m_closedTabs;            // #221:最近关闭的文件标签路径(新→旧,Ctrl+Shift+T 恢复)
     // ── 2026-09-02 全屏胶片条 ──
