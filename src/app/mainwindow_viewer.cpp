@@ -462,6 +462,7 @@ void MainWindow::exitFullView() {
     if (m_fullViewSplitter.size() == 3)
         m_splitter->setSizes(m_fullViewSplitter);
     applyFullViewChrome();
+    updateFilmStrip(nullptr);   // #220:退出当场收掉胶片条与左右浮动钮,不等下一次鼠标移动
 }
 
 // 全屏形态的 chrome 收放:G 全屏预览=菜单栏收掉;查看器+F11 全屏也只留画面

@@ -12,16 +12,23 @@
 #include "foldertree.h"      // 拖放提示段:updateFolderDropTarget 摸树行
 #include "filegrid.h"
 #include "views/filmstrip.h"
-#include "previewpanel.h"    // #209:fitRequested → m_preview->fitAuto()
+#include "previewpanel.h"    // 预览面板(loadFile/fitAuto 等接口经 MainWindow 用)
 #include "i18n.h"            // 拖放提示段:gazeTr("复制"/"移动")
 
 #include <QLabel>
+#include <QToolButton>
+#include <QPainter>
+#include <QStyle>
 #include <QApplication>
 
 namespace {
 constexpr int kFilmEdge  = 48;    // 光标顶边触发区
 constexpr int kStripMaxW = 1600;  // 条最大宽(超宽屏上不铺满整窗)
 constexpr int kFilmGrace = 24;    // #210:条下沿的滞留带高(光标在此带内条不藏)
+constexpr int kNavW = 44;         // #220:左右浮动钮宽
+constexpr int kNavH = 88;         // #220:左右浮动钮高
+constexpr int kNavInset = 14;     // #220:浮动钮距屏幕左右边缘
+constexpr int kNavEdge  = 56;     // #220:光标进入左右边缘多宽才浮现
 }
 
 void MainWindow::createFilmStrip() {
@@ -33,18 +40,54 @@ void MainWindow::createFilmStrip() {
         if (m_fileGrid && !p.isEmpty() && p != m_currentFile)
             m_fileGrid->selectByPath(p);
     });
-    // 右端按钮区(#209):G 全屏的顶中浮动工具条已让位(PreviewPanel::setGFullView),
-    // 上一张/下一张/适应窗口/退出全屏四个功能并进条里
-    connect(m_filmStrip, &FilmStrip::navRelative, this, [this](int d) {
-        if (m_fileGrid) m_fileGrid->navigateSelection(d);
-    });
-    connect(m_filmStrip, &FilmStrip::fitRequested, this, [this]() {
-        if (m_preview) m_preview->fitAuto();
-    });
+    // 右端只剩"退出全屏"一键(#220 用户令:上一个/下一个挪去屏幕左右浮动钮,
+    // 适应窗口有预览右键菜单与查看器键位两处入口,条上不再重复)
     connect(m_filmStrip, &FilmStrip::exitRequested, this, [this]() { exitFullView(); });
     // 目录内容变了(增删/重载)才需要重建数据;平时只对账当前文件
     connect(m_fileGrid, &FileGrid::fileCountChanged, this, [this]() {
         m_filmDirty = true;
+    });
+
+    // ── #220 左右浮动钮:上一个/下一个 ──
+    // 光标挪到屏幕左右边缘才浮现,挪走(且不在钮上)即藏。点击与滚轮同一条链
+    // (FileGrid::navigateSelection):选区一变,预览换图,胶片条经
+    // mainwindow_nav.cpp 的 syncCurrent 自动居中+蓝框跟随。
+    // 图标染白:与 filmstrip.cpp / pp_impl::whiteIcon 同一套做法的又一份本地副本
+    // (那两处各自注明只供本单元使用)。
+    auto whiteIcon = [](QStyle::StandardPixmap sp) {
+        const QPixmap pm = QApplication::style()->standardIcon(sp).pixmap(32, 32);
+        QPixmap white(pm.size());
+        white.fill(Qt::transparent);
+        QPainter p(&white);
+        p.drawPixmap(0, 0, pm);
+        p.setCompositionMode(QPainter::CompositionMode_SourceIn);
+        p.fillRect(white.rect(), QColor("#FFFFFF"));
+        p.end();
+        return QIcon(white);
+    };
+    const QString navStyle = QString::fromUtf8(
+        "QToolButton{background:rgba(24,24,30,215);border:1px solid #3A3A42;"
+        "border-radius:10px;}"
+        "QToolButton:hover{background:#3A3A42;border-color:#6A6A74;}");
+    auto mkNav = [&](QStyle::StandardPixmap sp, const QString& tip) {
+        auto* b = new QToolButton(this);
+        b->setIcon(whiteIcon(sp));
+        b->setIconSize(QSize(20, 20));
+        b->setToolTip(tip);
+        b->setStyleSheet(navStyle);
+        b->setFocusPolicy(Qt::NoFocus);   // 点击不吃焦点:方向键继续归全屏键位
+        b->setCursor(Qt::PointingHandCursor);
+        b->setFixedSize(kNavW, kNavH);
+        b->hide();
+        return b;
+    };
+    m_fullNavPrev = mkNav(QStyle::SP_ArrowBack, gazeTr("上一个文件"));
+    m_fullNavNext = mkNav(QStyle::SP_ArrowForward, gazeTr("下一个文件"));
+    connect(m_fullNavPrev, &QToolButton::clicked, this, [this] {
+        if (m_fileGrid) m_fileGrid->navigateSelection(-1);
+    });
+    connect(m_fullNavNext, &QToolButton::clicked, this, [this] {
+        if (m_fileGrid) m_fileGrid->navigateSelection(1);
     });
 }
 
@@ -55,19 +98,57 @@ void MainWindow::createFilmStrip() {
 // 根本没机会演给用户看。
 void MainWindow::updateFilmStrip(const QPoint* cursor) {
     if (!m_filmStrip) return;
-    if (!m_fullView) { m_filmStrip->hide(); return; }
+    if (!m_fullView) {
+        m_filmStrip->hide();
+        if (m_fullNavPrev) m_fullNavPrev->hide();
+        if (m_fullNavNext) m_fullNavNext->hide();
+        return;
+    }
     const bool nearTop = cursor && cursor->y() <= kFilmEdge;
     bool sticky = false;
     if (!nearTop && m_filmStrip->isVisible() && cursor)
         sticky = m_filmStrip->geometry().adjusted(0, 0, 0, kFilmGrace).contains(*cursor);
-    if (!nearTop && !sticky) { m_filmStrip->hide(); return; }
-    refreshFilmStrip();
-    if (!m_filmStrip->isVisible() && m_filmStrip->count() > 0) {
-        const int w = qMin(width() - 24, kStripMaxW);
-        m_filmStrip->setGeometry((width() - w) / 2, 8, w, FilmStrip::preferredHeight());
-        m_filmStrip->raise();
-        m_filmStrip->show();
+    if (!nearTop && !sticky)
+        m_filmStrip->hide();
+    else {
+        refreshFilmStrip();
+        if (!m_filmStrip->isVisible() && m_filmStrip->count() > 0) {
+            const int w = qMin(width() - 24, kStripMaxW);
+            m_filmStrip->setGeometry((width() - w) / 2, 8, w, FilmStrip::preferredHeight());
+            m_filmStrip->raise();
+            m_filmStrip->show();
+        }
     }
+    updateFullNavButtons(cursor);   // 条藏了左右钮也要跟着算:两者显隐互不相干
+}
+
+// ── #220 左右浮动钮显隐:光标进左右边缘浮现,挪走(且不在钮上)即藏 ──
+// 与顶部胶片条各自独立:光标从上往左下走,条先藏、钮后现,同一拍里各管各的。
+void MainWindow::updateFullNavButtons(const QPoint* cursor) {
+    if (!m_fullNavPrev || !m_fullNavNext) return;
+    // 没有可切的条目(空目录/无当前文件)或拿不到光标坐标时不出钮
+    if (!cursor || !m_fileGrid || m_fileGrid->fileCount() <= 0
+        || m_currentFile.isEmpty()) {
+        m_fullNavPrev->hide();
+        m_fullNavNext->hide();
+        return;
+    }
+    const int cy = (height() - kNavH) / 2;
+    const QRect gl(kNavInset, cy, kNavW, kNavH);
+    const QRect gr(width() - kNavInset - kNavW, cy, kNavW, kNavH);
+    // 形参不用 near/far:Win32 老宏,在包含链里会被展开成空(GCC 报错实证)
+    auto settle = [&](QToolButton* b, const QRect& r, bool atEdge) {
+        const bool sticky = !atEdge && b->isVisible() && r.contains(*cursor);
+        if (atEdge || sticky) {
+            if (b->geometry() != r) b->setGeometry(r);
+            b->raise();
+            b->show();
+        } else {
+            b->hide();
+        }
+    };
+    settle(m_fullNavPrev, gl, cursor->x() <= kNavEdge);
+    settle(m_fullNavNext, gr, cursor->x() >= width() - kNavEdge);
 }
 
 // 把 FileGrid 当前目录的显示列表灌进条。#203:只有目录或条目数变了才重建

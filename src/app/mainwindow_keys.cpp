@@ -402,6 +402,20 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
                 return true;
             }
             if (!forText) {
+                // #220(2026-09-04 用户令):G 全屏预览里 C/V/方向键 = 滚轮(上一个/
+                // 下一个)。网格被藏起、焦点不在它身上,FileGrid::keyPressEvent 收
+                // 不到这些键;查看器形态的 Left/Right 早在 bypass 处被查看器热键表
+                // 放行,这里补的是浏览器形态全屏的缺口。设置页"方向键=滚动"在此
+                // 不适用:全屏没有网格可滚,键位一律导航(与滚轮同一条链)。
+                if (m_fullView && ke->modifiers() == Qt::NoModifier) {
+                    switch (ke->key()) {
+                    case Qt::Key_C: case Qt::Key_Left: case Qt::Key_Up:
+                        m_fileGrid->navigateSelection(-1); return true;
+                    case Qt::Key_V: case Qt::Key_Right: case Qt::Key_Down:
+                        m_fileGrid->navigateSelection(1); return true;
+                    default: break;
+                    }
+                }
                 // 颜色标记快捷键:Ctrl+0~5(0=取消)/ F=红 / D=取消;Ctrl+PgUp/PgDn 快退快进
                 if (ke->modifiers() & Qt::ControlModifier) {
                     if (ke->key() >= Qt::Key_0 && ke->key() <= Qt::Key_5) {

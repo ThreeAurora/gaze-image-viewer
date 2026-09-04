@@ -23,6 +23,9 @@ class QMouseEvent;
 //   单击     = 跳到那张(jumpRequested → MainWindow::selectByPath 同一条路)
 //   当前项   = 蓝框 #0078D7;其余描边;悬停亮描边
 //   底部     = 题注"文件名 · i / n"
+// #220(2026-09-04 用户令):条加高;右端只留"退出全屏"一键(上一个/下一个
+// 改挂屏幕左右浮动钮,见 MainWindow::m_fullNavPrev/Next);当前项强制居中,
+// 首尾张允许滚出边界外留白(不再贴边钳制,见 centerRow/updateGeometries)。
 // 缩略图缓存 QCache LRU(上限 2000 张),跨目录来回滚不重解。
 // ═══════════════════════════════════════════
 
@@ -63,10 +66,7 @@ public:
 
 signals:
     void jumpRequested(const QString& path);
-    // 右端按钮区(#209:G 全屏的顶中浮动工具条并入条里):
-    void navRelative(int delta);   // 上一张(-1)/下一张(+1),MainWindow 接到网格导航
-    void fitRequested();           // 适应窗口
-    void exitRequested();          // 退出全屏
+    void exitRequested();          // 退出全屏(右端唯一按钮,#220 起条上只留这一个)
 
 protected:
     void wheelEvent(QWheelEvent* e) override;
@@ -74,15 +74,17 @@ protected:
     void mouseMoveEvent(QMouseEvent* e) override;
     void mouseReleaseEvent(QMouseEvent* e) override;
     void resizeEvent(QResizeEvent* e) override;
+    void updateGeometries() override;   // #220:拉宽滚动范围,首尾张允许居中
 
 private:
     void requestVisibleThumbs();
     void applyCurrent(int row, bool center);
+    void centerRow(int row);                     // #220:手工算滚动值,首尾也真居中
     void updateCaption();
 
     FilmStripModel* m_model;
     QLabel* m_caption = nullptr;
-    QWidget* m_btnBar = nullptr;                 // 右端按钮区(prev/next/fit/exit)
+    QWidget* m_btnBar = nullptr;                 // 右端按钮区(只留退出全屏,#220)
     int     m_currentRow = -1;
     int     m_hoverRow   = -1;
     QPoint  m_pressPos;

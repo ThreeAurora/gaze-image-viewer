@@ -21,11 +21,11 @@
 
 namespace {
 constexpr int kThumbW  = 72;
-constexpr int kThumbH  = 64;
+constexpr int kThumbH  = 96;      // #220:用户令"上下宽一点",64 → 96
 constexpr int kGap     = 4;
-constexpr int kCaptionH = 20;
+constexpr int kCaptionH = 24;     // #220:题注行随条加高放宽,20 → 24
 constexpr int kPanThresh = 6;     // 按住位移超过这个像素才算拖
-constexpr int kBtnZone   = 60;    // #209:右端按钮区宽(2x2 网格)
+constexpr int kBtnZone   = 44;    // 右端按钮区宽(#220 只剩关闭一键,60 → 44)
 // 标准图标染白(条底是深色,原生图标是深色的看不见;与 pp_impl::whiteIcon
 // 同一套做法的本地副本 —— 那个头注明只供 previewpanel 各编译单元使用)
 QIcon whiteIcon(const QIcon& base) {
@@ -132,7 +132,9 @@ FilmStrip::FilmStrip(QWidget* parent)
     setItemDelegate(new FilmStripDelegate(this));
     setFixedHeight(preferredHeight());
 
-    // ── 右端按钮区(#209):G 全屏顶中的浮动工具条并入条里 ──
+    // ── 右端按钮区(#209 并入条;#220 用户令:只留"退出全屏" —— 上一个/下一个
+    // 改挂屏幕左右两侧浮动钮(MainWindow::m_fullNavPrev/Next),适应窗口在
+    // 预览右键菜单与查看器键位里都有入口)──
     m_btnBar = new QWidget(this);
     m_btnBar->setStyleSheet(QString::fromUtf8(
         "QToolButton{background:transparent;border:none;border-radius:4px;padding:0;}"
@@ -150,13 +152,7 @@ FilmStrip::FilmStrip(QWidget* parent)
         connect(b, &QToolButton::clicked, this, fn);
         grid->addWidget(b, r, c);
     };
-    mkBtn(QStyle::SP_MediaSkipBackward, gazeTr("上一个文件"), 0, 0,
-          [this] { emit navRelative(-1); });
-    mkBtn(QStyle::SP_MediaSkipForward,  gazeTr("下一个文件"), 0, 1,
-          [this] { emit navRelative(1); });
-    mkBtn(QStyle::SP_DialogResetButton, gazeTr("适应窗口"),   1, 0,
-          [this] { emit fitRequested(); });
-    mkBtn(QStyle::SP_DialogCloseButton, gazeTr("退出全屏"),   1, 1,
+    mkBtn(QStyle::SP_DialogCloseButton, gazeTr("退出全屏"), 0, 0,
           [this] { emit exitRequested(); });
 
     m_caption = new QLabel(this);
@@ -202,8 +198,34 @@ void FilmStrip::applyCurrent(int row, bool center) {
         viewport()->update();   // 蓝框从旧位置挪到新位置
         updateCaption();
     }
-    if (row >= 0 && center)
-        scrollTo(m_model->index(row), QAbstractItemView::PositionAtCenter);
+    if (row >= 0 && center) centerRow(row);
+}
+
+// ── #220 当前项强制居中(首尾张也真居中) ──
+// scrollTo(PositionAtCenter) 受滚动范围 [0, 内容宽-视口] 钳制:第一张/最后一张
+// 只能贴边,永远到不了正中。这里手工算滚动值,并把范围向两侧各扩 pad —— 越界
+// 部分是留白(条底色透出),第一张左边空着正是用户要的。负滚动值 QAbstractScrollArea
+// 原生支持,indexAt 的坐标换算(加滚动值)对负值同样成立,点击/悬停不受影响。
+// 对齐目标按条几何中心算:右边距(kBtnZone+10)比左边距(8)宽,目标值里补回差半。
+void FilmStrip::centerRow(int row) {
+    const int n = m_model->rowCount();
+    if (row < 0 || row >= n) return;
+    const int rowW = kThumbW + kGap;
+    const int vw = viewport()->width();
+    if (vw <= 0) return;
+    QScrollBar* h = horizontalScrollBar();
+    const int asym = kBtnZone + 2;   // 右边距 - 左边距
+    const int pad = qMax(8, (vw - kThumbW) / 2 + asym / 2);
+    const int contentW = n * rowW - kGap;
+    h->setRange(-pad, qMax(0, contentW + pad - vw));
+    h->setValue(row * rowW + kThumbW / 2 - (vw + asym) / 2);
+}
+
+// QListView 每次重排版都会把水平范围重设回 [0, 内容宽-视口],把我们的 pad 抹掉
+// (首尾张又贴边)。跟着重居中一次,任何时机的范围重置都被这里拉回来。
+void FilmStrip::updateGeometries() {
+    QListView::updateGeometries();
+    if (m_currentRow >= 0) centerRow(m_currentRow);
 }
 
 void FilmStrip::updateCaption() {
@@ -292,7 +314,7 @@ void FilmStrip::mouseReleaseEvent(QMouseEvent* e) {
 
 void FilmStrip::resizeEvent(QResizeEvent* e) {
     QListView::resizeEvent(e);
-    m_caption->setGeometry(8, height() - kCaptionH + 3, width() - 16, 14);
-    m_btnBar->setGeometry(width() - kBtnZone - 6, 6, kBtnZone, kThumbH);
+    m_caption->setGeometry(8, height() - kCaptionH + 4, width() - 20 - kBtnZone, 16);
+    m_btnBar->setGeometry(width() - kBtnZone - 6, (height() - 32) / 2, kBtnZone, 32);
     requestVisibleThumbs();
 }

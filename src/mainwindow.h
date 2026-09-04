@@ -162,6 +162,7 @@ private:
     //(QListView 虚拟化:全目录可滚、当前项居中、悬停反馈、题注行)。
     void createFilmStrip();                    // ctor:建隐藏的顶部条
     void updateFilmStrip(const QPoint* cursor); // 光标到顶显示、离开条与触发区隐藏
+    void updateFullNavButtons(const QPoint* cursor); // #220:G 全屏左右浮动钮显隐+几何
     void refreshFilmStrip();                   // 目录/当前文件变化时重建或跟随
     // 2026-09-02 拖放提示:拖动时更新光标旁"复制/移动"浮标,并高亮落点文件夹
     void updateDragHint(const QPoint& pos, bool valid);  // valid=落在可放置区
@@ -209,6 +210,9 @@ private:
     FilmStrip*          m_filmStrip = nullptr;  // 顶部缩略图条(全屏预览,光标到顶显示)
     bool                m_filmDirty = false;    // 目录列表变了,胶片条下次显示要重建
     QString             m_filmDir;              // 胶片条上次装载的目录(判目录切换)
+    // #220 G 全屏左右浮动钮(上一个/下一个;光标挪到屏幕边缘才显示,挪走即藏)
+    QToolButton*        m_fullNavPrev = nullptr;
+    QToolButton*        m_fullNavNext = nullptr;
     // 2026-09-02 拖放:光标旁"复制/移动"浮标 + 落点文件夹高亮
     QLabel*             m_dragHint = nullptr;   // 拖动时跟随光标的动作提示(隐藏态)
     bool   m_viewerNoSync = false;       // 进查看器时不要就地改标签(由"开新标签"自己追加)
