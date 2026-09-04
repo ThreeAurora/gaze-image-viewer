@@ -217,6 +217,19 @@ void MainWindow::createMenubar() {
             if (a->isCheckable() && a->data().toInt() < 0)
                 a->setChecked(!preset);
     });
+    // 2026-09-04 用户令:「显示隐藏文件」进查看菜单,打勾即显示。与设置→
+    // 文件列表的勾选框同一个键 FileList/showHidden —— FileGrid 订阅设置变更
+    // 自动重筛(胶片条 allFilePaths 同步尊重),这里只落盘;用 triggered(bool)
+    // 而非 toggled:弹出菜单时的程序性重勾不该反向写盘。显示态即时按实勾。
+    auto* hiddenAct = viewMenu->addAction(gazeTr("显示隐藏文件"), this,
+                                          [this](bool on) {
+        AppSettings::instance().set("FileList/showHidden", on);
+    });
+    hiddenAct->setCheckable(true);
+    connect(viewMenu, &QMenu::aboutToShow, this, [hiddenAct]() {
+        hiddenAct->setChecked(AppSettings::instance()
+                                  .get("FileList/showHidden", true).toBool());
+    });
     viewMenu->addSeparator();
     viewMenu->addAction(gazeTr("放大缩略图"), QKeySequence("Ctrl+="), this, [this](){ onThumbZoom(1); });
     viewMenu->addAction(gazeTr("缩小缩略图"), QKeySequence("Ctrl+-"), this, [this](){ onThumbZoom(-1); });
