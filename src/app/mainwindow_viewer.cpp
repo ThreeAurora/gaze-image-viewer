@@ -109,7 +109,7 @@ void MainWindow::applyLastLayout() {
 }
 
 void MainWindow::createLayoutMenu() {
-    auto* lm = new QMenu(gazeTr("布局(&L)"), this);
+    auto* lm = new QMenu(gazeTr("布局"), this);
     lm->setStyleSheet(menuBar()->styleSheet());
     menuBar()->addMenu(lm);   // 追加到末尾:菜单顺序由 createMenubar 的调用顺序决定
     connect(lm, &QMenu::aboutToShow, this, [this, lm]() {
@@ -302,7 +302,7 @@ void MainWindow::restorePanes(const QString& csv) {
 
 // ── 一级菜单"视图":面板开关,开着的显示 ✓ ──
 void MainWindow::createViewMenu() {
-    auto* vm = new QMenu(gazeTr("视图(&W)"), this);
+    auto* vm = new QMenu(gazeTr("视图"), this);
     vm->setStyleSheet(menuBar()->styleSheet());
     menuBar()->addMenu(vm);
 

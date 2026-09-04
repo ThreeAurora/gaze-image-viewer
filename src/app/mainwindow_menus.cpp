@@ -72,7 +72,7 @@ void MainWindow::createMenubar() {
         .arg(C_MENUBAR, C_TEXT, C_SEPARATOR, C_CARD_HOVER, C_ACCENT));
 
     // ── 文件(F) ──
-    auto *fileMenu = mb->addMenu(gazeTr("文件(&F)"));
+    auto *fileMenu = mb->addMenu(gazeTr("文件"));
     fileMenu->addAction(IconLib::appIcon("cmd_open"), gazeTr("打开"),
         QKeySequence("Ctrl+O"), this, [this]() {
             auto paths = m_fileGrid->selectedPaths();
@@ -98,7 +98,7 @@ void MainWindow::createMenubar() {
     fileMenu->addAction(gazeTr("退出(&X)"), QKeySequence("Alt+X"), this, &QWidget::close);
 
     // ── 编辑(E) ──
-    auto *editMenu = mb->addMenu(gazeTr("编辑(&E)"));
+    auto *editMenu = mb->addMenu(gazeTr("编辑"));
     editMenu->addAction(IconLib::appIcon("cmd_copyPath"),
         gazeTr("复制绝对路径"), QKeySequence("Ctrl+Shift+C"), this, [this]() {
             auto paths = m_fileGrid->selectedPaths();
@@ -146,7 +146,7 @@ void MainWindow::createMenubar() {
     labelMenu->addAction(gazeTr("取消颜色标记\tCtrl+0 / D"), this, [this](){ applyColorLabel(0); });
 
     // ── 查看(V) ──
-    auto *viewMenu = mb->addMenu(gazeTr("查看(&V)"));
+    auto *viewMenu = mb->addMenu(gazeTr("查看"));
     auto* fsAct = viewMenu->addAction(IconLib::appIcon("cmd_fullscreen"),
         gazeTr("界面全屏"), QKeySequence("F11"), this, [this]() {
             if (m_fullView) { exitFullView(); return; }   // F11 也得把全屏预览整个退干净(#154)
@@ -234,7 +234,7 @@ void MainWindow::createMenubar() {
     //(用户点名:设置开着时主窗右上角 X 与任务栏关闭都必须仍能点)。已开着就提到前台。
     // 关窗即析构(finished→deleteLater,QDialog 的取消/Esc 走 reject 只是 hide,
     // WA_DeleteOnClose 对它们不生效):槽位落空,下次全新实例重读设置。
-    auto* toolMenu = mb->addMenu(gazeTr("工具(&T)"));
+    auto* toolMenu = mb->addMenu(gazeTr("工具"));
     toolMenu->addAction(IconLib::appIcon("cmd_options"),
         gazeTr("设置..."), QKeySequence("F12"), this, [this]() {
             if (m_settingsDlg) {
@@ -273,7 +273,7 @@ void MainWindow::createMenubar() {
     // ── 帮助(H) ──
     // #218:信息框也非模态(堆上+finished→deleteLater,挂主窗为父——主窗关则随之
     // 销毁,应用照常退出);模态的 about/information 会把主窗按住不让点
-    auto *helpMenu = mb->addMenu(gazeTr("帮助(&H)"));
+    auto *helpMenu = mb->addMenu(gazeTr("帮助"));
     helpMenu->addAction(gazeTr("快捷键帮助(&K)"), this, [this](){
         auto* mb = new QMessageBox(QMessageBox::Information, gazeTr("快捷键帮助"),
             gazeTr("C / ← / ↑ — 上一个\n"
@@ -321,7 +321,7 @@ void MainWindow::createMenubar() {
     // 征询重启;重启用 --restart 自启动(绕过单实例握手,见 main.cpp)。
     // 选中项即当前生效意图;中文系统默认=跟随系统→中文照旧。
     {
-        auto *langMenu = new QMenu(gazeTr("语言(&G)"), this);
+        auto *langMenu = new QMenu(gazeTr("语言"), this);
         langMenu->setToolTip(gazeTr("界面语言(切换后重启生效)"));
         mb->insertMenu(helpMenu->menuAction(), langMenu);
         auto *langGroup = new QActionGroup(langMenu);

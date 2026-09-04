@@ -141,7 +141,6 @@
  "尺寸": "Dimensions",
  "居中": "Center",
  "属性": "Properties",
- "工具(&T)": "&Tools",
  "左": "Left",
  "左/右键方向键": "Left/Right arrows",
  "左旋 90°": "Rotate 90° left",
@@ -160,7 +159,6 @@
  "已送印 %1 页 · %2 张图片。": "Sent %1 page(s) · %2 images to print.",
  "已选「%1」，重启 Gaze 后生效。": "\"%1\" selected; it takes effect after restarting Gaze.",
  "布局 %1": "Layout %1",
- "布局(&L)": "&Layout",
  "布局名称:": "Layout name:",
  "带文件启动": "Start with files",
  "帧提取完成:\n": "Frame extraction finished:\n",
@@ -285,5 +283,7 @@
  "服务无响应(连接失败或超时)": "Service not responding (connection failed or timed out)",
  "服务生命周期": "Service lifecycle",
  "服务返回错误(HTTP %1)": "Service returned an error (HTTP %1)",
- "未列出的格式:%1\n(上面总开关关掉时一律不上底色)": "Formats not listed: %1\n(no background color while the master switch above is off)"
+ "未列出的格式:%1\n(上面总开关关掉时一律不上底色)": "Formats not listed: %1\n(no background color while the master switch above is off)",
+ "工具": "Tools",
+ "布局": "Layout"
 }

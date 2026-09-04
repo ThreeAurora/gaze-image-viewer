@@ -337,6 +337,34 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
             m_addrWasAllSelected = false;
         }
     }
+    // ── #232(2026-09-04 用户令):Alt 裸键 = 死键 ──
+    // 单独按 Alt 不得聚焦菜单栏、不得有任何动作(用户原话:"单独alt不要生效,
+    // 不要去给我选菜单栏")。用户大量使用 Alt 相关键(Alt+Q 映射退格、Alt+Left
+    // 导航),Qt 原生"裸 Alt=菜单栏"只添乱;菜单栏助记符已全部拆除
+    // (mainwindow_menus.cpp)。实测(cache/tmp/probe_alt.cpp v3):只消费
+    // KeyPress/KeyRelease 挡不住 —— 菜单栏 grabShortcut(Alt) 走 QShortcutMap,
+    // 比 qApp 过滤器早一层;连 ShortcutOverride(Key_Alt) 一起消费才断得干净。
+    // 组合键天然不受影响:ShortcutOverride 的 key() 是另一个键(Alt+Left 的
+    // key()==Key_Left),Press/Release 又被 modifiers 闸挡住。Alt+退格(#155)、
+    // Alt+Space(系统菜单)不落这两个分支,照旧。
+    // 豁免:弹窗开着(菜单里的 Alt 助记符仍是活键)、对话框内(原生行为原样)。
+    if (!QApplication::activePopupWidget()) {
+        if (event->type() == QEvent::ShortcutOverride) {
+            auto *ke = static_cast<QKeyEvent*>(event);
+            auto *tw = qobject_cast<QWidget*>(obj);
+            if (ke->key() == Qt::Key_Alt && !(tw && insideDialog(tw)))
+                return true;
+        } else if (event->type() == QEvent::KeyPress
+                   || event->type() == QEvent::KeyRelease) {
+            auto *ke = static_cast<QKeyEvent*>(event);
+            auto *tw = qobject_cast<QWidget*>(obj);
+            if (ke->key() == Qt::Key_Alt
+                && ke->modifiers() == Qt::NoModifier
+                && !ke->isAutoRepeat()
+                && !(tw && insideDialog(tw)))
+                return true;
+        }
+    }
     if (event->type() == QEvent::KeyPress) {
         auto *ke = static_cast<QKeyEvent*>(event);
         auto *tgt = qobject_cast<QWidget*>(obj);

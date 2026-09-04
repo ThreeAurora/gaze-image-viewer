@@ -1,5 +1,4 @@
 {
- "语言(&G)": "&Language",
  "界面语言(切换后重启生效)": "UI language (applies after restart)",
  "跟随系统": "Follow system",
  "切换界面语言": "Switch UI language",
@@ -44,5 +43,6 @@
  "注册文件关联失败(注册表写入被拒)。": "Registering file associations failed (registry write denied).",
  "移除文件关联": "Remove file associations",
  "已移除 Gaze 的全部文件关联登记。": "All Gaze file association entries removed.",
- "移除失败(注册表写入被拒)。": "Removal failed (registry write denied)."
+ "移除失败(注册表写入被拒)。": "Removal failed (registry write denied).",
+ "语言": "Language"
 }

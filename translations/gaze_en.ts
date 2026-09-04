@@ -1556,8 +1556,8 @@ Click once to select the whole path, click again to place the caret</translation
         <translation>Properties...</translation>
     </message>
     <message>
-        <source>工具(&amp;T)</source>
-        <translation>&amp;Tools</translation>
+        <source>工具</source>
+        <translation>Tools</translation>
     </message>
     <message>
         <source>工具栏</source>
@@ -1656,12 +1656,12 @@ or in system Settings → Apps → Default apps → Gaze → &apos;Set default&a
         <translation>&quot;%1&quot; selected; it takes effect after restarting Gaze.</translation>
     </message>
     <message>
-        <source>布局 %1</source>
-        <translation>Layout %1</translation>
+        <source>布局</source>
+        <translation>Layout</translation>
     </message>
     <message>
-        <source>布局(&amp;L)</source>
-        <translation>&amp;Layout</translation>
+        <source>布局 %1</source>
+        <translation>Layout %1</translation>
     </message>
     <message>
         <source>布局名称:</source>
@@ -1682,8 +1682,8 @@ or in system Settings → Apps → Default apps → Gaze → &apos;Set default&a
 </translation>
     </message>
     <message>
-        <source>帮助(&amp;H)</source>
-        <translation>&amp;Help</translation>
+        <source>帮助</source>
+        <translation>Help</translation>
     </message>
     <message>
         <source>常规</source>
@@ -1976,10 +1976,6 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
     <message>
         <source>文件 %1 KB，仅读取前 %2 KB</source>
         <translation>File is %1 KB; only the first %2 KB is read</translation>
-    </message>
-    <message>
-        <source>文件(&amp;F)</source>
-        <translation>&amp;File</translation>
     </message>
     <message>
         <source>文件不存在:
@@ -2326,10 +2322,6 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     <message>
         <source>查看</source>
         <translation>View</translation>
-    </message>
-    <message>
-        <source>查看(&amp;V)</source>
-        <translation>&amp;View</translation>
     </message>
     <message>
         <source>查看器</source>
@@ -2822,8 +2814,8 @@ Try a different selection (a bit larger and farther from the edges).</translatio
         <translation>Thumbnail cache max size (MB)</translation>
     </message>
     <message>
-        <source>编辑(&amp;E)</source>
-        <translation>&amp;Edit</translation>
+        <source>编辑</source>
+        <translation>Edit</translation>
     </message>
     <message>
         <source>缩小</source>
@@ -3016,8 +3008,8 @@ Once set manually, thumbnails scale to the pane edge when resizing, but the colu
         <translation>Crop failed</translation>
     </message>
     <message>
-        <source>视图(&amp;W)</source>
-        <translation>&amp;Views</translation>
+        <source>视图</source>
+        <translation>Views</translation>
     </message>
     <message>
         <source>视频</source>
@@ -3088,8 +3080,8 @@ Continue?</translation>
         <translation>Semantic</translation>
     </message>
     <message>
-        <source>语言(&amp;G)</source>
-        <translation>&amp;Language</translation>
+        <source>语言</source>
+        <translation>Language</translation>
     </message>
     <message>
         <source>说明</source>

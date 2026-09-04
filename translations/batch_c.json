@@ -1,7 +1,6 @@
 {
  "查找文件名...": "Find file name...",
  "查看": "View",
- "查看(&V)": "&View",
  "查看器": "Viewer",
  "查看器标签卡上限(2-99,默认99)": "Viewer tab limit (2-99, default 99)",
  "查看方式": "View mode",
@@ -98,7 +97,6 @@
  "缓存目录": "Cache folder",
  "缓存维护": "Cache maintenance",
  "缓存缩略图最大容量(MB)": "Thumbnail cache max size (MB)",
- "编辑(&E)": "&Edit",
  "缩小": "Zoom out",
  "缩小抗锯齿": "Anti-aliasing when zooming out",
  "缩小缩略图": "Smaller thumbnails",
@@ -139,7 +137,6 @@
  "裁剪 — %1": "Crop — %1",
  "裁剪...(无损)": "Crop... (lossless)",
  "裁剪失败": "Crop failed",
- "视图(&W)": "&Views",
  "视频提取帧位置(%,0=第 1 秒)": "Video frame grab position (%, 0 = second 1)",
  "警告!\n此操作将从缓存数据库中删除全部的孤立条目。\n是否继续?": "Warning!\nThis will delete all orphaned entries from the cache database.\nContinue?",
  "记住上次": "Remember last",
@@ -231,5 +228,7 @@
  "黄金分割(Phi)": "Golden ratio (Phi)",
  "黑色": "Black",
  "默认": "Default",
- "默认颜色": "Default color"
+ "默认颜色": "Default color",
+ "编辑": "Edit",
+ "视图": "Views"
 }
