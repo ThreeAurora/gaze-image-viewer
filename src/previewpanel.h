@@ -44,6 +44,11 @@ public:
     bool showingMedia() const { return m_mode == "video" || m_mode == "audio"; }
     // 相邻预读:切换方向键时预解码下一张/上一张,命中则零等待显示(mainwindow 调用)
     void preload(const QString& prev, const QString& next);
+    // 冷启动预解(argv 带文件启动):构造期把目标静态图解进预读缓存 —— show 后
+    // 补做的目录扫描选中它时,showImage 命中缓存零等待直出。解码与目录扫描
+    // 并行,大图不再排在整份目录清单后面。只收 IMAGE_EXTS 静态图一档(GIF 走
+    // 逐帧解码不吃这张缓存;媒体类构造期建栈有闪框史,都交给 show 后的正常路径)
+    void preloadStartup(const QString& path);
     // 面板身份:浏览器预览窗格 ↔ 独立查看器(背景色各用一个设置项)
     Q_INVOKABLE void setViewerMode(bool on);
     // 该键事件是否命中 ViewerShortcut/* 表。主窗口的应用级过滤器用它让路:

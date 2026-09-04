@@ -360,6 +360,20 @@ void PreviewPanel::preloadNext() {
     });
 }
 
+// 冷启动预解(#254):与 preload 同一条缓存通路,但不吃 Viewer/readAhead 开关
+// —— 那个开关管的是"翻页时预读邻居",而开门这件事本身就是用户点名的解码
+// 请求。命中口是 showImage 的 m_preloadCache.contains(path):预读缓存不参与
+// 代次闸,后续 loadFile 撞不上"结果被作废重解"的坑。构造期调用时 m_filePath
+// 还是空串,preloadNext 的同路径跳过不会误伤。
+void PreviewPanel::preloadStartup(const QString& path) {
+    const QString ext = QFileInfo(path).suffix().toLower();
+    if (!IMAGE_EXTS.count("." + ext) || ext == QLatin1String("gif")) return;
+    Logger::event(QStringLiteral("preloadStartup: '%1'").arg(path));
+    m_preloadQueue.clear();
+    m_preloadQueue << path;
+    preloadNext();
+}
+
 // 控制栏可见时画面要让出的高度(#94.1):栏是布局里的固定项,而 label 自由
 // 定位、不受布局约束 —— 不主动扣,40px 的栏就压在画面下沿,"进度条贴底"
 // 看起来像"画面被切了一刀"。栏隐藏(纯静态图)时为 0,不影响原口径。

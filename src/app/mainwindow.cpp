@@ -361,16 +361,30 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 
         if (!cliPath.isEmpty()) {
             QFileInfo fi(QDir::fromNativeSeparators(cliPath));
-            navigateTo(fi.isDir() ? fi.absoluteFilePath() : fi.absolutePath());
-            // "带文件启动"只管"带文件"这一种情况:传目录进来就是来浏览的,
-            // 走查看器模式会把整个文件列表面板藏起来(网格不可见、无从滚动)。
             if (!fi.isDir()) {
+                // 先出大图再补加载:构造期就把目标文件交给预览的预读通路后台
+                // 解码,目录扫描+选中推迟到 show 后补做 —— 选中落定时若解码
+                // 已完成,showImage 命中预读缓存零等待直出,解码与扫描并行,
+                // 大图不再排在整份目录清单后面(目录越大收益越大)。
+                const QString file = fi.absoluteFilePath();
+                m_preview->preloadStartup(file);
+                // 布局档留在构造期:toggleViewer 对"未 show 直进查看器"有专门
+                // 存档纪律(m_savedSplitter),show 后再切会先闪一帧浏览器布局。
+                // 此刻 m_currentFile 还是空:查看器标签由补做选中时的
+                // syncViewerTab 兜底开出(无签则 openViewerTab)
                 const int mode = st.get("Start/withFile", 0).toInt();
-                m_fileGrid->selectByPath(fi.absoluteFilePath());
                 if (mode == 0 || mode == 1) toggleViewer();
                 if (mode == 1 || mode == 3) enterFullscreen();
                 // #233 新选项"全屏预览":G 全屏(只铺画面),不进查看器不碰标签
                 if (mode == 4) toggleFullView();
+                QTimer::singleShot(0, this, [this, dir = fi.absolutePath(), file] {
+                    navigateTo(dir);
+                    m_fileGrid->selectByPath(file);
+                });
+            } else {
+                // "带文件启动"只管"带文件"这一种情况:传目录进来就是来浏览的,
+                // 走查看器模式会把整个文件列表面板藏起来(网格不可见、无从滚动)。
+                navigateTo(fi.absoluteFilePath());
             }
         } else {
             QString dir;
