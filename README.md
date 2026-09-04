@@ -1,66 +1,128 @@
+<div align="center">
+
+<img src="src/Gaze.png" alt="Gaze" width="128"/>
+
 # Gaze
 
-[English](./README.en-US.md) | 中文
+**一款为 Windows 打造的本地媒体查看器与文件浏览器**
 
-**一款为 Windows 打造的本地媒体查看器与文件浏览器** —— 图片、视频、RAW、PDF，一个窗口全搞定。界面与交互对标 XnView MP，以现代化的技术栈（C++17 / Qt 6.8 LTS）重新实现。
+[English](./README.en-US.md) | 简体中文
 
-- 单进程、便携式：解压即用，设置随程序目录保存
-- 原生渲染：文件网格为虚拟化自绘控件，十万级文件目录依旧流畅滚动
-- 格式广度优先：从主流 JPEG/PNG 到 AVIF / JXL / RAW / AV1 / HDR，能解就显示
+![Version](https://img.shields.io/badge/version-1.0.0-blue?style=flat-square)
+![Platform](https://img.shields.io/badge/platform-Windows-0078D6?style=flat-square&logo=windows&logoColor=white)
+![C++](https://img.shields.io/badge/C%2B%2B-17-00599C?style=flat-square&logo=cplusplus&logoColor=white)
+![Qt](https://img.shields.io/badge/Qt-6.8%20LTS-41CD52?style=flat-square&logo=qt&logoColor=white)
+![License](https://img.shields.io/badge/license-private-red?style=flat-square)
 
-> 本项目受 **XnView MP** 启发，旨在作为一个轻量级的开源替代方案。
-> 致敬原作者 **Pierre-e Gougelet**！
+🔥 界面与交互对标 XnView MP，以现代化的技术栈（C++17 / Qt 6.8 LTS）重新实现 —— 单进程、便携式、格式广度优先。
+
+</div>
 
 ---
 
-## ✨ 特性
+## 📑 项目功能
 
-> **完整功能清单（约 250 项）见 [FEATURES.md](FEATURES.md)**，166 个设置键逐键状态见 [SETTINGS_MATRIX.md](SETTINGS_MATRIX.md)。以下为精选门面。
+<details>
+<summary><b>点击展开全部特性</b>（约 250 项，逐项全表见 <a href="FEATURES.md">FEATURES.md</a>）</summary>
 
-### 浏览器
-- **三栏布局**：目录树 / 文件网格 / 预览面板，各自可开关、可记忆布局
-- **8 种查看方式**：缩略图、缩略图+文件名、+标签、详细信息、图标、列表、详细信息表、瀑布流；列数 1–16 固定，缩放贴边不换列
-- **四合一文件夹缩略图**：文件夹图标聚合其内 4 张预览图，向原图取高清再降采样
-- **多标签页**：常驻浏览器标签，Ctrl+W 关闭；地址栏单击全选、回车直达、粘贴文件路径定位
-- **排序与筛选**：表头 16 列排序（含 EXIF 双日期、创建日期、尺寸/比例/打印尺寸）、自然排序（1, 2, … 10）、18 种筛选模式（格式/颜色标/自定义扩展名）
-- **颜色标记**：SQLite 存储，Ctrl+1~5 快速标色，跨会话保留
-- **内联搜索**：Ctrl+F 输入即搜，上一个/下一个/高亮；另有含/排除正则的目录搜索对话框
+**🖼 浏览器**
+- ✅ 三栏布局：目录树 / 文件网格 / 预览面板，各自可开关、布局全程记忆
+- ✅ 8 种查看方式：缩略图、缩略图+文件名、+标签、详细信息、图标、列表、详细信息表、瀑布流
+- ✅ 四合一文件夹缩略图：文件夹聚合其内 4 张预览图，向原图取高清再降采样
+- ✅ 常驻多标签页 + 标签缩略图，Ctrl+W 关签、Ctrl+Shift+T 恢复、中键/双击关签
+- ✅ 虚拟化自绘文件网格：十万级文件目录依旧流畅滚动，表头 7 列固定
+- ✅ 缩略图引擎：后台多线程 + SQLite 缓存，尺寸 384/768/自定义
+- ✅ 内联搜索（Ctrl+F 输入即搜）+ 目录搜索对话框（含/排除正则）
 
-### 查看器
-- **回车进入，ESC 返回**：树与网格隐藏，画面占满
-- **缩放与定位**：1:1 像素级查看（长按）、光标中心缩放、Ctrl+滚轮步进、导航小图蓝框拖动
-- **视频播放**：播放/暂停/音量/进度（点击跳转、剩余时间切换），HDR（VP9 10bit HDR10）与 AV1 硬解兼容路径
-- **动态照片（Motion Photo）**：单击预览即播，播完自动切回静态帧，XMP/ftyp 双协议探测
-- **GIF 控制**：逐帧步进、跳帧回拖、片尾回卷
-- **PDF 与文本预览**：Ghostscript 渲染；长文本自动截断
-- **元数据面板与直方图**：EXIF 信息一览
-- **打印**：多图排版打印布局
+**🔍 排序 · 筛选 · 标记**
+- ✅ 表头 16 列排序：名称/大小/类型/扩展名/创建/修改/EXIF 双日期/尺寸/比例/打印尺寸…
+- ✅ 自然排序（1, 2, … 10，不是 1, 10, 2）
+- ✅ 18 种筛选模式：图片/视频/音频/文档/可执行/文件夹/自定义扩展名集合
+- ✅ 颜色标记 Ctrl+1~5：SQLite 存储，跨会话保留
+- ✅ 文件名底色编辑器（扩展名 → 底色）
 
-### 格式支持
+**👁 查看器**
+- ✅ Enter 进入、ESC 返回，树与网格隐藏画面占满
+- ✅ 1:1 像素查看（长按）、光标中心缩放、导航小图蓝框拖动定位
+- ✅ GIF 逐帧步进 / 跳帧回拖 / 片尾回卷
+- ✅ 动态照片（Motion Photo）单击即播，XMP/ftyp 双协议探测
+- ✅ PDF（Ghostscript 渲染）与文本预览（自动截断、换行开关、MD 渲染）
+- ✅ 元数据面板 + 直方图 + EXIF 一览
+- ✅ 多图排版打印
+
+**🎬 视频与音频**
+- ✅ 28 种容器播放：MP4/MKV/WebM/FLV/RMVB/MXF…
+- ✅ AV1（内置 libdav1d，拒绝故障硬解设备）、H.264/H.265、VP9 10bit HDR10
+- ✅ 播放控制栏：点击跳转、剩余时间切换、音量数值、左键播放/暂停
+- ✅ 全屏胶卷画廊：全目录参与、图片/视频/音频分类过滤钮
+- ✅ 音频波形预览：后台线程解码，绝不阻塞浏览
+- ✅ 播放中删除/移动/重命名自动解除文件占用
+
+**🗃 格式与解码（首要要求：全格式）**
+- ✅ 33 种图片扩展名：JPEG/PNG/GIF/WebP/BMP/TGA/TIFF/SVG/ICO/DDS/EXR/QOI/JPEG 2000…
+- ✅ 现代格式：AVIF、HEIF（HEIC/HIF 走随包 FFmpeg）、JPEG XL
+- ✅ RAW：26 种厂商扩展名，LibRaw 0.21.4 静态编入，「加载原始RAW」按钮
+- ✅ CMYK JPEG：印刷口径统一渲染 + 颜色解释切换
+- ✅ 解码组件全部随程序分发（FFmpeg/Ghostscript/jpegtran），不要求安装任何系统扩展
+
+**📂 文件管理**
+- ✅ 删除走回收站（含文件夹与批量）、F3 用默认应用打开、F2/双击重命名
+- ✅ JPEG 无损旋转/裁剪（jpegtran）
+- ✅ 拖放：文件树/网格互拖移动，禁止落点明确反馈
+- ✅ 单实例运行：再次启动唤起已有窗口
+
+**⚙️ 设置与集成**
+- ✅ 20 个分类设置页、约 166 个设置键
+- ✅ 深/浅双主题即时切换（无需重启）
+- ✅ 中英双语界面（828 条全量翻译）
+- ✅ 资源管理器右键「用 Gaze 浏览」、文件关联注册、ms-settings 跳转
+- ✅ 以文搜图：接入本地 CLIP+OCR 语义检索服务
+- ✅ 文件夹大小统计（后台精确递归 + 缓存库）
+- ✅ 数据库维护页、崩溃 minidump + 事件日志自诊
+
+</details>
+
+---
+
+## 📸 程序截图
+
+**浏览器（三栏布局）**
+
+![浏览器](docs/images/screenshot_browser.png)
+
+**查看器（Enter 进入，画面占满）**
+
+![查看器](docs/images/screenshot_viewer.png)
+
+---
+
+## 🖼 支持格式
+
 | 类别 | 覆盖 |
 |---|---|
 | 图片 | JPEG / PNG / GIF / WebP / BMP / TGA / TIFF / SVG / ICO / DDS / EXR / QOI / JPEG 2000 等共 33 种扩展名 |
 | 现代格式 | AVIF、HEIF、JPEG XL（JXL）、WebP 动图 |
 | 专业格式 | RAW（26 种厂商扩展名，内置 LibRaw 静态编入）、CMYK JPEG |
-| 视频 | 28 种容器（MP4/MKV/WebM/FLV/RMVB/MXF…），H.264/H.265/AV1（内置 libdav1d，拒绝故障硬解设备）、VP9 10bit HDR10 |
+| 视频 | 28 种容器（MP4/MKV/WebM/FLV/RMVB/MXF…），H.264/H.265/AV1（内置 libdav1d）、VP9 10bit HDR10 |
 | 音频 | 10 种扩展，波形预览（后台线程解码，绝不阻塞浏览） |
-
-### 工具与集成
-- **无损操作**：JPEG 无损旋转 / 裁剪（jpegtran）
-- **随程序分发**：ffmpeg、Ghostscript、jpegtran 全部内置于程序目录，不要求用户安装任何解码器或系统扩展
-- **系统集成**：资源管理器右键「用 Gaze 浏览」、打开方式注册、单实例运行（再次启动唤起已有窗口）
-- **以文搜图**：接入本地语义检索服务（CLIP + OCR + 文件名），自然语言搜图
+| 文档 | PDF（Ghostscript）、TXT/MD 文本预览 |
 
 ---
 
-## 📦 安装
+## 🥣 使用方法
 
-**便携版（推荐）**：将整个程序目录放置任意位置，双击 `Gaze.exe` 运行。
+### 便携版（推荐）
+
+从 [Releases](../../releases) 下载 `Gaze_1.0.0_Portable.zip`，解压到任意位置，双击 `Gaze.exe` 运行。
 
 - 所有设置保存在程序目录内的 `Gaze.ini`，缩略图缓存在 `thumbnails.db`
 - 不写注册表（仅首次可选的系统集成项），拷贝目录即完成迁移
 
-## 🔨 从源码构建
+### 安装版
+
+从 [Releases](../../releases) 下载 `Gaze_1.0.0_Setup.exe`，按向导安装。首次启动可选择把配置迁移到 `%APPDATA%`（程序目录只读、卸载保留用户配置）。
+
+### 从源码构建
 
 ```
 依赖：CMake ≥ 3.16、Qt 6.8.3 (win64_mingw)、MinGW 13.1.0 (SEH)
@@ -74,6 +136,8 @@ cmake --build build -j
 
 构建脚本会自动同步 `assets/` 与 `vendor/` 到构建目录，产物直接可运行。
 
+---
+
 ## ⌨️ 快捷键（精选）
 
 | 键 | 作用 |
@@ -82,32 +146,29 @@ cmake --build build -j
 | ESC | 返回浏览器 |
 | G | 全屏预览（仅画面，退出后精确还原布局） |
 | F11 | 界面全屏 |
-| 空格 | 默认操作 / 播放 |
+| 空格 | 默认操作 / 播放暂停 |
 | Ctrl+F | 内联搜索 |
-| F3 | 重命名 |
+| F2 / F3 | 重命名 / 用默认应用打开 |
 | Ctrl+W | 关闭当前标签页 |
+| Ctrl+PgUp / PgDn | 切换标签页（视频页=进度调整） |
 | Ctrl+1~5 | 颜色标记 |
+| B / F | 目录浏览历史后退 / 前进 |
+| Home / End | 首个 / 末个条目 |
 | 长按左键 | 1:1 像素查看（光标聚焦） |
 
-## 🗂 项目结构
+全表见 [FEATURES.md §十一](FEATURES.md)。
 
-```
-src/app/       应用壳：主窗口、设置、主题
-src/views/     文件网格（虚拟化自绘）、目录树、预览面板、右键菜单
-src/media/     缩略图引擎、动态照片解析、颜色标记库
-src/dialogs/   设置页（20 个分类页）、打印、以文搜图、数据库维护
-vendor/        随程序分发的外部工具（ffmpeg、Ghostscript、jpegtran）
-thirdparty/    编入的第三方源码（LibRaw 等）
-```
+---
 
-## 🧭 Roadmap
+## 📜 其他说明
 
-- [x] 运行时主题热切换（深/浅双档，设置→外观即时生效，无需重启）
-- [ ] HEIF / CMYK 解码全内置（去除对系统 WIC 扩展的依赖）
-- [ ] 更多 RAW 厂商格式实测覆盖（EXR/DDS/JP2 解码器已在位，样张验证待做）
-- [ ] 以文搜图深度集成（目录管理与模型管理界面）
+- **构建产物入库**：本仓库同时提交编译产物（`build_qt68/Gaze.exe`），便于直接取用验证
+- **开发账本**：任务规格与进度的唯一账本是 [`todo.md`](todo.md)，功能全表见 [`FEATURES.md`](FEATURES.md)，设置键逐键状态见 [`SETTINGS_MATRIX.md`](SETTINGS_MATRIX.md)
+- ⚠️ **公开前须知（内部）**：`src/assets/` 含 144 个自 XnView 提取的图标，公开/开源前必须整体替换
 
-## 🙏 致谢
+---
+
+## ♥️ 致谢
 
 - [Qt](https://www.qt.io/) —— 应用框架
 - [LibRaw](https://www.libraw.org/) —— RAW 解码
@@ -116,12 +177,15 @@ thirdparty/    编入的第三方源码（LibRaw 等）
 - [jpegtran](https://jpegclub.org/) —— JPEG 无损操作
 - [XnView MP](https://www.xnview.com/en/xnviewmp/) —— 界面形态与交互的设计参考
 
-## 📄 License
-
-私有项目，暂未授权公开分发。如需使用请与作者联系。
+> 本项目受 **XnView MP** 启发，旨在作为一个轻量级的替代方案。
+> 致敬原作者 **Pierre-e Gougelet**！
 
 ---
 
-### 📎 关于本仓库（内部说明）
+## ⚠️ 免责声明
 
-本仓库同时入库了构建产物，便于直接取用验证。开发进度与任务规格的唯一账本是 [`todo.md`](todo.md)。
+本项目为个人自用工具，仅供学习与交流使用。使用者请自行确保遵守所运行环境的相关法律法规，因使用本软件产生的任何问题由使用者自行承担。
+
+## 📄 License
+
+私有项目，暂未授权公开分发。如需使用请与作者联系。
