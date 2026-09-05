@@ -79,7 +79,19 @@ QRect fittedRect(const QSize& src, const QRect& box, bool cover, int imageAlign)
 void FileGrid::paintCanvas(QPainter& p, const QRect& clipIn) {
     PerfLog::Scope _perf("paintCanvas", 16);
     ensureGeometry();
-    if (m_entries.empty() || !m_canvas || m_byY.empty()) return;
+    if (m_entries.empty() || !m_canvas || m_byY.empty()) {
+        // #6 异步装载:首次启动/进大目录的扫描期画一行"正在读取目录…"占位,
+        // 不再是一块死灰的四边形(旧观感:等几秒什么都没有)
+        if (m_loading) {
+            QFont f = p.font();
+            f.setPixelSize(13);
+            p.setFont(f);
+            p.setPen(QColor(QString::fromUtf8(C_TEXT_FAINT)));
+            p.drawText(m_canvas->rect(), Qt::AlignCenter,
+                       gazeTr("正在读取目录…"));
+        }
+        return;
+    }
     const QRect clip = clipIn.isNull() ? m_canvas->rect() : clipIn;
     p.setRenderHint(QPainter::Antialiasing);
     // 只遍历曝光窗口:起点 = 顶边 >= clip.top - 最高卡片 的第一个,终点 = 顶边越过 clip 底边

@@ -55,6 +55,12 @@
 #include "filegrid_internal.h"
 
 bool FileGrid::selectByPath(const QString& path) {
+    // 目录还在后台装载(#6 异步化):先挂起,装载完成后 onDirScanDone 兑现。
+    // 启动恢复/单实例转交在扫描完成前到达时不再空手而归
+    if (m_loading && m_currentDir == QFileInfo(path).absolutePath()) {
+        m_pendingSelectPath = path;
+        return false;
+    }
     // 外部传入的路径(argv 启动/地址栏文件跳转/上次文件恢复/旧存档)可能是
     // 旧版盘根连体形 "X://name" 或反斜杠形;内部条目自 joinEntryPath 收敛后
     // 一律是规范形 "X:/name"。先精确比(内部调用零开销),整体失配再按

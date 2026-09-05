@@ -487,8 +487,15 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 
     createFilmStrip();   // #203:G 全屏顶部胶片条(隐藏;光标到顶出现,交互在控件内自理)
 
-    m_folderTree->loadDrives();
-    Logger::boot("ctor:drives");
+    // #27 冷启动:驱动器枚举(机械盘唤醒/杀软握手,百 ms 级)挪出构造期 ——
+    // 主窗先画出来,首帧后树再灌盘符;灌完按当前目录回填树的焦点
+    // (navigateTo 在构造期已走过 focusPath,树那时还是空的)
+    QTimer::singleShot(0, this, [this]() {
+        m_folderTree->loadDrives();
+        if (!m_currentDir.isEmpty()) m_folderTree->focusPath(m_currentDir);
+        Logger::event("tree: drives loaded (post-first-frame)");
+    });
+    Logger::boot("ctor:drives(deferred)");
 
     // 启动目录/文件:此前 Start/withFile、Start/withoutFile、Start/rememberFilename
     // 三键只被设置页写入、无人读取(永远打开桌面)。argv 优先,其次按设置恢复。
@@ -608,8 +615,9 @@ void MainWindow::restoreStartupPreview() {
     if (m_startupRestoreFile.isEmpty()) return;
     const QString last = m_startupRestoreFile;
     m_startupRestoreFile.clear();   // 只恢复一次:后续 grid 信号不再走这条路径
-    if (m_fileGrid->fileCount() > 0)
-        m_fileGrid->selectByPath(last);
+    // 目录装载已异步化(#6):扫描没完时 selectByPath 会把请求挂进 FileGrid,
+    // 装载完成即兑现 —— 不再因"列表还是空的"而静默丢失
+    m_fileGrid->selectByPath(last);
 }
 
 // 预热预览媒体栈:QMediaPlayer/QVideoWidget 首次创建同步且重(日志实测 3~4 秒),

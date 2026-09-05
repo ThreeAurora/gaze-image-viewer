@@ -49,6 +49,8 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QStyle>
+#include <QPointer>
+#include <QMetaObject>
 #include <algorithm>
 #include <cmath>
 #include "filegrid_internal.h"
@@ -301,11 +303,15 @@ bool FileGrid::headerScanAllowed(const QString& dirPath) const {
 }
 
 // ═══════════════════════════════════════════
-// 目录加载
+// 目录加载(#6 异步化,2026-09-05)
+//   旧实现整段跑在 GUI 线程:启动时主线程同步枚举 G 盘,盘响应慢时窗口灰着
+//   挂几秒(用户报"启动有个灰色四边形,等几秒才出内容"),浏览中途进大目录
+//   也一样卡。现在枚举/递归/嗅探全在池线程,旧内容保持显示;就绪后经
+//   onDirScanDone 回 GUI 应用,代次对不上(期间又换了目录)的结果整批丢弃。
 // ═══════════════════════════════════════════
 void FileGrid::loadDirectory(const QString& dirPath) {
-    if (m_loading) return;
     m_loading = true;
+    const quint64 gen = ++m_loadGen;   // 作废任何在途扫描
 
     // 同一目录重载(refresh/删除后)才谈得上"新增文件":换目录时全部条目都是新的,
     // 若按 newAtEnd/autoSelectNew 处理会把整列表打乱、并抢走正常导航的选中项
@@ -319,14 +325,63 @@ void FileGrid::loadDirectory(const QString& dirPath) {
     // 清掉上一目录的缩略图任务
     Thumbnailer::instance().clearQueue();
 
-    m_allEntries = fastScanDir(dirPath);
+    // 工作线程捕获的全是值拷贝(设置项此刻读好),不碰任何 GUI 侧状态
+    const bool expandSub = (m_showSubFolders || m_mfScope == 1);
+    const bool skipHidden = !m_showHidden;
+    const bool allowHdr = m_mfScope != 2
+        && !AppSettings::instance().get("FileList/recognizeByExt", true).toBool()
+        && headerScanAllowed(dirPath);
+    m_dirScanInFlight = true;
+    QPointer<FileGrid> self(this);
+    QThreadPool::globalInstance()->start(
+        [self, gen, dirPath, sameDir, prevPaths, expandSub, skipHidden, allowHdr]() {
+        std::vector<FileEntry> scanned = fastScanDir(dirPath);
+        // FileList/showSubFolders(树右键"显示子文件夹中的文件")/#242 范围1=
+        // 当前目录(递归):目录行只列本层,文件向下递归铺开
+        if (expandSub && !scanned.empty()) {
+            QStringList subDirs;
+            subDirs.reserve(static_cast<int>(scanned.size()));
+            for (const auto& e : scanned)
+                if (e.isDir) subDirs << e.path;
+            for (const QString& d : subDirs)
+                fastScanSubFiles(d, scanned, skipHidden);
+        }
+        // FileList/recognizeByExt 关=按文件头魔数判定真实格式(逐文件开门读,
+        // 只在设置允许的卷上做);GUI 侧零阻塞
+        if (allowHdr) {
+            for (auto& e : scanned) {
+                if (e.isDir) continue;
+                const QString real = sniffExtByHeader(e.path);
+                if (!real.isEmpty()) e.ext = real;
+            }
+        }
+        QMetaObject::invokeMethod(self, [self, gen, dirPath, sameDir, prevPaths,
+                                         scanned = std::move(scanned), allowHdr]() {
+            if (self)
+                self->onDirScanDone(gen, dirPath, sameDir, prevPaths,
+                                    std::move(scanned), allowHdr);
+        }, Qt::QueuedConnection);
+    });
+
+    // 扫描期间旧目录内容保持显示(首次启动为空白画布,paintCanvas 会写
+    // "正在读取目录…");选中集在此不动,避免旧画面整行失去高亮
+}
+
+// 池线程扫描完成 → GUI 应用(代次不匹配=期间又换了目录,整批丢弃)
+void FileGrid::onDirScanDone(quint64 gen, const QString& dirPath, bool sameDir,
+                             const QSet<QString>& prevPaths,
+                             std::vector<FileEntry> scanned, bool allowHdr) {
+    if (gen != m_loadGen) return;   // 迟到的旧扫描:丢弃
+    m_loading = false;
+    m_dirScanInFlight = false;
+
+    m_allEntries = std::move(scanned);
 
     // ── #242 分类筛选器范围 2=全局:候选宇宙=标签库全表,只列其中仍存在、
     //   非目录的文件。本层扫描结果整个丢弃 —— 全局语义就是"跨目录找标记过的
     //   文件",混进本层未标记文件会让三档范围的边界含糊。已删除路径静默忽略。
     QHash<QString,int> globalColored;   // 全表色(下方直接复用,免二次查询)
     if (m_mfScope == 2) {
-        PerfLog::Scope probe("loadDir.multiGlobal", 50);
         globalColored = LabelStore::instance().allColored();
         m_allEntries.clear();
         m_allEntries.reserve(globalColored.size());
@@ -353,36 +408,7 @@ void FileGrid::loadDirectory(const QString& dirPath) {
             m_allEntries.push_back(fe);
         }
     }
-    // ── FileList/showSubFolders(树右键"显示子文件夹中的文件")/
-    //   #242 范围1=当前目录(递归):两者共用同一条递归铺开 ──
-    // 目录行仍只列本层,只有文件向下递归铺开。整棵子树的枚举代价由探针记账,
-    // 逛巨型仓库时慢在哪一眼可见,不用靠猜。
-    else if (m_showSubFolders || m_mfScope == 1) {
-        QStringList subDirs;
-        subDirs.reserve(static_cast<int>(m_allEntries.size()));
-        for (const auto& e : m_allEntries)
-            if (e.isDir) subDirs << e.path;
-        if (!subDirs.isEmpty()) {
-            PerfLog::Scope probe("loadDir.subFolders", 50);
-            for (const QString& d : subDirs)
-                fastScanSubFiles(d, m_allEntries, !m_showHidden);
-        }
-    }
-
-    // ── FileList/recognizeByExt(默认开)= 只看扩展名 ──
-    // 关掉时按文件头魔数判定真实格式(扩展名被改错/缺失仍能正确归类);
-    // 是否允许读头由 FileList/scanHeader 按卷类型决定(软盘/光盘默认不读,
-    // 免得逐文件寻道把 removable 介质拖垮)。#242 全局范围不读:条目可能散在
-    // 几万个路径上,逐个开门读头是数万次 IO,且这些文件扩展名即真源
-    if (m_mfScope != 2
-        && !AppSettings::instance().get("FileList/recognizeByExt", true).toBool()
-        && headerScanAllowed(dirPath)) {
-        for (auto& e : m_allEntries) {
-            if (e.isDir) continue;
-            const QString real = sniffExtByHeader(e.path);
-            if (!real.isEmpty()) e.ext = real;
-        }
-    }
+    Q_UNUSED(allowHdr);   // 嗅探已在池线程做完(留参备将来 GUI 侧复查)
 
     m_selected.clear();
     m_lastClicked = -1;
@@ -441,6 +467,12 @@ void FileGrid::loadDirectory(const QString& dirPath) {
         requestAllThumbs();
 
     emit fileCountChanged();
+    // 目录装载期间来的选中请求(启动恢复/单实例转交):此刻兑现
+    if (!m_pendingSelectPath.isEmpty()) {
+        const QString want = m_pendingSelectPath;
+        m_pendingSelectPath.clear();
+        if (!m_entries.empty()) selectByPath(want);
+    }
     if (!m_entries.empty()) {
         // 默认选中第一个;reloadAfterDelete 可用 m_preferPath 指定落点
         int idx = 0;

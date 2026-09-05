@@ -65,7 +65,7 @@ class FileGrid : public QScrollArea {
 public:
     explicit FileGrid(QWidget* parent = nullptr);
 
-    void loadDirectory(const QString& dirPath);
+    void loadDirectory(const QString& dirPath);   // 枚举在池线程跑(#6 启动灰块/挂死),就绪后 GUI 应用
     void refreshCurrentDir();    // 重新加载当前目录(文件操作后)
     // 主题切换:重灌画布背景色(构造期内联样式表,QSS 刷新覆盖不到)
     void refreshThemeColors();
@@ -179,6 +179,13 @@ private:
     void ensureGeometry();    // m_geomDirty 时补一次重建(绘制/命中前兜底)
     bool m_geomDirty = false;
     void applyFilter();     // 按 m_filterMode 从 m_allEntries 生成 m_entries
+    // 异步目录装载(#6):枚举+递归+嗅探在池线程,完成后 GUI 侧应用
+    void onDirScanDone(quint64 gen, const QString& dirPath, bool sameDir,
+                       const QSet<QString>& prevPaths,
+                       std::vector<FileEntry> scanned, bool allowHdr);
+    quint64 m_loadGen = 0;          // 装载代次:换目录即作废在途扫描
+    QString m_pendingSelectPath;    // 目录装载期间来的选中请求(启动恢复),就绪后兑现
+    bool    m_dirScanInFlight = false;
     int  colsForWidth(int w) const;
     int  cardH(int idx) const;// 卡片高度(瀑布流按宽高比)
 
