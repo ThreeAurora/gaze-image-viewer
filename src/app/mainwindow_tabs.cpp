@@ -155,10 +155,7 @@ void MainWindow::installTabCloseButton(int index) {
     x->setAutoRaise(true);
     x->setFocusPolicy(Qt::NoFocus);
     x->setCursor(Qt::ArrowCursor);
-    x->setStyleSheet(QString(
-        "QToolButton{border:none;background:transparent;color:%1;font-size:14px;padding:0 2px;}"
-        "QToolButton:hover{color:%2;background:%3;border-radius:3px;}")
-        .arg(C_TEXT_HIDDEN, C_TEXT, C_CARD_HOVER));
+    x->setObjectName("tabCloseBtn");
     connect(x, &QToolButton::clicked, this, [this, x]() {
         // 按按钮指针回查索引:点击前可能已有标签被关掉或被拖动重排
         for (int k = 0; k < m_viewerTabs->count(); ++k)

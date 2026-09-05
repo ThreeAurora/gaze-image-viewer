@@ -181,15 +181,15 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     Logger::boot("ctor:tabbar");
 
     m_splitter = new QSplitter(Qt::Horizontal);
-    m_splitter->setStyleSheet(QString::fromUtf8(
-        "QSplitter::handle{background:%1;width:1px;}").arg(C_SEPARATOR));
+    // 手柄样式走应用级 QSS(QSplitter::handle/::handle:horizontal),本窗无竖向
+    // 分割器,原内联表是它的逐字子集(#89 收敛时删)
     ml->addWidget(m_splitter, 1);
 
     // 树面板:"文件夹"标题条 + FolderTree(标题条右侧 X 关闭)
     auto* treePane = new QWidget;
     m_treePane = treePane;
+    treePane->setObjectName("treePane");   // 底色见应用级 QSS(#89 收敛)
     auto* tv = new QVBoxLayout(treePane);
-    treePane->setStyleSheet(QString("background:%1;border:none;").arg(C_SIDEBAR));
     tv->setContentsMargins(0, 0, 0, 0);
     tv->setSpacing(0);
     tv->addWidget(createPaneHeader(gazeTr("文件夹"), "tree"));
@@ -204,7 +204,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     //   面板只管显示与交互。容器保留(header 搬去当 dock 标题条,容器只装面板),
     //   停靠位置/大小/浮动形态归 saveState,显隐仍归 applyPaneVisibility ──
     m_favPane = new QWidget;
-    m_favPane->setStyleSheet(QString("background:%1;border:none;").arg(C_SIDEBAR));
+    m_favPane->setObjectName("favPane");   // 底色见应用级 QSS(#89 收敛)
     auto* fvl = new QVBoxLayout(m_favPane);
     fvl->setContentsMargins(0, 0, 0, 0);
     fvl->setSpacing(0);
@@ -263,7 +263,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     // ── #242 分类筛选器面板(已 Dock 化):条件真源 = 面板勾选;显隐推拉在
     //   applyPaneVisibility 的 filter 分支。与收藏夹同区左停靠,竖排在下 ──
     m_filterPane = new QWidget;
-    m_filterPane->setStyleSheet(QString("background:%1;border:none;").arg(C_SIDEBAR));
+    m_filterPane->setObjectName("filterPane");   // 底色见应用级 QSS(#89 收敛)
     auto* kvl = new QVBoxLayout(m_filterPane);
     kvl->setContentsMargins(0, 0, 0, 0);
     kvl->setSpacing(0);
@@ -391,7 +391,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     auto* previewPane = new QWidget;
     m_previewPane = previewPane;
     previewPane->setMinimumWidth(200);
-    previewPane->setStyleSheet(QString("background:%1;border:none;").arg(C_PREVIEW_BG));
+    previewPane->setObjectName("previewPane");   // 底色见应用级 QSS(#89 收敛)
     auto* pv = new QVBoxLayout(previewPane);
     pv->setContentsMargins(0, 0, 0, 0);
     pv->setSpacing(0);
@@ -404,7 +404,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     // 停靠右区(原"预览栏下半"的位置感):dock 位置/大小归 saveState 存档,
     // 显隐仍归 applyPaneVisibility。不再塞进预览栏 vbox。
     m_infoPane = new QWidget;
-    m_infoPane->setStyleSheet(QString("background:%1;border:none;").arg(C_PREVIEW_BG));
+    m_infoPane->setObjectName("infoPane");   // 底色见应用级 QSS(#89 收敛)
     auto* iv = new QVBoxLayout(m_infoPane);
     iv->setContentsMargins(0, 0, 0, 0);
     iv->setSpacing(0);
@@ -600,74 +600,18 @@ void MainWindow::warmUpPreviewMedia() {
     m_preview->warmUp();
 }
 
-// ── 主题切换:重灌"构造期内联样式表 + 填充期缓存色"──
-// 设置页切换主题协议见 theme.h。这里补齐全局 QSS 刷不到的部分:
-//   · 各面板/分割条/状态栏/工具栏/地址栏的内联 setStyleSheet(构造期
-//     .arg(C_*) 求值一次,之后不再变)
+// ── 主题切换:重灌"填充期缓存色"──
+// 设置页切换主题协议见 theme.h。静态外观(面板底色/工具条/状态栏/标题条/
+// 菜单栏等)已在 #89 收敛进应用级 QSS,Theme::applyLive() 重设全局表即覆盖,
+// 这里只剩"加载时缓存进 item/画笔"的动态色,各子树自己重灌:
 //   · FileGrid 画布背景、PreviewPanel 文字色、FolderTree 行前景色
-//     (加载时缓存进 item,必须重灌)
 void MainWindow::applyThemeSurfaces() {
-    if (m_splitter)
-        m_splitter->setStyleSheet(QString::fromUtf8(
-            "QSplitter::handle{background:%1;width:1px;}").arg(C_SEPARATOR));
-    if (m_treePane)
-        m_treePane->setStyleSheet(QString("background:%1;border:none;").arg(C_SIDEBAR));
-    if (m_previewPane)
-        m_previewPane->setStyleSheet(QString("background:%1;border:none;").arg(C_PREVIEW_BG));
-    if (m_infoPane)
-        m_infoPane->setStyleSheet(QString("background:%1;border:none;").arg(C_PREVIEW_BG));
-
-    const QString barQss =
-        QString::fromUtf8("QWidget{background:%1;border-bottom:1px solid %2;}"
-        "QToolButton{background:transparent;border:none;border-radius:4px;"
-        "padding:3px 6px;color:%3;font-size:11px;}"
-        "QToolButton:hover{background:%4;}"
-        "QToolButton::menu-indicator{image:none;}").arg(C_TOOLBAR, C_SEPARATOR, C_TEXT, C_CARD_HOVER);
-    if (m_addrRow) m_addrRow->setStyleSheet(barQss);
-    if (m_toolRow) m_toolRow->setStyleSheet(barQss);
-    if (m_addrBar)
-        m_addrBar->setStyleSheet(QString::fromUtf8(
-            "QLineEdit{background:%1;color:%2;"
-            "border:1px solid %3;"
-            "border-radius:4px;padding:2px 8px;font-size:11px;}")
-            .arg(C_CONTENT, C_TEXT, C_CARD_BORDER));
-
-    if (QStatusBar* sb = statusBar()) {
-        sb->setStyleSheet(QString::fromUtf8(
-            "QStatusBar{background:%1;border-top:1px solid %2;"
-            "color:%3;font-size:11px;padding:2px 10px;}"
-            "QStatusBar::item{border:none;}")
-            .arg(C_STATUSBAR, C_SEPARATOR, C_TEXT));
-        if (m_statusLabel)
-            m_statusLabel->setStyleSheet(QString("color:%1;background:transparent;").arg(C_TEXT));
-        if (m_pathLabel)
-            m_pathLabel->setStyleSheet(QString("color:%1;background:transparent;").arg(C_TEXT));
-    }
-
-    // 面板标题条("文件夹"/"预览"/"信息")与其标题文字
-    for (QWidget* h : m_paneHdrs) {
-        if (!h) continue;
-        h->setStyleSheet(QString::fromUtf8(
-            "QWidget{background:%1;border-bottom:1px solid %2;}"
-            "QToolButton{background:transparent;border:none;border-radius:4px;"
-            "color:%3;font-size:13px;}"
-            "QToolButton:hover{background:%4;}")
-            .arg(C_PANE_HDR, C_SEPARATOR, C_TEXT, C_CARD_HOVER));
-        if (QLabel* lbl = h->findChild<QLabel*>())
-            lbl->setStyleSheet(QString::fromUtf8(
-                "background:transparent;color:%1;font-size:12px;").arg(C_TEXT));
-    }
-
     // 子树缓存色(各自的重灌入口)
     if (m_fileGrid)   m_fileGrid->refreshThemeColors();
     if (m_preview)    m_preview->refreshThemeColors();
     if (m_folderTree) m_folderTree->refreshThemeColors();
     if (m_info)       m_info->applyTheme();   // #248:信息面板此前无刷新钩子
-    if (m_favPane)
-        m_favPane->setStyleSheet(QString("background:%1;border:none;").arg(C_SIDEBAR));
     if (m_favs)       m_favs->applyTheme();   // #243:收藏夹列表同款重灌
-    if (m_filterPane)
-        m_filterPane->setStyleSheet(QString("background:%1;border:none;").arg(C_SIDEBAR));
     if (m_filterPnl)  m_filterPnl->applyTheme();   // #242:筛选面板同款重灌
 }
 

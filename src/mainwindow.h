@@ -270,8 +270,6 @@ private:
     QDockWidget* m_favDock    = nullptr;  // objectName="favorites" → 左停靠区
     QDockWidget* m_filterDock = nullptr;  // objectName="filter"    → 左停靠区(收藏夹之下)
     bool m_restoringDocks = false;        // restoreState 期间抑制 visibilityChanged 回写
-    // 各面板标题条(createPaneHeader 产出;主题切换时重灌内联样式)
-    QList<QWidget*> m_paneHdrs;
     QWidget* m_addrRow = nullptr;     // 地址栏行(视图菜单可隐藏)
     QWidget* m_toolRow = nullptr;     // 工具栏第二行(视图菜单可隐藏)
     // 面板开关 action(视图菜单),与 m_panesOn 同步 ✓

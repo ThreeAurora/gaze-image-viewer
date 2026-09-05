@@ -127,7 +127,6 @@ void MainWindow::restoreDocks(const QByteArray& hex) {
 
 void MainWindow::createLayoutMenu() {
     auto* lm = new QMenu(gazeTr("布局"), this);
-    lm->setStyleSheet(menuBar()->styleSheet());
     menuBar()->addMenu(lm);   // 追加到末尾:菜单顺序由 createMenubar 的调用顺序决定
     connect(lm, &QMenu::aboutToShow, this, [this, lm]() {
         lm->clear();
@@ -229,20 +228,14 @@ bool MainWindow::paneVisible(const char* paneId) const {
 QWidget* MainWindow::createPaneHeader(const QString& title, const char* paneId) {
     auto* h = new QWidget;
     h->setFixedHeight(24);
-    m_paneHdrs.push_back(h);   // 主题切换时 applyThemeSurfaces 重灌本条样式
-    h->setStyleSheet(QString::fromUtf8(
-        "QWidget{background:%1;border-bottom:1px solid %2;}"
-        "QToolButton{background:transparent;border:none;border-radius:4px;"
-        "color:%3;font-size:13px;}"
-        "QToolButton:hover{background:%4;}")
-        .arg(C_PANE_HDR, C_SEPARATOR, C_TEXT, C_CARD_HOVER));
+    h->setObjectName("paneHdr");   // 标题条样式在应用级 QSS(#89 收敛)
     auto* hl = new QHBoxLayout(h);
     hl->setContentsMargins(8, 0, 3, 0);
     hl->setSpacing(0);
     auto* lbl = new QLabel(title);
     // 不用 600 字重:雅黑只有 400/700 两档真字重,600 会被就近硬凑,
     // 12px 小字上笔画发虚;全应用其余文字均为常规字重且清晰
-    lbl->setStyleSheet(QString::fromUtf8("background:transparent;color:%1;font-size:12px;").arg(C_TEXT));
+    // (底色/字色见应用级 QSS 的 QWidget#paneHdr 规则)
     hl->addWidget(lbl, 1);
     auto* x = new QToolButton;
     x->setText(gazeTr("×"));   // ×
@@ -350,7 +343,6 @@ void MainWindow::restorePanes(const QString& csv) {
 // ── 一级菜单"视图":面板开关,开着的显示 ✓ ──
 void MainWindow::createViewMenu() {
     auto* vm = new QMenu(gazeTr("视图"), this);
-    vm->setStyleSheet(menuBar()->styleSheet());
     menuBar()->addMenu(vm);
 
     struct Item { const char* id; const char* name; const char* key; };

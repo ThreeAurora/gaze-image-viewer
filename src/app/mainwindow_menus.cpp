@@ -64,14 +64,8 @@
 
 void MainWindow::createMenubar() {
     auto *mb = menuBar();
-    mb->setStyleSheet(QString::fromUtf8(
-        "QMenuBar{background:%1;color:%2;font-size:12px;"
-        "padding:3px 2px;border-bottom:1px solid %3;}"
-        "QMenuBar::item{background:transparent;padding:4px 10px;border-radius:3px;}"
-        "QMenuBar::item:selected{background:%4;}"
-        "QMenuBar::item:pressed{background:%5;color:#FFF;}")
-        .arg(C_MENUBAR, C_TEXT, C_SEPARATOR, C_CARD_HOVER, C_ACCENT));
-
+    // 菜单栏样式在应用级 QSS 的 QMenuBar 规则(#89 收敛,原来还要手动复制给
+    // 布局/视图两个 QMenu——全局表生效后该复制也成了死码,一并删)
     // ── 文件(F) ──
     auto *fileMenu = mb->addMenu(gazeTr("文件"));
     fileMenu->addAction(IconLib::appIcon("cmd_open"), gazeTr("打开"),
@@ -550,17 +544,13 @@ QMenu* MainWindow::createFilterMenu(QWidget* parent) {
 
 void MainWindow::createStatusbar() {
     auto *sb = statusBar();
-    sb->setStyleSheet(QString::fromUtf8(
-        "QStatusBar{background:%1;border-top:1px solid %2;"
-        "color:%3;font-size:11px;padding:2px 10px;}"
-        "QStatusBar::item{border:none;}")
-        .arg(C_STATUSBAR, C_SEPARATOR, C_TEXT));
+    // 状态栏/两枚标签的样式在应用级 QSS 的 QStatusBar/QLabel#statusLabel 规则(#89 收敛)
     sb->setFixedHeight(28);
     m_statusLabel = new QLabel;
-    m_statusLabel->setStyleSheet(QString("color:%1;background:transparent;").arg(C_TEXT));
+    m_statusLabel->setObjectName("statusLabel");
     sb->addWidget(m_statusLabel, 1);
     m_pathLabel = new QLabel;
-    m_pathLabel->setStyleSheet(QString("color:%1;background:transparent;").arg(C_TEXT));
+    m_pathLabel->setObjectName("pathLabel");
     sb->addPermanentWidget(m_pathLabel);
 }
 
@@ -568,18 +558,15 @@ void MainWindow::createStatusbar() {
 // 文件页上方工具栏:地址行(导航+路径) + 查看方式/排序/筛选/红标三态/列数
 // ═══════════════════════════════════════════
 void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
-    const QString barQss =
-        QString::fromUtf8("QWidget{background:%1;border-bottom:1px solid %2;}"
-        "QToolButton{background:transparent;border:none;border-radius:4px;"
-        "padding:3px 6px;color:%3;font-size:11px;}"
-        "QToolButton:hover{background:%4;}"
-        "QToolButton::menu-indicator{image:none;}").arg(C_TOOLBAR, C_SEPARATOR, C_TEXT, C_CARD_HOVER);
+    // 两行工具条(地址行/功能行)及其子控件的样式在应用级 QSS 的
+    // QWidget#addrRow / QWidget#toolRow 规则组(#89 收敛);小箭头钮
+    // (barArrowBtn)、分隔线(toolSep)、格式下拉(fmtFilterCombo)也在那里。
 
     // ── 地址行:上一级 + 路径输入 + 历史下拉 ──
     auto* addrRow = new QWidget;
     m_addrRow = addrRow;            // 视图菜单可隐藏
+    addrRow->setObjectName("addrRow");
     addrRow->setFixedHeight(36);
-    addrRow->setStyleSheet(barQss);
     auto* al = new QHBoxLayout(addrRow);
     al->setContentsMargins(6, 4, 6, 4);
     al->setSpacing(4);
@@ -599,24 +586,19 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
           [this](){ goUp(); });
 
     m_addrBar = new QLineEdit;
+    m_addrBar->setObjectName("addrBar");
     m_addrBar->setFixedHeight(26);
     m_addrBar->setPlaceholderText(gazeTr("输入路径,回车跳转"));
     m_addrBar->setToolTip(gazeTr(
         "回车跳转到该路径(目录=进去,文件=进它的目录并选中)\n单击全选整条路径,再点一下落光标"));
-    m_addrBar->setStyleSheet(QString::fromUtf8(
-        "QLineEdit{background:%1;color:%2;"
-        "border:1px solid %3;"
-        "border-radius:4px;padding:2px 8px;font-size:11px;}")
-        .arg(C_CONTENT, C_TEXT, C_CARD_BORDER));
     connect(m_addrBar, &QLineEdit::returnPressed, this, &MainWindow::gotoTypedPath);
     al->addWidget(m_addrBar, 1);
 
     // 历史路径下拉(上限 30,无动画)
     auto* histBtn = new QToolButton;
+    histBtn->setObjectName("barArrowBtn");   // 小号箭头灰字(应用级 QSS)
     histBtn->setText(gazeTr("▼")); // ▼
     histBtn->setFixedSize(22, 26);
-    histBtn->setStyleSheet(QString::fromUtf8("QToolButton{color:%1;font-size:9px;}")
-                               .arg(C_SB_ARROW));   // #151:同款小号箭头灰
     histBtn->setToolTip(gazeTr("历史访问路径")); // 历史访问路径
     histBtn->setPopupMode(QToolButton::InstantPopup);
     auto* histMenu = new QMenu(histBtn);
@@ -638,8 +620,8 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
     // ── 功能行:后退/前进/刷新 + 查看方式/排序/筛选/红标三态/列数 ──
     auto* bar2 = new QWidget;
     m_toolRow = bar2;               // 视图菜单可隐藏
+    bar2->setObjectName("toolRow");
     bar2->setFixedHeight(34);
-    bar2->setStyleSheet(barQss);
     auto* b2 = new QHBoxLayout(bar2);
     b2->setContentsMargins(6, 3, 6, 3);
     b2->setSpacing(2);
@@ -684,18 +666,18 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
         btn->setIcon(ic);
         btn->setIconSize(QSize(17, 17));
         btn->setToolTip(tip);
-        // #134(复报)：这三颗是"有菜单但没有箭头"的元凶 —— barQss 里
+        // #134(复报)：这三颗是"有菜单但没有箭头"的元凶 —— 应用级表里
         // QToolButton::menu-indicator{image:none} 把 Qt 自带指示也关了，于是只剩一个
         // 方形图标，肉眼完全看不出能展开(违反「控件须有可见指示器」)。
         // 改成图标旁带一颗 ▼，与地址栏历史按钮(histBtn)同一形态 = 用户点名的参照物。
         btn->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
         btn->setText(gazeTr("▼")); // ▼
         btn->setFixedSize(46, 26);
-        // #151:▼ 原样继承 barQss 的 11px/C_TEXT(近白)= 用户点名"太白太大"。
-        // 按钮自有表只压这两项:9px + 箭头灰(C_SB_ARROW,与滚动条/数字框箭头同色);
-        // 底色/悬停底仍走 barQss 的 QToolButton 规则(自有表只覆盖冲突属性)
-        btn->setStyleSheet(QString::fromUtf8("QToolButton{color:%1;font-size:9px;}")
-                               .arg(C_SB_ARROW));
+        // #151:▼ 原样继承工具条规则的 11px/C_TEXT(近白)= 用户点名"太白太大"。
+        // 现走应用级 QSS 的 QToolButton#barArrowBtn 规则:只压 9px + 箭头灰
+        // (C_SB_ARROW,与滚动条/数字框箭头同色);底色/悬停底仍走工具条规则
+        // (应用级表里它排在后面,冲突属性覆盖,其余属性继承)
+        btn->setObjectName("barArrowBtn");
         btn->setPopupMode(QToolButton::InstantPopup);
         btn->setMenu(menu);
         b2->addWidget(btn);
@@ -725,22 +707,20 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
     b2->addWidget(redBtn);
 
     auto* sep2 = new QFrame;
+    sep2->setObjectName("toolSep");   // 竖线颜色在应用级 QSS(#89 收敛)
     sep2->setFrameShape(QFrame::VLine);
     sep2->setFixedHeight(18);
-    sep2->setStyleSheet(QString::fromUtf8("color:%1;")
-                            .arg(Theme::T("#2A2A2E", "#C9C9D1")));
     b2->addWidget(sep2);
 
     // 缩略图列数:自动 + 1-16(手动指定后缩放窗口时缩略图贴边缩放但列数不变)
-    // #134:InstantPopup 按钮的 menu-indicator 被 barQss 关掉,补 ▼ 文本承担"点开有菜单"的可见指示
+    // #134:InstantPopup 按钮的 menu-indicator 被应用级表关掉,补 ▼ 文本承担"点开有菜单"的可见指示
     auto* colsBtn = new QToolButton;
+    colsBtn->setObjectName("barArrowBtn");   // 小号箭头灰字(应用级 QSS)
     colsBtn->setIcon(IconLib::appIcon("cmd_paneThumbs"));
     colsBtn->setIconSize(QSize(17, 17));
     colsBtn->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     colsBtn->setText(gazeTr("▼"));
     colsBtn->setFixedSize(46, 26);
-    colsBtn->setStyleSheet(QString::fromUtf8("QToolButton{color:%1;font-size:9px;}")
-                               .arg(C_SB_ARROW));   // #151:同款小号箭头灰
     colsBtn->setToolTip(gazeTr(
         "缩略图列数\n手动指定后,拖动边框/缩放窗口时缩略图贴边缩放但列数不变"));
     colsBtn->setPopupMode(QToolButton::InstantPopup);
@@ -773,13 +753,13 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
     // 与「筛选」菜单的条目并不是一一对应(菜单另有 图像(+目录)、颜色标记…)。
     // 落在那些模式时框里不再谎报"全部",而是显示"筛选：xxx"(见构造函数里的反向同步)。
     auto* fmtSep = new QFrame;
+    fmtSep->setObjectName("toolSep");   // 竖线颜色在应用级 QSS(#89 收敛)
     fmtSep->setFrameShape(QFrame::VLine);
     fmtSep->setFixedHeight(18);
-    fmtSep->setStyleSheet(QString::fromUtf8("color:%1;")
-                              .arg(Theme::T("#2A2A2E", "#C9C9D1")));
     b2->addWidget(fmtSep);
 
     m_formatFilterCombo = new QComboBox;
+    m_formatFilterCombo->setObjectName("fmtFilterCombo");   // 样式在应用级 QSS(#89 收敛)
     m_formatFilterCombo->setFixedSize(112, 26);
     m_formatFilterCombo->setToolTip(gazeTr("按文件格式筛选当前目录"));
     {
@@ -801,25 +781,10 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
     // 用户在真机上仍然看不到 —— 根因未明,不再赌样式表,改用与三颗按钮同款的
     // "▼" 文本:QLabel 叠在 drop-down 区,WA_TransparentForMouseEvents 让点击
     // 穿透回框。框尺寸固定 112x26,几何一次摆放即可,无 resize 问题。
-    // ::down-arrow 保留"置零"规则(image:none+0尺寸),防止原生箭头跟 ▼ 重影。
-    m_formatFilterCombo->setStyleSheet(QString::fromUtf8(
-        "QComboBox{background:%1;color:%2;border:1px solid %3;"
-        "border-radius:4px;padding:2px 10px;font-size:12px;min-height:22px;}"
-        "QComboBox:hover{border-color:%9;}"
-        "QComboBox:focus{border-color:%4;}"
-        "QComboBox::drop-down{width:18px;border:none;background:transparent;"
-        "subcontrol-origin:padding;subcontrol-position:top right;}"
-        "QComboBox::down-arrow{image:none;width:0;height:0;background:none;border:none;}"
-        "QComboBox QAbstractItemView{background:%5;color:%6;"
-        "border:1px solid %7;selection-background-color:%8;"
-        "outline:none;}"
-        "QComboBox QAbstractItemView::item{min-height:24px;padding:2px 8px;}")
-        .arg(C_TOOLBAR, C_TEXT, C_SEPARATOR, C_ACCENT,
-             C_CONTENT, C_TEXT, C_SEPARATOR, C_ACCENT,
-             Theme::T("#4A4A56", "#9A9AA4")));
+    // ::down-arrow 保留"置零"规则(image:none+0尺寸),防止原生箭头跟 ▼ 重影
+    // (两条规则现都在应用级 QSS 的 #fmtFilterCombo 块里)。
     auto* comboArrow = new QLabel(gazeTr("▼"), m_formatFilterCombo);
-    comboArrow->setStyleSheet(QString::fromUtf8(
-        "color:%1;background:transparent;font-size:9px;").arg(C_SB_ARROW));
+    comboArrow->setObjectName("fmtComboArrow");   // 样式在应用级 QSS(#89 收敛)
     comboArrow->setAlignment(Qt::AlignCenter);
     comboArrow->setAttribute(Qt::WA_TransparentForMouseEvents);
     comboArrow->setGeometry(112 - 18, 0, 18, 26);

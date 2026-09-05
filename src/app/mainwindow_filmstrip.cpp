@@ -65,16 +65,12 @@ void MainWindow::createFilmStrip() {
         p.end();
         return QIcon(white);
     };
-    const QString navStyle = QString::fromUtf8(
-        "QToolButton{background:rgba(24,24,30,215);border:1px solid #3A3A42;"
-        "border-radius:10px;}"
-        "QToolButton:hover{background:#3A3A42;border-color:#6A6A74;}");
     auto mkNav = [&](QStyle::StandardPixmap sp, const QString& tip) {
         auto* b = new QToolButton(this);
         b->setIcon(whiteIcon(sp));
         b->setIconSize(QSize(20, 20));
         b->setToolTip(tip);
-        b->setStyleSheet(navStyle);
+        b->setObjectName("filmNavBtn");
         b->setFocusPolicy(Qt::NoFocus);   // 点击不吃焦点:方向键继续归全屏键位
         b->setCursor(Qt::PointingHandCursor);
         b->setFixedSize(kNavW, kNavH);
@@ -176,9 +172,7 @@ void MainWindow::refreshFilmStrip() {
 void MainWindow::updateDragHint(const QPoint& pos, bool valid) {
     if (!m_dragHint) {
         m_dragHint = new QLabel(this);
-        m_dragHint->setStyleSheet(QString::fromUtf8(
-            "QLabel{background:rgba(24,24,30,235);color:#FFFFFF;border:1px solid #3A3A42;"
-            "border-radius:4px;padding:3px 8px;font-size:12px;}"));
+        m_dragHint->setObjectName("filmDragHint");
     }
     const bool copy = (QApplication::keyboardModifiers() & Qt::ControlModifier) != 0;
     const QString verb = copy ? gazeTr("复制") : gazeTr("移动");

@@ -37,7 +37,7 @@ void applyLive() {
 }
 
 QString appQss() {
-    // 占位符按 %1..%17 顺序逐个 .arg:单个 arg() 每次替换最小编号占位符,
+    // 占位符按 %1..%24 顺序逐个 .arg:单个 arg() 每次替换最小编号占位符,
     // 取值全是 #hex,不含 %N 字样,链式安全
     return QStringLiteral(
         "QWidget {"
@@ -193,6 +193,96 @@ QString appQss() {
         "  border-top: 4px solid transparent; border-bottom: 4px solid transparent;"
         "  border-left: 6px solid %11;"
         "}"
+        // ── #89 样式收敛:原散在各控件构造期的静态内联 setStyleSheet 并入本表。
+        // 语义与原内联表逐条一致,但级联从"控件表必赢"变为"同特异性靠位置",
+        // 因此块内顺序敏感:工具条后代泛规则在前,#addrBar/#fmtFilterCombo/
+        // 小箭头钮靠排在其后赢回自己的属性;后代泛规则刻意保留 QWidget 后代
+        // 匹配(分隔线/弹层容器当年吃到的 background 原样复刻,防像素漂移)。
+        "QWidget#addrRow, QWidget#toolRow,"
+        "QWidget#addrRow QWidget, QWidget#toolRow QWidget {"
+        "  background: %3; border-bottom: 1px solid %4;"
+        "}"
+        "QWidget#addrRow QToolButton, QWidget#toolRow QToolButton {"
+        "  background: transparent; border: none; border-radius: 4px;"
+        "  padding: 3px 6px; color: %1; font-size: 11px;"
+        "}"
+        "QWidget#addrRow QToolButton:hover, QWidget#toolRow QToolButton:hover {"
+        "  background: %16;"
+        "}"
+        "QWidget#addrRow QToolButton::menu-indicator,"
+        "QWidget#toolRow QToolButton::menu-indicator { image: none; }"
+        "QToolButton#barArrowBtn { color: %11; font-size: 9px; }"
+        "QLineEdit#addrBar {"
+        "  background: %13; color: %1; border: 1px solid %12;"
+        "  border-radius: 4px; padding: 2px 8px; font-size: 11px;"
+        "}"
+        "QLabel#fmtComboArrow { color: %11; background: transparent; font-size: 9px; }"
+        "QWidget#paneHdr, QWidget#paneHdr QWidget {"
+        "  background: %20; border-bottom: 1px solid %4;"
+        "}"
+        "QWidget#paneHdr QLabel {"
+        "  background: transparent; color: %1; font-size: 12px;"
+        "}"
+        "QWidget#paneHdr QToolButton {"
+        "  background: transparent; border: none; border-radius: 4px;"
+        "  color: %1; font-size: 13px;"
+        "}"
+        "QWidget#paneHdr QToolButton:hover { background: %16; }"
+        "QWidget#treePane, QWidget#favPane, QWidget#filterPane {"
+        "  background: %14; border: none;"
+        "}"
+        "QWidget#previewPane, QWidget#infoPane {"
+        "  background: %15; border: none;"
+        "}"
+        "QStatusBar {"
+        "  background: %21; border-top: 1px solid %4;"
+        "  color: %1; font-size: 11px; padding: 2px 10px;"
+        "}"
+        "QStatusBar::item { border: none; }"
+        "QLabel#statusLabel, QLabel#pathLabel { color: %1; background: transparent; }"
+        "QMenuBar {"
+        "  background: %19; color: %1; font-size: 12px;"
+        "  padding: 3px 2px; border-bottom: 1px solid %4;"
+        "}"
+        "QMenuBar::item { background: transparent; padding: 4px 10px; border-radius: 3px; }"
+        "QMenuBar::item:selected { background: %16; }"
+        "QMenuBar::item:pressed { background: %5; color: #FFF; }"
+        "QToolButton#tabCloseBtn {"
+        "  border: none; background: transparent; color: %22;"
+        "  font-size: 14px; padding: 0 2px;"
+        "}"
+        "QToolButton#tabCloseBtn:hover { color: %1; background: %16; border-radius: 3px; }"
+        "QToolButton#filmNavBtn {"
+        "  background: rgba(24,24,30,215); border: 1px solid #3A3A42;"
+        "  border-radius: 10px;"
+        "}"
+        "QToolButton#filmNavBtn:hover { background: #3A3A42; border-color: #6A6A74; }"
+        "QLabel#filmDragHint {"
+        "  background: rgba(24,24,30,235); color: #FFFFFF;"
+        "  border: 1px solid #3A3A42; border-radius: 4px;"
+        "  padding: 3px 8px; font-size: 12px;"
+        "}"
+        "QFrame#toolSep { color: %24; }"
+        "QComboBox#fmtFilterCombo {"
+        "  background: %3; color: %1; border: 1px solid %4;"
+        "  border-radius: 4px; padding: 2px 10px; font-size: 12px; min-height: 22px;"
+        "}"
+        "QComboBox#fmtFilterCombo:hover { border-color: %23; }"
+        "QComboBox#fmtFilterCombo:focus { border-color: %5; }"
+        "QComboBox#fmtFilterCombo::drop-down {"
+        "  width: 18px; border: none; background: transparent;"
+        "  subcontrol-origin: padding; subcontrol-position: top right;"
+        "}"
+        "QComboBox#fmtFilterCombo::down-arrow {"
+        "  image: none; width: 0; height: 0; background: none; border: none;"
+        "}"
+        "QComboBox#fmtFilterCombo QAbstractItemView {"
+        "  background: %13; color: %1; border: 1px solid %4;"
+        "  selection-background-color: %5; outline: none;"
+        "}"
+        "QComboBox#fmtFilterCombo QAbstractItemView::item {"
+        "  min-height: 24px; padding: 2px 8px;"
+        "}"
         // ── 对话框按钮(2026-09-03 用户令:确定/取消不够醒目,边框与背景融为一体)──
         // 全部对话框统一成「次按钮=底色+蓝色描边,默认按钮=蓝底白字」,
         // 与设置对话框既有按钮样式同口径(那里是内联写死的,这里是全局兜底)。
@@ -234,7 +324,13 @@ QString appQss() {
         .arg(C_PREVIEW_BG)
         .arg(C_CARD_HOVER)
         .arg(C_SEPARATOR)      // %17:消息框按钮悬停(#215 起 C_PANE_HDR=#191919 不再作 hover,换描边灰=比按钮底亮一档)
-        .arg(C_ACCENT_DOWN);   // %18:默认(确定)按钮悬停/按下,比 C_ACCENT 暗一档
+        .arg(C_ACCENT_DOWN)    // %18:默认(确定)按钮悬停/按下,比 C_ACCENT 暗一档
+        .arg(C_MENUBAR)        // %19:菜单栏底(#89 收敛自 mainwindow_menus 内联)
+        .arg(C_PANE_HDR)       // %20:面板标题条底(#89 收敛自 createPaneHeader 内联)
+        .arg(C_STATUSBAR)      // %21:状态栏底(#89 收敛自 createStatusbar 内联)
+        .arg(C_TEXT_HIDDEN)    // %22:标签关闭钮常态字色(#89 收敛自 installTabCloseButton 内联)
+        .arg(Theme::T("#4A4A56", "#9A9AA4"))  // %23:格式筛选框悬停描边(原内联局部双档值)
+        .arg(Theme::T("#2A2A2E", "#C9C9D1")); // %24:工具条竖分隔线(原内联局部双档值)
 }
 
 } // namespace Theme
