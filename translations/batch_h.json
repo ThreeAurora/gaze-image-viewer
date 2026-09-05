@@ -16,5 +16,8 @@
   "把 %1 下的缓存记录改挂到 %2?\n(只改数据库记录,不搬动任何文件)": "Repoint cache records from %1 to %2?\n(Only database records change; no files are moved)",
   "新路径不能与原路径相同或位于原路径之下。": "The new path must differ from the original and cannot be inside it.",
   "无法写入文件。": "Cannot write the file.",
-  "数据库:%1  ·  目录:%2  ·  缓存条目:%3  ·  标记:%4  ·  缩略图合计:%5": "Database: %1 · folders: %2 · cache entries: %3 · labels: %4 · thumbnails total: %5"
+  "数据库:%1  ·  目录:%2  ·  缓存条目:%3  ·  标记:%4  ·  缩略图合计:%5": "Database: %1 · folders: %2 · cache entries: %3 · labels: %4 · thumbnails total: %5",
+  "特殊范围确认": "Special scope confirmation",
+  "「当前目录(递归)」要扫描全部子目录，文件很多时可能卡顿。确定使用吗？": "Current folder (recursive) scans all subfolders and may stall with a huge number of files. Use it anyway?",
+  "「全部标记文件」要在整个颜色标记库中搜索，文件很多时可能卡顿。确定使用吗？": "All labeled files searches the whole color-label database and may stall with a huge number of files. Use it anyway?"
 }

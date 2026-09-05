@@ -14,6 +14,7 @@
 #include <QComboBox>
 #include <QLabel>
 #include <QButtonGroup>
+#include <QMessageBox>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QGridLayout>
@@ -128,6 +129,7 @@ public:
         }
         (st.get("Filter/andMode", false).toBool() ? m_andBtn : m_orBtn)->setChecked(true);
         m_scope->setCurrentIndex(qBound(0, st.get("Filter/scope", 0).toInt(), 2));
+        m_lastScope = m_scope->currentIndex();   // 构造期恢复不弹警告(先设状态后接线)
 
         // ── 接线(状态就位之后)──
         for (int c = 1; c <= 5; ++c)
@@ -138,7 +140,24 @@ public:
                     this, [this](bool) { if (!m_updating) emitChange(); });
         connect(m_orBtn,  &QToolButton::toggled, this, [this](bool on) { if (on) emitChange(); });
         connect(m_andBtn, &QToolButton::toggled, this, [this](bool on) { if (on) emitChange(); });
-        connect(m_scope, &QComboBox::currentIndexChanged, this, [this](int) { emitChange(); });
+        connect(m_scope, &QComboBox::currentIndexChanged, this, [this](int idx) {
+            // 特殊范围两档先警告(2026-09-05 用户令):文件过多可能卡死,询问后才生效;
+            // 拒绝=回退上次生效档(回退触发再进时 idx==m_lastScope 不再弹)。
+            // 构造期恢复走"先设状态后接线"不经过这里,重启恢复不弹。
+            if ((idx == 1 || idx == 2) && idx != m_lastScope) {
+                const QString msg = (idx == 1)
+                    ? gazeTr("「当前目录(递归)」要扫描全部子目录，文件很多时可能卡顿。确定使用吗？")
+                    : gazeTr("「全部标记文件」要在整个颜色标记库中搜索，文件很多时可能卡顿。确定使用吗？");
+                if (QMessageBox::question(this, gazeTr("特殊范围确认"), msg,
+                                          QMessageBox::Yes | QMessageBox::No,
+                                          QMessageBox::No) != QMessageBox::Yes) {
+                    m_scope->setCurrentIndex(m_lastScope);
+                    return;
+                }
+            }
+            m_lastScope = idx;
+            emitChange();
+        });
         connect(clearBtn, &QPushButton::clicked, this, [this]() {
             // 十个勾一起撤:置哨兵拦住中间态,收尾只发一次
             m_updating = true;
@@ -197,5 +216,6 @@ private:
     QToolButton* m_andBtn = nullptr;
     QComboBox*   m_scope  = nullptr;
     QLabel*      m_hitLabel = nullptr;
+    int          m_lastScope = 0;     // 上一次生效的范围档(警告拒绝时的回退目标)
     bool         m_updating = false;   // 程序化批量改勾选中(拦中间态 emit)
 };

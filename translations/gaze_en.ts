@@ -626,6 +626,14 @@ Version 1.0 — C++ + Qt6</translation>
         <translation>If &quot;start without files&quot; is set to &quot;specified folder&quot;, the browser opens here</translation>
     </message>
     <message>
+        <source>「全部标记文件」要在整个颜色标记库中搜索，文件很多时可能卡顿。确定使用吗？</source>
+        <translation>All labeled files searches the whole color-label database and may stall with a huge number of files. Use it anyway?</translation>
+    </message>
+    <message>
+        <source>「当前目录(递归)」要扫描全部子目录，文件很多时可能卡顿。确定使用吗？</source>
+        <translation>Current folder (recursive) scans all subfolders and may stall with a huge number of files. Use it anyway?</translation>
+    </message>
+    <message>
         <source>一个文件仅有一个查看器标签卡</source>
         <translation>One viewer tab per file</translation>
     </message>
@@ -2760,6 +2768,10 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     <message>
         <source>版本 %1 · C++17 + Qt %2</source>
         <translation>Version %1 · C++17 + Qt %2</translation>
+    </message>
+    <message>
+        <source>特殊范围确认</source>
+        <translation>Special scope confirmation</translation>
     </message>
     <message>
         <source>状态栏</source>
