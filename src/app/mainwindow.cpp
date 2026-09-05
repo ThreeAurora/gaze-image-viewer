@@ -68,6 +68,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     resize(1500, 900);
 
     auto *central = new QWidget;
+    // saveState/restoreState 用 objectName 识别中央部件:没有名字 restoreState
+    // 会校验失败(dock 位置存档全废),起个稳定名
+    central->setObjectName("gazeCentral");
     setCentralWidget(central);
     auto *ml = new QVBoxLayout(central);
     ml->setContentsMargins(0, 0, 0, 0);
@@ -197,19 +200,26 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     connect(m_folderTree, &FolderTree::folderSelected, this, &MainWindow::onTreeFolderSelected);
     tv->addWidget(m_folderTree, 1);
 
-    // ── #243 收藏夹面板:树栏下半部(同信息面板手法,塞进既有分栏,不动三段存档)──
-    //   数据真源 = m_favPaths(Favorites/paths),面板只管显示与交互
+    // ── #243 收藏夹面板(已 Dock 化):数据真源 = m_favPaths(Favorites/paths),
+    //   面板只管显示与交互。容器保留(header 搬去当 dock 标题条,容器只装面板),
+    //   停靠位置/大小/浮动形态归 saveState,显隐仍归 applyPaneVisibility ──
     m_favPane = new QWidget;
     m_favPane->setStyleSheet(QString("background:%1;border:none;").arg(C_SIDEBAR));
     auto* fvl = new QVBoxLayout(m_favPane);
     fvl->setContentsMargins(0, 0, 0, 0);
     fvl->setSpacing(0);
-    fvl->addWidget(createPaneHeader(gazeTr("收藏夹"), "favorites"));
     m_favs = new FavoritesPanel;
     fvl->addWidget(m_favs, 1);
     m_favPane->setMinimumHeight(120);
-    m_favPane->setVisible(paneOn("favorites"));   // 构造期先对齐意图,restorePanes 稍后统一重算
-    tv->addWidget(m_favPane);
+    m_favDock = new QDockWidget(gazeTr("收藏夹"), this);
+    m_favDock->setObjectName("favorites");   // saveState 按名字匹配
+    // 不给 Closable:关闭只走自绘标题条的 X(setPaneVisible 单一出口,意图不脱节);
+    // 浮动成独立窗口后系统标题栏仍有关闭 X,由 visibilityChanged 守卫回写意图
+    m_favDock->setFeatures(QDockWidget::DockWidgetMovable
+                           | QDockWidget::DockWidgetFloatable);
+    m_favDock->setTitleBarWidget(createPaneHeader(gazeTr("收藏夹"), "favorites"));
+    m_favDock->setWidget(m_favPane);
+    addDockWidget(Qt::LeftDockWidgetArea, m_favDock);
     m_favPaths = AppSettings::instance().get("Favorites/paths", QStringList()).toStringList();
     m_favs->setPaths(m_favPaths);
     connect(m_favs, &FavoritesPanel::openRequested, this, [this](const QString& p) {
@@ -237,19 +247,23 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
         m_favs->setPaths(m_favPaths);
     });
 
-    // ── #242 分类筛选器面板:树栏下半(收藏夹之下),同信息面板手法 ──
-    //   条件真源 = 面板勾选;显隐推拉在 applyPaneVisibility 的 filter 分支
+    // ── #242 分类筛选器面板(已 Dock 化):条件真源 = 面板勾选;显隐推拉在
+    //   applyPaneVisibility 的 filter 分支。与收藏夹同区左停靠,竖排在下 ──
     m_filterPane = new QWidget;
     m_filterPane->setStyleSheet(QString("background:%1;border:none;").arg(C_SIDEBAR));
     auto* kvl = new QVBoxLayout(m_filterPane);
     kvl->setContentsMargins(0, 0, 0, 0);
     kvl->setSpacing(0);
-    kvl->addWidget(createPaneHeader(gazeTr("分类筛选器"), "filter"));
     m_filterPnl = new FilterPanel;
     kvl->addWidget(m_filterPnl);
     m_filterPane->setMinimumHeight(120);
-    m_filterPane->setVisible(paneOn("filter"));   // 构造期先对齐意图,restorePanes 稍后统一重算
-    tv->addWidget(m_filterPane);
+    m_filterDock = new QDockWidget(gazeTr("分类筛选器"), this);
+    m_filterDock->setObjectName("filter");
+    m_filterDock->setFeatures(QDockWidget::DockWidgetMovable
+                              | QDockWidget::DockWidgetFloatable);
+    m_filterDock->setTitleBarWidget(createPaneHeader(gazeTr("分类筛选器"), "filter"));
+    m_filterDock->setWidget(m_filterPane);
+    addDockWidget(Qt::LeftDockWidgetArea, m_filterDock);
     // 勾选变化 → 网格:范围不同先切范围(重扫),再压条件(重筛)。
     // 面板组装先于 m_fileGrid 创建,lambda 里经 this 取,发射时都已就位
     connect(m_filterPnl, &FilterPanel::conditionsChanged, this, [this](int scope) {
@@ -373,22 +387,47 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     pv->addWidget(m_preview, 1);
     connect(m_preview, &PreviewPanel::navFile, m_fileGrid, &FileGrid::navigateSelection);
 
-    // ── #80 信息面板(元数据 + 直方图)──
-    // 刻意塞进"预览"这一栏的内部,而不是新增第 4 个分栏:分栏存档是 3 段宽度,
-    // 加一段会让用户保存过的布局全部失效(splitterArchiveUsable 要求 size()==3)。
-    // 放在预览栏下半部分,默认隐藏,视图菜单勾选才出来。
+    // ── #80 信息面板(元数据 + 直方图,已 Dock 化)──
+    // 停靠右区(原"预览栏下半"的位置感):dock 位置/大小归 saveState 存档,
+    // 显隐仍归 applyPaneVisibility。不再塞进预览栏 vbox。
     m_infoPane = new QWidget;
     m_infoPane->setStyleSheet(QString("background:%1;border:none;").arg(C_PREVIEW_BG));
     auto* iv = new QVBoxLayout(m_infoPane);
     iv->setContentsMargins(0, 0, 0, 0);
     iv->setSpacing(0);
-    iv->addWidget(createPaneHeader(gazeTr("信息"), "info"));
     m_info = new InfoPanel;
     m_info->setMinimumHeight(140);
     iv->addWidget(m_info, 1);
     m_infoPane->setMinimumHeight(140);
-    pv->addWidget(m_infoPane);
     connect(m_info, &QWidget::destroyed, this, [this]() { m_info = nullptr; });
+    m_infoDock = new QDockWidget(gazeTr("信息"), this);
+    m_infoDock->setObjectName("info");
+    m_infoDock->setFeatures(QDockWidget::DockWidgetMovable
+                            | QDockWidget::DockWidgetFloatable);
+    m_infoDock->setTitleBarWidget(createPaneHeader(gazeTr("信息"), "info"));
+    m_infoDock->setWidget(m_infoPane);
+    addDockWidget(Qt::RightDockWidgetArea, m_infoDock);
+    // 三个 dock 的默认体量:无存档时别让 Qt 平分窗口把网格压扁(有存档时
+    // restoreState 覆盖这里的值)
+    resizeDocks({m_favDock, m_filterDock}, {180, 180}, Qt::Horizontal);
+    resizeDocks({m_favDock, m_filterDock}, {260, 220}, Qt::Vertical);
+    resizeDocks({m_infoDock}, {260}, Qt::Horizontal);
+    resizeDocks({m_infoDock}, {280}, Qt::Vertical);
+    // 浮动成独立窗口后,系统标题栏的 X 直接 hide dock、绕过 setPaneVisible:
+    // visibilityChanged 回写意图。守卫三重:与意图一致不动(防循环)、查看器/G
+    // 全屏的程序性隐藏不回写(同"只是进了查看器"误存的病)、restoreState 期间
+    // 不回写(存档可见性不得污染意图)
+    auto dockCloseGuard = [this](QDockWidget* dock, const char* paneId) {
+        const QString id = QString::fromLatin1(paneId);
+        connect(dock, &QDockWidget::visibilityChanged, this, [this, id](bool vis) {
+            if (vis == paneOn(id) || m_viewerMode || m_fullView || m_restoringDocks)
+                return;
+            setPaneVisible(id.toLatin1().constData(), vis);
+        });
+    };
+    dockCloseGuard(m_favDock, "favorites");
+    dockCloseGuard(m_filterDock, "filter");
+    dockCloseGuard(m_infoDock, "info");
 
     m_splitter->addWidget(previewPane);
     // 伸展策略:树/预览固定,网格吃掉窗口增量大头(否则最大化后列数铺不满)
@@ -672,6 +711,10 @@ void MainWindow::closeEvent(QCloseEvent* event) {
     // 面板意图(m_panesOn)而非控件实时可见性:查看器模式临时藏了树/网格,
     // 用实时可见性落盘会把"只是进了查看器"误存成"用户关掉了面板"
     s.setValue("Layout/last/panes", m_panesOn.join(','));
+    // dock(信息/收藏夹/筛选器)的位置/大小/浮动形态:saveState 全量序列化。
+    // 存档里的 dock 可见性不作数 —— 启动时 restorePanes→applyPaneVisibility
+    // 按意图统一纠正,查看器模式下退出也不会把"临时藏起"存成"用户关掉"
+    s.setValue("Layout/last/docks", saveState().toHex());
     // 由 Gaze 拉起的万象图搜服务:按设置决定是否随 Gaze 退出一起结束
     if (ImgSearch::servicePid() > 0
         && AppSettings::instance().get("ImgSearch/killOnExit", false).toBool())

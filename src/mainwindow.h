@@ -1,5 +1,6 @@
 #pragma once
 #include <QMainWindow>
+#include <QDockWidget>
 #include <QSplitter>
 #include <QLineEdit>
 #include <QLabel>
@@ -161,6 +162,7 @@ private:
     void   setPaneVisible(const char* paneId, bool on, bool remember = true); // 面板显隐(含记忆用户意图)
     bool   paneVisible(const char* paneId) const; // 用户意图(非查看器模式下的临时隐藏)
     void   restorePanes(const QString& csv);     // "tree,preview,.." 恢复可见面板(空=全部)
+    void   restoreDocks(const QByteArray& hex);  // dock 位置存档恢复 + 意图纠正(restoreState 包装)
     QStringList paneIds() const;                  // 全部面板 id(顺序稳定)
     bool   paneOn(const QString& id) const;       // m_panesOn 查询
     void   applyPaneVisibility();                // 意图 + 查看器模式 → 实际 setVisible
@@ -255,12 +257,19 @@ private:
     QWidget* m_centerPane = nullptr;  // 网格面板(查看器模式隐藏)
     QWidget* m_previewPane = nullptr; // 预览面板包装(标题条 + PreviewPanel)
     QWidget* m_previewHdr = nullptr;  // 预览标题条(查看器模式下隐藏,单图不需要)
-    QWidget* m_infoPane  = nullptr;  // #80 信息面板容器(含标题条,挂在预览栏内)
+    QWidget* m_infoPane  = nullptr;  // #80 信息面板内容(dock "info" 的 widget)
     InfoPanel* m_info    = nullptr;  // #80 元数据表 + 直方图
-    QWidget* m_favPane   = nullptr;  // #243 收藏夹面板容器(含标题条,挂在树栏下半)
+    QWidget* m_favPane   = nullptr;  // #243 收藏夹内容(dock "favorites" 的 widget)
     FavoritesPanel* m_favs = nullptr;  // #243 收藏夹列表(数据真源=m_favPaths)
-    QWidget* m_filterPane = nullptr; // #242 分类筛选器容器(含标题条,树栏下半收藏夹之下)
+    QWidget* m_filterPane = nullptr; // #242 分类筛选器内容(dock "filter" 的 widget)
     FilterPanel* m_filterPnl = nullptr; // #242 条件真源(勾选即落盘 Filter/*)
+    // Dock 化:三辅面板外壳,可拖动/合并成标签组/浮动;树/预览/网格仍归 splitter
+    // (查看器模式、G 全屏、Layout/* 三段存档全部不碰)。可见性唯一出口仍是
+    // applyPaneVisibility,saveState/restoreState 只管位置/大小/浮动形态
+    QDockWidget* m_infoDock   = nullptr;  // objectName="info"      → 右停靠区
+    QDockWidget* m_favDock    = nullptr;  // objectName="favorites" → 左停靠区
+    QDockWidget* m_filterDock = nullptr;  // objectName="filter"    → 左停靠区(收藏夹之下)
+    bool m_restoringDocks = false;        // restoreState 期间抑制 visibilityChanged 回写
     // 各面板标题条(createPaneHeader 产出;主题切换时重灌内联样式)
     QList<QWidget*> m_paneHdrs;
     QWidget* m_addrRow = nullptr;     // 地址栏行(视图菜单可隐藏)

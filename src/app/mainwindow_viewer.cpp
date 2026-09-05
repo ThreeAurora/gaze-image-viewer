@@ -81,6 +81,8 @@ void MainWindow::saveLayout(const QString& name) {
     s.setValue("Layout/" + name + "/geometry", saveGeometry().toHex());
     s.setValue("Layout/" + name + "/splitter", splitterCsv());
     s.setValue("Layout/" + name + "/panes", m_panesOn.join(','));
+    // dock 位置/大小/浮动形态(信息/收藏夹/筛选器);可见性仍按 panes 意图恢复
+    s.setValue("Layout/" + name + "/docks", saveState().toHex());
     QStringList names = s.value("Layout/names").toStringList();
     if (!names.contains(name)) { names.append(name); s.setValue("Layout/names", names); }
     s.setValue("Layout/active", name);
@@ -96,6 +98,7 @@ void MainWindow::applyLayout(const QString& name) {
         s.value("Layout/" + name + "/splitter").toString());
     if (mw_impl::splitterArchiveUsable(sz)) m_splitter->setSizes(sz);
     restorePanes(s.value("Layout/" + name + "/panes").toString());
+    restoreDocks(s.value("Layout/" + name + "/docks").toByteArray());
     s.setValue("Layout/active", name);
     s.setValue("Layout/followLast", false);
 }
@@ -108,6 +111,18 @@ void MainWindow::applyLastLayout() {
         s.value("Layout/last/splitter").toString());
     if (mw_impl::splitterArchiveUsable(sz)) m_splitter->setSizes(sz);
     restorePanes(s.value("Layout/last/panes").toString());
+    restoreDocks(s.value("Layout/last/docks").toByteArray());
+}
+
+// restoreState 按存档摆 dock 位置(顺序刻意在 restorePanes 之后):存档里的
+// dock 可见性可能污染意图,恢复完立刻 applyPaneVisibility 按意图纠正;
+// 期间抑制 visibilityChanged 回写,别让存档态当"用户动作"记进 m_panesOn
+void MainWindow::restoreDocks(const QByteArray& hex) {
+    if (hex.isEmpty()) return;
+    m_restoringDocks = true;
+    restoreState(QByteArray::fromHex(hex));
+    m_restoringDocks = false;
+    applyPaneVisibility();
 }
 
 void MainWindow::createLayoutMenu() {
@@ -252,9 +267,9 @@ void MainWindow::applyPaneVisibility() {
         if (m_previewHdr)  m_previewHdr->hide();
         if (m_addrRow)     m_addrRow->hide();
         if (m_toolRow)     m_toolRow->hide();
-        if (m_infoPane)    m_infoPane->hide();
-        if (m_favPane)     m_favPane->hide();
-        if (m_filterPane)  m_filterPane->hide();
+        if (m_infoDock)    m_infoDock->hide();
+        if (m_favDock)     m_favDock->hide();
+        if (m_filterDock)  m_filterDock->hide();
         statusBar()->hide();
         return;
     }
@@ -265,25 +280,26 @@ void MainWindow::applyPaneVisibility() {
     if (m_addrRow)     m_addrRow->setVisible(paneOn("addr"));
     if (m_toolRow)     m_toolRow->setVisible(paneOn("tool"));
     statusBar()->setVisible(paneOn("status"));
-    if (m_infoPane) {
+    // #80 信息面板:已 Dock 化,显隐走 dock 外壳;容器 m_infoPane 只是 dock 内容
+    if (m_infoDock) {
         const bool on = paneOn("info");
-        m_infoPane->setVisible(on);
+        m_infoDock->setVisible(on);
         // 打开即记"见过":下次启动不再强制剔除
         if (on && !AppSettings::instance().get("Interface/infoPanelSeen", false).toBool())
             AppSettings::instance().set("Interface/infoPanelSeen", true);
     }
-    // 收藏夹容器是树栏的孩子:查看器/全屏下树栏整栏隐藏,这里只在浏览器态有意义
-    if (m_favPane) {
+    // #243 收藏夹:已 Dock 化(左停靠区),浏览器态才有意义
+    if (m_favDock) {
         const bool on = paneOn("favorites");
-        m_favPane->setVisible(on && !m_viewerMode);
+        m_favDock->setVisible(on && !m_viewerMode);
         if (on && !AppSettings::instance().get("Interface/favPanelSeen", false).toBool())
             AppSettings::instance().set("Interface/favPanelSeen", true);
     }
-    // #242 分类筛选器:容器在树栏下半(收藏夹之下),浏览器态才有意义。
+    // #242 分类筛选器:已 Dock 化(左停靠区,收藏夹之下),浏览器态才有意义。
     // 开=把面板当前条件推给网格(重开恢复上次勾选);关=清掉第二层筛选(范围复位回本层)
-    if (m_filterPane) {
+    if (m_filterDock) {
         const bool on = paneOn("filter");
-        m_filterPane->setVisible(on && !m_viewerMode);
+        m_filterDock->setVisible(on && !m_viewerMode);
         if (on && !AppSettings::instance().get("Interface/filterPanelSeen", false).toBool())
             AppSettings::instance().set("Interface/filterPanelSeen", true);
         if (m_filterPnl && m_fileGrid) {
