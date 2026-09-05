@@ -66,7 +66,11 @@ Thumbnailer& Thumbnailer::instance() {
 
 Thumbnailer::Thumbnailer() {
     m_pool = new QThreadPool(this);
-    m_pool->setMaxThreadCount(4);
+    // 并发 4→2(2026-09-05 实测裁定):抽帧是随机寻道型 I/O,机械盘上 4 路并发
+    // ffmpeg 把寻道次数打到每秒几百次——吞吐实测仅 12MB/s(不高),但盘响/灯闪
+    // 剧烈到用户以为异常。2 路把寻道风暴减半,浏览流畅度(用户底线)优先于
+    // 出图速度;代际重建期的一次性队列本就该慢慢消化。
+    m_pool->setMaxThreadCount(2);
     // 本对象在 FileGrid 构造时(Main 线程)创建:快照只在此线程读 QSettings,
     // worker 线程读副本 —— 逐条目 enqueue 路径不碰设置/磁盘
     snapshotPrefs();
