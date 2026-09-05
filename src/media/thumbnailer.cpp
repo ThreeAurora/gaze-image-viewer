@@ -66,11 +66,12 @@ Thumbnailer& Thumbnailer::instance() {
 
 Thumbnailer::Thumbnailer() {
     m_pool = new QThreadPool(this);
-    // 并发 4→2(2026-09-05 实测裁定):抽帧是随机寻道型 I/O,机械盘上 4 路并发
-    // ffmpeg 把寻道次数打到每秒几百次——吞吐实测仅 12MB/s(不高),但盘响/灯闪
-    // 剧烈到用户以为异常。2 路把寻道风暴减半,浏览流畅度(用户底线)优先于
-    // 出图速度;代际重建期的一次性队列本就该慢慢消化。
-    m_pool->setMaxThreadCount(2);
+    // 并发可调(2026-09-05):Thumbs/genConcurrency(1-8,默认 4=历史速度)。
+    // 背景:抽帧是随机寻道型 I/O,机械盘上 4 路并发 ffmpeg 吞吐实测仅
+    // 12MB/s 但寻道次数每秒数百(盘响剧烈);2 路安静但慢。快/静是物理
+    // 矛盾,交用户裁决——设置变更即生效(maxThreadCount 运行时可改)。
+    m_pool->setMaxThreadCount(
+        qBound(1, AppSettings::instance().get("Thumbs/genConcurrency", 4).toInt(), 8));
     // 本对象在 FileGrid 构造时(Main 线程)创建:快照只在此线程读 QSettings,
     // worker 线程读副本 —— 逐条目 enqueue 路径不碰设置/磁盘
     snapshotPrefs();
@@ -106,6 +107,10 @@ void Thumbnailer::snapshotPrefs() {
     p.folder4       = st.get("Thumbs/folder4", true).toBool();
     p.video4        = st.get("Thumbs/video4", false).toBool();
     p.wholeFolder   = st.get("Thumbs/wholeFolder", false).toBool();
+    // 抽帧并发运行时可改:设置页改动即生效,无需重启(2026-09-05)
+    if (m_pool)
+        m_pool->setMaxThreadCount(
+            qBound(1, st.get("Thumbs/genConcurrency", 4).toInt(), 8));
     // ── 设置→缩略图(处理) ──
     p.alpha     = st.get("Thumbs/alpha", true).toBool();
     p.transGrid = st.get("Thumbs/transparencyGrid", true).toBool();
