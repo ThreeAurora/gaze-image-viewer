@@ -227,7 +227,8 @@ bool MainWindow::paneVisible(const char* paneId) const {
 // XnView 式面板标题条:左标题 + 右关闭 X
 QWidget* MainWindow::createPaneHeader(const QString& title, const char* paneId) {
     auto* h = new QWidget;
-    h->setFixedHeight(24);
+    // 24px 曾把 12px 雅黑的上下沿裁掉(用户报"文件夹"三字显示不全),放宽一档
+    h->setFixedHeight(28);
     h->setObjectName("paneHdr");   // 标题条样式在应用级 QSS(#89 收敛)
     auto* hl = new QHBoxLayout(h);
     hl->setContentsMargins(8, 0, 3, 0);
