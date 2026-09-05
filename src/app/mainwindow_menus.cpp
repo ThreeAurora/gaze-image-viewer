@@ -319,8 +319,9 @@ void MainWindow::createMenubar() {
     // 2026-09-04 用户令:「语言」要排在「帮助」左边(insertMenu),不再最右;
     // 后建的布局菜单照旧追加在末尾。切换写入 General/language 并征询重启;
     // 重启用 --restart 自启动(绕过单实例握手,见 main.cpp)。
-    // 2026-09-04 用户令:三项不打勾框(原 setCheckable+互斥组已拆)——当前语言
-    // 改用加粗字体提示;语言切换必须重启,构造期定稿一次即可,无需动态刷新。
+    // 2026-09-05 用户令:打勾恢复——三项重新 checkable+互斥组,当前语言打勾
+    // (2026-09-04 曾令去勾改加粗提示,加粗随勾恢复一并退场);语言切换必须重启,
+    // 构造期定稿一次即可,无需动态刷新。
     {
         auto *langMenu = new QMenu(gazeTr("语言"), this);
         langMenu->setToolTip(gazeTr("界面语言(切换后重启生效)"));
@@ -334,14 +335,14 @@ void MainWindow::createMenubar() {
         };
         const QString cur =
             AppSettings::instance().get("General/language", "system").toString();
+        auto *langGrp = new QActionGroup(langMenu);
+        langGrp->setExclusive(true);
         for (auto& it : langs) {
             QAction* a = langMenu->addAction(it.label);
             a->setData(it.key);
-            if (cur == it.key) {
-                QFont f = a->font();
-                f.setBold(true);
-                a->setFont(f);
-            }
+            a->setCheckable(true);
+            langGrp->addAction(a);
+            if (cur == it.key) a->setChecked(true);
             connect(a, &QAction::triggered, this,
                     [this, key = it.key]() {
                 if (AppSettings::instance()
