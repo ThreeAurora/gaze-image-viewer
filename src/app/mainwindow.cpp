@@ -443,6 +443,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     auto dockCloseGuard = [this](QDockWidget* dock, const char* paneId) {
         const QString id = QString::fromLatin1(paneId);
         connect(dock, &QDockWidget::visibilityChanged, this, [this, id](bool vis) {
+            // 主窗最小化/整体不可见期间,dock 会随之收到 visibilityChanged(false)
+            // ——这是窗口状态的自然连锁,不是用户意图;不忽略就会把"树/面板被
+            // 藏"写成持久意图,还原后面板集体消失(2026-09-05 用户实测:
+            // 最小化再还原,文件树自动消失)。主窗可见时的隐藏才回写意图。
+            if (isMinimized() || !isVisible()) return;
             if (vis == paneOn(id) || m_viewerMode || m_fullView || m_restoringDocks)
                 return;
             setPaneVisible(id.toLatin1().constData(), vis);
