@@ -57,8 +57,7 @@ QWidget* wrapTitled(const QString& title, QLayout* lay) {
     v->setContentsMargins(14, 8, 14, 8);
     v->setSpacing(5);
     auto* h = new QLabel(title);
-    h->setStyleSheet(QString::fromUtf8("font-size:15px;font-weight:700;color:%1;"
-                     "background:transparent;").arg(C_TEXT));
+    h->setObjectName(QStringLiteral("settingsPageTitle"));
     // 标题钉死高度:否则页内剩余空间先喂给这个 Preferred 标题(探针实测被撑到
     // 519px,文字 AlignVCenter 浮在空带中央——即用户报的"标题上下间距过大")
     h->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
@@ -66,7 +65,7 @@ QWidget* wrapTitled(const QString& title, QLayout* lay) {
     auto* line = new QFrame;
     line->setFrameShape(QFrame::HLine);
     line->setFixedHeight(1);
-    line->setStyleSheet(QString::fromUtf8("background:%1;border:none;").arg(C_TEXT));
+    line->setObjectName(QStringLiteral("settingsPageRule"));
     v->addWidget(line);
     v->addLayout(lay, 1);
     // 组框全被 #156 钉 Fixed,内层 max 顶死 → stretch=1 失效,剩余空间会摊进各
@@ -81,18 +80,17 @@ QWidget* group(const QString& title, QLayout* lay) {
     // wrapTitled 给内容 stretch=1,组框默认 Preferred 会连标题带框被摊满整页高度
     // (框内大面积留白、行垂直居中) —— 垂直钉死:组框贴内容,多余空间留页尾
     w->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-    w->setStyleSheet("background:transparent;");
+    // 容器透明原是裸声明(泼给组内全部控件);应用级 QSS 里由
+    // QWidget#settingsGroup 系列规则复刻(#89 收敛)
+    w->setObjectName(QStringLiteral("settingsGroup"));
     auto* v = new QVBoxLayout(w);
     v->setContentsMargins(0, 0, 0, 0);
     v->setSpacing(2);   // 标题贴框:组标题与框之间的缝
     auto* t = new QLabel(title);
-    t->setStyleSheet(QString::fromUtf8("font-size:12px;font-weight:700;color:%1;"
-                     "background:transparent;").arg(C_TEXT_SOFT));
+    t->setObjectName(QStringLiteral("settingsGroupTitle"));
     v->addWidget(t);
     auto* frame = new QFrame;
     frame->setObjectName(QStringLiteral("grpFrame"));
-    frame->setStyleSheet(
-        QString::fromUtf8("QFrame#grpFrame{background:%1;border:1px solid %2;border-radius:5px;}").arg(C_CARD_BG, C_SEPARATOR));
     auto* fl = new QVBoxLayout(frame);
     fl->setContentsMargins(10, 4, 10, 4);   // #148:框内再收一档
     fl->setSpacing(4);
@@ -165,50 +163,9 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent) {
     resize(900, 660);
     // 中文字体用雅黑渲染(默认字体小字发虚)
     setFont(QFont(QString::fromUtf8("Microsoft YaHei UI"), 9));
-    // 灰阶走 constants.h(与主窗口同一套令牌;此处再留字面量就会出现"两套深灰")
-    setStyleSheet(
-        QString::fromUtf8("QDialog{background:%1;}"
-        "QTreeWidget{background:%2;color:%4;border:none;outline:none;}"
-        "QTreeWidget::item{height:26px;padding:0 8px;border:none;}"
-        "QTreeWidget::item:hover{background:%5;border:none;}"
-        "QTreeWidget::item:selected{background:%6;color:%4;border:none;}"
-        "QLineEdit{background:%2;color:%4;border:1px solid %3;"
-        "border-radius:3px;padding:4px 8px;}"
-        "QLineEdit[readOnly=\"true\"]{color:%8;background:%2;}"
-        "QLabel{color:%4;background:transparent;}"
-        "QCheckBox{color:%4;background:transparent;spacing:6px;}"
-        "QComboBox{background:%2;color:%4;border:1px solid %3;"
-        "border-radius:3px;padding:3px 8px;min-width:180px;}"
-        "QComboBox::drop-down{width:16px;border:none;background:transparent;"
-        "subcontrol-origin:padding;subcontrol-position:top right;}"
-        "QComboBox::down-arrow{image:none;width:0;height:0;background:none;"
-        "border-left:4px solid transparent;border-right:4px solid transparent;"
-        "border-top:5px solid %9;margin-right:6px;}"
-        "QComboBox QAbstractItemView{background:%2;color:%4;"
-        "selection-background-color:%6;}"
-        "QSpinBox{background:%2;color:%4;border:1px solid %3;"
-        "border-radius:3px;padding:3px 6px;}"
-        "QSpinBox::up-button,QSpinBox::down-button{width:14px;border:none;"
-        "background:transparent;}"
-        "QSpinBox::up-arrow{image:none;width:0;height:0;background:none;"
-        "border-left:3px solid transparent;border-right:3px solid transparent;"
-        "border-bottom:4px solid %9;}"
-        "QSpinBox::down-arrow{image:none;width:0;height:0;background:none;"
-        "border-left:3px solid transparent;border-right:3px solid transparent;"
-        "border-top:4px solid %9;}"
-        "QPushButton{background:%7;color:%4;border:1px solid %3;"
-        "border-radius:3px;padding:5px 16px;}"
-        "QPushButton:hover{border-color:%6;}"
-        "QGroupBox{color:%4;font-weight:700;border:1px solid %3;"
-        "border-radius:5px;margin-top:12px;padding:14px 10px 10px 10px;"
-        "background:%1;}"
-        "QGroupBox::title{subcontrol-origin:margin;left:12px;top:2px;}"
-        "QScrollArea{background:%1;border:none;}"
-        "QToolButton{background:%7;color:%4;border:1px solid %3;"
-        "border-radius:3px;padding:3px 10px;}"
-        "QToolButton:hover{border-color:%6;}").arg(C_WIN_BG, C_CONTENT, C_SEPARATOR, C_TEXT,
-                                                  C_CARD_HOVER, C_ACCENT, C_TOOLBAR, C_TEXT_DIM,
-                                                  C_SB_ARROW));
+    // 整表样式(树/输入/下拉/数字框/按钮/组框…)在应用级 QSS
+    // (QDialog#settingsDialog 规则组,#89 收敛),切主题即时跟上
+    setObjectName(QStringLiteral("settingsDialog"));
 
     auto* root = new QVBoxLayout(this);          // 外层垂直:内容区 + 底部按钮行
     auto* content = new QHBoxLayout;             // 分类树 + 页面
@@ -266,15 +223,10 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent) {
     });
 
     // 底部按钮行:左"恢复默认",右下角 确定 / 取消
+    // (三钮样式在应用级 QSS:settingsStdBtn=工具条底+灰描边,okBtn=蓝底白字)
     auto* bottom = new QHBoxLayout;
-    const QString btnQss =
-        QString::fromUtf8("QPushButton{background:%1;color:%4;border:1px solid %2;"
-        "padding:6px 28px;border-radius:4px;}"
-        "QPushButton:hover{border-color:%3;}"
-        "QPushButton#okBtn{background:%3;border-color:%3;color:#FFF;}"
-        "QPushButton#okBtn:hover{background:%5;}").arg(C_TOOLBAR, C_SEPARATOR, C_ACCENT, C_TEXT, C_ACCENT_DOWN);
     auto* resetBtn = new QPushButton(gazeTr("恢复默认"));
-    resetBtn->setStyleSheet(btnQss);
+    resetBtn->setObjectName(QStringLiteral("settingsStdBtn"));
     connect(resetBtn, &QPushButton::clicked, this, [this]() {
         if (QMessageBox::question(this, gazeTr("恢复默认"),
             gazeTr("将所有设置恢复为默认值?"))
@@ -290,9 +242,8 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent) {
     // 显式默认:Enter=确定;对话框空格过滤器的候选也按 default 优先
     // (不设的话 autoDefault 会先命中创建更早的"恢复默认")
     okBtn->setDefault(true);
-    okBtn->setStyleSheet(btnQss);
     auto* cancelBtn = new QPushButton(gazeTr("取消"));
-    cancelBtn->setStyleSheet(btnQss);
+    cancelBtn->setObjectName(QStringLiteral("settingsStdBtn"));
     connect(okBtn, &QPushButton::clicked, this, &QDialog::accept);
     connect(cancelBtn, &QPushButton::clicked, this, &QDialog::reject);
     bottom->addWidget(okBtn);

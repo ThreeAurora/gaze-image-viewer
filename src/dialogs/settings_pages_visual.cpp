@@ -150,10 +150,8 @@ QWidget* SettingsDialog::pageLabelColors() {
     // 左:扩展名列表(整行以对应颜色填充)
     auto* list = new QListWidget;
     list->setFixedWidth(320);
-    list->setStyleSheet(
-        QString::fromUtf8("QListWidget{background:%1;border:1px solid %2;outline:none;}"
-        "QListWidget::item{height:24px;padding:0 8px;border:none;}"
-        "QListWidget::item:selected{background:%3;color:%4;border:none;}").arg(C_CONTENT, C_SEPARATOR, C_ACCENT, C_TEXT));
+    // 列表样式在应用级 QSS(QListWidget#labelColorList,#89 收敛)
+    list->setObjectName(QStringLiteral("labelColorList"));
     body->addWidget(list, 1);
 
     // 右:输入行 + 色块/按钮列
@@ -187,7 +185,9 @@ QWidget* SettingsDialog::pageLabelColors() {
     colorBtn->setFixedSize(30, 24);
     auto* whiteBtn = new QToolButton;
     whiteBtn->setFixedSize(30, 24);
-    whiteBtn->setStyleSheet(QString::fromUtf8("background:#FFFFFF;border:1px solid %1;").arg(C_SEPARATOR));
+    // 白色快选块:样式在应用级 QSS(QToolButton#labelWhiteSwatch,#89 收敛);
+    // colorBtn/defBtn 的底色随数据变,留控件级动态灌
+    whiteBtn->setObjectName(QStringLiteral("labelWhiteSwatch"));
     whiteBtn->setToolTip(gazeTr("设为白色"));
     swRow->addWidget(colorBtn);
     swRow->addWidget(whiteBtn);

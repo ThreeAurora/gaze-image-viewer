@@ -96,10 +96,8 @@ QWidget* SettingsDialog::pageShortcuts() {
     table->verticalHeader()->setVisible(false);
     table->setSelectionBehavior(QAbstractItemView::SelectRows);
     table->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    table->setStyleSheet(
-        QString::fromUtf8("QTableWidget{background:%1;color:%2;border:1px solid %3;}"
-        "QHeaderView::section{background:%1;color:%2;"
-        "border:none;padding:4px;}").arg(C_CONTENT, C_TEXT, C_SEPARATOR));
+    // 表样式在应用级 QSS(QTableWidget#settingsTable,#89 收敛,维护页同款)
+    table->setObjectName(QStringLiteral("settingsTable"));
     table->setColumnWidth(1, 190);
     root->addWidget(table, 1);
 
@@ -121,9 +119,7 @@ QWidget* SettingsDialog::pageShortcuts() {
         "鼠标：滚轮 = 上一个/下一个文件；Ctrl+滚轮 或 按住右键+滚轮 = 放大/缩小；"
         "左键拖动 = 移动画面；右键 = 上下文菜单；中键动作见「切换模式」页。"));
     mouseTip->setWordWrap(true);
-    mouseTip->setStyleSheet(
-        QString::fromUtf8("color:%1;font-size:12px;background:transparent;")
-            .arg(Theme::T("#B8B8C0", "#77777F")));
+    mouseTip->setObjectName(QStringLiteral("settingsMouseTip"));
     root->addWidget(mouseTip);
 
     // ── 数据填充 ──

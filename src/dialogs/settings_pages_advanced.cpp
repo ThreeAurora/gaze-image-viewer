@@ -59,8 +59,7 @@ QWidget* SettingsDialog::pageMaintenance() {
 
     // 数据库统计行
     auto* summary = new QLabel;
-    summary->setStyleSheet(QString::fromUtf8("color:%1;background:transparent;")
-                               .arg(Theme::T("#D0D0D0", "#44444C")));
+    summary->setObjectName(QStringLiteral("settingsDbSummary"));
     root->addWidget(summary);
 
     // 筛选框
@@ -79,10 +78,8 @@ QWidget* SettingsDialog::pageMaintenance() {
     table->setSelectionBehavior(QAbstractItemView::SelectRows);
     table->setEditTriggers(QAbstractItemView::NoEditTriggers);
     table->setItemDelegate(new ElideMiddleDelegate(table));
-    table->setStyleSheet(
-        QString::fromUtf8("QTableWidget{background:%1;color:%2;border:1px solid %3;}"
-        "QHeaderView::section{background:%1;color:%2;"
-        "border:none;padding:4px;}").arg(C_CONTENT, C_TEXT, C_SEPARATOR));
+    // 表样式在应用级 QSS(QTableWidget#settingsTable,#89 收敛,快捷键页同款)
+    table->setObjectName(QStringLiteral("settingsTable"));
     table->setColumnWidth(0, 260);
     table->setColumnWidth(1, 90);
     table->setColumnWidth(2, 110);
@@ -472,8 +469,7 @@ QWidget* SettingsDialog::pageImgSearch() {
                  spin("ImgSearch/port", 1024, 65535, 8747));
     auto* portNote = new QLabel(gazeTr(
         "与 imgseek 服务实际监听端口一致(默认 8747);服务已在运行时改动需重启服务。"));
-    portNote->setStyleSheet(
-        QString("background:transparent;color:%1;").arg(C_TEXT_FAINT));
+    portNote->setObjectName(QStringLiteral("settingsNote"));
     fLoc->addRow(portNote);
     root->addWidget(group(gazeTr("服务位置"), fLoc));
 
@@ -488,8 +484,7 @@ QWidget* SettingsDialog::pageImgSearch() {
     auto* lifeNote = new QLabel(gazeTr(
         "默认由你手动运行 main.py;自动启动关闭时,以文搜图只会报\"服务未运行\"。"
         "\"退出时结束\"只回收由 Gaze 自动拉起的服务实例,手动启动的不受影响。"));
-    lifeNote->setStyleSheet(
-        QString("background:transparent;color:%1;").arg(C_TEXT_FAINT));
+    lifeNote->setObjectName(QStringLiteral("settingsNote"));
     fLife->addRow(lifeNote);
     root->addWidget(group(gazeTr("服务生命周期"), fLife));
 
