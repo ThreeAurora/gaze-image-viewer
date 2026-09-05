@@ -58,22 +58,8 @@ SearchDialog::SearchDialog(const QString& rootDir, QWidget* parent)
     setWindowTitle(gazeTr("搜索 - ") + QFileInfo(rootDir).fileName());
     setAttribute(Qt::WA_DeleteOnClose);   // 非模态:关掉就该回收
     resize(860, 560);
-    setStyleSheet(
-        QString::fromUtf8("QDialog{background:%1;}"
-        "QLabel{color:%2;background:transparent;}"
-        "QLineEdit{background:%3;color:%2;border:1px solid %4;"
-        "border-radius:3px;padding:5px 8px;}"
-        "QPushButton{background:%5;color:%2;border:1px solid %4;"
-        "border-radius:3px;padding:6px 18px;}"
-        "QPushButton:hover{border-color:%6;}"
-        "QPushButton:disabled{color:%7;}"
-        "QCheckBox{color:%2;background:transparent;spacing:6px;}"
-        "QTreeWidget{background:%3;color:%2;border:1px solid %4;"
-        "outline:none;}"
-        "QTreeWidget::item{padding:3px 2px;}"
-        "QTreeWidget::item:selected{background:%6;}"
-        "QHeaderView::section{background:%5;color:%2;"
-        "border:1px solid %4;padding:4px 6px;}").arg(C_WIN_BG, C_TEXT, C_CONTENT, C_SEPARATOR, C_TOOLBAR, C_ACCENT, C_TEXT_DIM));
+    // 整表样式在应用级 QSS(QDialog#searchDialog 规则组,#89 收敛)
+    setObjectName(QStringLiteral("searchDialog"));
 
     auto* root = new QVBoxLayout(this);
     root->setContentsMargins(14, 12, 14, 12);
@@ -110,7 +96,7 @@ SearchDialog::SearchDialog(const QString& rootDir, QWidget* parent)
     root->addLayout(opts);
 
     m_status = new QLabel(gazeTr("范围:%1").arg(QDir::toNativeSeparators(rootDir)));
-    m_status->setStyleSheet(QString("color:%1;").arg(C_TEXT_FAINT));
+    m_status->setObjectName(QStringLiteral("searchStatus"));
     m_status->setTextInteractionFlags(Qt::TextSelectableByMouse);
     root->addWidget(m_status);
 

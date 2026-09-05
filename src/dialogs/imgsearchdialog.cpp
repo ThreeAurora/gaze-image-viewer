@@ -45,30 +45,8 @@ QString scoreText(const QJsonObject& s, int prec) {
 ImageSearchDialog::ImageSearchDialog(QWidget* parent) : QDialog(parent) {
     setWindowTitle(gazeTr("以文搜图 - 万象图搜"));
     resize(880, 640);
-    setStyleSheet(
-        QString::fromUtf8("QDialog{background:%1;}"
-        "QLabel{color:%2;background:transparent;}"
-        "QLineEdit{background:%3;color:%2;border:1px solid %4;"
-        "border-radius:3px;padding:6px 10px;}"
-        "QComboBox{background:%3;color:%2;border:1px solid %4;"
-        "border-radius:3px;padding:5px 8px;}"
-        "QComboBox::drop-down{width:16px;border:none;background:transparent;"
-        "subcontrol-origin:padding;subcontrol-position:top right;}"
-        "QComboBox::down-arrow{image:none;width:0;height:0;background:none;"
-        "border-left:4px solid transparent;border-right:4px solid transparent;"
-        "border-top:5px solid %8;margin-right:6px;}"
-        "QComboBox QAbstractItemView{background:%3;color:%2;"
-        "selection-background-color:%6;}"
-        "QPushButton{background:%5;color:%2;border:1px solid %4;"
-        "border-radius:3px;padding:6px 20px;}"
-        "QPushButton:hover{border-color:%6;}"
-        "QPushButton:disabled{color:%7;}"
-        "QListWidget{background:%3;color:%2;border:1px solid %4;"
-        "outline:none;}"
-        "QListWidget::item{padding:2px;}"
-        "QListWidget::item:selected{background:%6;}")
-        .arg(C_WIN_BG, C_TEXT, C_CONTENT, C_SEPARATOR, C_TOOLBAR, C_ACCENT,
-             C_TEXT_FAINT, C_SB_ARROW));
+    // 整表样式在应用级 QSS(QDialog#imgSearchDialog 规则组,#89 收敛)
+    setObjectName(QStringLiteral("imgSearchDialog"));
 
     auto* root = new QVBoxLayout(this);
     root->setContentsMargins(14, 14, 14, 12);
@@ -97,7 +75,7 @@ ImageSearchDialog::ImageSearchDialog(QWidget* parent) : QDialog(parent) {
     root->addLayout(top);
 
     m_status = new QLabel(gazeTr("输入关键词后回车;服务未运行时会自动拉起"));
-    m_status->setStyleSheet(QString("color:%1;").arg(C_TEXT_FAINT));
+    m_status->setObjectName(QStringLiteral("imgSearchStatus"));
     root->addWidget(m_status);
 
     m_list = new QListWidget;

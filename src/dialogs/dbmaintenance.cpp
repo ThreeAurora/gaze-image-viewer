@@ -56,14 +56,8 @@ static QSqlDatabase maintenanceDb() {
 DbMaintenanceDialog::DbMaintenanceDialog(QWidget* parent) : QDialog(parent) {
     setWindowTitle(gazeTr("缩略图数据库维护"));
     resize(760, 540);
-    setStyleSheet(
-        QString::fromUtf8("QDialog{background:%1;}"
-        "QLabel{color:%2;background:transparent;}"
-        "QTableWidget{background:%1;color:%2;border:1px solid %3;}"
-        "QHeaderView::section{background:%1;color:%2;border:none;padding:4px;}"
-        "QPushButton{background:%4;color:%2;border:1px solid %3;"
-        "padding:5px 14px;border-radius:4px;}"
-        "QPushButton:hover{border-color:%5;}").arg(C_CONTENT, C_TEXT, C_SEPARATOR, C_TOOLBAR, C_ACCENT));
+    // 整表样式在应用级 QSS(QDialog#dbMaintDialog 规则组,#89 收敛)
+    setObjectName(QStringLiteral("dbMaintDialog"));
 
     auto* root = new QVBoxLayout(this);
 

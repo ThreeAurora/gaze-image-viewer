@@ -21,14 +21,8 @@ public:
     explicit AboutDialog(QWidget* parent) : QDialog(parent) {
         setWindowTitle(gazeTr("关于 Gaze"));
         setFixedWidth(580);
-        setStyleSheet(QString::fromUtf8(
-            "QDialog{background:%1;}"
-            "QLabel{color:%2;background:transparent;}"
-            "QFrame{background:%3;max-height:1px;border:none;}"
-            "QPushButton{background:%4;color:%2;border:1px solid %3;"
-            "padding:5px 18px;border-radius:4px;}"
-            "QPushButton:hover{border-color:%5;}")
-            .arg(C_CONTENT, C_TEXT, C_SEPARATOR, C_TOOLBAR, C_ACCENT));
+        // 整表样式在应用级 QSS(QDialog#aboutDialog 规则组,#89 收敛)
+        setObjectName(QStringLiteral("aboutDialog"));
 
         auto* root = new QVBoxLayout(this);
         root->setContentsMargins(24, 20, 24, 16);
