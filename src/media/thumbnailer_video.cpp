@@ -7,6 +7,7 @@
 #include "logger.h"
 
 #include <QFileInfo>
+#include <QElapsedTimer>
 #include <QImage>
 #include <QThread>
 #include <QPainter>
@@ -165,6 +166,11 @@ QImage Thumbnailer::videoThumbFFmpeg(const QString& filePath, int size, int pctO
     // 两条管线(内置 libavcodec / 外部 ffmpeg.exe)共用这一个换算:
     // 以前 pctOverride 到了 #else 分支就被丢掉,四帧拼图于是把同一帧画满四格
     const int pct = pctOverride >= 0 ? pctOverride : prefs().framePct;
+    // #7 磁盘开销归因打点(2026-09-05 用户报"生成视频缩略图变慢+硬盘异响"):
+    // 每次真解码都留一条耗时/尺寸/取帧位置日志,perf.log / gaze.log 末尾
+    // 连起来看就是抽帧的 I/O 时间线;缓存命中不打点(不碰盘)
+    QElapsedTimer vtClock;
+    vtClock.start();
 #ifdef HAS_FFMPEG
     AVFormatContext* fmtCtx = nullptr;
     if (avformat_open_input(&fmtCtx, filePath.toUtf8().constData(), nullptr, nullptr) < 0)
@@ -261,8 +267,14 @@ QImage Thumbnailer::videoThumbFFmpeg(const QString& filePath, int size, int pctO
     avcodec_free_context(&codecCtx);
     avformat_close_input(&fmtCtx);
 
-    return result.isNull() ? videoThumbFallback(filePath, size, pct) : result;
+    if (result.isNull())
+        return videoThumbFallback(filePath, size, pct);
+    Logger::event(QStringLiteral("videoThumb: %1 ms %2x%3 pct=%4 '%5'")
+                      .arg(vtClock.elapsed()).arg(result.width()).arg(result.height())
+                      .arg(pct).arg(QFileInfo(filePath).fileName()));
+    return result;
 #else
+    Q_UNUSED(vtClock);
     return videoThumbFallback(filePath, size, pct);
 #endif
 }
