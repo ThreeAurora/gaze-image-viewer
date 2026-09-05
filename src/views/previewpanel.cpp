@@ -62,12 +62,10 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
 
-    // 空态占位(未选中任何文件时)
+    // 空态占位(未选中任何文件时;样式在应用级 QSS,#89 收敛)
     m_placeholder = new QLabel;
+    m_placeholder->setObjectName("pvPlaceholder");
     m_placeholder->setAlignment(Qt::AlignCenter);
-    m_placeholder->setStyleSheet(
-        QString("color:%1;font-size:13px;background:transparent;")
-            .arg(C_TEXT_DIM));
     layout->addWidget(m_placeholder, 1);
 
     // 图片标签:不进布局——缩放/拖动需要自由定位,
@@ -82,17 +80,16 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
 
     // 音频标签
     m_audioLabel = new QLabel;
+    m_audioLabel->setObjectName("pvAudio");   // 样式在应用级 QSS(#89 收敛)
     m_audioLabel->setAlignment(Qt::AlignCenter);
-    m_audioLabel->setStyleSheet(QString("color:%1;font-size:16px;background:transparent;").arg(C_TEXT_SUB));
     m_audioLabel->hide();
     layout->addWidget(m_audioLabel, 1);
 
     // 音频波形画布:解码+聚合在专属线程(audiowave.h),这里只收快照画像素。
     // stretch 3:波形吃音频区大头,文件名条占 1/4
     m_waveLabel = new QLabel;
+    m_waveLabel->setObjectName("pvWave");   // 样式在应用级 QSS(#89 收敛)
     m_waveLabel->setAlignment(Qt::AlignCenter);
-    m_waveLabel->setStyleSheet(
-        QString("color:%1;font-size:12px;background:transparent;").arg(C_TEXT_DIM));
     m_waveLabel->hide();
     layout->addWidget(m_waveLabel, 3);
 
@@ -106,23 +103,17 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     // 第一行:按钮右对齐(右上角),随容器缩放保持贴边
     auto* rawBtnRow = new QHBoxLayout;
     rawBtnRow->addStretch(1);
-    const QString rawBtnQss = QString::fromUtf8(
-        "QPushButton{background:%1;color:#FFFFFF;border:none;border-radius:6px;"
-        "padding:6px 14px;font-size:12px;}"
-        "QPushButton:hover{background:%2;}"
-        "QPushButton:disabled{background:%3;border:1px solid %4;color:%5;}")
-        .arg(C_ACCENT, C_ACCENT_DOWN, C_CARD_BG, C_SEPARATOR, C_TEXT_FAINT);
+    // RAW 按钮/说明样式在应用级 QSS(QPushButton#pvRawBtn 等,#89 收敛)
     m_rawBtn = new QPushButton;
+    m_rawBtn->setObjectName("pvRawBtn");
     m_rawBtn->setCursor(Qt::PointingHandCursor);
-    m_rawBtn->setStyleSheet(rawBtnQss);
     connect(m_rawBtn, &QPushButton::clicked, this, [this]() { decodeRawAsync(); });
     rawBtnRow->addWidget(m_rawBtn);
     rawL->addLayout(rawBtnRow);
     rawL->addStretch(1);
     m_rawCaption = new QLabel;
+    m_rawCaption->setObjectName("pvRawCaption");
     m_rawCaption->setAlignment(Qt::AlignCenter);
-    m_rawCaption->setStyleSheet(
-        QString("color:%1;font-size:13px;background:transparent;").arg(C_TEXT_DIM));
     rawL->addWidget(m_rawCaption);
     rawL->addStretch(1);
     layout->addWidget(m_rawBox, 1);
@@ -130,8 +121,8 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     // 悬浮「加载原始RAW」(#140b):不进布局,盖在预览右上角。内嵌预览加载完
     // rawBox 整体藏掉,全解入口靠它保留 —— 用户令"加载完内嵌图之后按钮加回来"
     m_rawFullBtn = new QPushButton(gazeTr("加载原始 RAW"), this);
+    m_rawFullBtn->setObjectName("pvRawBtn");
     m_rawFullBtn->setCursor(Qt::PointingHandCursor);
-    m_rawFullBtn->setStyleSheet(rawBtnQss);
     connect(m_rawFullBtn, &QPushButton::clicked, this, [this]() { decodeRawAsync(); });
     m_rawFullBtn->hide();
 
@@ -139,14 +130,9 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     // 色彩配置时两套解码器颜色解释不同:默认 WIC 印刷口径(与缩略图/打印/系统
     // 照片一致);勾选=Qt 数值直接反演(通常偏亮),仅供对比,切文件自动复位。
     m_cmykBtn = new QPushButton(QStringLiteral("CMYK"), this);
+    m_cmykBtn->setObjectName("pvCmykBtn");   // 样式在应用级 QSS(#89 收敛)
     m_cmykBtn->setCursor(Qt::PointingHandCursor);
     m_cmykBtn->setCheckable(true);
-    m_cmykBtn->setStyleSheet(QString::fromUtf8(
-        "QPushButton{background:%1;color:#FFFFFF;border:none;border-radius:6px;"
-        "padding:4px 10px;font-size:11px;}"
-        "QPushButton:hover{background:%2;}"
-        "QPushButton:checked{background:%3;}")
-        .arg(C_TEXT_FAINT, C_ACCENT, C_ACCENT_DOWN));
     m_cmykBtn->setToolTip(gazeTr(
         "CMYK 印刷图（未内嵌色彩配置）:默认按印刷标准转换,与缩略图/打印/系统照片一致。\n"
         "勾选=数值直接反演(通常偏亮),仅供对比,切文件自动复位。"));
@@ -159,19 +145,16 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     });
     m_cmykBtn->hide();
 
-    // txt 文本预览(等宽字体,只读,深色底)
+    // txt 文本预览(等宽字体,只读;样式在应用级 QSS QTextEdit#pvText,#89 收敛)
     m_textEdit = new QTextEdit;
+    m_textEdit->setObjectName("pvText");
     m_textEdit->setReadOnly(true);
-    m_textEdit->setStyleSheet(
-        QString::fromUtf8("QTextEdit{background:%1;color:%2;border:none;"
-        "font-family:'Consolas','Courier New',monospace;font-size:13px;"
-        "selection-background-color:%3;}").arg(C_CONTENT, C_TEXT, C_ACCENT));
     m_textEdit->hide();
     layout->addWidget(m_textEdit, 1);
 
     // 视频区
     m_videoWidget = new QWidget;
-    m_videoWidget->setStyleSheet("background:#0A0A0C;");
+    m_videoWidget->setObjectName("pvVideo");   // 底色在应用级 QSS(#89 收敛)
     m_videoWidget->setMouseTracking(true);   // #208 同图片标签:全屏悬停事件死区
     m_videoWidget->hide();
     layout->addWidget(m_videoWidget, 1);
@@ -186,27 +169,22 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     layout->addWidget(m_imgSpace, 1);
 
     // 控制栏(XnView 排布):上一文件 / 播放暂停 / 停止 / 音量 / 进度 / 时间
+    // 底色/上边线在应用级 QSS(QWidget#pvControlBar 后代规则,#89 收敛)
     m_controlBar = new QWidget;
+    m_controlBar->setObjectName("pvControlBar");
     m_controlBar->setFixedHeight(40);
-    m_controlBar->setStyleSheet(
-        QString::fromUtf8("background:%1;border-top:1px solid %2;").arg(C_TOOLBAR, C_SEPARATOR));
     m_controlBar->hide();
 
     auto* cl = new QHBoxLayout(m_controlBar);
     cl->setContentsMargins(10, 4, 10, 4);
     cl->setSpacing(4);
 
-    // 按钮统一样式 + 白色图标:播放/暂停图标在别处切换时必须同样走 whiteIcon,
+    // 按钮统一样式在应用级 QSS(QWidget#pvControlBar QPushButton/QToolButton,
+    // #89 收敛) + 白色图标:播放/暂停图标在别处切换时必须同样走 whiteIcon,
     // 否则标准图标自带深色,在深底上直接"变黑看不见"
-    const QString btnQss =
-        QString::fromUtf8("QPushButton{background:transparent;border:none;border-radius:4px;padding:4px;}"
-        "QPushButton:hover{background:%1;}"
-        "QToolButton{background:transparent;border:none;border-radius:4px;padding:4px;}"
-        "QToolButton:hover{background:%1;}").arg(C_CARD_HOVER);
     auto mkBtn = [&](auto* b, QStyle::StandardPixmap sp, int w, const QString& tip) {
         b->setIcon(pp_impl::whiteIcon(style()->standardIcon(sp)));
         b->setIconSize(QSize(16, 16));
-        b->setStyleSheet(btnQss);
         b->setFixedSize(w, 28);
         b->setToolTip(tip);
         cl->addWidget(b);
@@ -248,16 +226,10 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
           gazeTr("音量"));   // 音量
 
     m_progress = new QSlider(Qt::Horizontal);
+    m_progress->setObjectName("pvProgress");   // 滑槽/旋钮样式在应用级 QSS(#89 收敛)
     m_progress->setRange(0, 0);
     m_progress->setFixedHeight(16);
     m_progress->setMouseTracking(true);   // hover 移动即请求秒级缩略图
-    m_progress->setStyleSheet(
-        QString::fromUtf8("QSlider::groove:horizontal{height:3px;background:%1;border-radius:1px;}"
-        "QSlider::sub-page:horizontal{background:%2;border-radius:1px;}"
-        "QSlider::add-page:horizontal{background:%3;border-radius:1px;}"
-        "QSlider::handle:horizontal{width:9px;height:9px;margin:-3px 0;"
-        "background:%4;border-radius:4px;}"   // 旋钮用 C_TEXT:浅色下 #FFFFFF 在白底上会消失
-        "QSlider::handle:horizontal:hover{background:#DCE7FF;}").arg(C_SEPARATOR, C_ACCENT, C_SEPARATOR, C_TEXT));
     m_progress->installEventFilter(this);   // 播放条点击直接跳转
     // 同 m_btnPlay,拖动进度条的槽也移出 setupPlayer 以免重复注册。
     connect(m_progress, &QSlider::sliderMoved, this, [this](int pos) {
@@ -271,8 +243,7 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     cl->addSpacing(4);
 
     m_timeLabel = new QLabel("0:00 / 0:00");
-    m_timeLabel->setStyleSheet(
-        QString("color:%1;font-size:12px;background:transparent;").arg(C_TEXT));
+    m_timeLabel->setObjectName("pvTime");   // 样式在应用级 QSS(#89 收敛)
     m_timeLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
     m_timeLabel->setToolTip(gazeTr("点击切换 已播/剩余时间"));
     m_timeLabel->installEventFilter(this);  // 点击切换剩余时间显示
@@ -280,12 +251,9 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
 
     layout->addWidget(m_controlBar);
 
-    // LIVE 徽章(动态照片播放时的右上角标识,child of videoWidget)
+    // LIVE 徽章(动态照片播放时的右上角标识,child of videoWidget;样式在应用级 QSS)
     m_liveBadge = new QLabel("LIVE", m_videoWidget);
-    m_liveBadge->setStyleSheet(
-        "QLabel{background:rgba(0,0,0,150);color:#FFF;border-radius:8px;"
-        "padding:2px 10px;font-size:11px;font-weight:bold;"
-        "border:1px solid rgba(255,255,255,60);}");
+    m_liveBadge->setObjectName("pvLiveBadge");
     m_liveBadge->adjustSize();
     m_liveBadge->hide();
 
@@ -322,10 +290,9 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
         slider->setValue(static_cast<int>(m_audioOutput->volume() * 100));
         slider->setFixedSize(24, 110);
         auto* val = new QLabel(QString::number(slider->value()), wrap);
+        val->setObjectName("pvVolVal");   // 样式在应用级 QSS(#89 收敛)
         val->setFixedWidth(30);
         val->setAlignment(Qt::AlignHCenter | Qt::AlignTop);
-        val->setStyleSheet(
-            QString("QLabel{background:transparent;color:%1;font-size:13px;}").arg(C_TEXT));
         wl->addWidget(slider);
         wl->addWidget(val);
         connect(slider, &QSlider::valueChanged, this, [this, val](int v) {
@@ -345,11 +312,7 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     // 走覆盖而非布局:图片标签是自由定位的,塞进布局会破坏"放大后仍可拖动查看"的模型
     auto mkScroll = [this](Qt::Orientation o) {
         auto* sb = new QScrollBar(o, this);
-        sb->setStyleSheet(
-            "QScrollBar{background:rgba(20,20,24,200);border:none;margin:0;}"
-            "QScrollBar::handle{background:#5A5A62;border-radius:3px;}"
-            "QScrollBar::handle:hover{background:#7A7A82;}"
-            "QScrollBar::add-line,QScrollBar::sub-line{height:0;width:0;}");
+        sb->setObjectName("pvOverlaySb");   // 覆盖滚动条样式在应用级 QSS(#89 收敛)
         sb->hide();
         return sb;
     };
@@ -368,22 +331,17 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     // (#230:旧左上角信息条 m_infoLabel 整链删除 —— 文件名/大小信息由 G 全屏
     // 胶片条题注承担,"全屏只留画面"不再有第二处文字)
     m_floatBar = new QWidget(this);
-    m_floatBar->setStyleSheet(
-        "QWidget{background:rgba(18,18,22,225);border:1px solid #3A3A42;border-radius:6px;}");
+    m_floatBar->setObjectName("pvFloatBar");   // 底/边框样式在应用级 QSS(#89 收敛)
     m_floatBar->hide();
     {
         auto* fl = new QHBoxLayout(m_floatBar);
         fl->setContentsMargins(6, 4, 6, 4);
         fl->setSpacing(4);
-        const char* bq =
-            "QPushButton{background:transparent;border:none;border-radius:4px;"
-            "padding:3px;color:#E8E8E8;min-width:26px;}"
-            "QPushButton:hover{background:#3A3A42;}";
+        // 按钮样式在应用级 QSS(QWidget#pvFloatBar QPushButton,#89 收敛)
         auto add = [&](QStyle::StandardPixmap sp, const QString& tip, auto&& fn) {
             auto* b = new QPushButton;
             b->setIcon(pp_impl::whiteIcon(style()->standardIcon(sp)));
             b->setToolTip(tip);
-            b->setStyleSheet(bq);
             QObject::connect(b, &QPushButton::clicked, this, fn);
             fl->addWidget(b);
         };
@@ -401,17 +359,16 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     m_panTool = new QWidget(this);
     m_panTool->setObjectName(QStringLiteral("panNavTool"));
     m_panTool->setFixedSize(150, 110);
-    // 选择器必须带 #objectName:写成裸 QWidget{} 会**连带子控件**一起吃到这条
+    // 底/边框样式在应用级 QSS(QWidget#panNavTool,#89 收敛)。选择器必须带
+    // #objectName:写成裸 QWidget{} 会**连带子控件**一起吃到这条
     // 边框与底色(#111 的账)——m_panThumb 一旦有了 1px 边框,Qt 就把缩略图 pixmap
     // 画进内容矩形(整体右移 1px),而 ox/oy 按控件全宽算,蓝框就比图偏左偏上一格
-    m_panTool->setStyleSheet(
-        "QWidget#panNavTool{background:rgba(14,14,18,220);border:1px solid #3A3A42;}");
     m_panTool->hide();
     m_panThumb = new QLabel(m_panTool);
     m_panThumb->setAlignment(Qt::AlignCenter);
     m_panThumb->setGeometry(1, 1, 148, 108);
     m_panView = new QWidget(m_panTool);
-    m_panView->setStyleSheet("background:transparent;border:1px solid #4C9AF5;");
+    m_panView->setObjectName("pvPanView");   // 蓝框样式在应用级 QSS(#89 收敛)
     m_panView->hide();
     // 拖动蓝框/缩略图 → 视口跟随(事件过滤器在 eventFilter 里处理)
     m_panThumb->setCursor(Qt::PointingHandCursor);
@@ -419,26 +376,19 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     m_panView->installEventFilter(this);
 
     // ── #82 PDF 页导航条(仅预览 PDF 时出现,贴底居中)──
+    // 底/边框样式在应用级 QSS(QWidget#pvPdfBar 后代规则,#89 收敛)
     m_pdfBar = new QWidget(this);
-    m_pdfBar->setStyleSheet(
-        "QWidget{background:rgba(18,18,22,225);border:1px solid #3A3A42;border-radius:6px;}");
+    m_pdfBar->setObjectName("pvPdfBar");
     m_pdfBar->hide();
     {
         auto* pl = new QHBoxLayout(m_pdfBar);
         pl->setContentsMargins(8, 5, 8, 5);
         pl->setSpacing(6);
-        const char* bq =
-            "QPushButton{background:transparent;border:none;border-radius:4px;"
-            "padding:2px 4px;color:#E8E8E8;min-width:24px;}"
-            "QPushButton:hover{background:#3A3A42;}"
-            "QPushButton:disabled{color:#5A5A62;}";
+        // 按钮样式在应用级 QSS(QWidget#pvPdfBar QPushButton,#89 收敛)
         m_pdfPrev = new QPushButton(gazeTr("◀ 上一页"));
         m_pdfNext = new QPushButton(gazeTr("下一页 ▶"));
         m_pdfLabel = new QLabel(gazeTr("第 1 页"));
-        m_pdfLabel->setStyleSheet(
-            "QLabel{background:transparent;color:#E0E0E0;font-size:12px;padding:0 4px;}");
-        m_pdfPrev->setStyleSheet(bq);
-        m_pdfNext->setStyleSheet(bq);
+        m_pdfLabel->setObjectName("pvPdfLabel");
         connect(m_pdfPrev, &QPushButton::clicked, this,
                 [this]() { pdfGotoPage(m_pdfPage - 1); });
         connect(m_pdfNext, &QPushButton::clicked, this,

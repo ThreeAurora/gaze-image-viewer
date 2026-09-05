@@ -37,7 +37,7 @@ void applyLive() {
 }
 
 QString appQss() {
-    // 占位符按 %1..%25 顺序逐个 .arg:单个 arg() 每次替换最小编号占位符,
+    // 占位符按 %1..%28 顺序逐个 .arg:单个 arg() 每次替换最小编号占位符,
     // 取值全是 #hex,不含 %N 字样,链式安全
     return QStringLiteral(
         "QWidget {"
@@ -366,6 +366,86 @@ QString appQss() {
         "  background: rgba(0,0,0,150); color: #FFF; font-size: 9px; font-weight: bold;"
         "  padding: 2px 7px; border-radius: 8px; border: 1px solid rgba(255,255,255,60);"
         "}"
+        // ── #89 收敛(批4):预览面板静态表面。控件上的动态样式(图片边框态、
+        // 评级点、CMYK 勾选后切换解码等)仍留控件级。播放控制栏/全屏浮动条/PDF 条
+        // 原内联是裸声明(底色边框泼给全部子孙),此处用 QWidget 后代选择器
+        // 原样复刻,按钮规则紧随其后靠排位赢回透明底。
+        "QLabel#pvPlaceholder { color: %26; font-size: 13px; background: transparent; }"
+        "QLabel#pvAudio { color: %25; font-size: 16px; background: transparent; }"
+        "QLabel#pvWave { color: %26; font-size: 12px; background: transparent; }"
+        "QLabel#pvRawCaption { color: %26; font-size: 13px; background: transparent; }"
+        "QPushButton#pvRawBtn {"
+        "  background: %5; color: #FFF; border: none; border-radius: 6px;"
+        "  padding: 6px 14px; font-size: 12px;"
+        "}"
+        "QPushButton#pvRawBtn:hover { background: %18; }"
+        "QPushButton#pvRawBtn:disabled {"
+        "  background: %27; border: 1px solid %4; color: %28;"
+        "}"
+        "QPushButton#pvCmykBtn {"
+        "  background: %28; color: #FFF; border: none; border-radius: 6px;"
+        "  padding: 4px 10px; font-size: 11px;"
+        "}"
+        "QPushButton#pvCmykBtn:hover { background: %5; }"
+        "QPushButton#pvCmykBtn:checked { background: %18; }"
+        "QTextEdit#pvText {"
+        "  background: %13; color: %1; border: none;"
+        "  font-family: 'Consolas','Courier New',monospace; font-size: 13px;"
+        "  selection-background-color: %5;"
+        "}"
+        "QWidget#pvVideo { background: #0A0A0C; }"
+        "QWidget#pvControlBar, QWidget#pvControlBar QWidget {"
+        "  background: %3; border-top: 1px solid %4;"
+        "}"
+        "QWidget#pvControlBar QPushButton, QWidget#pvControlBar QToolButton {"
+        "  background: transparent; border: none; border-radius: 4px; padding: 4px;"
+        "}"
+        "QWidget#pvControlBar QPushButton:hover,"
+        "QWidget#pvControlBar QToolButton:hover { background: %16; }"
+        "QSlider#pvProgress::groove:horizontal"
+        "{ height: 3px; background: %4; border-radius: 1px; }"
+        "QSlider#pvProgress::sub-page:horizontal { background: %5; border-radius: 1px; }"
+        "QSlider#pvProgress::add-page:horizontal { background: %4; border-radius: 1px; }"
+        "QSlider#pvProgress::handle:horizontal {"
+        "  width: 9px; height: 9px; margin: -3px 0; background: %1; border-radius: 4px;"
+        "}"
+        "QSlider#pvProgress::handle:horizontal:hover { background: #DCE7FF; }"
+        "QLabel#pvTime { color: %1; font-size: 12px; background: transparent; }"
+        "QLabel#pvLiveBadge {"
+        "  background: rgba(0,0,0,150); color: #FFF; border-radius: 8px;"
+        "  padding: 2px 10px; font-size: 11px; font-weight: bold;"
+        "  border: 1px solid rgba(255,255,255,60);"
+        "}"
+        "QLabel#pvVolVal { background: transparent; color: %1; font-size: 13px; }"
+        "QScrollBar#pvOverlaySb { background: rgba(20,20,24,200); border: none; margin: 0; }"
+        "QScrollBar#pvOverlaySb::handle { background: #5A5A62; border-radius: 3px; }"
+        "QScrollBar#pvOverlaySb::handle:hover { background: #7A7A82; }"
+        "QScrollBar#pvOverlaySb::add-line, QScrollBar#pvOverlaySb::sub-line"
+        "{ height: 0; width: 0; }"
+        "QWidget#pvFloatBar, QWidget#pvFloatBar QWidget {"
+        "  background: rgba(18,18,22,225); border: 1px solid #3A3A42; border-radius: 6px;"
+        "}"
+        "QWidget#pvFloatBar QPushButton {"
+        "  background: transparent; border: none; border-radius: 4px;"
+        "  padding: 3px; color: #E8E8E8; min-width: 26px;"
+        "}"
+        "QWidget#pvFloatBar QPushButton:hover { background: #3A3A42; }"
+        // 平移导航小窗:必须 ID 选择器只匹配自身(#111 的账:子控件吃到 1px
+        // 边框会让缩略图 pixmap 画进内容矩形,蓝框对不上位)
+        "QWidget#panNavTool { background: rgba(14,14,18,220); border: 1px solid #3A3A42; }"
+        "QWidget#pvPanView { background: transparent; border: 1px solid #4C9AF5; }"
+        "QWidget#pvPdfBar, QWidget#pvPdfBar QWidget {"
+        "  background: rgba(18,18,22,225); border: 1px solid #3A3A42; border-radius: 6px;"
+        "}"
+        "QWidget#pvPdfBar QPushButton {"
+        "  background: transparent; border: none; border-radius: 4px;"
+        "  padding: 2px 4px; color: #E8E8E8; min-width: 24px;"
+        "}"
+        "QWidget#pvPdfBar QPushButton:hover { background: #3A3A42; }"
+        "QWidget#pvPdfBar QPushButton:disabled { color: #5A5A62; }"
+        "QLabel#pvPdfLabel {"
+        "  background: transparent; color: #E0E0E0; font-size: 12px; padding: 0 4px;"
+        "}"
     )
         .arg(C_TEXT)
         .arg(C_WIN_BG)
@@ -391,7 +471,10 @@ QString appQss() {
         .arg(C_TEXT_HIDDEN)    // %22:标签关闭钮常态字色(#89 收敛自 installTabCloseButton 内联)
         .arg(Theme::T("#4A4A56", "#9A9AA4"))  // %23:格式筛选框悬停描边(原内联局部双档值)
         .arg(Theme::T("#2A2A2E", "#C9C9D1"))  // %24:工具条竖分隔线(原内联局部双档值)
-        .arg(C_TEXT_SUB);      // %25:查找条计数文字(#89 收敛自 filegrid_find 内联)
+        .arg(C_TEXT_SUB)       // %25:查找条计数文字(#89 收敛自 filegrid_find 内联)
+        .arg(C_TEXT_DIM)       // %26:占位/波形/RAW说明文字(#89 收敛自 previewpanel 内联)
+        .arg(C_CARD_BG)        // %27:RAW 按钮禁用底(#89 同上)
+        .arg(C_TEXT_FAINT);    // %28:RAW 按钮禁用字/CMYK 钮常态底(#89 同上)
 }
 
 } // namespace Theme
