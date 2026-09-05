@@ -82,24 +82,67 @@ public:
 protected:
     void resizeEvent(QResizeEvent*) override { updateView(); }
 
+    // 2026-09-05 用户令:框选只有第一次有效 —— 第一次拖拽确定裁剪窗口之后,
+    // 光标就只被允许「移动窗口」(按住窗口内部)或「调整窗口大小」(按住边/角),
+    // 不能再重新框选。窗口内/边/角的命中分区见 gripAt。
+    enum Grip { GripNone, GripSelect, GripMove,
+                GripTL, GripT, GripTR, GripR, GripBR, GripB, GripBL, GripL };
+
     bool eventFilter(QObject* obj, QEvent* ev) override {
         if (obj != m_view) return QDialog::eventFilter(obj, ev);
         switch (ev->type()) {
         case QEvent::MouseButtonPress: {
             auto* me = static_cast<QMouseEvent*>(ev);
             if (me->button() != Qt::LeftButton) break;
-            m_dragging = true;
-            m_anchor = toImage(me->pos());
-            m_sel = QRect(m_anchor, QSize(1, 1));
+            if (!m_established) {           // 第一次:框选(此后不再有框选)
+                m_grip = GripSelect;
+                m_dragging = true;
+                m_anchor = toImage(me->pos());
+                m_sel = QRect(m_anchor, QSize(1, 1));
+            } else {
+                m_grip = gripAt(me->pos());
+                if (m_grip == GripNone) return true;   // 窗口之外:不动作
+                m_dragging = true;
+                m_pressView = me->pos();
+                m_origSel = m_sel;
+            }
             updateView();
             return true;
         }
         case QEvent::MouseMove: {
-            if (!m_dragging) break;
             auto* me = static_cast<QMouseEvent*>(ev);
-            const QPoint cur = toImage(me->pos());
-            m_sel = QRect(std::min(m_anchor.x(), cur.x()), std::min(m_anchor.y(), cur.y()),
-                          std::abs(cur.x() - m_anchor.x()), std::abs(cur.y() - m_anchor.y()));
+            if (!m_dragging) { updateCursor(me->pos()); break; }
+            switch (m_grip) {
+            case GripSelect: {
+                const QPoint cur = toImage(me->pos());
+                m_sel = QRect(std::min(m_anchor.x(), cur.x()), std::min(m_anchor.y(), cur.y()),
+                              std::abs(cur.x() - m_anchor.x()), std::abs(cur.y() - m_anchor.y()));
+                break;
+            }
+            case GripMove: {
+                const double sc = qMax(0.0001, m_scale);
+                QPoint d = me->pos() - m_pressView;
+                int nx = m_origSel.x() + int(std::round(d.x() / sc));
+                int ny = m_origSel.y() + int(std::round(d.y() / sc));
+                nx = qBound(0, nx, m_img.width()  - m_origSel.width());
+                ny = qBound(0, ny, m_img.height() - m_origSel.height());
+                m_sel.moveTo(nx, ny);
+                break;
+            }
+            default: {   // 边/角缩放:固定对角(对边),另一端跟手,钳在图内
+                const QPoint cur = toImage(me->pos());
+                int x0 = m_origSel.x(), y0 = m_origSel.y();
+                int x1 = m_origSel.right(), y1 = m_origSel.bottom();
+                if (m_grip == GripTL || m_grip == GripT || m_grip == GripTR) y0 = cur.y();
+                if (m_grip == GripTL || m_grip == GripL || m_grip == GripBL) x0 = cur.x();
+                if (m_grip == GripBR || m_grip == GripB || m_grip == GripBL) y1 = cur.y();
+                if (m_grip == GripBR || m_grip == GripR || m_grip == GripTR) x1 = cur.x();
+                m_sel = QRect(QPoint(std::min(x0, x1), std::min(y0, y1)),
+                              QPoint(std::max(x0, x1), std::max(y0, y1)));
+                m_sel = m_sel.intersected(QRect(0, 0, m_img.width(), m_img.height()));
+                break;
+            }
+            }
             updateView();
             return true;
         }
@@ -107,6 +150,7 @@ protected:
             if (!m_dragging) break;
             m_dragging = false;
             snapSel();
+            m_established = true;
             updateView();
             return true;
         }
@@ -116,6 +160,47 @@ protected:
     }
 
 private:
+    // 选区在视图坐标下的矩形(toImage 的逆)
+    QRect viewRect() const {
+        const int ox = (m_view->width()  - int(m_img.width()  * m_scale)) / 2;
+        const int oy = (m_view->height() - int(m_img.height() * m_scale)) / 2;
+        return QRect(ox + int(m_sel.x() * m_scale), oy + int(m_sel.y() * m_scale),
+                     int(m_sel.width() * m_scale), int(m_sel.height() * m_scale));
+    }
+    // 命中分区:边/角 6px 带 = 调整大小,内部 = 移动,外部 = 无动作
+    Grip gripAt(const QPoint& viewPos) const {
+        const QRect r = viewRect();
+        const int pad = 6;
+        const bool L = std::abs(viewPos.x() - r.left())   <= pad;
+        const bool R = std::abs(viewPos.x() - r.right())  <= pad;
+        const bool T = std::abs(viewPos.y() - r.top())    <= pad;
+        const bool B = std::abs(viewPos.y() - r.bottom()) <= pad;
+        if (L && T) return GripTL;
+        if (R && T) return GripTR;
+        if (L && B) return GripBL;
+        if (R && B) return GripBR;
+        if (T && viewPos.x() > r.left() && viewPos.x() < r.right()) return GripT;
+        if (B && viewPos.x() > r.left() && viewPos.x() < r.right()) return GripB;
+        if (L && viewPos.y() > r.top() && viewPos.y() < r.bottom()) return GripL;
+        if (R && viewPos.y() > r.top() && viewPos.y() < r.bottom()) return GripR;
+        return r.contains(viewPos) ? GripMove : GripNone;
+    }
+    // 悬停光标:窗口内=移动掌,边/角=缩放箭头,未框选/窗外=十字
+    void updateCursor(const QPoint& viewPos) {
+        Qt::CursorShape c = Qt::CrossCursor;
+        if (m_established) {
+            switch (gripAt(viewPos)) {
+            case GripMove: c = Qt::SizeAllCursor; break;
+            case GripT: case GripB: c = Qt::SizeVerCursor; break;
+            case GripL: case GripR: c = Qt::SizeHorCursor; break;
+            case GripTL: case GripBR: c = Qt::SizeFDiagCursor; break;
+            case GripTR: case GripBL: c = Qt::SizeBDiagCursor; break;
+            default: c = Qt::CrossCursor; break;
+            }
+        }
+        m_view->setCursor(c);
+    }
+
     // 吸附到 MCU 整数倍:起点向原点方向对齐,尺寸向 MCU 对齐(至少 1 个 MCU)
     void snapSel() {
         const int iw = m_img.width(), ih = m_img.height();
@@ -187,5 +272,9 @@ private:
     QRect       m_sel;
     QPoint      m_anchor;
     bool        m_dragging = false;
+    bool        m_established = false;   // 第一次框选完成 = 裁剪窗口定形
+    Grip        m_grip = GripNone;
+    QPoint      m_pressView;             // 按下点(视图坐标;移动窗口用)
+    QRect       m_origSel;               // 按下时的选区(移动/缩放基准)
     double      m_scale = 1.0;
 };
