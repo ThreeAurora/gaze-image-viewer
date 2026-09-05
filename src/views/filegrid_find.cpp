@@ -58,23 +58,10 @@
 // 匹配 = 文件名不区分大小写包含;到边界/无结果时对应按钮变灰(不回绕)。
 // ═══════════════════════════════════════════
 
-// 标准图标在深色底上是黑线,统一染成白色轮廓;QIcon 的 Disabled 模式
-// 会从这份 pixmap 自动生成置灰版本,按钮 disable 即"变灰"
-static QIcon whiteStdIcon(QStyle* st, QStyle::StandardPixmap sp) {
-    const QPixmap pm = st->standardIcon(sp).pixmap(20, 20);
-    QImage img = pm.toImage().convertToFormat(QImage::Format_ARGB32);
-    for (int y = 0; y < img.height(); ++y) {
-        auto* line = reinterpret_cast<QRgb*>(img.scanLine(y));
-        for (int x = 0; x < img.width(); ++x) {
-            const int a = qAlpha(line[x]);
-            if (a) line[x] = qRgba(255, 255, 255, a);
-        }
-    }
-    return QIcon(QPixmap::fromImage(img));
-}
-
 void FileGrid::buildFindBar() {
-    m_findBar = new QWidget(viewport());
+    // 用户令:查找条不浮在右上角,改为贴着排序表头正下方、与表头一样长的整条。
+    // 父件 = FileGrid 本体(视口子件会被滚动条裁窄),y=0 即表头正下方。
+    m_findBar = new QWidget(this);
     m_findBar->setObjectName("findBar");   // 样式在应用级 QSS(#89 收敛)
     auto* lay = new QHBoxLayout(m_findBar);
     lay->setContentsMargins(6, 4, 6, 4);
@@ -83,7 +70,7 @@ void FileGrid::buildFindBar() {
     m_findEdit = new QLineEdit(m_findBar);
     m_findEdit->setPlaceholderText(gazeTr("查找文件名..."));
     m_findEdit->setClearButtonEnabled(true);
-    m_findEdit->setFixedSize(180, 24);
+    m_findEdit->setMinimumWidth(180);
     m_findEdit->installEventFilter(this);   // Enter/Shift+Enter/Up/Down/Esc
     // 输入即搜:当前项仍命中就原地不动,否则跳到落点之后(无落点则从头)的第一个命中
     connect(m_findEdit, &QLineEdit::textChanged, this, [this](const QString&) {
@@ -101,7 +88,7 @@ void FileGrid::buildFindBar() {
         }
         findRefresh();
     });
-    lay->addWidget(m_findEdit);
+    lay->addWidget(m_findEdit, 1);
 
     m_findInfo = new QLabel(m_findBar);
     m_findInfo->setObjectName("findInfo");   // 样式在应用级 QSS(#89 收敛)
@@ -110,21 +97,21 @@ void FileGrid::buildFindBar() {
     lay->addWidget(m_findInfo);
 
     m_findPrev = new QToolButton(m_findBar);
-    m_findPrev->setIcon(whiteStdIcon(style(), QStyle::SP_ArrowUp));
+    m_findPrev->setIcon(fg_impl::findStdIcon(style(), QStyle::SP_ArrowUp));
     m_findPrev->setToolTip(gazeTr("上一个(Shift+Enter)"));
     m_findPrev->setFixedSize(24, 24);
     connect(m_findPrev, &QToolButton::clicked, this, [this]() { findStep(-1); });
     lay->addWidget(m_findPrev);
 
     m_findNext = new QToolButton(m_findBar);
-    m_findNext->setIcon(whiteStdIcon(style(), QStyle::SP_ArrowDown));
+    m_findNext->setIcon(fg_impl::findStdIcon(style(), QStyle::SP_ArrowDown));
     m_findNext->setToolTip(gazeTr("下一个(Enter)"));
     m_findNext->setFixedSize(24, 24);
     connect(m_findNext, &QToolButton::clicked, this, [this]() { findStep(1); });
     lay->addWidget(m_findNext);
 
     auto* btnClose = new QToolButton(m_findBar);
-    btnClose->setIcon(whiteStdIcon(style(), QStyle::SP_TitleBarCloseButton));
+    btnClose->setIcon(fg_impl::findStdIcon(style(), QStyle::SP_TitleBarCloseButton));
     btnClose->setToolTip(gazeTr("关闭(Esc)"));
     btnClose->setFixedSize(24, 24);
     connect(btnClose, &QToolButton::clicked, this, [this]() { closeFind(); });
@@ -149,8 +136,8 @@ void FileGrid::closeFind() {
 void FileGrid::placeFindBar() {
     if (!m_findBar) return;
     const QSize sz = m_findBar->sizeHint();
-    m_findBar->resize(sz);
-    m_findBar->move(viewport()->width() - sz.width() - 12, 12);
+    // 贴排序表头正下方的整条(用户令):宽度吃满 FileGrid 本体,与表头同长,y=0
+    m_findBar->setGeometry(0, 0, qMax(sz.width(), width()), sz.height());
 }
 
 // 命中数/当前序号/按钮置灰,一次 O(n) 扫完。当前项 = m_lastClicked:

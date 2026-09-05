@@ -247,9 +247,14 @@ void FileGrid::refreshCurrentDir() {
     if (!m_currentDir.isEmpty()) loadDirectory(m_currentDir);
 }
 
-// 主题切换:静态底色已收敛进应用级 QSS,这里只重绘自绘缓存色(卡片笔刷等)
+// 主题切换:静态底色已收敛进应用级 QSS,这里只重绘自绘缓存色(卡片笔刷等);
+// 查找条图标是按主题染色的位图,换主题要重染一遍
 void FileGrid::refreshThemeColors() {
     refreshView();
+    if (m_findBar) {
+        m_findPrev->setIcon(fg_impl::findStdIcon(style(), QStyle::SP_ArrowUp));
+        m_findNext->setIcon(fg_impl::findStdIcon(style(), QStyle::SP_ArrowDown));
+    }
 }
 
 // 删除后重载:落点 = 被删块的后一项,已在末尾则前一项(对齐 XnView)

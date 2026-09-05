@@ -11,6 +11,28 @@
 #include <QMouseEvent>
 #include <QContextMenuEvent>
 #include <QToolTip>
+#include <QStyle>
+#include <QIcon>
+
+namespace fg_impl {
+
+// 标准图标按主题文字色染色(深=白,浅=黑):查找条上/下一页钮共用。
+// filegrid_find.cpp 构建时与 filegrid.cpp 主题切换重染时都走这一份。
+inline QIcon findStdIcon(QStyle* st, QStyle::StandardPixmap sp) {
+    const QColor ink = QColor(QString::fromUtf8(Theme::T("#FFFFFF", "#1F1F26")));
+    const QPixmap pm = st->standardIcon(sp).pixmap(20, 20);
+    QImage img = pm.toImage().convertToFormat(QImage::Format_ARGB32);
+    for (int y = 0; y < img.height(); ++y) {
+        auto* line = reinterpret_cast<QRgb*>(img.scanLine(y));
+        for (int x = 0; x < img.width(); ++x) {
+            const int a = qAlpha(line[x]);
+            if (a) line[x] = ink.rgba() & 0x00FFFFFF | (a << 24);
+        }
+    }
+    return QIcon(QPixmap::fromImage(img));
+}
+
+} // namespace fg_impl
 
 // ═══════════════════════════════════════════
 // 画布:整个列表只有这一个控件
