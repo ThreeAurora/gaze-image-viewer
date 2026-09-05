@@ -221,6 +221,19 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     m_favDock->setWidget(m_favPane);
     addDockWidget(Qt::LeftDockWidgetArea, m_favDock);
     m_favPaths = AppSettings::instance().get("Favorites/paths", QStringList()).toStringList();
+    // 旧存档可能混着 "G://x" 盘根连体形(旧版 canonicalPath 不收敛):载入即
+    // 归一 + 去重(保序),与新增的 canonical 形不再两套并存;有变化就回写 ini
+    {
+        QStringList norm;
+        for (const QString& p : m_favPaths) {
+            const QString c = mw_impl::canonicalPath(p);
+            if (!c.isEmpty() && !norm.contains(c)) norm << c;
+        }
+        if (norm != m_favPaths) {
+            m_favPaths = norm;
+            saveFavorites();
+        }
+    }
     m_favs->setPaths(m_favPaths);
     connect(m_favs, &FavoritesPanel::openRequested, this, [this](const QString& p) {
         if (QFileInfo(p).isDir()) { navigateTo(p); return; }

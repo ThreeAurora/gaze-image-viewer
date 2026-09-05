@@ -70,11 +70,21 @@ inline double fileTimeToEpoch(const FILETIME& ft) {
     return double(u.QuadPart / 10000000ull) - 11644473600.0;
 }
 
+// 目录路径 + 条目名。目录带尾分隔符时不再补:盘根的规范形是 "G:/"
+// (canonicalPath 盘根不变式),无脑拼会出 "G://name" 连体形,一路传成
+// 地址栏 "G:\\name\"(树点开盘根下第一层子夹的实报)。目录层契约是
+// 前向斜杠,反斜杠尾一并兜住
+inline QString joinEntryPath(const QString& dir, const QString& name) {
+    return (dir.endsWith(QLatin1Char('/')) || dir.endsWith(QLatin1Char('\\')))
+         ? dir + name
+         : dir + QLatin1Char('/') + name;
+}
+
 // 一条 FindNextFile 记录 → FileEntry(单层扫描与递归扫描共用,避免两处口径漂移)
 inline FileEntry entryFromFindData(const WIN32_FIND_DATAW& data, const QString& dirPath) {
     FileEntry fe;
     fe.name = QString::fromWCharArray(data.cFileName);
-    fe.path = dirPath + QLatin1Char('/') + fe.name;
+    fe.path = joinEntryPath(dirPath, fe.name);
     const int dot = fe.name.lastIndexOf(QLatin1Char('.'));
     fe.ext = (dot > 0) ? fe.name.mid(dot).toLower() : QString();
     // Windows 隐藏属性 / 点开头文件/夹都算隐藏,显示时用淡灰色
@@ -145,7 +155,7 @@ inline void fastScanSubFiles(const QString& dirPath, std::vector<FileEntry>& out
             const bool hiddenDir = (data.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN)
                                    || name.startsWith(QLatin1Char('.'));
             if (!(skipHiddenDirs && hiddenDir))
-                subs << dirPath + QLatin1Char('/') + name;
+                subs << joinEntryPath(dirPath, name);
         }
     } while (FindNextFileW(h, &data));
     FindClose(h);

@@ -23,6 +23,7 @@
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QMutex>
+#include <atomic>
 
 #include "settings.h"
 
@@ -73,6 +74,18 @@ inline QSqlDatabase threadDb(int cacheMB) {
                 // 同一算法算,不用建索引——主键 path 就是唯一入口)
                 q.exec("CREATE TABLE IF NOT EXISTS dirsize "
                        "(path TEXT PRIMARY KEY, size INTEGER, basis TEXT, computed INTEGER)");
+                // 盘根连体键迁移(一次性):旧版条目路径在盘根是 "G://x" 形
+                // (fastScanDir 对规范形 "G:/" 再补分隔符的连锁),整棵根下
+                // 子树都带连体首分隔符;不迁,升级后缩略图/文件夹大小缓存全
+                // 部未命中白重算。起始双斜杠是 UNC 头,不动;同文件新旧两形态
+                // 都在时 UPDATE OR REPLACE 合并。进程级 atomic 保证只跑一次
+                static std::atomic<bool> uniSlashDone{false};
+                if (!uniSlashDone.exchange(true)) {
+                    q.exec("UPDATE OR REPLACE thumbs SET key = REPLACE(key, '//', '/') "
+                           "WHERE substr(key,1,2) <> '//' AND key LIKE '%//%'");
+                    q.exec("UPDATE OR REPLACE dirsize SET path = REPLACE(path, '//', '/') "
+                           "WHERE substr(path,1,2) <> '//' AND path LIKE '%//%'");
+                }
             }
         }
     }

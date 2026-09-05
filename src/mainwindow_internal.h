@@ -107,17 +107,35 @@ inline QList<int> defaultSplitterSizes() {
 }
 
 // 路径显示/内部规范形:
-//   内部一律用 '/' 且不带尾斜杠(历史栈 / lastDir / Browser/lastFile 比较都用它)
+//   内部一律用 '/' 且不带尾斜杠(历史栈 / lastDir / Browser/lastFile 比较都用它),
+//   唯盘根刻意保留尾斜杠("G:/")—— 下游 fastScanDir 的 joinEntryPath 认得它
 //   地址栏按 Windows 习惯显示:反斜杠 + 末尾 "\"(XnView 同款)
+// 连续 '/' 收敛成单个:树/网格旧存档的盘根连体形 "G://x"、手输 "G:\\x"
+// (双反斜杠)都归一为 "G:/x" —— 显示层不再冒双斜杠,匹配层不再依赖
+// cleanPath 兜底。UNC 头("//srv/share")是合法形态,起始双斜杠整串原样保留
+inline QString collapseSlashes(const QString& p) {
+    if (p.startsWith(QStringLiteral("//"))) return p;
+    QString out;
+    out.reserve(p.size());
+    for (int i = 0; i < p.size(); ++i) {
+        out += p.at(i);
+        if (p.at(i) == QLatin1Char('/'))
+            while (i + 1 < p.size() && p.at(i + 1) == QLatin1Char('/')) ++i;
+    }
+    return out;
+}
+
 inline QString canonicalPath(const QString& raw) {
-    QString p = QDir::fromNativeSeparators(raw.trimmed());
+    QString p = collapseSlashes(QDir::fromNativeSeparators(raw.trimmed()));
     while (p.size() > 3 && p.endsWith('/')) p.chop(1);   // "E:/" 根保留斜杠
     if (p.size() == 2 && p.endsWith(':')) p += '/';
     return p;
 }
 
 inline QString displayPath(const QString& canonical) {
-    QString d = QDir::toNativeSeparators(canonical);
+    // 输入契约是 canonical 形;ini 旧存档(pathHistory 等)可能还留着
+    // "G://x" 连体形,显示前再收敛一次,历史菜单不再冒 "G:\\x\"
+    QString d = QDir::toNativeSeparators(collapseSlashes(canonical));
     if (!d.endsWith('\\')) d += '\\';
     return d;
 }

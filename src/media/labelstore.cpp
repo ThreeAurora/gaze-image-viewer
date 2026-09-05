@@ -31,6 +31,11 @@ QSqlDatabase LabelStore::db() {
         // 历史数据迁移:旧版扫描产出混合分隔符路径(E:/dir\file),统一为 '/';
         // Windows 文件名不可能含 '\',幂等且安全
         q.exec("UPDATE labels SET path = REPLACE(path, '\\', '/')");
+        // 盘根连体形迁移:"G://x" → "G:/x"(旧版 fastScanDir 对盘根规范形
+        // "G:/" 再补分隔符的连锁)。起始双斜杠是 UNC 头,不动;同文件新旧
+        // 两形态都在时 UPDATE OR REPLACE 合并成一条
+        q.exec("UPDATE OR REPLACE labels SET path = REPLACE(path, '//', '/') "
+               "WHERE substr(path,1,2) <> '//' AND path LIKE '%//%'");
     }
     return QSqlDatabase::database(conn);
 }
