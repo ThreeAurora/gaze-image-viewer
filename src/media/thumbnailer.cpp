@@ -66,12 +66,12 @@ Thumbnailer& Thumbnailer::instance() {
 
 Thumbnailer::Thumbnailer() {
     m_pool = new QThreadPool(this);
-    // 并发可调(2026-09-05):Thumbs/genConcurrency(1-8,默认 4=历史速度)。
-    // 背景:抽帧是随机寻道型 I/O,机械盘上 4 路并发 ffmpeg 吞吐实测仅
-    // 12MB/s 但寻道次数每秒数百(盘响剧烈);2 路安静但慢。快/静是物理
-    // 矛盾,交用户裁决——设置变更即生效(maxThreadCount 运行时可改)。
+    // 并发可调(2026-09-05):Thumbs/genConcurrency(1-8)。默认 2 有对照实验
+    // 钉死:同代码仅变并发,单张文件夹卡片耗时 2 路=63~913ms,4 路=2126~2716ms
+    // (连零视频的纯图片格都要 2.1s)——机械盘上 4 路互相抢寻道/写锁,总吞吐
+    // 不升、单卡出图慢 3~10 倍,是负优化。SSD 用户可在设置里调高。
     m_pool->setMaxThreadCount(
-        qBound(1, AppSettings::instance().get("Thumbs/genConcurrency", 4).toInt(), 8));
+        qBound(1, AppSettings::instance().get("Thumbs/genConcurrency", 2).toInt(), 8));
     // 本对象在 FileGrid 构造时(Main 线程)创建:快照只在此线程读 QSettings,
     // worker 线程读副本 —— 逐条目 enqueue 路径不碰设置/磁盘
     snapshotPrefs();
@@ -110,7 +110,7 @@ void Thumbnailer::snapshotPrefs() {
     // 抽帧并发运行时可改:设置页改动即生效,无需重启(2026-09-05)
     if (m_pool)
         m_pool->setMaxThreadCount(
-            qBound(1, st.get("Thumbs/genConcurrency", 4).toInt(), 8));
+            qBound(1, st.get("Thumbs/genConcurrency", 2).toInt(), 8));
     // ── 设置→缩略图(处理) ──
     p.alpha     = st.get("Thumbs/alpha", true).toBool();
     p.transGrid = st.get("Thumbs/transparencyGrid", true).toBool();

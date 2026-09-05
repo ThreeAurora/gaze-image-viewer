@@ -57,10 +57,10 @@ QWidget* SettingsDialog::pageThumbs() {
     fCreate->addRow(chk("Thumbs/wholeFolder", gazeTr("为整个文件夹创建缩略图"), false));
     fCreate->addRow(gazeTr("视频提取帧位置(%,0=第 1 秒)"),
         spin("Thumbs/videoFramePct", 0, 100, 0));
-    // 2026-09-05:抽帧并发可调。机械盘上 4 路并发 ffmpeg 是寻道风暴(吞吐
-    // 实测仅 12MB/s 但盘响剧烈),2 路安静但慢——快/静矛盾交给用户裁决。
-    fCreate->addRow(gazeTr("视频抽帧并发数(机械盘建议 2,SSD 可用 4+)"),
-        spin("Thumbs/genConcurrency", 1, 8, 4));
+    // 2026-09-05:抽帧并发可调。机械盘实测对照:2 路=单卡 63~913ms,4 路=
+    // 2126~2716ms(4 路互抢寻道/写锁,总吞吐不升反致单卡变慢)——默认 2。
+    fCreate->addRow(gazeTr("视频抽帧并发数(机械盘建议 2,SSD 可调高)"),
+        spin("Thumbs/genConcurrency", 1, 8, 2));
     root->addWidget(group(gazeTr("创建"), fCreate));
 
     // 分组"处理"
