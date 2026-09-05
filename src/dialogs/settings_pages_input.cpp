@@ -262,17 +262,17 @@ QWidget* SettingsDialog::pageBrowser() {
     fPrev->addRow(gazeTr("预览背景色"),
                   colorPick("Browser/previewBackColor", Theme::T("#000000", "#FFFFFF")));
     fPrev->addRow(chk("Browser/showRating", gazeTr("显示颜色标记"), true));
-    // #111(用户 2026-08-31):文本/PDF 预览单独成开关且默认关,打勾才预览。
-    // 长文本另按"行数 + 每行字符数"截断,上限与实测依据见 textlimit.h。
+    // #111(用户 2026-08-31):文本/PDF 预览单独成开关。2026-09-05 用户令:
+    // 文本预览改为默认开;长文本仍按"行数 + 每行字符数"截断(textlimit.h)。
     fPrev->addRow(chk("Preview/previewTxt",
-                      gazeTr("预览 txt 文本文件内容(超长自动截断)"), false));
-    // #240:txt 自动换行与 MD 渲染样式独立开关(右键文本预览同样可切)
+                      gazeTr("预览 txt 文本文件内容(超长自动截断)"), true));
+    // #240:txt 自动换行独立开关(右键文本预览同样可切)
     fPrev->addRow(chk("Preview/textWrap",
                       gazeTr("文本预览自动换行(关闭则长行横向滚动)"), true));
+    // 2026-09-05 用户令:「以 MD 格式预览」与「按渲染样式展示」两个开关重复,
+    // 文案合并为一个;渲染样式仍是默认行为,想看纯文本用右键菜单切(键保留)。
     fPrev->addRow(chk("Preview/showMd",
-                      gazeTr("以 MD 格式预览 Markdown 文件(超长自动截断)"), false));
-    fPrev->addRow(chk("Preview/mdRenderStyle",
-                      gazeTr("Markdown 按渲染样式展示(关闭则当纯文本)"), true));
+                      gazeTr("预览 Markdown 文件(渲染样式展示,超长自动截断)"), false));
     // PDF 用随 Gaze 分发的内置 Ghostscript(gs/),不再要求系统安装(#110)
     fPrev->addRow(chk("Preview/showPdf", gazeTr("预览 PDF 文档(内置 Ghostscript 渲染)"), false));
     root->addWidget(group(gazeTr("预览"), fPrev));
