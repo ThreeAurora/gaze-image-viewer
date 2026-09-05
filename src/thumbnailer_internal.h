@@ -19,6 +19,8 @@
 #include <QString>
 #include <QImage>
 #include <QThread>
+#include <QThreadPool>
+#include <QCoreApplication>
 #include <QPainter>
 #include <QSqlDatabase>
 #include <QSqlQuery>
@@ -78,13 +80,40 @@ inline QSqlDatabase threadDb(int cacheMB) {
                 // (fastScanDir 对规范形 "G:/" 再补分隔符的连锁),整棵根下
                 // 子树都带连体首分隔符;不迁,升级后缩略图/文件夹大小缓存全
                 // 部未命中白重算。起始双斜杠是 UNC 头,不动;同文件新旧两形态
-                // 都在时 UPDATE OR REPLACE 合并。进程级 atomic 保证只跑一次
-                static std::atomic<bool> uniSlashDone{false};
-                if (!uniSlashDone.exchange(true)) {
-                    q.exec("UPDATE OR REPLACE thumbs SET key = REPLACE(key, '//', '/') "
-                           "WHERE substr(key,1,2) <> '//' AND key LIKE '%//%'");
-                    q.exec("UPDATE OR REPLACE dirsize SET path = REPLACE(path, '//', '/') "
-                           "WHERE substr(path,1,2) <> '//' AND path LIKE '%//%'");
+                // 都在时 UPDATE OR REPLACE 合并。进程级 atomic 保证只跑一次。
+                // (2026-09-05)迁移绝不在 GUI 线程跑:首次建连接的若是主线程
+                // (启动后首次选中文件夹→updateStatus→dirSizeLookup),这轮
+                // LIKE 全表扫 33.9MB 就是界面灰块卡几秒的来源——GUI 线程抢到
+                // 头名时把活转给全局池,自己直接用连接(幂等 REPLACE,晚做无碍)。
+                static std::atomic<int> uniSlashState{0};   // 0未做 1已认领 2完成
+                const bool onGui = QThread::currentThread()
+                                   == QCoreApplication::instance()->thread();
+                if (uniSlashState.load(std::memory_order_acquire) != 2) {
+                    if (uniSlashState.exchange(1) == 0) {
+                        if (onGui) {
+                            // QSqlDatabase 连接只能在建它的线程用,后台任务
+                            // 自建自用(threadDb 按线程取连接);迁移是幂等的
+                            // REPLACE,晚几秒无碍。
+                            QThreadPool::globalInstance()->start([]() {
+                                QSqlDatabase mdb = threadDb(
+                                    AppSettings::instance()
+                                        .get("Cache/dbCacheMB", 64).toInt());
+                                if (!mdb.isOpen()) { uniSlashState.store(2); return; }
+                                QSqlQuery mq(mdb);
+                                mq.exec("UPDATE OR REPLACE thumbs SET key = REPLACE(key, '//', '/') "
+                                        "WHERE substr(key,1,2) <> '//' AND key LIKE '%//%'");
+                                mq.exec("UPDATE OR REPLACE dirsize SET path = REPLACE(path, '//', '/') "
+                                        "WHERE substr(path,1,2) <> '//' AND path LIKE '%//%'");
+                                uniSlashState.store(2, std::memory_order_release);
+                            });
+                        } else {
+                            q.exec("UPDATE OR REPLACE thumbs SET key = REPLACE(key, '//', '/') "
+                                   "WHERE substr(key,1,2) <> '//' AND key LIKE '%//%'");
+                            q.exec("UPDATE OR REPLACE dirsize SET path = REPLACE(path, '//', '/') "
+                                   "WHERE substr(path,1,2) <> '//' AND path LIKE '%//%'");
+                            uniSlashState.store(2, std::memory_order_release);
+                        }
+                    }
                 }
             }
         }

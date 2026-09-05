@@ -249,12 +249,23 @@ void PreviewPanel::ensureVideoWidget() {
                       .arg(initSw.elapsed()));
 }
 
-// 预热媒体栈:QMediaPlayer/QVideoWidget 的首次创建同步且重(日志实测 3~4 秒,
-// 全在 GUI 线程)。主窗 show 后调用,把这笔开销从"点击树里首项为视频的文件夹/
-// 启动恢复预览"的路径上挪走。已建好则瞬间返回,重复调用无害。
+// 预热媒体栈(2026-09-05 重做):QMediaPlayer/QVideoWidget 的首次创建同步且重
+// (日志实测 2~4 秒),大头是 FFmpeg 后端 DLL(66MB avcodec)的首载——LoadLibrary
+// 是进程级的,在**任何**线程建一次播放器,DLL 就驻留全程。所以这笔账改在
+// 全局池线程付:临时实例走完一生即毁,GUI 线程从此不在启动期被冻结
+// (过去同步预热把主线程钉住 2.2 秒,文件页定格在半成品帧上——用户报的
+// "启动灰块卡几秒")。真需要 player 时(点视频/恢复视频)setupPlayer 现场
+// 建,只剩管线初始化。重复调用无害。
 void PreviewPanel::warmUp() {
-    setupPlayer();
-    ensureVideoWidget();
+    static std::atomic<bool> dllWarmed{false};
+    if (!dllWarmed.exchange(true)) {
+        QThreadPool::globalInstance()->start([]() {
+            QMediaPlayer probe;          // 无 parent:建、毁都在本池线程
+            QAudioOutput out;
+            probe.setAudioOutput(&out);
+        });
+    }
+    ensureVideoWidget();   // 实测 0ms,轻量,主线程直接做
 }
 
 void PreviewPanel::showAudio(const QString& path) {
