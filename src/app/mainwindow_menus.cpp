@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include "fastsearch.h"   // #16 文件极速搜索(NTFS MFT 直读)
 #include "foldertree.h"
 #include "filegrid.h"
 #include "previewpanel.h"
@@ -264,6 +265,19 @@ void MainWindow::createMenubar() {
             m_imgSearchDlg = new ImageSearchDialog(this);
             connect(m_imgSearchDlg, &QDialog::finished, m_imgSearchDlg, &QDialog::deleteLater);
             m_imgSearchDlg->show();
+        });
+    // #16(2026-09-05 用户令"融入 Everything 的优点"):NTFS MFT 直读全盘
+    // 索引 + 即时文件名搜索,第一步先落"秒级全盘找文件"这个根能力
+    toolMenu->addAction(IconLib::appIcon("cmd_search"),
+        gazeTr("文件极速搜索..."), QKeySequence("Ctrl+E"), this, [this]() {
+            if (m_fastSearchDlg) {
+                m_fastSearchDlg->setWindowState(m_fastSearchDlg->windowState() & ~Qt::WindowMinimized);
+                m_fastSearchDlg->show(); m_fastSearchDlg->raise(); m_fastSearchDlg->activateWindow();
+                return;
+            }
+            m_fastSearchDlg = new FastSearchDialog(this);
+            connect(m_fastSearchDlg, &QDialog::finished, m_fastSearchDlg, &QDialog::deleteLater);
+            m_fastSearchDlg->show();
         });
     toolMenu->addAction(IconLib::appIcon("cmd_editMetadata"),
         gazeTr("缩略图数据库维护..."), this, [this]() {
