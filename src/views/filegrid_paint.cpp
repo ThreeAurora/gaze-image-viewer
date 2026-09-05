@@ -321,8 +321,19 @@ QPixmap FileGrid::iconPixmap(const FileEntry& e, int side) {
 
     QIcon icon = e.isDir ? folderIcon(side) : typeIcon(e.ext, e.path);
     QPixmap pm = icon.pixmap(side, side);
+    // #17(2026-09-05 用户令):有的 EXE 图标资源不是正方形(或画布内自带留白),
+    // 旧代码把返回的 pixmap 直接顶在左上角,看着就是"左上角一小块"。统一先
+    // 等比放缩,再画到 side×side 透明画布的**正中**:放得满=填满,放不满=原大小居中
     if (pm.width() != side || pm.height() != side)
         pm = pm.scaled(side, side, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    {
+        QPixmap canvas(side, side);
+        canvas.fill(Qt::transparent);
+        QPainter cp(&canvas);
+        cp.drawPixmap((side - pm.width()) / 2, (side - pm.height()) / 2, pm);
+        cp.end();
+        pm = canvas;
+    }
     if (e.hidden) {   // 隐藏条目图标弱化(与原实现同一 0.45 不透明度)
         QPixmap dim(pm.size());
         dim.fill(Qt::transparent);
