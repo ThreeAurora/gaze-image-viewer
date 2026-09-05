@@ -33,3 +33,20 @@ private:
     QLabel*       m_summary = nullptr;
     QHash<QString, DirStat> m_byDir;
 };
+
+// 文件夹大小缓存维护(2026-09-05 用户令:工具菜单里贴着"缩略图数据库维护"):
+// dirsize 表(path/size/basis/computed)是文件夹大小统计的落库缓存 ——
+// 列出每条:目录路径 / 缓存大小 / 记账时间 / 失效键;支持删除选中、清空、
+// 同步(移除目录已不存在的条目)。
+class DirSizeMaintenanceDialog : public QDialog {
+    Q_OBJECT
+public:
+    explicit DirSizeMaintenanceDialog(QWidget* parent = nullptr);
+
+private:
+    void reload();
+    QStringList selectedPaths() const;
+
+    QTableWidget* m_table   = nullptr;
+    QLabel*       m_summary = nullptr;
+};

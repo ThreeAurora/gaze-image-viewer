@@ -33,6 +33,7 @@ class FilmStrip;
 class SettingsDialog;      // #218 长驻工具窗(非模态单例)
 class ImageSearchDialog;
 class DbMaintenanceDialog;
+class DirSizeMaintenanceDialog;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -310,4 +311,6 @@ private:
     QPointer<QDialog> m_settingsDlg;
     QPointer<QDialog> m_imgSearchDlg;
     QPointer<QDialog> m_dbMaintDlg;
+    QPointer<QDialog> m_dirSizeMaintDlg;   // #11 文件夹大小缓存维护
+    QPointer<QDialog> m_fastSearchDlg;     // #16 NTFS 全盘极速搜索
 };

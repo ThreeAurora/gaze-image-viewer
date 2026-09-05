@@ -17,6 +17,7 @@
 #include <QInputDialog>
 #include <QLineEdit>
 #include <QFileInfo>
+#include <QDateTime>
 #include <QMessageBox>
 #include <QHeaderView>
 #include <QItemSelectionModel>
@@ -374,5 +375,124 @@ void DbMaintenanceDialog::rebuildThumbs() {
         != QMessageBox::Yes) return;
     QSqlQuery q(maintenanceDb());
     q.exec("DELETE FROM thumbs");
+    reload();
+}
+
+// ═══════════════════════════════════════════
+// 文件夹大小缓存维护(2026-09-05 用户令):dirsize 表逐条列出
+// ═══════════════════════════════════════════
+void DirSizeMaintenanceDialog::reload() {
+    QSqlDatabase d = maintenanceDb();
+    m_table->setSortingEnabled(false);
+    m_table->setRowCount(0);
+    qint64 totalBytes = 0;
+    QSqlQuery q(d);
+    int row = 0;
+    if (q.exec("SELECT path, size, computed, basis FROM dirsize ORDER BY path")) {
+        while (q.next()) {
+            const QString path = q.value(0).toString();
+            const qint64 bytes = q.value(1).toLongLong();
+            const qint64 ms    = q.value(2).toLongLong();
+            const QString basis = q.value(3).toString();
+            const int r = m_table->rowCount();
+            m_table->insertRow(r);
+            m_table->setItem(r, 0, new QTableWidgetItem(path));
+            m_table->setItem(r, 1, new BytesItem(bytes));
+            m_table->setItem(r, 2, new QTableWidgetItem(
+                QDateTime::fromMSecsSinceEpoch(ms).toString("yyyy/M/d HH:mm")));
+            // 失效键 = mtime|子项数|字节和:首段是 mtime 毫秒,细节给 tooltip
+            auto* basisIt = new QTableWidgetItem(basis.section('|', 0, 0));
+            basisIt->setToolTip(basis);
+            m_table->setItem(r, 3, basisIt);
+            totalBytes += bytes;
+            ++row;
+        }
+    }
+    QFileInfo fi(d.databaseName());
+    m_summary->setText(gazeTr(
+        "数据库:%1  ·  缓存目录:%2  ·  合计:%3")
+        .arg(fi.fileName() + QString(" (%1 MB)").arg(fi.size() / 1024 / 1024))
+        .arg(row)
+        .arg(QString::asprintf("%.2f MB", totalBytes / 1024.0 / 1024.0)));
+    m_table->setSortingEnabled(true);
+}
+
+QStringList DirSizeMaintenanceDialog::selectedPaths() const {
+    QStringList out;
+    const auto rows = m_table->selectionModel()->selectedRows(0);
+    for (const auto& idx : rows) out << idx.data().toString();
+    return out;
+}
+
+DirSizeMaintenanceDialog::DirSizeMaintenanceDialog(QWidget* parent) : QDialog(parent) {
+    setWindowTitle(gazeTr("文件夹大小数据库维护"));
+    resize(760, 540);
+    setObjectName(QStringLiteral("dbMaintDialog"));   // 与缩略图维护同一套样式
+
+    auto* root = new QVBoxLayout(this);
+    m_summary = new QLabel;
+    root->addWidget(m_summary);
+
+    m_table = new QTableWidget(0, 4);
+    m_table->setHorizontalHeaderLabels({ gazeTr("目录"), gazeTr("缓存大小"),
+                                         gazeTr("记账时间"), gazeTr("失效键(mtime)") });
+    m_table->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+    for (int c = 1; c < 4; ++c)
+        m_table->horizontalHeader()->setSectionResizeMode(c, QHeaderView::ResizeToContents);
+    m_table->verticalHeader()->setVisible(false);
+    m_table->setSelectionBehavior(QAbstractItemView::SelectRows);
+    m_table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    m_table->setSortingEnabled(true);
+    root->addWidget(m_table, 1);
+
+    auto* bar = new QHBoxLayout;
+    auto* delSel = new QPushButton(gazeTr("删除选中"));
+    auto* delAll = new QPushButton(gazeTr("清空"));
+    auto* sync   = new QPushButton(gazeTr("同步(移除已不存在的目录)"));
+    bar->addWidget(delSel);
+    bar->addWidget(delAll);
+    bar->addStretch(1);
+    bar->addWidget(sync);
+    root->addLayout(bar);
+
+    connect(delSel, &QPushButton::clicked, this, [this]() {
+        const QStringList sel = selectedPaths();
+        if (sel.isEmpty()) return;
+        QSqlDatabase d = maintenanceDb();
+        d.transaction();
+        QSqlQuery del(d);
+        del.prepare("DELETE FROM dirsize WHERE path = ?");
+        for (const QString& p : sel) { del.addBindValue(p); del.exec(); }
+        d.commit();
+        reload();
+    });
+    connect(delAll, &QPushButton::clicked, this, [this]() {
+        if (QMessageBox::question(this, gazeTr("清空"),
+                gazeTr("清空全部文件夹大小缓存?(选中目录时会自动重新统计)"))
+            != QMessageBox::Yes) return;
+        QSqlQuery q(maintenanceDb());
+        q.exec("DELETE FROM dirsize");
+        reload();
+    });
+    connect(sync, &QPushButton::clicked, this, [this]() {
+        QSqlDatabase d = maintenanceDb();
+        QStringList gone;
+        QSqlQuery q(d);
+        if (q.exec("SELECT path FROM dirsize")) {
+            while (q.next()) {
+                const QString p = q.value(0).toString();
+                if (!QFileInfo::exists(p)) gone << p;
+            }
+        }
+        d.transaction();
+        QSqlQuery del(d);
+        del.prepare("DELETE FROM dirsize WHERE path = ?");
+        for (const QString& p : gone) { del.addBindValue(p); del.exec(); }
+        d.commit();
+        QMessageBox::information(this, gazeTr("同步"),
+            gazeTr("已移除 %1 条失效目录缓存。").arg(gone.size()));
+        reload();
+    });
+
     reload();
 }

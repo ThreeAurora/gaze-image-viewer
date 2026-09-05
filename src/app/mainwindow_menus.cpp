@@ -276,6 +276,19 @@ void MainWindow::createMenubar() {
             connect(m_dbMaintDlg, &QDialog::finished, m_dbMaintDlg, &QDialog::deleteLater);
             m_dbMaintDlg->show();
         });
+    // #11(2026-09-05 用户令):文件夹大小缓存(dirsize 表)的维护入口,
+    // 与缩略图数据库维护同一套非模态单例寿命协议
+    toolMenu->addAction(IconLib::appIcon("cmd_editMetadata"),
+        gazeTr("文件夹大小数据库维护..."), this, [this]() {
+            if (m_dirSizeMaintDlg) {
+                m_dirSizeMaintDlg->setWindowState(m_dirSizeMaintDlg->windowState() & ~Qt::WindowMinimized);
+                m_dirSizeMaintDlg->show(); m_dirSizeMaintDlg->raise(); m_dirSizeMaintDlg->activateWindow();
+                return;
+            }
+            m_dirSizeMaintDlg = new DirSizeMaintenanceDialog(this);
+            connect(m_dirSizeMaintDlg, &QDialog::finished, m_dirSizeMaintDlg, &QDialog::deleteLater);
+            m_dirSizeMaintDlg->show();
+        });
     // #123:原「批量重命名...」菜单项已删 —— 该功能在 TODO_ALL §9 否决清单(@153611)。
 
     // ── 帮助(H) ──
