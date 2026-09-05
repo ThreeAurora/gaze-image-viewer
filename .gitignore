@@ -35,3 +35,6 @@ cache/
 build_qt68/cmykpyr/
 # moc 增量目录(已跟踪的旧快照除外,新生成目录不再冒头)
 build_qt68/Gaze_autogen/
+
+# 历史重写时的整树备份(backups/20260905_*),体量大且可再生成,不入库
+backups/
