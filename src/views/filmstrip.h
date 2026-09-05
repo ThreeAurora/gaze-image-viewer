@@ -70,7 +70,10 @@ public:
 
 signals:
     void jumpRequested(const QString& path);
-    void exitRequested();          // 退出全屏(右端唯一按钮,#220 起条上只留这一个)
+    void exitRequested();
+    // 2026-09-05 用户令:条上滚动 = 画廊与图片一起滚(主图跟着切,当前图经
+    // centerRow 恒在画廊中间);delta=+1 下一张 / -1 上一张
+    void stepRequested(int delta);          // 退出全屏(右端唯一按钮,#220 起条上只留这一个)
 
 protected:
     void wheelEvent(QWheelEvent* e) override;
@@ -97,10 +100,12 @@ private:
     int     m_pressRow   = -1;
     bool    m_panning    = false;
     QSet<QString> m_requested;                   // 已 enqueue 的路径(防重复入队)
+    int     m_pxAcc      = 0;                   // 触控板/高分辨率滚轮的像素累积(满 kStepPx 切一张)
     // #225/#226:全量数据源与当前文件记账;类别勾选(ini FilmStrip/show*)
     QStringList m_allPaths;
     QString     m_currentPath;
     bool        m_showImg = true;
     bool        m_showVid = true;
     bool        m_showAud = true;
+    bool        m_showOth = false;   // #228 用户令:第四类"其他"默认不开,记忆式
 };

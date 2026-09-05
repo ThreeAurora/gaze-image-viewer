@@ -43,6 +43,12 @@ void MainWindow::createFilmStrip() {
     // 右端只剩"退出全屏"一键(#220 用户令:上一个/下一个挪去屏幕左右浮动钮,
     // 适应窗口有预览右键菜单与查看器键位两处入口,条上不再重复)
     connect(m_filmStrip, &FilmStrip::exitRequested, this, [this]() { exitFullView(); });
+    // 2026-09-05 用户令:条上滚动 = 画廊与图片一起滚。走 navigateSelection 这条
+    // 与左右浮动钮/方向键完全相同的链:选区变 → 预览换图 → syncCurrent 回填,
+    // 蓝框/题注由 locateCurrent 拉回正中(当前图恒在画廊中间)
+    connect(m_filmStrip, &FilmStrip::stepRequested, this, [this](int delta) {
+        if (m_fileGrid) m_fileGrid->navigateSelection(delta);
+    });
     // 目录内容变了(增删/重载)才需要重建数据;平时只对账当前文件
     connect(m_fileGrid, &FileGrid::fileCountChanged, this, [this]() {
         m_filmDirty = true;

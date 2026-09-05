@@ -27,7 +27,8 @@ constexpr int kThumbH  = 72;      // #230:用户令"缩短",96 → 72(#220 的�
 constexpr int kGap     = 4;
 constexpr int kCaptionH = 26;     // #230:题注改 13px 纯白大字,行高放宽一档
 constexpr int kPanThresh = 6;     // 按住位移超过这个像素才算拖
-constexpr int kBtnZone   = 160;   // 右端按钮区宽(#226:图片/视频/音频三勾选钮+退出)
+constexpr int kStepPx    = 76;    // 滚动联动:像素累积满一格(缩略+间距)切一张图
+constexpr int kBtnZone   = 200;   // 右端按钮区宽(#226 三类 + #228 其他 四勾选钮 + 退出)
 // #230:非当前项图像画在格子的这个占比,当前项吃满格子 —— 不改格子尺寸,
 // centerRow/滚动数学零变动,视觉上"当前项比其余大"
 constexpr double kIdleShrink = 0.84;
@@ -200,6 +201,7 @@ FilmStrip::FilmStrip(QWidget* parent)
     m_showImg = st.get("FilmStrip/showImages", true).toBool();
     m_showVid = st.get("FilmStrip/showVideos", true).toBool();
     m_showAud = st.get("FilmStrip/showAudios", true).toBool();
+    m_showOth = st.get("FilmStrip/showOthers", false).toBool();   // 默认不开(#228)
     auto mkCat = [&](const QString& label, const QString& tip,
                      const char* key, bool* flag, int col) {
         auto* b = new QToolButton(m_btnBar);
@@ -219,6 +221,9 @@ FilmStrip::FilmStrip(QWidget* parent)
     mkCat(gazeTr("图片"), gazeTr("显示/隐藏图片"), "FilmStrip/showImages", &m_showImg, 0);
     mkCat(gazeTr("视频"), gazeTr("显示/隐藏视频"), "FilmStrip/showVideos", &m_showVid, 1);
     mkCat(gazeTr("音频"), gazeTr("显示/隐藏音频"), "FilmStrip/showAudios", &m_showAud, 2);
+    // #228(2026-09-05 用户令):补第四类"其他"(文本/文档/可执行等),默认不开,
+    // 同为记忆式(勾选落 ini)。此前"其他"类没有按钮管、恒显示,现在一并归队。
+    mkCat(gazeTr("其他"), gazeTr("显示/隐藏其他类型"), "FilmStrip/showOthers", &m_showOth, 3);
     auto mkBtn = [&](QStyle::StandardPixmap sp, const QString& tip, int c,
                      auto&& fn) {
         auto* b = new QToolButton(m_btnBar);
@@ -230,9 +235,9 @@ FilmStrip::FilmStrip(QWidget* parent)
         connect(b, &QToolButton::clicked, this, fn);
         grid->addWidget(b, 0, c);
     };
-    mkBtn(QStyle::SP_DialogCloseButton, gazeTr("退出全屏"), 3,
+    mkBtn(QStyle::SP_DialogCloseButton, gazeTr("退出全屏"), 4,
           [this] { emit exitRequested(); });
-    grid->setColumnStretch(4, 1);   // 多余宽度吃在尾列:按钮组靠左贴齐
+    grid->setColumnStretch(5, 1);   // 多余宽度吃在尾列:按钮组靠左贴齐
 
     m_caption = new QLabel(this);
     m_caption->setObjectName("filmCaption");   // #230:题注纯白大字,样式在应用级 QSS
@@ -287,7 +292,7 @@ void FilmStrip::refilter() {
         case CatImage: if (!m_showImg) continue; break;
         case CatVideo: if (!m_showVid) continue; break;
         case CatAudio: if (!m_showAud) continue; break;
-        default: break;
+        case CatOther: if (!m_showOth) continue; break;   // #228:第四类归队
         }
         shown << p;
     }
@@ -372,18 +377,28 @@ void FilmStrip::requestVisibleThumbs() {
     }
 }
 
+// 2026-09-05 用户令:条上滚动不再只滚画廊 —— 画廊与图片一起滚:每滚一格
+// 发 stepRequested 给主窗(navigateSelection 同一条链),选区一变,预览换图,
+// 蓝框经 syncCurrent→centerRow 拉回正中,当前图恒在画廊中间。触控板像素
+// 滚动按累积 76px(=一格)折算一步,保留平滑手感。
 void FilmStrip::wheelEvent(QWheelEvent* e) {
-    QScrollBar* h = horizontalScrollBar();
-    if (!e->pixelDelta().isNull()) {          // 触控板:平滑跟手
+    if (!e->pixelDelta().isNull()) {
         const QPoint d = e->pixelDelta();
-        h->setValue(h->value() - (d.x() != 0 ? d.x() : d.y()));
+        m_pxAcc += (d.x() != 0 ? d.x() : d.y());
     } else {
         const int dy = e->angleDelta().y();
-        const int notches = dy / 120;
-        if (notches != 0)                     // 滚轮:一格滚两张
-            h->setValue(h->value() - notches * (kThumbW + kGap) * 2);
-        else                                  // 高分辨率滚轮
-            h->setValue(h->value() - dy / 4);
+        if (dy % 120 == 0 && dy != 0) {
+            const int notches = dy / 120;
+            for (int i = 0; i < qAbs(notches); ++i) emit stepRequested(notches > 0 ? -1 : 1);
+            e->accept();
+            return;
+        }
+        m_pxAcc += -dy / 4;   // 高分辨率滚轮
+    }
+    while (qAbs(m_pxAcc) >= kStepPx) {
+        const int s = m_pxAcc > 0 ? -1 : 1;
+        m_pxAcc -= s * kStepPx;
+        emit stepRequested(s);
     }
     e->accept();
 }
