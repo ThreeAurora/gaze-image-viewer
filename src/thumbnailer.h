@@ -4,6 +4,7 @@
 #include <QThreadPool>
 #include <QMutex>
 #include <QSqlDatabase>
+#include <atomic>
 #include <unordered_map>
 #include <unordered_set>
 #include <queue>
@@ -17,6 +18,12 @@ public:
 
     void enqueue(const QString& filePath, int size, bool isVideo);
     void clearQueue();
+    // 退出收口(2026-09-05 抓冻结现场定案):必须在 QCoreApplication 仍存活时
+    // (aboutToQuit)调用——置关停旗+清队列+等在跑任务收尾。晚于此点(静态析构)
+    // 工作线程的收尾要写库/读设置,而那些服务已随 app 死亡,曾致 waitForDone
+    // 永挂(主线程卡死,WATCHDOG/WerFault 实锤)。
+    void shutdown();
+    bool isShutdown() const { return m_shutdown.load(std::memory_order_acquire); }
     QImage generate(const QString& filePath, int size, bool isVideo);
     // 缓存完整性校验(Cache/checkOnStartup):丢掉读不出来的坏条目
     void verifyCache();
@@ -95,6 +102,10 @@ private:
     // 任务去重：已经在队列中的 (filePath, size) 不再重复添加
     QMutex                 m_queueMutex;
     std::unordered_set<QString> m_pending;
+
+    // 关停旗(2026-09-05):aboutToQuit 置位后 enqueue/generate/ThumbTask 全部
+    // 快速返回,配合 clear+waitForDone 保证退出有界(详见 shutdown() 注释)
+    std::atomic_bool m_shutdown{false};
 
     // 内存 LRU 缓存
     QMutex m_cacheMutex;

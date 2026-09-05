@@ -123,6 +123,7 @@ Thumbnailer::Prefs Thumbnailer::prefs() const {
 // 公开接口
 // ═══════════════════════════════════════════
 void Thumbnailer::enqueue(const QString& filePath, int size, bool isVideo) {
+    if (m_shutdown.load(std::memory_order_acquire)) return;   // 关停后不再入队
     QString ck = cacheKey(filePath, size, isVideo);
 
     // 检查内存缓存
@@ -156,10 +157,28 @@ void Thumbnailer::clearQueue() {
     m_pending.clear();
 }
 
+// 退出收口(2026-09-05):由 main.cpp 的 aboutToQuit 钩子调用——此刻
+// QCoreApplication 仍存活,在跑任务(≤4 个,各自秒级)的收尾(写库/读设置)
+// 才是安全的。若放任到静态析构才收,工作线程会在 app 死后继续跑并使用
+// 已销毁的服务(日志实证 QSqlDatabase requires a QCoreApplication ×4、
+// QMutex: destroying locked mutex),waitForDone 永挂=主线程卡死。
+void Thumbnailer::shutdown() {
+    m_shutdown.store(true, std::memory_order_release);
+    m_pool->clear();
+    {
+        QMutexLocker lk(&m_queueMutex);
+        m_pending.clear();
+    }
+    m_pool->waitForDone();
+    Logger::event(QStringLiteral("thumbnailer shutdown: queue drained"));
+}
+
 // ═══════════════════════════════════════════
 // 同步生成（后台线程调用）
 // ═══════════════════════════════════════════
 QImage Thumbnailer::generate(const QString& filePath, int size, bool isVideo) {
+    // 关停后快速返回:在跑的任务(≤4 个)此刻放弃,让退出等待收敛到秒级
+    if (m_shutdown.load(std::memory_order_acquire)) return {};
     QFileInfo fi(filePath);
     if (!fi.exists()) return {};
 
@@ -269,6 +288,7 @@ QImage Thumbnailer::generate(const QString& filePath, int size, bool isVideo) {
 // ThumbTask — QRunnable 实现
 // ═══════════════════════════════════════════
 void ThumbTask::run() {
+    if (Thumbnailer::instance().isShutdown()) return;   // 关停期不入 generate
     QImage pix = Thumbnailer::instance().generate(m_path, m_size, m_isVideo);
     if (!pix.isNull()) {
         QMetaObject::invokeMethod(

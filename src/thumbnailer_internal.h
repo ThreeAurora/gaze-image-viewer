@@ -95,6 +95,13 @@ inline QSqlDatabase threadDb(int cacheMB) {
                             // 自建自用(threadDb 按线程取连接);迁移是幂等的
                             // REPLACE,晚几秒无碍。
                             QThreadPool::globalInstance()->start([]() {
+                                // app 已死(静态析构期)就放弃迁移:此时 threadDb
+                                // → AppSettings 已不可用(实证 QSqlDatabase
+                                // requires a QCoreApplication 警告),晚做无害
+                                if (!QCoreApplication::instance()) {
+                                    uniSlashState.store(2, std::memory_order_release);
+                                    return;
+                                }
                                 QSqlDatabase mdb = threadDb(
                                     AppSettings::instance()
                                         .get("Cache/dbCacheMB", 64).toInt());

@@ -266,7 +266,14 @@ int main(int argc, char *argv[]) {
     QObject::connect(&touchTimer, &QTimer::timeout, []() { Logger::touch(); });
     touchTimer.start(3000);
     QObject::connect(&app, &QCoreApplication::aboutToQuit,
-                     []() { Logger::event(QStringLiteral("session end")); });
+                     []() {
+                         Logger::event(QStringLiteral("session end"));
+                         // 退出收口(2026-09-05):此刻 QCoreApplication 仍存活,
+                         // 缩略图工作线程的收尾(写库/读设置)才是安全的;放任到
+                         // 静态析构,曾致工作线程在 app 死后继续跑+锁着的锁被
+                         // 销毁,waitForDone 永挂=关窗后进程残留(WerFault 实锤)。
+                         Thumbnailer::instance().shutdown();
+                     });
 
     auto cliPaths = []() {
         QStringList out;
