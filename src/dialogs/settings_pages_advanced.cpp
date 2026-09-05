@@ -68,9 +68,9 @@ QWidget* SettingsDialog::pageMaintenance() {
     root->addWidget(filter);
 
     // 四列目录表:列宽可拖动,窄列中段省略
-    auto* table = new QTableWidget(0, 4);
+    auto* table = new QTableWidget(0, 5);
     table->setHorizontalHeaderLabels({gazeTr("缓存目录"),
-        gazeTr("文件"), gazeTr("元数据"),
+        gazeTr("媒体文件"), gazeTr("缩略图条目"), gazeTr("元数据"),
         gazeTr("缩略图")});
     table->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
     table->horizontalHeader()->setStretchLastSection(true);
@@ -82,7 +82,8 @@ QWidget* SettingsDialog::pageMaintenance() {
     table->setObjectName(QStringLiteral("settingsTable"));
     table->setColumnWidth(0, 260);
     table->setColumnWidth(1, 90);
-    table->setColumnWidth(2, 110);
+    table->setColumnWidth(2, 90);
+    table->setColumnWidth(3, 110);
     root->addWidget(table, 1);
 
     // 按钮组(两行)
@@ -119,15 +120,20 @@ QWidget* SettingsDialog::pageMaintenance() {
 
     auto reload = [db, summary, table, filter]() {
         QSqlDatabase d = db();
-        struct Rec { int count = 0; qint64 meta = 0; qint64 thumb = 0; };
+        struct Rec { QSet<QString> files; int thumbs = 0; qint64 meta = 0; qint64 thumb = 0; };
         QHash<QString, Rec> byDir;
         qint64 totalThumb = 0, totalMeta = 0;
         int total = 0;
         QSqlQuery q(d);
-        // 元数据字节 = key 长度 + mtime/atime 两个 double(估算)
+        // 2026-09-05 用户令:统计口径按**媒体文件路径** —— 缓存键是
+        // "媒体路径|尺寸|代际",竖线前才是媒体路径;同一媒体文件的多档
+        // 尺寸只算一个文件:"媒体文件"列=去重文件数,"缩略图条目"列=键数
         if (q.exec("SELECT key, LENGTH(png), LENGTH(key) FROM thumbs")) {
             while (q.next()) {
-                const QString p = q.value(0).toString();
+                const QString key0 = q.value(0).toString();
+                // 缓存键 = "媒体路径|尺寸|代际":截竖线前才是媒体文件路径
+                const int bar = key0.indexOf('|');
+                const QString p = bar > 0 ? key0.left(bar) : key0;
                 const qint64 thumbB = q.value(1).toLongLong();
                 const qint64 metaB = q.value(2).toLongLong() + 16;
                 totalThumb += thumbB;
@@ -137,7 +143,8 @@ QWidget* SettingsDialog::pageMaintenance() {
                 if (slash < 0) slash = p.lastIndexOf('\\');
                 QString dir = slash > 0 ? p.left(slash + 1) : p;
                 Rec& r = byDir[dir];
-                r.count += 1;
+                r.files.insert(p);
+                r.thumbs += 1;
                 r.meta += metaB;
                 r.thumb += thumbB;
             }
@@ -162,10 +169,12 @@ QWidget* SettingsDialog::pageMaintenance() {
             int r = table->rowCount();
             table->insertRow(r);
             table->setItem(r, 0, new QTableWidgetItem(row.first));
-            table->setItem(r, 1, new QTableWidgetItem(QString::number(row.second.count)));
-            table->setItem(r, 2, new QTableWidgetItem(
-                QString::asprintf("%.2f KB", row.second.meta / 1024.0)));
+            table->setItem(r, 1, new QTableWidgetItem(
+                QString::number(row.second.files.size())));
+            table->setItem(r, 2, new QTableWidgetItem(QString::number(row.second.thumbs)));
             table->setItem(r, 3, new QTableWidgetItem(
+                QString::asprintf("%.2f KB", row.second.meta / 1024.0)));
+            table->setItem(r, 4, new QTableWidgetItem(
                 QString::asprintf("%.2f KB", row.second.thumb / 1024.0)));
         }
     };
