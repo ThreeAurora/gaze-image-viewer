@@ -12,6 +12,7 @@
 #include <QFileInfo>
 #include <QPoint>
 #include <QPointer>
+#include <QThreadPool>
 #include <atomic>
 #include <memory>
 
@@ -212,6 +213,10 @@ private:
     QString m_dirSizeTarget;                          // 正在统计/已有精确值的目录
     std::shared_ptr<std::atomic_bool> m_dirSizeStop;  // 本轮取消旗(线程协同停)
     quint64 m_dirSizeRunId   = 0;    // 轮次;旧线程的迟到上报按代作废
+    // 专用单线程池(2026-09-05):全树递归统计是大 I/O 长任务,过去丢进全局池,
+    // 与缩略图缓存清扫等任务互抢,大目录一统计磁盘就满载(用户报"硬盘异响");
+    // 独占 1 线程即满足"同一时刻只跑一个统计",也不再挤压别处。
+    QThreadPool* m_dirSizePool = nullptr;
     bool    m_dirSizeRunning = false;
     bool    m_dirSizeDone    = false;  // target 已有精确值(会话内缓存)
     qint64  m_dirSizeValue   = 0;    // 精确总字节

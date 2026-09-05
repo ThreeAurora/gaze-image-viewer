@@ -64,13 +64,22 @@ namespace {
 
 constexpr qint64 kDirSizeRevalidateMs = 10 * 60 * 1000;   // 10 分钟强制复核
 
+// 父目录 mtime 的单次 stat —— 失效键的"快筛"段。NTFS 下直接子项增删/改名
+// 都会翻新父目录 mtime,所以 mtime 没变(绝大多数选中场景)就不必做下面的
+// 全目录枚举比对:过去每次选中都 entryInfoList+逐项 stat 一遍,大目录一选
+// GUI 线程就卡、磁盘就响(用户报"点个文件夹都咯吱咯吱"),先比这一段再决定
+// 要不要贵的那步。
+QString dirSizeMtimeStamp(const QString& dirPath) {
+    return QString::number(QFileInfo(dirPath).lastModified().toMSecsSinceEpoch());
+}
+
 QString dirSizeBasisKey(const QString& dirPath) {
     const QFileInfoList kids = QDir(dirPath).entryInfoList(
         QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
     qint64 bytes = 0;
     for (const QFileInfo& fi : kids)
         if (fi.isFile()) bytes += fi.size();
-    return QString::number(QFileInfo(dirPath).lastModified().toMSecsSinceEpoch())
+    return dirSizeMtimeStamp(dirPath)
          + QLatin1Char('|') + QString::number(kids.size())
          + QLatin1Char('|') + QString::number(bytes);
 }
@@ -131,6 +140,7 @@ void dirSizeStore(const QString& dirPath, qint64 bytes, const QString& basis) {
 #include <QDirIterator>
 #include <QElapsedTimer>
 #include <QThreadPool>
+#include <QThread>          // msleep:全树统计节流(2026-09-05)
 
 #include "mainwindow_internal.h"
 
@@ -312,10 +322,19 @@ void MainWindow::updateStatus() {
                 // 有旧值但可疑(键变/超龄) → 旧值先行+静默重算;
                 // 无记录 → 走 #241 的「统计中」增长
                 const DirSizeRow row = dirSizeLookup(dp);
-                const bool fresh = row.ok
-                    && row.basis == dirSizeBasisKey(dp)
-                    && QDateTime::currentMSecsSinceEpoch() - row.computed
-                           < kDirSizeRevalidateMs;
+                // 失效键快筛(2026-09-05):先只 stat 父目录 mtime 一段,mtime 与
+                // 缓存一致就当作键未变直接命中;不一致才做全目录枚举的精确比对。
+                // 全枚举是 O(子项数) 的同步磁盘活,原来每次选中都跑一遍。
+                bool fresh = false;
+                if (row.ok && QDateTime::currentMSecsSinceEpoch() - row.computed
+                                  < kDirSizeRevalidateMs) {
+                    if (row.basis.section(QLatin1Char('|'), 0, 0)
+                        == dirSizeMtimeStamp(dp)) {
+                        fresh = true;                       // mtime 未变:免全枚举
+                    } else if (row.basis == dirSizeBasisKey(dp)) {
+                        fresh = true;                       // mtime 变了但键其实没变
+                    }
+                }
                 if (fresh) {
                     ss = row.size;
                     sizeText = formatSize(ss);
@@ -375,11 +394,20 @@ void MainWindow::startDirSizeRun(const QString& path, qint64 staleSeed) {
     m_dirSizeStaleValue = quiet ? qMax<qint64>(0, staleSeed) : 0;
     m_dirSizePartial = quiet ? m_dirSizeStaleValue : 0;
     QPointer<MainWindow> self(this);
-    QThreadPool::globalInstance()->start([self, path, stop, runId, quiet]() {
+    if (!m_dirSizePool) {
+        m_dirSizePool = new QThreadPool(this);
+        m_dirSizePool->setMaxThreadCount(1);   // 统计永远串行,不与全局池互抢
+    }
+    m_dirSizePool->start([self, path, stop, runId, quiet]() {
         qint64 sz = 0;
         QElapsedTimer t; t.start();
         qint64 lastPost = 0;
         bool stopped = false;
+        // 节流(2026-09-05):每 512 项让出 1ms。统计是后台静默活,晚几秒无所谓;
+        // 不节流时全树扫描把磁盘队列打满,缩略图/预览的读盘全被拖慢(用户报
+        // "视频缩略图越来越慢+硬盘异响"的主要推手之一)。
+        constexpr int kYieldEvery = 512;
+        int sinceYield = 0;
         QDirIterator it(path, QDir::Files | QDir::NoDotAndDotDot,
                         QDirIterator::Subdirectories);
         while (it.hasNext()) {
@@ -387,6 +415,10 @@ void MainWindow::startDirSizeRun(const QString& path, qint64 staleSeed) {
             it.next();
             const QFileInfo fi = it.fileInfo();
             if (fi.isFile()) sz += fi.size();
+            if (++sinceYield >= kYieldEvery) {
+                sinceYield = 0;
+                QThread::msleep(1);
+            }
             // 静默重校验不报中途进度:旧值还在状态栏稳稳挂着,免得数字跳回「统计中」
             if (!quiet && t.elapsed() - lastPost >= 24) {
                 lastPost = t.elapsed();
