@@ -180,7 +180,40 @@ void FileGrid::setHovered(int idx) {
     if (idx == m_hoverIdx) return;
     if (m_hoverIdx >= 0) m_canvas->update(cardRect(m_hoverIdx).adjusted(-4, -4, 4, 4));
     m_hoverIdx = idx;
-    if (idx >= 0) m_canvas->update(cardRect(idx).adjusted(-4, -4, 4, 4));
+    if (idx >= 0) {
+        m_canvas->update(cardRect(idx).adjusted(-4, -4, 4, 4));
+        // #10(2026-09-05 用户令):悬停到文件夹时它的"大小"不能再是 0KB ——
+        // 向主窗要统计值(库/缓存命中即时回,否则后台算);同一目录只发一次
+        if (m_entries[idx].isDir
+            && !m_dirSizes.contains(m_entries[idx].path)
+            && !m_dirSizeAsked.contains(m_entries[idx].path)) {
+            m_dirSizeAsked.insert(m_entries[idx].path);
+            emit dirSizeRequested(m_entries[idx].path);
+        }
+    }
+}
+
+// 大小列/详细行/悬浮提示共用的文案:目录=统计值(未知则"统计中…"),文件=常规
+QString FileGrid::entrySizeText(const FileEntry& e) const {
+    if (!e.isDir)
+        return m_sizeBytes ? QString::number(e.size) + QLatin1String(" B")
+                           : formatSize(e.size);
+    const auto it = m_dirSizes.constFind(e.path);
+    if (it != m_dirSizes.constEnd())
+        return m_sizeBytes ? QString::number(*it) + QLatin1String(" B")
+                           : formatSize(*it);
+    return gazeTr("统计中…");
+}
+
+// 主窗统计完成回填:定点重绘该行(统计中的字样换成了真值)
+void FileGrid::setDirSize(const QString& dirPath, qint64 bytes) {
+    m_dirSizes.insert(dirPath, bytes);
+    m_dirSizeAsked.insert(dirPath);
+    if (m_dirSizes.size() > 400) m_dirSizes.clear();   // 会话封顶,防无限涨
+    const int i = m_pathRow.value(dirPath, -1);
+    if (i < 0) return;
+    ensureGeometry();
+    m_canvas->update(cardRect(i));
 }
 
 // 悬停提示按需生成(原实现每建一张卡就拼一次日期串,滚动时纯浪费)
@@ -198,7 +231,7 @@ QString FileGrid::tipFor(int idx) const {
         + (birth.isValid() ? birth.toString("yyyy/MM/dd - HH:mm:ss") : dash) + "\n"
         + gazeTr("修改: ")   // 修改:
         + (mod.isValid() ? mod.toString("yyyy/MM/dd - HH:mm:ss") : dash) + "\n"
-        + (m_sizeBytes ? QString::number(e.size) + " B" : formatSize(e.size));
+        + entrySizeText(e);   // #10:目录大小走统计
 }
 
 // 单击/多选语义(与原 FileCard::clicked → onCardClicked 完全一致)

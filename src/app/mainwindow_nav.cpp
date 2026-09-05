@@ -462,6 +462,66 @@ void MainWindow::applyDirSizeDone(const QString& path, quint64 runId,
     updateStatus();
 }
 
+// ── #10 悬停文件夹大小(2026-09-05 用户令):文件页里悬停到文件夹,大小列
+// 不再恒 0KB —— 库/会话缓存命中即时回;否则进共享单线程统计池串行算,
+// 算完回填缓存 + dirsize 库 + 网格定点重绘。与选中统计共用节流纪律
+// (每 512 项让出 1ms),悬停一次只带起一个目录,不会形成全盘扫描风暴。
+void MainWindow::onGridDirSizeRequested(const QString& path) {
+    if (m_gridDirSizes.contains(path)) {
+        m_fileGrid->setDirSize(path, m_gridDirSizes.value(path));
+        return;
+    }
+    if (m_gridDirPending.contains(path)) return;
+    const DirSizeRow row = dirSizeLookup(path);
+    bool fresh = false;
+    if (row.ok && QDateTime::currentMSecsSinceEpoch() - row.computed
+                                  < kDirSizeRevalidateMs) {
+        // 与选中统计同一套失效键快筛:mtime 段一致就免全枚举
+        if (row.basis.section(QLatin1Char('|'), 0, 0) == dirSizeMtimeStamp(path)
+            || row.basis == dirSizeBasisKey(path))
+            fresh = true;
+    }
+    if (fresh) {
+        m_gridDirSizes.insert(path, row.size);
+        if (m_gridDirSizes.size() > 256) m_gridDirSizes.clear();
+        m_fileGrid->setDirSize(path, row.size);
+        return;
+    }
+    if (m_gridDirPending.size() > 32) return;   // 积压上限:悬停刷新快,旧的下轮再说
+    m_gridDirPending.insert(path);
+    if (!m_dirSizePool) {
+        m_dirSizePool = new QThreadPool(this);
+        m_dirSizePool->setMaxThreadCount(1);
+    }
+    QPointer<MainWindow> self(this);
+    m_dirSizePool->start([self, path]() {
+        qint64 sz = 0;
+        QElapsedTimer t; t.start();
+        constexpr int kYieldEvery = 512;
+        int sinceYield = 0;
+        QDirIterator it(path, QDir::Files | QDir::NoDotAndDotDot,
+                        QDirIterator::Subdirectories);
+        while (it.hasNext()) {
+            it.next();
+            const QFileInfo fi = it.fileInfo();
+            if (fi.isFile()) sz += fi.size();
+            if (++sinceYield >= kYieldEvery) {
+                sinceYield = 0;
+                QThread::msleep(1);   // 与选中统计同款节流:别把磁盘队列打满
+            }
+            Q_UNUSED(t);
+        }
+        QMetaObject::invokeMethod(self, [self, path, sz]() {
+            if (!self) return;
+            self->m_gridDirPending.remove(path);
+            self->m_gridDirSizes.insert(path, sz);
+            if (self->m_gridDirSizes.size() > 256) self->m_gridDirSizes.clear();
+            dirSizeStore(path, sz, dirSizeBasisKey(path));
+            if (self->m_fileGrid) self->m_fileGrid->setDirSize(path, sz);
+        }, Qt::QueuedConnection);
+    });
+}
+
 void MainWindow::onSelectionChanged(const QString &path) {
     m_currentFile = path;
     if (m_slideshow && path.isEmpty()) toggleSlideshow();

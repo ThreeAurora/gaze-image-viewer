@@ -172,8 +172,7 @@ void FileGrid::paintCard(QPainter& p, int idx, const QRect& r) {
         f.setPixelSize(m_viewMode == VM_DETAILS ? 11 : 10);
         p.setFont(f);
         p.setPen(e.hidden ? QColor(C_TEXT_HIDDEN) : QColor(C_TEXT));
-        const QString sz = m_sizeBytes ? QString::number(e.size) + " B"
-                                       : formatSize(e.size);
+        const QString sz = entrySizeText(e);   // #10:目录悬停统计后不再恒 0KB
         const QString date = QDateTime::fromSecsSinceEpoch(
             static_cast<qint64>(e.mtime)).toString("yyyy/M/d HH:mm");
         const QString txt = m_viewMode == VM_DETAILS
@@ -282,8 +281,7 @@ void FileGrid::paintDetailsRow(QPainter& p, int idx, const QRect& r) {
             QString txt;
             switch (i) {
             case 0:
-                txt = m_sizeBytes ? QString::number(e.size) + QLatin1String(" B")
-                                  : formatSize(e.size);
+                txt = entrySizeText(e);   // #10:目录=统计值/统计中…
                 break;
             case 1: txt = e.isDir ? gazeTr("文件夹") : mimeType(e.ext); break;
             case 2: txt = e.ext.isEmpty() ? QString() : e.ext.mid(1).toUpper(); break;

@@ -339,6 +339,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
         if (m_filterPnl) m_filterPnl->setHitCount(m_fileGrid->fileCount());
     });
     connect(m_fileGrid, &FileGrid::selectionChanged, this, &MainWindow::onSelectionChanged);
+    // #10 悬停文件夹大小:网格悬停到目录 → 主窗回值(库/缓存/后台统计)
+    connect(m_fileGrid, &FileGrid::dirSizeRequested,
+            this, &MainWindow::onGridDirSizeRequested);
     // 反向同步:任何入口(筛选菜单/红标循环/键盘)改了 filterMode,下拉框跟着走。
     // 这个框只列 8 种"格式",而筛选菜单/红标三态键还会给出 图像(+目录)、
     // 红色… 框里没有对应项 —— 旧代码查不到就回落到 idx 0,于是网格只列

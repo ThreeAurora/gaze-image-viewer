@@ -13,6 +13,8 @@
 #include <QPoint>
 #include <QPointer>
 #include <QThreadPool>
+#include <QSet>
+#include <QHash>
 #include <atomic>
 #include <memory>
 
@@ -111,6 +113,9 @@ private:
     // #244:staleSeed ≥ 0 = 缓存库有旧值,本轮是静默重校验(不报中途进度,
     // 状态栏稳定显旧值,收尾悄悄替换)
     void startDirSizeRun(const QString& path, qint64 staleSeed = -1);
+    // #10(2026-09-05 用户令):文件页里悬停到文件夹也要出大小 —— 悬停驱动,
+    // 一次只统计一个目录(缓存/库命中即时回,否则进共享统计池串行算)
+    void onGridDirSizeRequested(const QString& path);
     void cancelDirSizeRun();                     // 不再看单目录时停旧统计
     void applyDirSizeProgress(const QString& path, quint64 runId, qint64 bytes);  // 线程中途上报
     void applyDirSizeDone(const QString& path, quint64 runId, qint64 bytes);      // 线程收尾
@@ -217,6 +222,8 @@ private:
     // 与缩略图缓存清扫等任务互抢,大目录一统计磁盘就满载(用户报"硬盘异响");
     // 独占 1 线程即满足"同一时刻只跑一个统计",也不再挤压别处。
     QThreadPool* m_dirSizePool = nullptr;
+    QHash<QString,qint64> m_gridDirSizes;   // #10 悬停统计的会话缓存(path→字节)
+    QSet<QString>         m_gridDirPending; // 在途去重(网格侧同样有,双保险)
     bool    m_dirSizeRunning = false;
     bool    m_dirSizeDone    = false;  // target 已有精确值(会话内缓存)
     qint64  m_dirSizeValue   = 0;    // 精确总字节

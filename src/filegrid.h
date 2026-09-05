@@ -104,6 +104,8 @@ public:
     // 拖放(#81):追加选中(不清空已有选中),用于一次拖进多个文件时全选
     void selectPathAdditive(const QString& path);
     QString pathAt(int idx) const;           // 条目序号 → 路径(越界/空白返回空)
+    // #10 悬停文件夹大小:主窗统计完成回填 → 定点重绘该行
+    void setDirSize(const QString& dirPath, qint64 bytes);
     QString currentDir() const { return m_currentDir; }   // #203 胶片条对账数据来源
     QStringList allFilePaths() const;   // #225 胶片条数据源:目录全部文件(跳目录行,按 showHidden)
     int    hitTest(const QPoint& canvasPos);  // 画布坐标 → 条目序号(拖放落点判定)
@@ -143,8 +145,14 @@ public:
     void beginInlineRename();
     void endInlineRename(bool commit);
 
+    // #10 悬停文件夹大小:网格向主窗要值,值到了 setDirSize 定点重绘
+    QString entrySizeText(const FileEntry& e) const;   // 目录=统计值/统计中…,文件=常规
+    QHash<QString,qint64> m_dirSizes;      // 已知目录大小(path→字节)
+    QSet<QString>         m_dirSizeAsked;  // 已请求过(防重复发信号)
+
 signals:
     void fileCountChanged();
+    void dirSizeRequested(const QString& dirPath);
     void selectionChanged(const QString& currentPath);
     // 注:2026-09-03 曾加过 dirSelected(鼠标单选目录卡→文件树镜像选中),
     // 用户裁决「选中文件夹时树应当留在原处,只有双击打开才同步」后整条链路已移除。
