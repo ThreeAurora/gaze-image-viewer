@@ -64,12 +64,12 @@
 // ═══════════════════════════════════════════
 // 布局方案:保存/应用窗口几何与分栏宽度
 // ═══════════════════════════════════════════
-// 可落盘的分栏宽度。查看器模式下树/网格被藏起来,实时 sizes() 是 "0,0,W",
+// 可落盘的分栏宽度。查看器模式下网格被藏起来,实时 sizes() 是 "0,W",
 // 直接写回会把"只是进了查看器"永久存成"用户把网格拖成了 0":
 // splitterArchiveUsable 判定网格=0 的存档不可信,下次启动布局再也回不来。
 // 与 panes 同一原则——存"浏览器意图",不存控件瞬时状态。
 QString MainWindow::splitterCsv() const {
-    const QList<int> sz = (m_viewerMode && m_savedSplitter.size() == 3)
+    const QList<int> sz = (m_viewerMode && m_savedSplitter.size() == 2)
                         ? m_savedSplitter : m_splitter->sizes();
     QStringList out;
     for (int v : sz) out << QString::number(v);
@@ -81,8 +81,8 @@ void MainWindow::saveLayout(const QString& name) {
     s.setValue("Layout/" + name + "/geometry", saveGeometry().toHex());
     s.setValue("Layout/" + name + "/splitter", splitterCsv());
     s.setValue("Layout/" + name + "/panes", m_panesOn.join(','));
-    // dock 位置/大小/浮动形态(信息/收藏夹/筛选器);可见性仍按 panes 意图恢复
-    s.setValue("Layout/" + name + "/docks", saveState().toHex());
+    // dock 位置/大小/浮动形态(树/信息/收藏夹/筛选器);可见性仍按 panes 意图恢复
+    s.setValue("Layout/" + name + "/docks", saveState(mw_impl::kDockStateVersion).toHex());
     QStringList names = s.value("Layout/names").toStringList();
     if (!names.contains(name)) { names.append(name); s.setValue("Layout/names", names); }
     s.setValue("Layout/active", name);
@@ -120,7 +120,7 @@ void MainWindow::applyLastLayout() {
 void MainWindow::restoreDocks(const QByteArray& hex) {
     if (hex.isEmpty()) return;
     m_restoringDocks = true;
-    restoreState(QByteArray::fromHex(hex));
+    restoreState(QByteArray::fromHex(hex), mw_impl::kDockStateVersion);
     m_restoringDocks = false;
     applyPaneVisibility();
 }
@@ -254,7 +254,7 @@ void MainWindow::applyPaneVisibility() {
     // #154 全屏预览:面板意图挂起,只留画面;退出经 exitFullView 走下面正常分支还原。
     // 全屏预览期间面板开关被拨动也不破功(这里每次都会重新压回只留画面)
     if (m_fullView) {
-        if (m_treePane)    m_treePane->hide();
+        if (m_treeDock)    m_treeDock->hide();
         if (m_centerPane)  m_centerPane->hide();
         if (m_previewPane) m_previewPane->show();
         if (m_previewHdr)  m_previewHdr->hide();
@@ -266,7 +266,7 @@ void MainWindow::applyPaneVisibility() {
         statusBar()->hide();
         return;
     }
-    if (m_treePane)    m_treePane->setVisible(paneOn("tree") && !m_viewerMode);
+    if (m_treeDock)    m_treeDock->setVisible(paneOn("tree") && !m_viewerMode);
     if (m_centerPane)  m_centerPane->setVisible(!m_viewerMode);
     if (m_previewPane) m_previewPane->setVisible(paneOn("preview") || m_viewerMode);
     if (m_previewHdr)  m_previewHdr->setVisible(!m_viewerMode);
@@ -432,7 +432,7 @@ void MainWindow::toggleViewer() {
         // 清空让退出走存档恢复(见退出分支)
         if (isVisible()) m_savedSplitter = m_splitter->sizes();
         else             m_savedSplitter.clear();
-        QList<int> sz { 0, 0, width() };
+        QList<int> sz { 0, width() };
         m_splitter->setSizes(sz);
         // 进查看器:标签表跨退出保留,先丢掉文件已经不在的那几张(在浏览器里删过的)。
         // #105:索引 0 的「浏览器」标签常驻,点它回标准模式。
@@ -470,7 +470,7 @@ void MainWindow::toggleViewer() {
         // 没有可信快照(构造期直进查看器,见进入分支)时不落硬编码默认:
         // 按启动时会选的同一份存档恢复(followLast=Layout/last,否则 active 布局),
         // 独立双击图片退回浏览器,分栏就是用户保存的那套
-        if (m_savedSplitter.size() == 3) {
+        if (m_savedSplitter.size() == 2) {
             m_splitter->setSizes(m_savedSplitter);
         } else {
             QSettings s = mw_impl::appSettings();
@@ -509,7 +509,7 @@ void MainWindow::toggleFullView() {
     showFullScreen();
     applyFullViewChrome();
     applyPaneVisibility();
-    QList<int> sz { 0, 0, width() };
+    QList<int> sz { 0, width() };
     m_splitter->setSizes(sz);
 }
 
@@ -521,7 +521,7 @@ void MainWindow::exitFullView() {
     m_fullView = false;
     if (isFullScreen()) setWindowState(m_preFullViewState);
     applyPaneVisibility();
-    if (m_fullViewSplitter.size() == 3)
+    if (m_fullViewSplitter.size() == 2)
         m_splitter->setSizes(m_fullViewSplitter);
     applyFullViewChrome();
     updateFilmStrip(nullptr);   // #220:退出当场收掉胶片条与左右浮动钮,不等下一次鼠标移动

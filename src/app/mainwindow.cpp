@@ -185,20 +185,28 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     // 分割器,原内联表是它的逐字子集(#89 收敛时删)
     ml->addWidget(m_splitter, 1);
 
-    // 树面板:"文件夹"标题条 + FolderTree(标题条右侧 X 关闭)
+    // 树面板(已 Dock 化):"文件夹"标题条当 dock 标题条,FolderTree 为内容。
+    // 树进 dock 体系后,收藏夹/筛选器/信息才能拖到它的同区正下方自由拼列
     auto* treePane = new QWidget;
-    m_treePane = treePane;
     treePane->setObjectName("treePane");   // 底色见应用级 QSS(#89 收敛)
     auto* tv = new QVBoxLayout(treePane);
     tv->setContentsMargins(0, 0, 0, 0);
     tv->setSpacing(0);
-    tv->addWidget(createPaneHeader(gazeTr("文件夹"), "tree"));
 
     m_folderTree = new FolderTree;
     m_folderTree->setMinimumWidth(160);
     // 树点击导航经包装函数:标记来源,让 navigateTo 不把焦点从树抢回网格
     connect(m_folderTree, &FolderTree::folderSelected, this, &MainWindow::onTreeFolderSelected);
     tv->addWidget(m_folderTree, 1);
+
+    m_treeDock = new QDockWidget(gazeTr("文件夹树"), this);
+    m_treeDock->setObjectName("tree");     // saveState 按名字匹配
+    // 不给 Closable:关闭只走自绘标题条的 X(setPaneVisible 单一出口,意图不脱节)
+    m_treeDock->setFeatures(QDockWidget::DockWidgetMovable
+                            | QDockWidget::DockWidgetFloatable);
+    m_treeDock->setTitleBarWidget(createPaneHeader(gazeTr("文件夹"), "tree"));
+    m_treeDock->setWidget(treePane);
+    addDockWidget(Qt::LeftDockWidgetArea, m_treeDock);
 
     // ── #243 收藏夹面板(已 Dock 化):数据真源 = m_favPaths(Favorites/paths),
     //   面板只管显示与交互。容器保留(header 搬去当 dock 标题条,容器只装面板),
@@ -293,7 +301,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     // QLineEdit 头上,总账不变;且树在挂载前无父,applyPaneVisibility 的
     // setVisible(true) 会把它当独立顶层窗口 show(原生窗口创建 196~272ms,
     // 即 #207 记录过的无父闪窗病)。见 todo.md §8.ak 全套分账数据。
-    m_splitter->addWidget(treePane);
     Logger::boot("ctor:tree");
 
     auto *centerPanel = new QWidget;
@@ -420,10 +427,13 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     m_infoDock->setTitleBarWidget(createPaneHeader(gazeTr("信息"), "info"));
     m_infoDock->setWidget(m_infoPane);
     addDockWidget(Qt::RightDockWidgetArea, m_infoDock);
-    // 三个 dock 的默认体量:无存档时别让 Qt 平分窗口把网格压扁(有存档时
+    // 四个 dock(树/收藏夹/筛选器/信息)自由拼装:嵌套开启后同区可并排,
+    // 收藏夹拖到树正下方、信息并入同列都靠同区竖排/嵌套实现
+    setDockNestingEnabled(true);
+    // 无存档时的默认体量:别让 Qt 平分窗口把网格压扁(有存档时
     // restoreState 覆盖这里的值)
-    resizeDocks({m_favDock, m_filterDock}, {180, 180}, Qt::Horizontal);
-    resizeDocks({m_favDock, m_filterDock}, {260, 220}, Qt::Vertical);
+    resizeDocks({m_treeDock, m_favDock, m_filterDock}, {200, 180, 180}, Qt::Horizontal);
+    resizeDocks({m_treeDock, m_favDock, m_filterDock}, {520, 240, 200}, Qt::Vertical);
     resizeDocks({m_infoDock}, {260}, Qt::Horizontal);
     resizeDocks({m_infoDock}, {280}, Qt::Vertical);
     // 浮动成独立窗口后,系统标题栏的 X 直接 hide dock、绕过 setPaneVisible:
@@ -441,12 +451,12 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     dockCloseGuard(m_favDock, "favorites");
     dockCloseGuard(m_filterDock, "filter");
     dockCloseGuard(m_infoDock, "info");
+    dockCloseGuard(m_treeDock, "tree");
 
     m_splitter->addWidget(previewPane);
-    // 伸展策略:树/预览固定,网格吃掉窗口增量大头(否则最大化后列数铺不满)
-    m_splitter->setStretchFactor(0, 0);
-    m_splitter->setStretchFactor(1, 1);
-    m_splitter->setStretchFactor(2, 0);
+    // 伸展策略:预览固定,网格吃掉窗口增量大头(否则最大化后列数铺不满)
+    m_splitter->setStretchFactor(0, 1);
+    m_splitter->setStretchFactor(1, 0);
     m_splitter->setSizes(mw_impl::defaultSplitterSizes());
     Logger::boot("ctor:preview");
 
@@ -665,10 +675,10 @@ void MainWindow::closeEvent(QCloseEvent* event) {
     // 面板意图(m_panesOn)而非控件实时可见性:查看器模式临时藏了树/网格,
     // 用实时可见性落盘会把"只是进了查看器"误存成"用户关掉了面板"
     s.setValue("Layout/last/panes", m_panesOn.join(','));
-    // dock(信息/收藏夹/筛选器)的位置/大小/浮动形态:saveState 全量序列化。
+    // dock(树/信息/收藏夹/筛选器)的位置/大小/浮动形态:saveState 全量序列化。
     // 存档里的 dock 可见性不作数 —— 启动时 restorePanes→applyPaneVisibility
     // 按意图统一纠正,查看器模式下退出也不会把"临时藏起"存成"用户关掉"
-    s.setValue("Layout/last/docks", saveState().toHex());
+    s.setValue("Layout/last/docks", saveState(mw_impl::kDockStateVersion).toHex());
     // 由 Gaze 拉起的万象图搜服务:按设置决定是否随 Gaze 退出一起结束
     if (ImgSearch::servicePid() > 0
         && AppSettings::instance().get("ImgSearch/killOnExit", false).toBool())

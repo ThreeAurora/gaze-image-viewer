@@ -253,7 +253,7 @@ private:
     QLabel*             m_dragHint = nullptr;   // 拖动时跟随光标的动作提示(隐藏态)
     bool   m_viewerNoSync = false;       // 进查看器时不要就地改标签(由"开新标签"自己追加)
     bool m_viewerMode = false; // 查看器(单图)模式
-    QWidget* m_treePane = nullptr;    // 树面板(查看器模式隐藏)
+    QDockWidget* m_treeDock = nullptr;  // objectName="tree" → 左停靠区(收藏夹/筛选器/信息可拖其正下方自由拼列)
     QWidget* m_centerPane = nullptr;  // 网格面板(查看器模式隐藏)
     QWidget* m_previewPane = nullptr; // 预览面板包装(标题条 + PreviewPanel)
     QWidget* m_previewHdr = nullptr;  // 预览标题条(查看器模式下隐藏,单图不需要)

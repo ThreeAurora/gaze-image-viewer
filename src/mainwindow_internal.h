@@ -77,12 +77,12 @@ inline QString filterModeName(int mode) {
     return QString();
 }
 
-// 存档分栏是否可信。顺序固定:0=树 1=网格 2=预览。
-// 树/预览可以是 0 —— 那是用户用面板标题条 X 关面板的合法意图(见 kPanes);
+// 存档分栏是否可信。顺序固定:0=网格 1=预览(树已 Dock 化,不进分栏器)。
+// 预览可以是 0 —— 那是用户用面板标题条 X 关面板的合法意图(见 kPanes);
 // 网格不在可关面板之列,它等于 0 只可能是"在查看器模式里退出"留下的
-// (toggleViewer 把 sizes 设成 {0,0,W}),这种存档回用会把布局永久锁死。
+// (toggleViewer 把 sizes 设成 {0,W}),这种存档回用会把布局永久锁死。
 inline bool splitterArchiveUsable(const QList<int>& sz) {
-    return sz.size() == 3 && sz[0] >= 0 && sz[1] > 0 && sz[2] >= 0;
+    return sz.size() == 2 && sz[0] > 0 && sz[1] >= 0;
 }
 
 // 解析 "a,b,c" 分栏存档;任一格不是整数即视为不可用
@@ -103,8 +103,12 @@ inline QList<int> defaultSplitterSizes() {
     const QList<int> saved = parseSplitterSizes(
         appSettings().value("Layout/last/splitter").toString());
     if (splitterArchiveUsable(saved)) return saved;
-    return {270, 570, 660};   // 从未保存过布局时的出厂兜底
+    return {900, 600};   // 从未保存过布局时的出厂兜底
 }
+
+// dock 布局存档(saveState/restoreState)的版本号。结构变化(树 Dock 化)时
+// +1:旧存档版本不匹配整体作废,四个 dock 回到出厂默认位,避免半套旧位置
+constexpr int kDockStateVersion = 2;
 
 // 路径显示/内部规范形:
 //   内部一律用 '/' 且不带尾斜杠(历史栈 / lastDir / Browser/lastFile 比较都用它),
