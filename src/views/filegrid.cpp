@@ -54,8 +54,6 @@
 #include "filegrid_internal.h"
 
 FileGrid::FileGrid(QWidget* parent) : QScrollArea(parent) {
-    setStyleSheet(QString::fromUtf8("QScrollArea{background:%1;border:none;}")
-                      .arg(C_CONTENT));
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     // 与 XnView 一致：即使内容少于一页也保留竖向滚动条，无法拖动时显示为整条长拇指
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
@@ -80,7 +78,6 @@ FileGrid::FileGrid(QWidget* parent) : QScrollArea(parent) {
     }
 
     m_canvas = new FileCanvas(this);
-    m_canvas->setStyleSheet(QString::fromUtf8("background:%1;").arg(C_CONTENT));
     setWidget(m_canvas);
 
     connect(verticalScrollBar(), &QScrollBar::valueChanged,
@@ -250,10 +247,8 @@ void FileGrid::refreshCurrentDir() {
     if (!m_currentDir.isEmpty()) loadDirectory(m_currentDir);
 }
 
-// 主题切换:画布背景是构造期内联样式表(全局 QSS 刷新覆盖不到),按新色重灌 + 重绘
+// 主题切换:静态底色已收敛进应用级 QSS,这里只重绘自绘缓存色(卡片笔刷等)
 void FileGrid::refreshThemeColors() {
-    if (m_canvas)
-        m_canvas->setStyleSheet(QString::fromUtf8("background:%1;").arg(C_CONTENT));
     refreshView();
 }
 

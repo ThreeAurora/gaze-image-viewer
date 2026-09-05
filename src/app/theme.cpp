@@ -37,7 +37,7 @@ void applyLive() {
 }
 
 QString appQss() {
-    // 占位符按 %1..%24 顺序逐个 .arg:单个 arg() 每次替换最小编号占位符,
+    // 占位符按 %1..%25 顺序逐个 .arg:单个 arg() 每次替换最小编号占位符,
     // 取值全是 #hex,不含 %N 字样,链式安全
     return QStringLiteral(
         "QWidget {"
@@ -306,6 +306,66 @@ QString appQss() {
         "QMessageBox QPushButton:hover {"
         "  background: %17; border-color: %5;"
         "}"
+        // ── #89 收敛(批3):views 层静态样式(文件网格/查找条/重命名框/排序表头/
+        // 全屏胶片条/文件卡片)。类型选择器用自定义类名(FileGrid/FileCanvas/
+        // SortHeader/FileCard),普通容器靠 objectName。全屏胶片条与 LIVE 徽章
+        // 沿用原内联的硬编码深色(浮层,不随主题换档)。
+        "FileGrid { background: %13; border: none; }"
+        "FileCanvas { background: %13; }"
+        "QWidget#findBar {"
+        "  background: %3; border: 1px solid %4; border-radius: 4px;"
+        "}"
+        "QWidget#findBar QLineEdit {"
+        "  background: %13; color: %1; border: 1px solid %4;"
+        "  border-radius: 3px; padding: 1px 6px; selection-background-color: %5;"
+        "}"
+        "QWidget#findBar QToolButton {"
+        "  background: transparent; border: none; border-radius: 3px;"
+        "}"
+        "QWidget#findBar QToolButton:hover { background: %16; }"
+        "QWidget#findBar QToolButton:pressed { background: %4; }"
+        "QWidget#findBar QToolButton:disabled { background: transparent; }"
+        "QLabel#findInfo {"
+        "  color: %25; font-size: 12px; background: transparent; border: none;"
+        "}"
+        "QLineEdit#renameEdit {"
+        "  background: %13; color: %1; border: 1px solid %5;"
+        "  font-size: 12px; padding: 0 2px;"
+        "}"
+        // 排序表头:原内联是裸声明(背景+下边线泼给全部子孙,含列钮与垫片),
+        // 这里用 QWidget 后代选择器原样复刻,列钮规则紧随其后靠排位赢回透明底
+        "SortHeader, SortHeader QWidget {"
+        "  background: %3; border-bottom: 1px solid %4;"
+        "}"
+        "SortHeader QPushButton {"
+        "  background: transparent; color: %1; border: none;"
+        "  padding: 2px 8px; font-size: 11px; text-align: left; border-radius: 4px;"
+        "}"
+        "SortHeader QPushButton:hover { color: %1; background: %16; }"
+        // 全屏胶片条:浮层,原内联硬编码深色,不随主题
+        "QWidget#filmStrip {"
+        "  background: rgba(18,18,24,235); border: 1px solid #3A3A42; border-radius: 8px;"
+        "}"
+        "QWidget#filmStrip::viewport { background: transparent; }"
+        "QWidget#filmBtnBar QToolButton {"
+        "  background: transparent; border: none; border-radius: 4px;"
+        "  padding: 2px 6px; font-size: 11px; color: #9A9AA4;"
+        "}"
+        "QWidget#filmBtnBar QToolButton:hover { background: #3A3A42; color: #FFFFFF; }"
+        "QWidget#filmBtnBar QToolButton:checked {"
+        "  background: rgba(0,120,215,80); color: #FFFFFF;"
+        "}"
+        "QWidget#filmBtnBar QToolButton#filmClose { padding: 0; }"
+        "QLabel#filmCaption {"
+        "  background: transparent; color: #FFFFFF; font-size: 13px; font-weight: 600;"
+        "}"
+        // 文件卡片:本体透明(图片之外纯黑由卡片父级透出)
+        "FileCard { background: transparent; border: none; }"
+        "QLabel#cardThumb { background: transparent; }"
+        "QLabel#cardLiveBadge {"
+        "  background: rgba(0,0,0,150); color: #FFF; font-size: 9px; font-weight: bold;"
+        "  padding: 2px 7px; border-radius: 8px; border: 1px solid rgba(255,255,255,60);"
+        "}"
     )
         .arg(C_TEXT)
         .arg(C_WIN_BG)
@@ -330,7 +390,8 @@ QString appQss() {
         .arg(C_STATUSBAR)      // %21:状态栏底(#89 收敛自 createStatusbar 内联)
         .arg(C_TEXT_HIDDEN)    // %22:标签关闭钮常态字色(#89 收敛自 installTabCloseButton 内联)
         .arg(Theme::T("#4A4A56", "#9A9AA4"))  // %23:格式筛选框悬停描边(原内联局部双档值)
-        .arg(Theme::T("#2A2A2E", "#C9C9D1")); // %24:工具条竖分隔线(原内联局部双档值)
+        .arg(Theme::T("#2A2A2E", "#C9C9D1"))  // %24:工具条竖分隔线(原内联局部双档值)
+        .arg(C_TEXT_SUB);      // %25:查找条计数文字(#89 收敛自 filegrid_find 内联)
 }
 
 } // namespace Theme

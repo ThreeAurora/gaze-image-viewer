@@ -75,16 +75,7 @@ static QIcon whiteStdIcon(QStyle* st, QStyle::StandardPixmap sp) {
 
 void FileGrid::buildFindBar() {
     m_findBar = new QWidget(viewport());
-    m_findBar->setObjectName("findBar");
-    m_findBar->setStyleSheet(QString::fromUtf8(
-        "QWidget#findBar{background:%1;border:1px solid %2;border-radius:4px;}"
-        "QLineEdit{background:%3;color:%4;border:1px solid %2;"
-        "border-radius:3px;padding:1px 6px;selection-background-color:%5;}"
-        "QToolButton{background:transparent;border:none;border-radius:3px;}"
-        "QToolButton:hover{background:%6;}"
-        "QToolButton:pressed{background:%2;}"
-        "QToolButton:disabled{background:transparent;}")
-        .arg(C_TOOLBAR, C_SEPARATOR, C_CONTENT, C_TEXT, C_ACCENT, C_CARD_HOVER));
+    m_findBar->setObjectName("findBar");   // 样式在应用级 QSS(#89 收敛)
     auto* lay = new QHBoxLayout(m_findBar);
     lay->setContentsMargins(6, 4, 6, 4);
     lay->setSpacing(4);
@@ -113,9 +104,7 @@ void FileGrid::buildFindBar() {
     lay->addWidget(m_findEdit);
 
     m_findInfo = new QLabel(m_findBar);
-    m_findInfo->setStyleSheet(QString::fromUtf8(
-        "color:%1;font-size:12px;background:transparent;border:none;")
-        .arg(C_TEXT_SUB));
+    m_findInfo->setObjectName("findInfo");   // 样式在应用级 QSS(#89 收敛)
     m_findInfo->setAlignment(Qt::AlignCenter);
     m_findInfo->setMinimumWidth(52);
     lay->addWidget(m_findInfo);

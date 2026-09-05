@@ -166,11 +166,7 @@ private:
 
 FilmStrip::FilmStrip(QWidget* parent)
     : QListView(parent), m_model(new FilmStripModel(this)) {
-    setObjectName(QStringLiteral("filmStrip"));
-    setStyleSheet(QString::fromUtf8(
-        "QWidget#filmStrip{background:rgba(18,18,24,235);border:1px solid #3A3A42;"
-        "border-radius:8px;}"
-        "QWidget#filmStrip::viewport{background:transparent;}"));
+    setObjectName(QStringLiteral("filmStrip"));   // 样式在应用级 QSS(#89 收敛)
     setFrameShape(QFrame::NoFrame);
     setModel(m_model);
     setViewMode(QListView::IconMode);
@@ -196,12 +192,7 @@ FilmStrip::FilmStrip(QWidget* parent)
     // 三个勾选钮,勾哪类多显示哪类、ini 持久化;退出全屏照旧最右)──
     // #230:三钮与退出钮统一观感 —— 同排等高 32px、勾选态淡蓝不再整块糊底
     m_btnBar = new QWidget(this);
-    m_btnBar->setStyleSheet(QString::fromUtf8(
-        "QToolButton{background:transparent;border:none;border-radius:4px;"
-        "padding:2px 6px;font-size:11px;color:#9A9AA4;}"
-        "QToolButton:hover{background:#3A3A42;color:#FFFFFF;}"
-        "QToolButton:checked{background:rgba(0,120,215,80);color:#FFFFFF;}"
-        "QToolButton#filmClose{padding:0;}"));
+    m_btnBar->setObjectName("filmBtnBar");   // 按钮样式在应用级 QSS(#89 收敛)
     auto* grid = new QGridLayout(m_btnBar);
     grid->setContentsMargins(0, 0, 0, 0);
     grid->setSpacing(2);
@@ -244,10 +235,8 @@ FilmStrip::FilmStrip(QWidget* parent)
     grid->setColumnStretch(4, 1);   // 多余宽度吃在尾列:按钮组靠左贴齐
 
     m_caption = new QLabel(this);
+    m_caption->setObjectName("filmCaption");   // #230:题注纯白大字,样式在应用级 QSS
     m_caption->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-    // #230:题注改纯白大字(原 #8A8A94 11px 太暗太小),文件名·大小·序号一起看
-    m_caption->setStyleSheet(QString::fromUtf8(
-        "QLabel{background:transparent;color:#FFFFFF;font-size:13px;font-weight:600;}"));
     m_caption->hide();
 
     connect(horizontalScrollBar(), &QScrollBar::valueChanged, this, [this](int) {

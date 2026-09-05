@@ -47,11 +47,11 @@ static Qt::AlignmentFlag alignFlag(int v) {
 FileCard::FileCard(QWidget* parent) : QFrame(parent) {
     setMouseTracking(true);
     // 光标保持默认箭头(不用小手);卡片本体透明,图片之外纯黑
-    setStyleSheet("FileCard{background:transparent;border:none;}");
+    // 静态样式在应用级 QSS(FileCard/QLabel#cardThumb/#cardLiveBadge,#89 收敛)
 
     m_thumbLabel = new QLabel(this);
+    m_thumbLabel->setObjectName("cardThumb");
     m_thumbLabel->setAlignment(Qt::AlignCenter);
-    m_thumbLabel->setStyleSheet("background:transparent;");
 
     m_nameLabel = new QLabel(this);
     m_nameLabel->setAlignment(Qt::AlignCenter);
@@ -59,9 +59,7 @@ FileCard::FileCard(QWidget* parent) : QFrame(parent) {
 
     // LIVE 徽章:半透明黑胶囊 + 红点
     m_liveBadge = new QLabel("LIVE", this);
-    m_liveBadge->setStyleSheet(
-        "background:rgba(0,0,0,150);color:#FFF;font-size:9px;font-weight:bold;"
-        "padding:2px 7px;border-radius:8px;border:1px solid rgba(255,255,255,60);");
+    m_liveBadge->setObjectName("cardLiveBadge");
     m_liveBadge->hide();
 }
 

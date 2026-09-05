@@ -59,8 +59,7 @@ void SortHeader::resizeEvent(QResizeEvent* event) {
 
 SortHeader::SortHeader(QWidget* parent) : QWidget(parent) {
     setFixedHeight(26);
-    setStyleSheet(QString::fromUtf8("background:%1;border-bottom:1px solid %2;")
-                      .arg(C_TOOLBAR, C_SEPARATOR));
+    // 自身底色/下边线在应用级 QSS(SortHeader 规则,#89 收敛)
 
     m_layout = new QHBoxLayout(this);
     m_layout->setContentsMargins(6, 0, 6, 0);
@@ -82,14 +81,9 @@ SortHeader::SortHeader(QWidget* parent) : QWidget(parent) {
         {SORT_EXIF,   gazeTr("EXIF日期")},
     };
 
-    QString btnStyle =
-        QString::fromUtf8("QPushButton{background:transparent;color:%1;border:none;"
-        "padding:2px 8px;font-size:11px;text-align:left;border-radius:4px;}"
-        "QPushButton:hover{color:%1;background:%2;}").arg(C_TEXT, C_CARD_HOVER);
-
+    // 列钮样式在应用级 QSS(SortHeader QPushButton 规则,#89 收敛)
     for (auto& c : cols) {
         auto* btn = new QPushButton(c.text);
-        btn->setStyleSheet(btnStyle);
         btn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
         connect(btn, &QPushButton::clicked, this, [this, id = c.id]() {
             onColumnClicked(id);

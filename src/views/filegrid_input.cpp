@@ -424,9 +424,7 @@ void FileGrid::beginInlineRename() {
     m_renameIdx  = m_lastClicked;
     m_renamePath = path;
     m_renameEdit = new QLineEdit(fi.fileName(), m_canvas);
-    m_renameEdit->setStyleSheet(QString::fromUtf8(
-        "QLineEdit{background:%1;color:%2;border:1px solid %3;"
-        "font-size:12px;padding:0 2px;}").arg(C_CONTENT, C_TEXT, C_ACCENT));
+    m_renameEdit->setObjectName("renameEdit");   // 样式在应用级 QSS(#89 收敛)
     m_renameEdit->setGeometry(nameR.adjusted(-2, -2, 2, 2));
     const int dot = fi.fileName().lastIndexOf(QLatin1Char('.'));
     if (dot > 0) m_renameEdit->setSelection(0, dot);
