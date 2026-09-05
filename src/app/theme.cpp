@@ -606,6 +606,23 @@ QString appQss() {
         "  border-radius: 3px; padding: 3px 10px;"
         "}"
         "QDialog#settingsDialog QToolButton:hover { border-color: %5; }"
+        // 快捷键/维护两页的表格(对象名 settingsTable):此前没有任何规则,
+        // 表头被原生风格画成浅底,叠加全局白字 → 白底白字不可读(#18)
+        "QDialog#settingsDialog QTableWidget {"
+        "  background: %13; color: %1; border: 1px solid %4; outline: none;"
+        "  gridline-color: %4;"
+        "}"
+        "QDialog#settingsDialog QTableWidget::item"
+        "{ padding: 2px 6px; selection-background-color: %5; }"
+        "QDialog#settingsDialog QTableWidget::item:selected"
+        "{ background: %5; color: #FFFFFF; }"
+        "QDialog#settingsDialog QTableWidget QTableCornerButton::section"
+        "{ background: %3; border: none; }"
+        "QDialog#settingsDialog QTableWidget QHeaderView::section {"
+        "  background: %3; color: %1; border: none;"
+        "  border-right: 1px solid %4; border-bottom: 1px solid %4;"
+        "  padding: 4px 6px; font-size: 12px;"
+        "}"
         // 设置页内部 ID 精确规则(a=2 压过上面的类型规则);底部三钮原是
         // 每颗按钮各自灌的 btnQss,样式与对话框块不同口径(radius/内距)
         "QDialog#settingsDialog QPushButton#settingsStdBtn {"
