@@ -260,7 +260,7 @@ QWidget* SettingsDialog::pageBrowser() {
     auto* fPrev = new QFormLayout;
     fPrev->setVerticalSpacing(6);
     fPrev->addRow(gazeTr("预览背景色"),
-                  colorPick("Browser/previewBackColor", "#000000"));
+                  colorPick("Browser/previewBackColor", Theme::T("#000000", "#FFFFFF")));
     fPrev->addRow(chk("Browser/showRating", gazeTr("显示颜色标记"), true));
     // #111(用户 2026-08-31):文本/PDF 预览单独成开关且默认关,打勾才预览。
     // 长文本另按"行数 + 每行字符数"截断,上限与实测依据见 textlimit.h。

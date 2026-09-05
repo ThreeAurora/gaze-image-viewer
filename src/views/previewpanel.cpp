@@ -779,8 +779,10 @@ void PreviewPanel::clear() {
     m_isLivePhoto = false;
 }
 
-// 主题切换:音频/波形标签文字色是构造期内联样式表,按新色重灌
+// 主题切换:音频/波形标签文字色是构造期内联样式表,按新色重灌;
+// 自绘底色在 paintEvent 里即时取主题默认值,补一次重绘即换白
 void PreviewPanel::refreshThemeColors() {
+    update();
     if (m_audioLabel)
         m_audioLabel->setStyleSheet(
             QString("color:%1;font-size:16px;background:transparent;").arg(C_TEXT_SUB));

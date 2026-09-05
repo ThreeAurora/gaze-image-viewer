@@ -63,12 +63,16 @@ QString PreviewPanel::modeKey(const char* suffix) const {
 }
 
 QColor PreviewPanel::backdropColor() const {
-    // 查看器与浏览器预览窗格用各自的背景色设置(XnView 同)
+    // 查看器与浏览器预览窗格用各自的背景色设置(XnView 同)。
+    // 未设置时默认底色随主题(深黑浅白);全屏放映厅恒黑不受主题影响
     const QString key = (m_viewerMode || inFullscreen())
         ? modeKey("backColor")
         : QStringLiteral("Browser/previewBackColor");
-    QColor c(AppSettings::instance().get(key, QStringLiteral("#000000")).toString());
-    return c.isValid() ? c : QColor("#000000");
+    const QColor def = (key == QLatin1String("Fullscreen/backColor"))
+        ? QColor(QStringLiteral("#000000"))
+        : QColor(Theme::T("#000000", "#FFFFFF"));
+    QColor c(AppSettings::instance().get(key, def.name()).toString());
+    return c.isValid() ? c : def;
 }
 
 // 透明像素下的挡板底纹(Viewer/checkerMode):16px 两色方格
