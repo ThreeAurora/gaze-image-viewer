@@ -21,6 +21,9 @@
 #include <QCursor>
 #include <QPointer>
 #include <QProcess>
+#include <QFileDialog>
+#include <QMessageBox>
+#include <QTimer>
 #include <algorithm>
 
 namespace {
@@ -52,6 +55,94 @@ ImageSearchDialog::ImageSearchDialog(QWidget* parent) : QDialog(parent) {
     root->setContentsMargins(14, 14, 14, 12);
     root->setSpacing(8);
 
+    // ── 2026-09-05 用户令:索引目录管理整体搬进 Gaze,不再依赖网页端 ──
+    // 左栏 = 索引目录(添加/扫描/重试 + 右键纳入/暂停/删除)与服务状态;
+    // 右栏 = 原搜索区。全部走 docs/imgseek/API_SCHEMA.md 定案字段。
+    auto* body = new QHBoxLayout;
+    body->setSpacing(10);
+    root->addLayout(body, 1);
+
+    auto* leftCol = new QVBoxLayout;
+    leftCol->setSpacing(6);
+    auto* leftTitle = new QLabel(gazeTr("索引目录"));
+    leftTitle->setStyleSheet(QStringLiteral("font-weight:600;background:transparent;"));
+    leftCol->addWidget(leftTitle);
+
+    m_folderList = new QListWidget;
+    m_folderList->setFixedWidth(280);
+    m_folderList->setWordWrap(true);
+    m_folderList->setContextMenuPolicy(Qt::CustomContextMenu);
+    m_folderList->setToolTip(gazeTr(
+        "右键目录:纳入/移出搜索、暂停/恢复索引、删除目录(服务端自动清理)"));
+    leftCol->addWidget(m_folderList, 1);
+
+    auto* leftBtns = new QHBoxLayout;
+    leftBtns->setSpacing(4);
+    auto* addBtn = new QPushButton(gazeTr("添加目录…"));
+    addBtn->setToolTip(gazeTr("把一个目录加入索引(服务端自动扫描其中的图片)"));
+    m_scanBtn = new QPushButton(gazeTr("开始扫描"));
+    m_scanBtn->setToolTip(gazeTr("触发服务端全量/增量扫描(缩略图/OCR/语义向量)"));
+    auto* retryBtn = new QPushButton(gazeTr("重试失败"));
+    retryBtn->setToolTip(gazeTr("对永久失败条目按阶段重跑"));
+    leftBtns->addWidget(addBtn);
+    leftBtns->addWidget(m_scanBtn, 1);
+    leftBtns->addWidget(retryBtn);
+    leftCol->addLayout(leftBtns);
+
+    m_svcStatus = new QLabel(gazeTr("服务状态:—"));
+    m_svcStatus->setObjectName("imgSearchStatus");
+    m_svcStatus->setWordWrap(true);
+    leftCol->addWidget(m_svcStatus);
+    m_svcModel = new QLabel(gazeTr("激活模型:—"));
+    m_svcModel->setObjectName("imgSearchStatus");
+    leftCol->addWidget(m_svcModel);
+
+    auto* leftW = new QWidget;
+    leftW->setLayout(leftCol);
+    body->addWidget(leftW);
+
+    auto* rightCol = new QVBoxLayout;
+    rightCol->setSpacing(8);
+    body->addLayout(rightCol, 1);
+
+    // 目录列表条目:UserRole=id,UserRole+1=path,UserRole+2=enabled,UserRole+3=paused
+    connect(m_folderList, &QListWidget::customContextMenuRequested, this,
+            [this](const QPoint& pos) {
+        QListWidgetItem* it = m_folderList->itemAt(pos);
+        if (!it) return;
+        const int id = it->data(Qt::UserRole).toInt();
+        const bool enabled = it->data(Qt::UserRole + 2).toInt() != 0;
+        const bool paused  = it->data(Qt::UserRole + 3).toInt() != 0;
+        QMenu menu(this);
+        QAction* aToggle = menu.addAction(enabled
+            ? gazeTr("移出搜索与索引") : gazeTr("纳入搜索与索引"));
+        QAction* aPause  = menu.addAction(paused
+            ? gazeTr("恢复索引处理") : gazeTr("暂停索引处理(保留搜索)"));
+        menu.addSeparator();
+        QAction* aDel    = menu.addAction(gazeTr("删除目录"));
+        QAction* chosen  = menu.exec(m_folderList->mapToGlobal(pos));
+        if (chosen == aToggle) toggleFolder(id, !enabled);
+        else if (chosen == aPause) pauseFolder(id, !paused);
+        else if (chosen == aDel) removeFolder(id);
+    });
+    connect(addBtn, &QPushButton::clicked, this, [this]() { addFolder(); });
+    connect(m_scanBtn, &QPushButton::clicked, this, [this]() { startScan(); });
+    connect(retryBtn, &QPushButton::clicked, this, [this, retryBtn]() {
+        QMenu menu(this);
+        QAction* aThumb = menu.addAction(gazeTr("重跑缩略图(thumb)"));
+        QAction* aOcr   = menu.addAction(gazeTr("重跑文字识别(ocr)"));
+        QAction* aEmb   = menu.addAction(gazeTr("重跑语义向量(embed,当前模型)"));
+        QAction* chosen = menu.exec(retryBtn->mapToGlobal(QPoint(0, retryBtn->height())));
+        if (chosen == aThumb) retryStage(QStringLiteral("thumb"));
+        else if (chosen == aOcr) retryStage(QStringLiteral("ocr"));
+        else if (chosen == aEmb) retryStage(QStringLiteral("embed"));
+    });
+
+    // 可见期间 5s 轮询服务状态(扫描进度/速率),隐藏即停
+    m_svcTimer = new QTimer(this);
+    m_svcTimer->setInterval(5000);
+    connect(m_svcTimer, &QTimer::timeout, this, [this]() { refreshServiceStatus(); });
+
     auto* top = new QHBoxLayout;
     m_input = new QLineEdit;
     m_input->setPlaceholderText(gazeTr(
@@ -72,11 +163,11 @@ ImageSearchDialog::ImageSearchDialog(QWidget* parent) : QDialog(parent) {
     top->addWidget(m_model);
     top->addWidget(m_sort);
     top->addWidget(m_searchBtn);
-    root->addLayout(top);
+    rightCol->addLayout(top);
 
     m_status = new QLabel(gazeTr("输入关键词后回车;服务未运行时会自动拉起"));
     m_status->setObjectName(QStringLiteral("imgSearchStatus"));
-    root->addWidget(m_status);
+    rightCol->addWidget(m_status);
 
     m_list = new QListWidget;
     m_list->setViewMode(QListWidget::IconMode);
@@ -87,7 +178,7 @@ ImageSearchDialog::ImageSearchDialog(QWidget* parent) : QDialog(parent) {
     m_list->setUniformItemSizes(true);
     m_list->setWordWrap(true);
     m_list->setContextMenuPolicy(Qt::CustomContextMenu);
-    root->addWidget(m_list, 1);
+    rightCol->addWidget(m_list, 1);
 
     // 双击/右键"在 Gaze 中定位"共用:向上找到主窗口的 revealFile
     // (Q_INVOKABLE 而非槽,须用 indexOfMethod —— 与 searchdialog.cpp 同因)
@@ -106,6 +197,9 @@ ImageSearchDialog::ImageSearchDialog(QWidget* parent) : QDialog(parent) {
 
     connect(m_searchBtn, &QPushButton::clicked, this, &ImageSearchDialog::doSearch);
     connect(m_input, &QLineEdit::returnPressed, this, &ImageSearchDialog::doSearch);
+    // 打开即对账索引目录与服务状态(铁律 #222:绝不自动拉起服务,离线只提示)
+    refreshFolders();
+    m_svcTimer->start();
     connect(m_sort, &QComboBox::currentIndexChanged, this, [this](int) {
         if (m_list->count() > 1) resort();
     });
@@ -304,4 +398,139 @@ void ImageSearchDialog::applyIcon(int imageId, const QImage& img) {
         if (it->data(kIdRole).toInt() == imageId && it->icon().isNull())
             it->setIcon(QIcon(pm));
     }
+}
+
+// ═══════════════════════════════════════════
+// 索引目录管理(Tier2 #133):字段零猜测,全部按 docs/imgseek/API_SCHEMA.md
+// ═══════════════════════════════════════════
+void ImageSearchDialog::refreshFolders() {
+    QPointer<ImageSearchDialog> self(this);
+    ImgSearch::foldersAsync(this, [self](int status, const QJsonDocument& doc) {
+        if (!self) return;
+        if (status == 0) {
+            self->m_svcStatus->setText(gazeTr(
+                "服务状态:离线(设置 → 以文搜图 可开自动启动,或手动运行 main.py)"));
+            self->m_folderList->clear();
+            return;
+        }
+        if (status != 200) return;
+        self->m_folderList->clear();
+        const QJsonArray folders = doc.object().value("folders").toArray();
+        for (const auto& fv : folders) {
+            const QJsonObject f = fv.toObject();
+            const bool enabled = f.value("enabled").toInt() != 0;
+            const bool paused  = f.value("paused").toInt() != 0;
+            QString tag;
+            if (!enabled) tag = gazeTr(" [已移出]");
+            else if (paused) tag = gazeTr(" [索引已暂停]");
+            auto* it = new QListWidgetItem(gazeTr("%1%2\n已处理 %3 · 待处理 %4 · 失效 %5")
+                .arg(f.value("path").toString(), tag)
+                .arg(f.value("processed").toInt())
+                .arg(f.value("pending").toInt())
+                .arg(f.value("dead").toInt()));
+            it->setData(Qt::UserRole, f.value("id").toInt());
+            it->setData(Qt::UserRole + 1, f.value("path").toString());
+            it->setData(Qt::UserRole + 2, enabled ? 1 : 0);
+            it->setData(Qt::UserRole + 3, paused ? 1 : 0);
+            self->m_folderList->addItem(it);
+        }
+        self->refreshServiceStatus();
+    });
+}
+
+void ImageSearchDialog::refreshServiceStatus() {
+    QPointer<ImageSearchDialog> self(this);
+    ImgSearch::statusAsync(this, [self](int status, const QJsonDocument& doc) {
+        if (!self || status != 200) return;
+        const QJsonObject o = doc.object();
+        const bool scanning = o.value("scanning").toBool();
+        const double rate = o.value("rate_per_sec").toDouble();
+        const int pendThumb = o.value("pending").toObject().value("thumb").toInt();
+        const int pendOcr   = o.value("pending").toObject().value("ocr").toInt();
+        const int failThumb = o.value("failed").toObject().value("thumb").toInt();
+        const int failOcr   = o.value("failed").toObject().value("ocr").toInt();
+        self->m_svcStatus->setText(gazeTr(
+            "服务状态:%1 · %2 张/秒\n待处理 缩略图 %3 / 文字 %4 · 失败 %5/%6 · 库内 %7 张")
+            .arg(scanning ? gazeTr("扫描中") : gazeTr("空闲"))
+            .arg(rate, 0, 'f', 1)
+            .arg(pendThumb).arg(pendOcr).arg(failThumb).arg(failOcr)
+            .arg(o.value("images_total").toInt()));
+        self->m_svcModel->setText(gazeTr("激活模型:%1")
+            .arg(o.value("active_model").toString()));
+        self->m_scanBtn->setEnabled(!scanning);
+    });
+}
+
+void ImageSearchDialog::addFolder() {
+    const QString dir = QFileDialog::getExistingDirectory(
+        this, gazeTr("添加索引目录"));
+    if (dir.isEmpty()) return;
+    QPointer<ImageSearchDialog> self(this);
+    ImgSearch::postJsonAsync(QStringLiteral("/api/folders"),
+        QJsonDocument(QJsonObject{{"path", QDir::toNativeSeparators(dir)}}).toJson(),
+        8000, this, [self](int status, const QJsonDocument& doc) {
+        if (!self) return;
+        if (status == 200 || status == 400) {
+            const QString msg = doc.object().value("msg").toString();
+            self->m_svcStatus->setText(msg.isEmpty()
+                ? gazeTr("已添加目录") : gazeTr("添加目录:%1").arg(msg));
+        } else {
+            self->m_svcStatus->setText(gazeTr("添加目录失败(HTTP %1)").arg(status));
+        }
+        self->refreshFolders();
+    });
+}
+
+void ImageSearchDialog::removeFolder(int id) {
+    if (QMessageBox::question(this, gazeTr("删除索引目录"),
+            gazeTr("删除后服务端会自动清理该目录的索引数据。继续?"))
+        != QMessageBox::Yes) return;
+    QPointer<ImageSearchDialog> self(this);
+    ImgSearch::deleteAsync(QStringLiteral("/api/folders/%1").arg(id),
+        15000, this, [self](int status, const QJsonDocument&) {
+        if (!self) return;
+        self->m_svcStatus->setText(status == 200
+            ? gazeTr("目录已删除") : gazeTr("删除失败(HTTP %1)").arg(status));
+        self->refreshFolders();
+    });
+}
+
+void ImageSearchDialog::toggleFolder(int id, bool enabled) {
+    QPointer<ImageSearchDialog> self(this);
+    ImgSearch::postJsonAsync(QStringLiteral("/api/folders/%1/toggle").arg(id),
+        QJsonDocument(QJsonObject{{"enabled", enabled}}).toJson(),
+        8000, this, [self](int, const QJsonDocument&) { if (self) self->refreshFolders(); });
+}
+
+void ImageSearchDialog::pauseFolder(int id, bool on) {
+    QPointer<ImageSearchDialog> self(this);
+    ImgSearch::postJsonAsync(QStringLiteral("/api/folders/%1/pause").arg(id),
+        QJsonDocument(QJsonObject{{"on", on}}).toJson(),
+        8000, this, [self](int, const QJsonDocument&) { if (self) self->refreshFolders(); });
+}
+
+void ImageSearchDialog::startScan() {
+    QPointer<ImageSearchDialog> self(this);
+    ImgSearch::postJsonAsync(QStringLiteral("/api/scan/start"), QByteArray("{}"),
+        8000, this, [self](int status, const QJsonDocument&) {
+        if (!self) return;
+        self->m_svcStatus->setText(status == 200
+            ? gazeTr("已触发扫描") : gazeTr("触发扫描失败(HTTP %1)").arg(status));
+        self->refreshServiceStatus();
+    });
+}
+
+void ImageSearchDialog::retryStage(const QString& stage) {
+    QPointer<ImageSearchDialog> self(this);
+    ImgSearch::postJsonAsync(QStringLiteral("/api/retry"),
+        QJsonDocument(QJsonObject{{"stage", stage}}).toJson(),
+        8000, this, [self, stage](int status, const QJsonDocument& doc) {
+        if (!self) return;
+        if (status == 200)
+            self->m_svcStatus->setText(gazeTr("已重置 %1 条失败项(%2)")
+                .arg(doc.object().value("reset").toInt()).arg(stage));
+        else
+            self->m_svcStatus->setText(gazeTr("重试失败(HTTP %1)").arg(status));
+        self->refreshServiceStatus();
+    });
 }

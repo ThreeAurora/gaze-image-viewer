@@ -115,6 +115,23 @@ public:
         else     QObject::connect(reply, &QNetworkReply::finished, this, onDone);
     }
 
+    void del(const QString& path, int timeoutMs, const QObject* ctx, Callback cb) {
+        QNetworkRequest req(baseUrl().resolved(QUrl(path)));
+        req.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                         QNetworkRequest::NoLessSafeRedirectPolicy);
+        QNetworkReply* reply = m_nam.deleteResource(req);
+        armTimeout(reply, timeoutMs);
+        auto onDone = [reply, cb = std::move(cb)] {
+            const int st = reply->attribute(
+                QNetworkRequest::HttpStatusCodeAttribute).toInt();
+            const QByteArray data = reply->readAll();
+            reply->deleteLater();
+            cb(st, data);
+        };
+        if (ctx) QObject::connect(reply, &QNetworkReply::finished, ctx, onDone);
+        else     QObject::connect(reply, &QNetworkReply::finished, this, onDone);
+    }
+
     void post(const QString& path, const QByteArray& json,
               int timeoutMs, const QObject* ctx, Callback cb) {
         QNetworkRequest req(baseUrl().resolved(QUrl(path)));
@@ -144,6 +161,30 @@ private:
     }
     QNetworkAccessManager m_nam;
 };
+
+// ── 目录管理/状态(Tier2 #133,字段定案见 docs/imgseek/API_SCHEMA.md)──
+inline void statusAsync(const QObject* ctx,
+                        std::function<void(int, const QJsonDocument&)> cb) {
+    ImgClient::instance().get("/api/status", {}, 4000, ctx,
+        [cb = std::move(cb)](int st, const QByteArray& d) { cb(st, QJsonDocument::fromJson(d)); });
+}
+inline void foldersAsync(const QObject* ctx,
+                         std::function<void(int, const QJsonDocument&)> cb) {
+    ImgClient::instance().get("/api/folders", {}, 8000, ctx,
+        [cb = std::move(cb)](int st, const QByteArray& d) { cb(st, QJsonDocument::fromJson(d)); });
+}
+inline void postJsonAsync(const QString& path, const QByteArray& json, int timeoutMs,
+                          const QObject* ctx,
+                          std::function<void(int, const QJsonDocument&)> cb) {
+    ImgClient::instance().post(path, json, timeoutMs, ctx,
+        [cb = std::move(cb)](int st, const QByteArray& d) { cb(st, QJsonDocument::fromJson(d)); });
+}
+inline void deleteAsync(const QString& path, int timeoutMs,
+                        const QObject* ctx,
+                        std::function<void(int, const QJsonDocument&)> cb) {
+    ImgClient::instance().del(path, timeoutMs, ctx,
+        [cb = std::move(cb)](int st, const QByteArray& d) { cb(st, QJsonDocument::fromJson(d)); });
+}
 
 // 服务是否可达:任何 HTTP 应答(含 4xx/5xx)都算进程活着;
 // 连接拒绝/超时(status=0)才算离线。ctx 语义同 ImgClient::get。

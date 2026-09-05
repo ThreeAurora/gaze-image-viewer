@@ -7,6 +7,7 @@
 #include <QComboBox>
 #include <QImage>
 #include <QJsonDocument>
+#include <QTimer>
 
 // 以文搜图对话框:万象图搜(imgseek)的客户端。三路融合检索
 // (文件名/OCR 文字/CLIP 语义),HTTP 全异步(旧版 QEventLoop 同步
@@ -23,6 +24,22 @@ private:
     void loadThumbFor(int imageId);   // 工作线程取图,回 GUI 按 id 贴(与行号无关)
     void applyIcon(int imageId, const QImage& img);
     qint64 mtimeOf(QListWidgetItem* it);
+
+    // ── 索引目录管理(Tier2 #133,2026-09-05 用户令:全部搬进 Gaze)──
+    void refreshFolders();           // 拉目录表+服务状态并刷新左侧面板
+    void refreshServiceStatus();     // 只刷状态行(扫描中/速率/待处理)
+    void addFolder();                // 添加索引目录
+    void removeFolder(int id);       // 删除目录(服务端自动 purge)
+    void toggleFolder(int id, bool enabled);   // 纳入/移出搜索与索引
+    void pauseFolder(int id, bool on);         // 单目录暂停索引处理
+    void startScan();                // 触发全量/增量扫描
+    void retryStage(const QString& stage);     // 重跑失败项(thumb/ocr/embed)
+
+    QListWidget* m_folderList = nullptr;   // 索引目录(右键:纳入/暂停/删除)
+    QLabel*      m_svcStatus = nullptr;    // 服务状态行(scanning/rate/pending/failed)
+    QLabel*      m_svcModel  = nullptr;    // 当前激活模型
+    QTimer*      m_svcTimer  = nullptr;    // 可见期间 5s 轮询状态
+    QPushButton* m_scanBtn = nullptr;
 
     QLineEdit*   m_input;
     QComboBox*   m_model;     // CLIP 模型(引擎默认/cn_clip_b16/clip_b32)
