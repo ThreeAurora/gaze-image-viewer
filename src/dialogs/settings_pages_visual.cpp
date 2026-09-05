@@ -112,7 +112,9 @@ QWidget* SettingsDialog::pageAppearance() {
     //   编辑器其实早就存在(「缩略图 → 标签颜色」:增删改扩展名、取色、写 ini、
     //   FileCard 真生效),那句占位话就是谎话。改成显示**当前真表**并一键跳过去。
     {
-        QString t = gazeTr("标签颜色(扩展名 → 文件名底色,当前生效表):\n");
+        // 用户令:这里的色块要与文件名下面实际显示的底色一致 —— 用富文本把
+        // 每行扩展名按其底色填色展示,不再是干巴巴的纯文字(3g2 等一眼见色)。
+        QString t = gazeTr("标签颜色(扩展名 → 文件名底色,当前生效表):<br>");
         QHash<QString, QStringList> byColor;
         for (const auto& e : LabelColors::all())
             byColor[e.second.name(QColor::HexRgb)].append(e.first);
@@ -123,11 +125,18 @@ QWidget* SettingsDialog::pageAppearance() {
             const QString shown = exts.size() > 8
                 ? exts.mid(0, 8).join(',') + gazeTr(",…(共 %1 项)").arg(exts.size())
                 : exts.join(',');
-            t += gazeTr("  %1 ← %2\n").arg(c, shown);
+            const QColor col(c);
+            const QString fg = col.lightness() > 140 ? "#000000" : "#FFFFFF";
+            t += gazeTr("  <span style=\"background-color:%1;color:%2;\">&nbsp;%3&nbsp;</span>"
+                        " ← %4<br>").arg(c, fg, shown, c);
         }
-        t += gazeTr("未列出的格式:%1\n(上面总开关关掉时一律不上底色)")
-                 .arg(LabelColors::fallbackColor().name(QColor::HexRgb));
+        const QColor fb = LabelColors::fallbackColor();
+        const QString fbf = fb.lightness() > 140 ? "#000000" : "#FFFFFF";
+        t += gazeTr("未列出的格式:<span style=\"background-color:%1;color:%2;\">&nbsp;%3&nbsp;</span>"
+                    "(上面总开关关掉时一律不上底色)")
+                 .arg(fb.name(), fbf, fb.name());
         auto* lab = new QLabel(t);
+        lab->setTextFormat(Qt::RichText);
         lab->setTextInteractionFlags(Qt::TextSelectableByMouse);
         form->addRow(lab);
     }
@@ -199,6 +208,9 @@ QWidget* SettingsDialog::pageLabelColors() {
 
     auto* addBtn = new QPushButton(gazeTr("新建"));
     auto* removeBtn = new QPushButton(gazeTr("移除"));
+    // 用户令:两钮原被右列撑得左右太长,收成紧凑定宽
+    addBtn->setFixedWidth(96);
+    removeBtn->setFixedWidth(96);
     right->addWidget(addBtn);
     right->addWidget(removeBtn);
     right->addStretch(1);
