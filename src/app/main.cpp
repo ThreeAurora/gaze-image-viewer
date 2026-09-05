@@ -27,6 +27,7 @@
 #include <QLibraryInfo>
 #include <QDateTime>
 #include <QAbstractNativeEventFilter>
+#include <functional>
 #include <windows.h>
 #include "mainwindow.h"
 #include "constants.h"
@@ -118,6 +119,30 @@ protected:
         QTimer::singleShot(0, this, [btn]() { if (btn) btn->animateClick(); });
         return true;
     }
+};
+
+// ── 启动首帧闸门(2026-09-05「启动先弹窗」报告根治)──
+// 旧链:show 后 singleShot(0) 里先恢复不透明、再跑媒体栈预热(FFmpeg 后端首载
+// 同步阻塞 1.6s+)。而首帧 PAINT 还排在事件队列里 —— GUI 线程被预热占住,
+// paint 根本跑不了,用户看到一扇纯白空窗顶足 1~2 秒才出 UI(probe_startup_win
+// 连拍 cap_001@SHOW+37ms 全白、cap_005@+1.1s 才画好),正是"先弹窗"本体。
+// 首帧透明(b91b4711)的防闪意图被后来同回调里加入的预热(aea7b3ac)冲垮。
+// 现改为 PAINT 事件驱动:第一帧在仍不可见时真画完,再放行"恢复不透明+预热+
+// 恢复预览"——窗口出现的瞬间就是画好的深色 UI,白窗期=0。
+class FirstPaintGate : public QObject {
+public:
+    std::function<void()> fire;
+protected:
+    bool eventFilter(QObject* obj, QEvent* ev) override {
+        if (ev->type() != QEvent::Paint || m_done) return false;
+        m_done = true;
+        obj->removeEventFilter(this);
+        // singleShot 一拍:让本帧 paint 先走完,再执行阻塞预热
+        QTimer::singleShot(0, obj, fire);
+        return false;
+    }
+private:
+    bool m_done = false;
 };
 
 // ── 启动防闪史(2026-09-03 深夜末段5 定案,StartupWindowGuard 已删除)──
@@ -338,15 +363,17 @@ int main(int argc, char *argv[]) {
     // StartupWindowGuard 已提前到 QApplication 之后安装(见 main 开头注释)。
     w.setWindowOpacity(0.0);
     w.show();
-    QTimer::singleShot(0, &w, [&w]() {
+    // 放行时机=首帧真画完(上方 FirstPaintGate);预热媒体栈放在恢复预览之前:
+    // QMediaPlayer/QVideoWidget 首建要同步加载 FFmpeg 后端与视频渲染管线(日志
+    // 实测 3~4 秒,GUI 线程),恢复的上次文件若是视频,player/渲染栈已就绪,
+    // 选中即秒开;此后点树里首项为视频的文件夹也不再付这笔账
+    FirstPaintGate gate;
+    gate.fire = [&w]() {
         w.setWindowOpacity(1.0);
-        // 预热媒体栈放在恢复预览之前:QMediaPlayer/QVideoWidget 首建要同步
-        // 加载 FFmpeg 后端与视频渲染管线(日志实测 3~4 秒,GUI 线程),恢复的
-        // 上次文件若是视频,player/渲染栈已就绪,选中即秒开;此后点树里
-        // 首项为视频的文件夹也不再付这笔账
         w.warmUpPreviewMedia();
         w.restoreStartupPreview();
-    });
+    };
+    w.installEventFilter(&gate);
     Logger::boot("show");
 
     // Cache/checkOnStartup:启动后延后一会儿再校验缓存完整性 ——
