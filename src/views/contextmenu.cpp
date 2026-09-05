@@ -425,28 +425,12 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
         if (grid) grid->refreshCurrentDir();
     });
     // ── FileOps/duplicateTemplate:创建副本的命名模板 ──
-    // 模板里的 # 是自增序号(从 1 起找第一个不冲突的名字)
+    // 模板里的 # 是自增序号(从 1 起找第一个不冲突的名字);命名规则与
+    // 裁剪"先建副本"共用 duplicateTargetFor(clipboardops.h)
     addAction(IconLib::appIcon("cmd_copy"), gazeTr("创建副本"), this, [this, grid]() {
         QFileInfo fi(m_filePath);
         if (!fi.isFile()) return;
-        const QString base = fi.completeBaseName();
-        const QString ext  = fi.suffix().isEmpty() ? QString()
-                                                   : QStringLiteral(".") + fi.suffix();
-        const int tpl = qBound(0, AppSettings::instance()
-                            .get("FileOps/duplicateTemplate", 0).toInt(), 4);
-        QString target;
-        for (int n = 1; n < 10000; ++n) {
-            QString name;
-            switch (tpl) {
-            case 0:  name = base + "-(" + QString::number(n) + ")"; break;
-            case 1:  name = base + QString::fromUtf8(" - 副本 (") + QString::number(n) + ")"; break;
-            case 2:  name = base + QString::fromUtf8("-副本 (") + QString::number(n) + ")"; break;
-            case 3:  name = base + "-" + QString::number(n); break;
-            default: name = QString::fromUtf8("副本 (") + QString::number(n) + ") - " + base; break;
-            }
-            const QString cand = fi.absolutePath() + "/" + name + ext;
-            if (!QFileInfo::exists(cand)) { target = cand; break; }
-        }
+        const QString target = duplicateTargetFor(m_filePath);
         if (target.isEmpty()) return;
         if (!QFile::copy(m_filePath, target)) {
             QMessageBox::warning(nullptr, gazeTr("创建副本失败"), target);
@@ -580,19 +564,27 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
             CropDialog dlg(m_filePath, nullptr);
             if (dlg.exec() != QDialog::Accepted) return;
 
+            // 2026-09-05 用户令:裁剪绝不写回原文件 —— 先按"重复文件命名"设置
+            // 建好副本,再对副本执行裁剪(此前顺序反了:直接改写原件,原件被
+            // 占用/只读时就报"写回文件失败",原件还险些被覆盖)。
             const QRect r = dlg.cropRect();
             QFileInfo fi(m_filePath);
-            const QString ext = fi.suffix().toLower();
-            QDateTime mod = fi.lastModified(), birth = fi.birthTime();
-
-            // FileOps/losslessBackup:动手前先留一份原件(与旋转同一规矩)
-            if (AppSettings::instance().get("FileOps/losslessBackup", true).toBool()) {
-                const QString backup = fi.absolutePath() + "/" + fi.completeBaseName()
-                                     + "_original." + fi.suffix();
-                if (!QFileInfo::exists(backup)) QFile::copy(m_filePath, backup);
+            const QString target = duplicateTargetFor(m_filePath);
+            if (target.isEmpty()) {
+                QMessageBox::warning(nullptr, gazeTr("裁剪失败"),
+                                     gazeTr("无法为副本取名(重名过多):\n") + m_filePath);
+                return;
+            }
+            if (!QFile::copy(m_filePath, target)) {
+                QMessageBox::warning(nullptr, gazeTr("裁剪失败"),
+                                     gazeTr("创建副本失败:\n") + target);
+                return;
             }
 
-            const QString tmp = m_filePath + ".Gaze_crop_tmp";
+            const QFileInfo tfi(target);
+            const QString ext = tfi.suffix().toLower();
+            QDateTime mod = tfi.lastModified(), birth = tfi.birthTime();
+            const QString tmp = target + ".Gaze_crop_tmp";
             bool ok = false;
 
             if ((ext == "jpg" || ext == "jpeg") && !findJpegtran().isEmpty()) {
@@ -601,7 +593,7 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
                 QStringList args = AppSettings::instance()
                         .get("FileOps/losslessKeepMeta", true).toBool()
                     ? QStringList{"-copy", "all"} : QStringList{"-copy", "none"};
-                args << "-crop" << spec << "-perfect" << m_filePath;
+                args << "-crop" << spec << "-perfect" << target;
                 QProcess proc;
                 proc.setStandardOutputFile(tmp);
                 proc.start(findJpegtran(), args);
@@ -611,7 +603,7 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
             }
 
             if (!ok) {   // 非 JPEG,或 jpegtran 拒绝(-perfect 失败)
-                QImage img(m_filePath);
+                QImage img(target);
                 if (!img.isNull()) {
                     QImage out = img.copy(r);
                     QFile f(tmp);
@@ -624,25 +616,28 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
             }
 
             if (!ok) {
+                // 裁剪没成:刚建的空壳副本一并删掉,如实报错(原件分毫未动)
+                QFile::remove(target);
                 QMessageBox::warning(nullptr, gazeTr("裁剪失败"),
                     gazeTr("无法无损完成该裁剪:\n%1\n\n"
                                       "可换个选区(建议选区再大一点、离边缘远一点)重试。")
                         .arg(m_filePath));
                 return;
             }
-            if (!QFile::rename(tmp, m_filePath)) {
+            if (!QFile::rename(tmp, target)) {
                 QFile::remove(tmp);
+                QFile::remove(target);
                 QMessageBox::warning(nullptr, gazeTr("裁剪失败"),
-                                     gazeTr("写回文件失败:\n") + m_filePath);
+                                     gazeTr("写回副本失败:\n") + target);
                 return;
             }
-            // 时间戳照旧保留,与旋转一致
-            QFile tf(m_filePath);
+            // 时间戳照旧保留(与原件一致),与旋转同一规矩
+            QFile tf(target);
             if (tf.open(QIODevice::ReadOnly)) {
                 tf.setFileTime(mod, QFileDevice::FileModificationTime);
                 if (birth.isValid()) tf.setFileTime(birth, QFileDevice::FileBirthTime);
             }
-            if (grid) grid->refreshCurrentDir();
+            if (grid) { grid->setPreferPath(target); grid->refreshCurrentDir(); }
         });
     }
 

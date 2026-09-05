@@ -13,6 +13,7 @@
 #include <QString>
 #include <QStringList>
 #include "filelockrelease.h"   // #214:移动前放掉预览握着的句柄
+#include "settings.h"
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
@@ -68,6 +69,31 @@ inline QString uniqueDest(const QString& dir, const QString& name) {
         if (!QFileInfo::exists(cand)) return cand;
     }
     return base;   // 万一同名一万次仍冲突(几乎不可能):交调用方报错
+}
+
+// ── 创建副本目标名:FileOps/duplicateTemplate 模板(# = 自增序号,从 1 起找空位)──
+// 右键"创建副本"与"无损裁剪"(2026-09-05 用户令:先建副本再裁副本)共用
+// 这一份命名规则;一万次全冲突返回空串交调用方报错。
+inline QString duplicateTargetFor(const QString& filePath) {
+    const QFileInfo fi(filePath);
+    const QString base = fi.completeBaseName();
+    const QString ext  = fi.suffix().isEmpty()
+        ? QString() : QStringLiteral(".") + fi.suffix();
+    const int tpl = qBound(0, AppSettings::instance()
+                        .get("FileOps/duplicateTemplate", 0).toInt(), 4);
+    for (int n = 1; n < 10000; ++n) {
+        QString name;
+        switch (tpl) {
+        case 0:  name = base + "-(" + QString::number(n) + ")"; break;
+        case 1:  name = base + QString::fromUtf8(" - 副本 (") + QString::number(n) + ")"; break;
+        case 2:  name = base + QString::fromUtf8("-副本 (") + QString::number(n) + ")"; break;
+        case 3:  name = base + "-" + QString::number(n); break;
+        default: name = QString::fromUtf8("副本 (") + QString::number(n) + ") - " + base; break;
+        }
+        const QString cand = fi.absolutePath() + "/" + name + ext;
+        if (!QFileInfo::exists(cand)) return cand;
+    }
+    return QString();
 }
 
 // ── 递归复制目录树 ──
