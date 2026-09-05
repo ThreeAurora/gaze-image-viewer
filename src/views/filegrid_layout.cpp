@@ -288,11 +288,11 @@ void FileGrid::ensureGeometry() {
     rebuildGeometry();
 }
 
-// ── #267 详细列表:定宽列与表头同源对齐 ──
+// ── #267 详细列表:列与表头同源对齐(#3/#5 起列宽为动态值) ──
 int FileGrid::detailColW(int i) const {
-    const int w = SortHeader::detailColWidth(i);
-    if (!m_header || w <= 0) return w;
-    return m_header->detailColumnVisible(i) ? w : 0;
+    if (i < 0 || i >= 6) return 0;
+    if (m_header && !m_header->detailColumnVisible(i)) return 0;
+    return m_dynColW[i];
 }
 
 // 行矩形内自右向左第 i 列的左缘:隐藏列宽 0 自然压缩,列区恒贴行右缘
@@ -302,14 +302,27 @@ int FileGrid::detailColX(const QRect& r, int i) const {
     return x;
 }
 
-// 把详细态列区两端的对齐垫片推给表头:
+// 把详细态列区两端的对齐垫片与动态列宽推给表头:
 //   lead = 名称文字起点对齐(28 名称偏移 + 8 MARGIN + 8 文字内缩 − 6 表头边距 − 8 按钮内边距)
 //   tail = 列区右缘吸到网格行右缘(差值随滚动条显隐/窗口宽变化,每次重推)
+//   宽   = #3/#5 动态列宽(拖宽均摊/拖窄名称保底),网格绘制与表头同源同值
 void FileGrid::updateDetailColumns() {
     if (!m_header || m_viewMode != VM_DETAILS) return;
     m_header->setDetailLead(viewport()->x() + 30);
     const int rowRight = viewport()->x() + MARGIN + cardW();
     m_header->setDetailTail(rowRight - (m_header->width() - 6));
+    bool vis[6];
+    for (int i = 0; i < 6; ++i) vis[i] = m_header->detailColumnVisible(i);
+    int w[6];
+    SortHeader::dynDetailWidths(cardW(), vis, w);
+    bool changed = false;
+    for (int i = 0; i < 6; ++i) {
+        const int v = vis[i] ? w[i] : 0;
+        changed |= (v != m_dynColW[i]);
+        m_dynColW[i] = v;
+    }
+    m_header->setDetailWidths(m_dynColW);
+    if (changed) refreshView();   // 列宽变了,行文本位置跟着变
 }
 
 // 表头挂接:#107 以来表头是 MainWindow 布局里的兄弟控件,网格持有指针反向驱动。

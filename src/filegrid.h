@@ -178,10 +178,11 @@ private:
     void  paintCanvas(QPainter& p, const QRect& clip);
     void  paintCard(QPainter& p, int idx, const QRect& rect);
     void  paintDetailsRow(QPainter& p, int idx, const QRect& r);   // #267 详细列表行
-    // 详细列表定宽列:真源宽在 SortHeader::detailColWidth,显隐在表头按钮
+    // 详细列表列宽:#3/#5 起为动态宽(dynDetailWidths 求值缓存,随行宽/显隐重算)
     int  detailColW(int i) const;                    // 第 i 列宽(隐藏=0)
     int  detailColX(const QRect& r, int i) const;    // 第 i 列左缘(自右向左锚定)
-    void updateDetailColumns();    // 把 lead/尾垫片推给表头(进入详细态/缩放/列配置变化)
+    void updateDetailColumns();    // 把 lead/尾垫片+动态列宽推给表头(进入详细态/缩放/列配置变化)
+    int  m_dynColW[6] = { 72, 96, 56, 112, 112, 112 };   // 动态列宽缓存(基准=死表)
     void  refreshView();                    // 数据/外观变化后重绘(取代"重排卡片")
     int   indexAt(const QPoint& canvasPos);         // 画布坐标 → 条目序号;-1=空白(命中前补建几何)
     QRect cardRect(int idx) const;

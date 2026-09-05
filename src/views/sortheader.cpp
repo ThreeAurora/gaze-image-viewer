@@ -13,6 +13,39 @@ int SortHeader::detailColWidth(int i) {
     return (i >= 0 && i < 6) ? W[i] : 0;
 }
 
+// #3/#5 用户令(2026-09-05):列宽不再是死表 ——
+//   · 拖宽文件页:增量在"名称 + 各列"之间均摊(过去全喂给名称列,大小/类型
+//     纹丝不动,名称列一枝独秀地过宽);
+//   · 拖窄:名称列保底 200px(约 25 字符,画侧右端省略号),其余列从基准向
+//     最小值等比压缩为名称让路;再窄(最小值之和都放不下)才允许名称跌破保底。
+// 基准/最小值:日期列 11px 字体 "yyyy/M/d HH:mm" 需 ~95px,最小 84 仍可读。
+void SortHeader::dynDetailWidths(int rowW, const bool vis[6], int out[6]) {
+    static const int B[6] = { 72, 96, 56, 112, 112, 112 };
+    static const int M[6] = { 56, 64, 40,  84,  84,  84 };
+    constexpr int kNameMin = 200;
+    int n = 0, S = 0, Smin = 0;
+    for (int i = 0; i < 6; ++i) {
+        out[i] = vis[i] ? B[i] : 0;
+        if (!vis[i]) continue;
+        ++n; S += B[i]; Smin += M[i];
+    }
+    if (n == 0) return;
+    // 名称实际宽度 = rowW - 33(28 图标+偏移 与 5 间隙,见 paintDetailsRow);
+    // 列区可用的上限 = 给名称留足保底之后的剩余
+    const int availMax = rowW - 33 - kNameMin;
+    if (S <= availMax) {
+        const int extra = availMax - S;
+        const int share = extra / (n + 1);   // 名称也是一份:它弹性吸收余数
+        for (int i = 0; i < 6; ++i)
+            if (vis[i]) out[i] = B[i] + share;
+    } else if (Smin <= availMax) {
+        const double t = double(S - availMax) / double(S - Smin);
+        for (int i = 0; i < 6; ++i)
+            if (vis[i]) out[i] = B[i] - int(t * double(B[i] - M[i]));
+    }
+    // else:各列已在最小值,名称吃剩余(见 out 初值)
+}
+
 bool SortHeader::detailColumnVisible(int i) const {
     // isHidden 而非 isVisible:表头尚未显示(启动期)时用户意图不受祖先链影响
     return i >= 0 && i + 1 < m_columns.size() && !m_columns[i + 1].btn->isHidden();
@@ -49,6 +82,17 @@ void SortHeader::setDetailMode(bool on) {
         }
     }
     updateGeometry();
+}
+
+// 表头列钮同步动态宽(FileGrid::updateDetailColumns 推):名称列不吃这份,
+// 它继续保持弹性,吸收行宽与各列定宽的差值
+void SortHeader::setDetailWidths(const int w[6]) {
+    if (!m_detailMode) return;
+    for (int i = 1; i < m_columns.size(); ++i) {
+        const int want = qMax(0, w[i - 1]);
+        if (m_columns[i].btn->maximumWidth() != want)
+            m_columns[i].btn->setFixedWidth(want);
+    }
 }
 
 void SortHeader::resizeEvent(QResizeEvent* event) {
