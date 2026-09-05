@@ -76,6 +76,13 @@ Thumbnailer::Thumbnailer() {
 }
 
 Thumbnailer::~Thumbnailer() {
+    // 2026-09-05 卡死定案(抓冻结现场拍栈实证):主线程静态析构在此 waitForDone
+    // 等全队列跑完——代际重解/大量浏览视频后,队列里排着几十上百个 ffmpeg 抽帧
+    // 任务(每个读盘秒级),退出要陪跑几分钟,期间 ffmpeg 持续读盘 = 用户看到的
+    // "关了还在狂转"+"进程关不掉"。先丢掉未启动的任务再等,只剩在跑的≤4 个
+    // (各自秒级收尾)。
+    m_pool->clear();
+    m_pending.clear();
     m_pool->waitForDone();
 }
 

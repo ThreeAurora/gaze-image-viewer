@@ -650,6 +650,11 @@ void MainWindow::closeEvent(QCloseEvent* event) {
     // 09-05 13:57 关闭后 GUI 无心跳 100 秒+)。置旗后任务下一轮循环即弃,
     // 析构的等待最多一个循环周期。
     if (m_dirSizeStop) m_dirSizeStop->store(true);
+    // 同理清空缩略图任务队列(2026-09-05 抓冻结现场拍栈定案):浏览过的每个
+    // 视频都排了一个 ffmpeg 抽帧任务,代际重解期队列极长,不清则退出时静态
+    // 析构 Thumbnailer::~Thumbnailer 的 waitForDone 要陪全队列跑完(分钟级,
+    // 硬盘持续狂转)。clearQueue 丢弃未启动任务,只剩在跑的≤4 个秒级收尾。
+    Thumbnailer::instance().clearQueue();
     if (AppSettings::instance().get("Interface/clearRecentOnExit", false).toBool()) {
         // 退出时清理"最近的文件":不落盘,直接把内存 + ini 一起清空
         m_recentFlushTimer.stop();
