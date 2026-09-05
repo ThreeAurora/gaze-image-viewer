@@ -812,8 +812,14 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
     // ::down-arrow 保留"置零"规则(image:none+0尺寸),防止原生箭头跟 ▼ 重影
     // (两条规则现都在应用级 QSS 的 #fmtFilterCombo 块里)。
     auto* comboArrow = new QLabel(gazeTr("▼"), m_formatFilterCombo);
-    comboArrow->setObjectName("fmtComboArrow");   // 样式在应用级 QSS(#89 收敛)
+    comboArrow->setObjectName("fmtComboArrow");
+    // 应用级 QSS 的取色在这颗标签上被级联吃掉(实测渲染成深灰,黑底上隐形):
+    // 改内联样式直给颜色,主题切换在 applyThemeSurfaces 重灌
+    comboArrow->setStyleSheet(
+        QString("QLabel{color:%1;background:transparent;font-size:9px;}")
+            .arg(QString::fromUtf8(C_SB_ARROW)));
     comboArrow->setAlignment(Qt::AlignCenter);
+    m_fmtComboArrow = comboArrow;
     comboArrow->setAttribute(Qt::WA_TransparentForMouseEvents);
     comboArrow->setGeometry(112 - 18, 0, 18, 26);
     connect(m_formatFilterCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),

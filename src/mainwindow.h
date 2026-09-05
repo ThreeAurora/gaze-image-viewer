@@ -202,6 +202,7 @@ private:
     SortHeader *m_sortHeader = nullptr;
     FileGrid *m_fileGrid = nullptr;
     QComboBox *m_formatFilterCombo = nullptr;
+    QLabel* m_fmtComboArrow = nullptr;   // 下拉框▼文字箭头:级联不可靠,内联染色+主题切换重灌
     PreviewPanel *m_preview = nullptr;
     QLineEdit *m_addrBar = nullptr;
     // 地址栏单击全选(#109①③):按下前是否已整条选中 + 按下点(用来分清单击和拖选)

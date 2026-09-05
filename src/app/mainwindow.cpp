@@ -632,6 +632,11 @@ void MainWindow::warmUpPreviewMedia() {
 // 这里只剩"加载时缓存进 item/画笔"的动态色,各子树自己重灌:
 //   · FileGrid 画布背景、PreviewPanel 文字色、FolderTree 行前景色
 void MainWindow::applyThemeSurfaces() {
+    // 格式下拉框的 ▼ 箭头是内联染色,主题换档要跟着重灌
+    if (m_fmtComboArrow)
+        m_fmtComboArrow->setStyleSheet(
+            QString("QLabel{color:%1;background:transparent;font-size:9px;}")
+                .arg(QString::fromUtf8(C_SB_ARROW)));
     // 子树缓存色(各自的重灌入口)
     if (m_fileGrid)   m_fileGrid->refreshThemeColors();
     if (m_preview)    m_preview->refreshThemeColors();
