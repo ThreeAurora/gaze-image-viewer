@@ -80,10 +80,8 @@ private:
         auto* insertBtn = new QToolButton(this);
         insertBtn->setText(gazeTr("插入日期/时间»"));
         insertBtn->setCursor(Qt::PointingHandCursor);
-        insertBtn->setStyleSheet(QString::fromUtf8(
-            "QToolButton{color:#4C9AF5;background:transparent;border:none;"
-            "padding:4px 8px;}"
-            "QToolButton:hover{color:#6FB1FF;text-decoration:underline;}"));
+        // 链接式蓝字钮:样式在应用级 QSS(QToolButton#renameInsertBtn,#89 收敛)
+        insertBtn->setObjectName(QStringLiteral("renameInsertBtn"));
         auto* fmtMenu = new QMenu(insertBtn);
         for (const QString& f : dateFormats()) {
             QAction* a = fmtMenu->addAction(f);

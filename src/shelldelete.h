@@ -72,12 +72,9 @@ inline void showDeleteToast(QWidget* parent, const QString& text) {
     toast->setAttribute(Qt::WA_DeleteOnClose);
     toast->setAttribute(Qt::WA_TransparentForMouseEvents);
     toast->setTextFormat(Qt::PlainText);
-    // 琥珀底+深字加粗:原灰底白字在深色界面里太不显眼(用户反馈)
-    toast->setStyleSheet(QString::fromUtf8(
-        "QLabel{background:%1;color:%2;font-size:12px;"
-        "font-weight:600;padding:8px 14px;border-radius:6px;"
-        "border:1px solid rgba(0,0,0,70);}")
-        .arg(C_SELECT_YELLOW, C_WIN_BG));
+    // 琥珀底+深字加粗:原灰底白字在深色界面里太不显眼(用户反馈)。
+    // 样式在应用级 QSS(QLabel#deleteToast 规则,#89 收敛),切主题即时跟上
+    toast->setObjectName(QStringLiteral("deleteToast"));
     toast->adjustSize();
 
     int bottomInset = 0;

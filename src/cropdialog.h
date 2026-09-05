@@ -39,17 +39,14 @@ public:
 
         auto* root = new QVBoxLayout(this);
         m_view = new QLabel;
+        m_view->setObjectName(QStringLiteral("cropView"));
         m_view->setAlignment(Qt::AlignCenter);
         m_view->setMinimumSize(400, 300);
-        m_view->setStyleSheet(QString::fromUtf8("QLabel{background:%1;}")
-                                  .arg(Theme::T("#141418", "#E9E9ED")));
         m_view->setCursor(Qt::CrossCursor);
         root->addWidget(m_view, 1);
 
         m_info = new QLabel;
-        m_info->setStyleSheet(QString::fromUtf8(
-            "QLabel{color:%1;font-size:12px;padding:2px 6px;}")
-            .arg(Theme::T("#C8C8CE", "#44444C")));
+        m_info->setObjectName(QStringLiteral("cropInfo"));
         root->addWidget(m_info);
 
         auto* bar = new QHBoxLayout;
