@@ -54,26 +54,11 @@ public:
         m_tree->setAlternatingRowColors(false);
         m_tree->setColumnWidth(0, 150);
         m_tree->setIndentation(14);
+        // 样式在应用级 QSS(QLabel#metaHistLabel / QTreeWidget#metaTree,
+        // #89 收敛):切主题由 applyLive 重设全局表自动跟上,不再需要重灌钩子
+        m_hist->setObjectName(QStringLiteral("metaHistLabel"));
+        m_tree->setObjectName(QStringLiteral("metaTree"));
         root->addWidget(m_tree, 1);
-        applyTheme();
-    }
-
-    // #248:构造期样式表按主题求值一次,切主题时由 MainWindow::applyThemeSurfaces
-    // 调用重灌(此前没有刷新钩子,浅色下信息面板整块仍是深色)
-    void applyTheme() {
-        m_hist->setStyleSheet(QString::fromUtf8(
-            "QLabel{background:%1;border-bottom:1px solid %2;}")
-            .arg(C_PREVIEW_BG, Theme::T("#2A2A31", "#D9D9E0")));
-        m_tree->setStyleSheet(QString::fromUtf8(
-            "QTreeWidget{background:%1;color:%2;border:none;font-size:12px;}"
-            "QTreeWidget::item{padding:2px 0;}"
-            "QTreeWidget::item:selected{background:#2F65C5;color:#FFFFFF;}"
-            "QHeaderView::section{background:%3;color:%4;"
-            "border:none;padding:4px 6px;font-size:12px;}")
-            .arg(C_CONTENT,
-                 Theme::T("#DCDCE2", "#1F1F26"),
-                 Theme::T("#232329", "#ECECEF"),
-                 Theme::T("#C8C8CE", "#44444C")));
     }
 
     // 换文件:立刻清掉旧内容(避免张冠李戴),再后台算新的

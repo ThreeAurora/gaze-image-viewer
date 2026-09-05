@@ -57,17 +57,9 @@ public:
             menu.exec(m_list->mapToGlobal(pos));
         });
         root->addWidget(m_list, 1);
-        applyTheme();
-    }
-
-    // #248 同款:构造期按主题求值一次,切主题由 applyThemeSurfaces 重灌
-    void applyTheme() {
-        m_list->setStyleSheet(QString::fromUtf8(
-            "QListWidget{background:%1;color:%2;border:none;font-size:12px;}"
-            "QListWidget::item{padding:3px 4px;}"
-            "QListWidget::item:selected{background:#2F65C5;color:#FFFFFF;}"
-            "QListWidget::item:hover{background:%3;}")
-            .arg(C_SIDEBAR, C_TEXT, C_TREE_HOVER));
+        // 列表样式在应用级 QSS(QListWidget#favList,#89 收敛):切主题由
+        // applyLive 重设全局表自动跟上,不再需要 #248 重灌钩子
+        m_list->setObjectName(QStringLiteral("favList"));
     }
 
     // 真源刷新:整表重建(收藏量级是个位数~几十,不设增量 diff)

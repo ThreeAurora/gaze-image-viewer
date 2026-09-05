@@ -610,9 +610,6 @@ void MainWindow::applyThemeSurfaces() {
     if (m_fileGrid)   m_fileGrid->refreshThemeColors();
     if (m_preview)    m_preview->refreshThemeColors();
     if (m_folderTree) m_folderTree->refreshThemeColors();
-    if (m_info)       m_info->applyTheme();   // #248:信息面板此前无刷新钩子
-    if (m_favs)       m_favs->applyTheme();   // #243:收藏夹列表同款重灌
-    if (m_filterPnl)  m_filterPnl->applyTheme();   // #242:筛选面板同款重灌
 }
 
 // ── #243 收藏夹:数据真源 = m_favPaths,改动即写 Favorites/paths ──

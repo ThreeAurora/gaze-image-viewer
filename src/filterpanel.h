@@ -29,6 +29,7 @@ class FilterPanel : public QWidget {
     Q_OBJECT
 public:
     explicit FilterPanel(QWidget* parent = nullptr) : QWidget(parent) {
+        setObjectName(QStringLiteral("filterPanel"));
         auto* root = new QVBoxLayout(this);
         root->setContentsMargins(6, 4, 6, 4);
         root->setSpacing(4);
@@ -40,6 +41,7 @@ public:
             { QT_TR_NOOP("红"), QT_TR_NOOP("橙"), QT_TR_NOOP("黄"), QT_TR_NOOP("绿"), QT_TR_NOOP("蓝") };
         for (int c = 1; c <= 5; ++c) {
             auto* b = new QToolButton;
+            b->setObjectName(QStringLiteral("filterColorBtn"));
             b->setCheckable(true);
             b->setFixedSize(24, 24);
             b->setCursor(Qt::PointingHandCursor);
@@ -127,8 +129,6 @@ public:
         (st.get("Filter/andMode", false).toBool() ? m_andBtn : m_orBtn)->setChecked(true);
         m_scope->setCurrentIndex(qBound(0, st.get("Filter/scope", 0).toInt(), 2));
 
-        applyTheme();
-
         // ── 接线(状态就位之后)──
         for (int c = 1; c <= 5; ++c)
             connect(m_colorBtns[c - 1], &QToolButton::toggled,
@@ -164,31 +164,8 @@ public:
 
     void setHitCount(int n) { m_hitLabel->setText(gazeTr("显示 %1 项").arg(n)); }
 
-    // #248 同款:构造期按主题求值一次,切主题由 applyThemeSurfaces 重灌
-    void applyTheme() {
-        const QString ss = QString::fromUtf8(
-            "QToolButton{background:transparent;color:%1;border:1px solid %2;"
-            "border-radius:4px;padding:2px 8px;font-size:12px;}"
-            "QToolButton:hover{background:%3;}"
-            "QToolButton:checked{border-color:%4;color:%4;font-weight:bold;}"
-            "QPushButton{background:transparent;color:%1;border:1px solid %2;"
-            "border-radius:4px;padding:2px 8px;font-size:12px;}"
-            "QPushButton:hover{background:%3;}"
-            "QCheckBox{color:%1;font-size:12px;spacing:4px;background:transparent;}"
-            "QCheckBox::indicator{width:13px;height:13px;}"
-            "QComboBox{background:transparent;color:%1;border:1px solid %2;"
-            "border-radius:4px;padding:2px 4px;font-size:12px;}"
-            "QLabel#filterHitLabel{color:%5;font-size:11px;background:transparent;}")
-            .arg(C_TEXT, C_SEPARATOR, C_CARD_HOVER, C_ACCENT, C_TEXT_FAINT);
-        setStyleSheet(ss);
-        // 色块钮:圆形描边,勾选=蓝圈;样式表不能混用,单独逐钮灌
-        for (int c = 1; c <= 5; ++c) {
-            m_colorBtns[c - 1]->setStyleSheet(QString::fromUtf8(
-                "QToolButton{background:transparent;border:1px solid %1;border-radius:12px;}"
-                "QToolButton:checked{border:2px solid %2;}")
-                .arg(C_SEPARATOR, C_ACCENT));
-        }
-    }
+    // 整表样式迁入应用级 QSS(QWidget#filterPanel 规则组,#89 收敛):
+    // 切主题由 Theme::applyLive 重设全局表自动跟上,不再需要重灌钩子
 
 signals:
     void conditionsChanged(int scope);
