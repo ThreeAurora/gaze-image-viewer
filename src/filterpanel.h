@@ -148,9 +148,15 @@ public:
                 const QString msg = (idx == 1)
                     ? gazeTr("「当前目录(递归)」要扫描全部子目录，文件很多时可能卡顿。确定使用吗？")
                     : gazeTr("「全部标记文件」要在整个颜色标记库中搜索，文件很多时可能卡顿。确定使用吗？");
-                if (QMessageBox::question(this, gazeTr("特殊范围确认"), msg,
-                                          QMessageBox::Yes | QMessageBox::No,
-                                          QMessageBox::No) != QMessageBox::Yes) {
+                // 2026-09-05 用户令:警示样式 + 中文按钮。Yes/No 英文钮不认路,
+                // Warning 图标+默认焦点落在"取消",防手滑直接回车放行。
+                QMessageBox box(QMessageBox::Warning, gazeTr("特殊范围确认"), msg,
+                                QMessageBox::NoButton, this);
+                QPushButton* okBtn = box.addButton(gazeTr("确定"), QMessageBox::YesRole);
+                box.addButton(gazeTr("取消"), QMessageBox::NoRole);
+                box.setDefaultButton(QMessageBox::No);
+                box.exec();
+                if (box.clickedButton() != okBtn) {
                     m_scope->setCurrentIndex(m_lastScope);
                     return;
                 }
