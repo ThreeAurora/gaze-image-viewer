@@ -644,6 +644,12 @@ void MainWindow::addFavorite(const QString& path) {
 }
 
 void MainWindow::closeEvent(QCloseEvent* event) {
+    // 退出即取消后台文件夹统计(2026-09-05):统计任务可能还要跑几分钟(G 盘
+    // 大目录),而 m_dirSizePool 是本窗口子对象,析构时 waitForDone 会陪任务
+    // 等到底 —— 主线程卡在析构里,进程"活着但无窗无响应"(WATCHDOG 实锤:
+    // 09-05 13:57 关闭后 GUI 无心跳 100 秒+)。置旗后任务下一轮循环即弃,
+    // 析构的等待最多一个循环周期。
+    if (m_dirSizeStop) m_dirSizeStop->store(true);
     if (AppSettings::instance().get("Interface/clearRecentOnExit", false).toBool()) {
         // 退出时清理"最近的文件":不落盘,直接把内存 + ini 一起清空
         m_recentFlushTimer.stop();
