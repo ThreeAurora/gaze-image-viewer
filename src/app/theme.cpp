@@ -393,7 +393,9 @@ QString appQss() {
         "  font-family: 'Consolas','Courier New',monospace; font-size: 13px;"
         "  selection-background-color: %5;"
         "}"
-        "QWidget#pvVideo { background: #0A0A0C; }"
+        // 视频区底:深色恒近黑;浅色主题下用户令"预览视频背景应为白色"。
+        // (视频面本体另有调色板,见 applyVideoBackdrop;这里管控件露出的边角)
+        "QWidget#pvVideo { background: %40; }"
         "QWidget#pvControlBar, QWidget#pvControlBar QWidget {"
         "  background: %3; border-top: 1px solid %4;"
         "}"
@@ -746,7 +748,8 @@ QString appQss() {
         .arg(Theme::T("#232329", "#ECECEF"))  // %36:元数据树表头底(同上)
         .arg(Theme::T("#C8C8CE", "#44444C"))  // %37:元数据树表头字色(同上)
         .arg(Theme::T("#141418", "#E9E9ED"))  // %38:裁剪画布底(原 cropdialog 内联)
-        .arg(Theme::T("#C8C8CE", "#44444C")); // %39:裁剪信息条字色(同上)
+        .arg(Theme::T("#C8C8CE", "#44444C"))  // %39:裁剪信息条字色(同上)
+        .arg(Theme::T("#0A0A0C", "#FFFFFF")); // %40:视频区底(浅色=白,#1)
 }
 
 } // namespace Theme

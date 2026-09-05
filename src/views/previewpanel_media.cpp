@@ -159,6 +159,7 @@ void PreviewPanel::showVideo(const QString& path) {
     setupPlayer();
     if (m_player) {
         ensureVideoWidget();          // 复用同一 QVideoWidget(切视频不重建)
+        applyVideoBackdrop();         // 底色按当前模式/主题取(全屏恒黑,浅色浏览器=白)
         const QUrl url = QUrl::fromLocalFile(path);
         if (m_player->source() == url) {
             // 同一媒体(连点动态照片重播):直接回零重播。反复走下面那套
@@ -190,9 +191,9 @@ void PreviewPanel::showVideo(const QString& path) {
                 m_player->setPosition(0);
                 if (live || pp_impl::s_bool("Viewer/autoPlayVideo", true)) {
                     m_player->play();
-                    m_btnPlay->setIcon(pp_impl::whiteIcon(style()->standardIcon(QStyle::SP_MediaPause)));
+                    m_btnPlay->setIcon(pp_impl::themeIcon(style()->standardIcon(QStyle::SP_MediaPause)));
                 } else {
-                    m_btnPlay->setIcon(pp_impl::whiteIcon(style()->standardIcon(QStyle::SP_MediaPlay)));
+                    m_btnPlay->setIcon(pp_impl::themeIcon(style()->standardIcon(QStyle::SP_MediaPlay)));
                 }
             }
         } else {
@@ -222,6 +223,15 @@ void PreviewPanel::showVideo(const QString& path) {
 
 // VIDFRAME 探针(旧 vidProbeAttach)已随 #121 收尾剪除,见文件顶部说明。
 
+// 视频面/遮罩底色唯一写入口:未播放/切源期间露出的底 = backdropColor()
+// (浏览器浅色主题默认白,深色与全屏恒黑)。主题切换与创建时都走这里,
+// 不再各处硬编码 #000000(白色主题下视频区一片黑的根因)。
+void PreviewPanel::applyVideoBackdrop() {
+    const QPalette pal(backdropColor());
+    if (m_vw) m_vw->setPalette(pal);
+    if (m_videoCover) m_videoCover->setPalette(pal);
+}
+
 // 视频控件唯一创建/复用入口:切视频时复用同一实例(标准 setSource 切换),
 // Qt 内部清空视频输出;无帧窗口期显示纯黑,绝不透出下层残留画面
 void PreviewPanel::ensureVideoWidget() {
@@ -231,16 +241,16 @@ void PreviewPanel::ensureVideoWidget() {
     m_vw = new QVideoWidget(m_videoWidget);
     m_vw->setGeometry(m_videoWidget->rect());
     m_vw->setAutoFillBackground(true);
-    m_vw->setPalette(QPalette(QColor("#000000")));
+    m_vw->setPalette(QPalette(backdropColor()));   // 浅色主题=白底(随主题/全屏恒黑)
     m_vw->setMouseTracking(true);   // #208:视频面悬停也要把 move 冒泡给面板(光标恢复/信息条)
     m_vw->installEventFilter(this);   // 它盖满 m_videoWidget,点击先到它
     m_vw->show();
     if (!m_videoCover) {
         // 遮罩是 m_videoWidget 的子件(随 resizeEvent 自动重设几何),
-        // 显式置黑 + 盖在 m_vw 之上;showVideo 时升起,Playing 后收回
+        // 底色随主题 + 盖在 m_vw 之上;showVideo 时升起,Playing 后收回
         m_videoCover = new QWidget(m_videoWidget);
         m_videoCover->setAutoFillBackground(true);
-        m_videoCover->setPalette(QPalette(QColor("#000000")));
+        m_videoCover->setPalette(QPalette(backdropColor()));
     }
     m_videoCover->setGeometry(m_videoWidget->rect());
     // QVideoWidget 首建要拉起视频渲染管线(D3D 设备/swapchain),与 QMediaPlayer
@@ -286,7 +296,7 @@ void PreviewPanel::showAudio(const QString& path) {
     if (m_player) {
         m_player->setSource(QUrl::fromLocalFile(path));
         m_player->play();
-        m_btnPlay->setIcon(pp_impl::whiteIcon(style()->standardIcon(QStyle::SP_MediaPause)));
+        m_btnPlay->setIcon(pp_impl::themeIcon(style()->standardIcon(QStyle::SP_MediaPause)));
     }
 
     // 波形启动:解码聚合全在专属线程,主线程在这里只花微秒级(性能红线:
@@ -373,7 +383,7 @@ void PreviewPanel::swapAudioSource(const QString& out) {
     m_player->setSource(QUrl::fromLocalFile(out));
     m_player->play();
     if (m_btnPlay)
-        m_btnPlay->setIcon(pp_impl::whiteIcon(style()->standardIcon(QStyle::SP_MediaPause)));
+        m_btnPlay->setIcon(pp_impl::themeIcon(style()->standardIcon(QStyle::SP_MediaPause)));
 }
 
 // ── 音频波形(见 audiowave.h;解码聚合全在专属线程,这里只画) ──

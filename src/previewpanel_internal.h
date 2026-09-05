@@ -8,6 +8,7 @@
 // 仅供 previewpanel*.cpp 这几个编译单元 include,不给其他类使用。
 // ═══════════════════════════════════════════════════════════════════════
 #include "settings.h"
+#include "theme.h"
 
 #include <QColor>
 #include <QIcon>
@@ -28,6 +29,23 @@ inline QIcon whiteIcon(const QIcon& base, int size = 32) {
     p.fillRect(white.rect(), QColor("#FFFFFF"));
     p.end();
     return QIcon(white);
+}
+
+// 标准图标随主题染色:深色主题白、浅色主题黑(与全局文字色同向)。
+// 浅色主题下播放控制栏底是浅灰,白色图标直接隐身 —— 控制栏一律走这版;
+// 全屏浮层(恒黑底)仍用 whiteIcon。
+inline QIcon themeIcon(const QIcon& base, int size = 32) {
+    const QColor ink = QColor(QString::fromUtf8(
+        Theme::light() ? "#1F1F26" : "#FFFFFF"));
+    QPixmap pm = base.pixmap(size, size);
+    QPixmap tinted(pm.size());
+    tinted.fill(Qt::transparent);
+    QPainter p(&tinted);
+    p.drawPixmap(0, 0, pm);
+    p.setCompositionMode(QPainter::CompositionMode_SourceIn);
+    p.fillRect(tinted.rect(), ink);
+    p.end();
+    return QIcon(tinted);
 }
 
 // ═══════════════════════════════════════════

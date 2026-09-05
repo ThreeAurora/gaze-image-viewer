@@ -180,10 +180,11 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     cl->setSpacing(4);
 
     // 按钮统一样式在应用级 QSS(QWidget#pvControlBar QPushButton/QToolButton,
-    // #89 收敛) + 白色图标:播放/暂停图标在别处切换时必须同样走 whiteIcon,
-    // 否则标准图标自带深色,在深底上直接"变黑看不见"
+    // #89 收敛) + 主题色图标:播放/暂停图标在别处切换时必须同样走 themeIcon,
+    // 否则标准图标自带深色,在深底上直接"变黑看不见";浅色主题下白图标又会
+    // 在浅灰栏上隐身,所以染的是"随主题反转"的文字色(深色白/浅色黑)
     auto mkBtn = [&](auto* b, QStyle::StandardPixmap sp, int w, const QString& tip) {
-        b->setIcon(pp_impl::whiteIcon(style()->standardIcon(sp)));
+        b->setIcon(pp_impl::themeIcon(style()->standardIcon(sp)));
         b->setIconSize(QSize(16, 16));
         b->setFixedSize(w, 28);
         b->setToolTip(tip);
@@ -580,7 +581,7 @@ void PreviewPanel::setupPlayer() {
     connect(m_player, &QMediaPlayer::playbackStateChanged,
             this, [this](QMediaPlayer::PlaybackState state) {
         if (!m_player || !m_btnPlay) return;
-        m_btnPlay->setIcon(pp_impl::whiteIcon(style()->standardIcon(
+        m_btnPlay->setIcon(pp_impl::themeIcon(style()->standardIcon(
             state == QMediaPlayer::PlayingState
                 ? QStyle::SP_MediaPause : QStyle::SP_MediaPlay)));
         // #104:armed 期间(等待本路首帧)不得由 PlayingState 露出画面——
@@ -627,9 +628,9 @@ void PreviewPanel::setupPlayer() {
                 armCoverUntilFirstFrame();
                 if (m_isLivePhoto || (m_mode == "video" && pp_impl::s_bool("Viewer/autoPlayVideo", true))) {
                     m_player->play();
-                    m_btnPlay->setIcon(pp_impl::whiteIcon(style()->standardIcon(QStyle::SP_MediaPause)));
+                    m_btnPlay->setIcon(pp_impl::themeIcon(style()->standardIcon(QStyle::SP_MediaPause)));
                 } else {
-                    m_btnPlay->setIcon(pp_impl::whiteIcon(style()->standardIcon(QStyle::SP_MediaPlay)));
+                    m_btnPlay->setIcon(pp_impl::themeIcon(style()->standardIcon(QStyle::SP_MediaPlay)));
                 }
             }
         }
@@ -780,7 +781,8 @@ void PreviewPanel::clear() {
 }
 
 // 主题切换:音频/波形标签文字色是构造期内联样式表,按新色重灌;
-// 自绘底色在 paintEvent 里即时取主题默认值,补一次重绘即换白
+// 自绘底色在 paintEvent 里即时取主题默认值,补一次重绘即换白;
+// 播放控制栏图标与视频面遮罩同拍换色(图标深白反转/视频底随主题)
 void PreviewPanel::refreshThemeColors() {
     update();
     if (m_audioLabel)
@@ -789,4 +791,20 @@ void PreviewPanel::refreshThemeColors() {
     if (m_waveLabel)
         m_waveLabel->setStyleSheet(
             QString("color:%1;font-size:12px;background:transparent;").arg(C_TEXT_DIM));
+    // 控制栏四钮重染(播放/暂停按当前态选形;播放器不存在时取播放形)
+    if (m_btnPrev)
+        m_btnPrev->setIcon(pp_impl::themeIcon(
+            style()->standardIcon(QStyle::SP_MediaSkipBackward)));
+    if (m_btnStop)
+        m_btnStop->setIcon(pp_impl::themeIcon(
+            style()->standardIcon(QStyle::SP_MediaStop)));
+    if (m_btnVolume)
+        m_btnVolume->setIcon(pp_impl::themeIcon(
+            style()->standardIcon(QStyle::SP_MediaVolume)));
+    if (m_btnPlay)
+        m_btnPlay->setIcon(pp_impl::themeIcon(style()->standardIcon(
+            m_player && m_player->playbackState() == QMediaPlayer::PlayingState
+                ? QStyle::SP_MediaPause : QStyle::SP_MediaPlay)));
+    // 视频面/遮罩底色随主题(浏览器浅色=白);全屏经 backdropColor 恒黑
+    applyVideoBackdrop();
 }

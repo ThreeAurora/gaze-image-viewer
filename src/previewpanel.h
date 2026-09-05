@@ -91,6 +91,7 @@ private:
     void raiseVideoCover();     // #104:切源期间藏起视频控件(+升起遮罩),首帧到达才露出
     void armCoverUntilFirstFrame();  // #104:改由"本路源第一帧"收回遮罩,而非 PlayingState
     void revealVideo();         // #104:首帧到达/兜底出口 → 收遮罩 + 露出视频控件
+    void applyVideoBackdrop();  // 视频面/遮罩底色唯一写入口(随主题,全屏恒黑)
     void syncVideoChildren();   // vw/cover 几何同步到 videoWidget(布局激活后必须重跑)
     void showImage(const QString &path);
     void showGif(const QString &path);        // GIF:第一帧定几何,动画只换像素(#103/#96)
