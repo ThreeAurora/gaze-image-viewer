@@ -32,33 +32,81 @@ public:
     explicit FilterPanel(QWidget* parent = nullptr) : QWidget(parent) {
         setObjectName(QStringLiteral("filterPanel"));
         auto* root = new QVBoxLayout(this);
-        root->setContentsMargins(6, 4, 6, 4);
-        root->setSpacing(4);
+        root->setContentsMargins(8, 6, 8, 6);
+        root->setSpacing(6);
 
-        // ── 颜色维:5 个圆形色块钮(checkable,外圈勾选态加亮)──
-        auto* colorRow = new QHBoxLayout;
-        colorRow->setSpacing(4);
+        // ── 模式行(2026-09-05 用户令):「颜色标记 / 类型」两种扁平切换,
+        //    一次只织入一个维度,不再同屏两套条件 + 与/或 ──
+        auto* modeRow = new QHBoxLayout;
+        modeRow->setSpacing(4);
+        auto mkMode = [&](const QString& text, const QString& tip, int id) {
+            auto* b = new QToolButton;
+            b->setText(text);
+            b->setToolTip(tip);
+            b->setCheckable(true);
+            b->setCursor(Qt::PointingHandCursor);
+            b->setObjectName(QStringLiteral("filterModeBtn"));
+            b->setFocusPolicy(Qt::TabFocus);
+            modeRow->addWidget(b, 1);
+            connect(b, &QToolButton::toggled, this, [this, id](bool on) {
+                if (!on) return;
+                m_mode = id;
+                AppSettings::instance().set("Filter/mode", id);
+                syncModeVisibility();
+                if (!m_updating) emitChange();
+            });
+            return b;
+        };
+        m_colorModeBtn = mkMode(gazeTr("颜色标记"),
+                                gazeTr("按颜色标记筛选(维度内多选=任一命中)"), 0);
+        m_typeModeBtn  = mkMode(gazeTr("类型"),
+                                gazeTr("按文件类型筛选(维度内多选=任一命中)"), 1);
+        // 状态先于接线恢复(下方),这里的互斥用手动压:同一行只留一个按下
+        connect(m_colorModeBtn, &QToolButton::toggled, this, [this](bool on) {
+            if (on && m_typeModeBtn->isChecked()) { m_updating = true; m_typeModeBtn->setChecked(false); m_updating = false; }
+        });
+        connect(m_typeModeBtn, &QToolButton::toggled, this, [this](bool on) {
+            if (on && m_colorModeBtn->isChecked()) { m_updating = true; m_colorModeBtn->setChecked(false); m_updating = false; }
+        });
+        root->addLayout(modeRow);
+
+        // ── 颜色维:5 个圆形色块钮(28px 圆形,勾选=蓝圈)──
+        m_colorRow = new QWidget;
+        auto* colorRow = new QHBoxLayout(m_colorRow);
+        colorRow->setContentsMargins(0, 0, 0, 0);
+        colorRow->setSpacing(6);
         static const char* const colorNames[5] =
             { QT_TR_NOOP("红"), QT_TR_NOOP("橙"), QT_TR_NOOP("黄"), QT_TR_NOOP("绿"), QT_TR_NOOP("蓝") };
         for (int c = 1; c <= 5; ++c) {
             auto* b = new QToolButton;
             b->setObjectName(QStringLiteral("filterColorBtn"));
             b->setCheckable(true);
-            b->setFixedSize(24, 24);
+            b->setFixedSize(28, 28);
             b->setCursor(Qt::PointingHandCursor);
             b->setToolTip(gazeTr(colorNames[c - 1]));
-            QPixmap pix(14, 14);
-            pix.fill(LabelStore::colorValue(c));
+            // 圆形色块:用抗锯齿画整圆,不再方块贴进方钮
+            QPixmap pix(20, 20);
+            pix.fill(Qt::transparent);
+            {
+                QPainter p(&pix);
+                p.setRenderHint(QPainter::Antialiasing);
+                p.setPen(Qt::NoPen);
+                p.setBrush(LabelStore::colorValue(c));
+                p.drawEllipse(1, 1, 18, 18);
+                p.end();
+            }
             b->setIcon(QIcon(pix));
-            b->setIconSize(QSize(14, 14));
+            b->setIconSize(QSize(20, 20));
             colorRow->addWidget(b);
+            colorRow->addStretch(1);
             m_colorBtns[c - 1] = b;
         }
-        colorRow->addStretch(1);
-        root->addLayout(colorRow);
+        root->addWidget(m_colorRow);
 
-        // ── 类型维:6 个勾选框,两列三行(与工具栏格式筛选同一套类名词)──
-        auto* grid = new QGridLayout;
+        // ── 类型维:6 个勾选框(3 行 2 列)──
+        m_typeGrid = new QWidget;
+        auto* grid = new QGridLayout(m_typeGrid);
+        grid->setContentsMargins(0, 0, 0, 0);
         grid->setHorizontalSpacing(6);
         grid->setVerticalSpacing(2);
         static const char* const catNames[6] = {
@@ -72,40 +120,24 @@ public:
             grid->addWidget(cb, t / 2, t % 2);
             m_catBoxes[t] = cb;
         }
-        root->addLayout(grid);
+        root->addWidget(m_typeGrid);
 
-        // ── 维度间与/或 + 清除 ──
-        auto* modeRow = new QHBoxLayout;
-        modeRow->setSpacing(4);
-        m_orBtn = new QToolButton;
-        m_orBtn->setText(gazeTr("任一"));
-        m_orBtn->setCheckable(true);
-        m_orBtn->setToolTip(gazeTr("任一:颜色或类型条件命中其一即显示"));
-        m_andBtn = new QToolButton;
-        m_andBtn->setText(gazeTr("全部"));
-        m_andBtn->setCheckable(true);
-        m_andBtn->setToolTip(gazeTr("全部:颜色和类型条件须同时命中"));
-        auto* modeGrp = new QButtonGroup(this);
-        modeGrp->setExclusive(true);
-        modeGrp->addButton(m_orBtn);
-        modeGrp->addButton(m_andBtn);
-        modeRow->addWidget(m_orBtn);
-        modeRow->addWidget(m_andBtn);
-        modeRow->addStretch(1);
-        auto* clearBtn = new QPushButton(gazeTr("清除筛选"));
-        clearBtn->setCursor(Qt::PointingHandCursor);
-        clearBtn->setToolTip(gazeTr("取消全部勾选(范围保持不变)"));
-        modeRow->addWidget(clearBtn);
-        root->addLayout(modeRow);
-
-        // ── 范围 ──
+        // ── 范围 + 清除 ──
+        auto* scopeRow = new QHBoxLayout;
+        scopeRow->setSpacing(6);
         m_scope = new QComboBox;
         m_scope->addItem(gazeTr("当前目录"));
         m_scope->addItem(gazeTr("当前目录(递归)"));
         m_scope->addItem(gazeTr("全部标记文件"));
         m_scope->setToolTip(gazeTr(
             "全部标记文件 = 在整个颜色标记库中搜索(跨目录);格式条件在其结果上生效"));
-        root->addWidget(m_scope);
+        scopeRow->addWidget(m_scope, 1);
+        auto* clearBtn = new QToolButton;
+        clearBtn->setText(gazeTr("清除"));
+        clearBtn->setCursor(Qt::PointingHandCursor);
+        clearBtn->setToolTip(gazeTr("取消全部勾选(范围保持不变)"));
+        scopeRow->addWidget(clearBtn);
+        root->addLayout(scopeRow);
 
         // ── 命中计数(弱文字;fileCountChanged 驱动)──
         m_hitLabel = new QLabel;
@@ -127,7 +159,9 @@ public:
             const int v = s.toInt();
             if (v >= 0 && v <= 5) m_catBoxes[v]->setChecked(true);
         }
-        (st.get("Filter/andMode", false).toBool() ? m_andBtn : m_orBtn)->setChecked(true);
+        m_mode = qBound(0, st.get("Filter/mode", 0).toInt(), 1);
+        (m_mode == 0 ? m_colorModeBtn : m_typeModeBtn)->setChecked(true);
+        syncModeVisibility();
         m_scope->setCurrentIndex(qBound(0, st.get("Filter/scope", 0).toInt(), 2));
         m_lastScope = m_scope->currentIndex();   // 构造期恢复不弹警告(先设状态后接线)
 
@@ -138,8 +172,6 @@ public:
         for (int t = 0; t < 6; ++t)
             connect(m_catBoxes[t], &QCheckBox::toggled,
                     this, [this](bool) { if (!m_updating) emitChange(); });
-        connect(m_orBtn,  &QToolButton::toggled, this, [this](bool on) { if (on) emitChange(); });
-        connect(m_andBtn, &QToolButton::toggled, this, [this](bool on) { if (on) emitChange(); });
         connect(m_scope, &QComboBox::currentIndexChanged, this, [this](int idx) {
             // 特殊范围两档先警告(2026-09-05 用户令):文件过多可能卡死,询问后才生效;
             // 拒绝=回退上次生效档(回退触发再进时 idx==m_lastScope 不再弹)。
@@ -164,8 +196,8 @@ public:
             m_lastScope = idx;
             emitChange();
         });
-        connect(clearBtn, &QPushButton::clicked, this, [this]() {
-            // 十个勾一起撤:置哨兵拦住中间态,收尾只发一次
+        connect(clearBtn, &QToolButton::clicked, this, [this]() {
+            // 当期维度的勾一起撤:置哨兵拦住中间态,收尾只发一次
             m_updating = true;
             for (int c = 1; c <= 5; ++c) m_colorBtns[c - 1]->setChecked(false);
             for (int t = 0; t < 6; ++t)  m_catBoxes[t]->setChecked(false);
@@ -174,14 +206,18 @@ public:
         });
     }
 
-    // 当前勾选 → spec(active 自算;范围走 scope())
+    // 当前模式勾选 → spec(active 自算;范围走 scope())。
+    // 只收当前维度:另一维度的历史勾选保持在 ini 里,不暗中参与筛选
     MultiFilterSpec spec() const {
         MultiFilterSpec s;
-        for (int c = 1; c <= 5; ++c)
-            if (m_colorBtns[c - 1]->isChecked()) s.colors.insert(c);
-        for (int t = 0; t < 6; ++t)
-            if (m_catBoxes[t]->isChecked()) s.cats.insert(t);
-        s.andMode = m_andBtn->isChecked();
+        if (m_mode == 0) {
+            for (int c = 1; c <= 5; ++c)
+                if (m_colorBtns[c - 1]->isChecked()) s.colors.insert(c);
+        } else {
+            for (int t = 0; t < 6; ++t)
+                if (m_catBoxes[t]->isChecked()) s.cats.insert(t);
+        }
+        s.andMode = false;
         s.active = !s.colors.isEmpty() || !s.cats.isEmpty();
         return s;
     }
@@ -196,10 +232,9 @@ signals:
     void conditionsChanged(int scope);
 
 private:
-    bool anyChecked() const {
-        for (int c = 1; c <= 5; ++c) if (m_colorBtns[c - 1]->isChecked()) return true;
-        for (int t = 0; t < 6; ++t)  if (m_catBoxes[t]->isChecked()) return true;
-        return false;
+    void syncModeVisibility() {
+        if (m_colorRow) m_colorRow->setVisible(m_mode == 0);
+        if (m_typeGrid) m_typeGrid->setVisible(m_mode == 1);
     }
     void emitChange() {
         // 落盘(面板重开/重启恢复);勾选是低频交互,逐键 set 无 perf 顾虑
@@ -211,17 +246,20 @@ private:
         AppSettings& st = AppSettings::instance();
         st.set("Filter/colors", cs.join(','));
         st.set("Filter/cats", ts.join(','));
-        st.set("Filter/andMode", m_andBtn->isChecked());
+        st.set("Filter/mode", m_mode);
         st.set("Filter/scope", m_scope->currentIndex());
         emit conditionsChanged(m_scope->currentIndex());
     }
 
+    QToolButton* m_colorModeBtn = nullptr;
+    QToolButton* m_typeModeBtn  = nullptr;
+    QWidget*     m_colorRow     = nullptr;   // 颜色行容器(模式切换显隐)
+    QWidget*     m_typeGrid     = nullptr;
     QToolButton* m_colorBtns[5] = {};
     QCheckBox*   m_catBoxes[6]  = {};
-    QToolButton* m_orBtn  = nullptr;
-    QToolButton* m_andBtn = nullptr;
     QComboBox*   m_scope  = nullptr;
     QLabel*      m_hitLabel = nullptr;
+    int          m_mode = 0;          // 0=颜色标记 1=类型(持久化 Filter/mode)
     int          m_lastScope = 0;     // 上一次生效的范围档(警告拒绝时的回退目标)
-    bool         m_updating = false;   // 程序化批量改勾选中(拦中间态 emit)
+    bool         m_updating = false;  // 程序化批量改勾选中(拦中间态 emit)
 };
