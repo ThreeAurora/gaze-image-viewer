@@ -529,8 +529,11 @@ void FolderTree::refreshCurrent() {
 }
 
 // 主题切换:行前景色在加载时就 setForeground 进了 item(全局 QSS 刷新覆盖不到),
-// 遍历已物化行按隐藏标志重灌,避免"树里仍留旧主题的文字色"
+// 遍历已物化行按隐藏标志重灌,避免"树里仍留旧主题的文字色";
+// 控件级样式表(底色/文字/悬停/选中,缓存着旧主题字面值)也一并重灌,
+// 否则浅色主题下树底仍是黑、新文字色还看不清
 void FolderTree::refreshThemeColors() {
+    applySelectionStyle();
     std::function<void(QTreeWidgetItem*)> walk = [&walk](QTreeWidgetItem* it) {
         for (int i = 0; i < it->childCount(); ++i) {
             QTreeWidgetItem* c = it->child(i);
