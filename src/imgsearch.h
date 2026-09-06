@@ -32,6 +32,7 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QProcess>
+#include <QRegularExpression>
 #include <QCoreApplication>
 #include <QFileInfo>
 #include <QPointer>
@@ -207,58 +208,95 @@ inline void killStartedService() {
     p.waitForFinished(3000);
 }
 
-// 服务离线时拉起(python main.py --no-browser)并异步轮询到就绪。
-// onReady(err):err 为空 = 就绪。轮询定时器挂在 ctx 上,ctx 析构自动停。
+// 端口上监听进程的 PID(netstat -ano 找 LISTENING 行);找不到返回 0。
+// 用于停掉"不是由 Gaze 拉起"的服务实例——端口就是配置里定下的那个,
+// 占着它的就是图搜服务本体
+inline qint64 pidListeningOnPort(int portNo) {
+    QProcess p;
+    hideConsoleWindow(p);   // netstat 是控制台程序,不藏会闪黑窗
+    p.start("netstat", {"-ano", "-p", "TCP"});
+    if (!p.waitForFinished(3000)) return 0;
+    const QString out = QString::fromLocal8Bit(p.readAllStandardOutput());
+    const QString suffix = QStringLiteral(":%1").arg(portNo);
+    for (const QString& raw : out.split(QLatin1Char('\n'))) {
+        const QStringList cols = raw.trimmed().split(QRegularExpression("\\s+"));
+        if (cols.size() < 5 || cols.at(0) != QLatin1String("TCP")) continue;
+        if (cols.at(1).endsWith(suffix) && cols.at(3) == QLatin1String("LISTENING"))
+            return cols.at(4).toLongLong();
+    }
+    return 0;
+}
+
+// 引擎开关的"关":优先回收由 Gaze 拉起的实例;否则按端口找监听进程结束。
+// 返回空串 = 已结束(或本来就没在跑);非空 = 需要给用户看的失败说明。
+inline QString stopService() {
+    qint64 pid = servicePid();
+    if (pid <= 0) pid = pidListeningOnPort(port());
+    if (pid <= 0) return gazeTr("服务未在运行");
+    QProcess p;
+    hideConsoleWindow(p);
+    p.start("taskkill", {"/PID", QString::number(pid), "/T", "/F"});
+    p.waitForFinished(3000);
+    servicePid() = 0;
+    return {};
+}
+
+// 拉起服务并轮询到就绪(不做任何开关检查——调用方自己拿主意:
+// ensureRunningAsync 查 ImgSearch/autoStart,对话框的"启动引擎"是用户点了才来)。
+inline void startServiceAsync(QObject* ctx, std::function<void(QString)> onReady) {
+    const QString dir = AppSettings::instance().get(
+        "ImgSearch/dir", defaultDir()).toString();
+    const QString py = AppSettings::instance().get(
+        "ImgSearch/python", QStringLiteral("C:/miniconda3")).toString();
+    if (!QFileInfo::exists(dir + "/main.py")) {
+        onReady(gazeTr(
+            "未找到万象图搜项目:%1/main.py —— 可在 设置 → 以文搜图 改目录").arg(dir));
+        return;
+    }
+    qint64 pid = 0;
+    QProcess p;
+    hideConsoleWindow(p);   // python 控制台窗口一闪而过同样难看:静默起服务
+    if (!p.startDetached(py, {"main.py", "--no-browser",
+                              "--port", QString::number(port())},
+                         dir, &pid)) {
+        onReady(gazeTr(
+            "无法启动 Python 解释器:%1 —— 检查 设置 → 以文搜图").arg(py));
+        return;
+    }
+    servicePid() = pid;
+    const qint64 deadline = QDateTime::currentMSecsSinceEpoch() + 30000;
+    // 轮询请求存在在途并发:done 保证 onReady 只回调一次
+    auto done = QSharedPointer<bool>::create(false);
+    auto* t = new QTimer(ctx);
+    QObject::connect(t, &QTimer::timeout, ctx, [ctx, deadline, onReady, t, done]() {
+        pingAsync(ctx, [deadline, onReady, t, done](bool alive) {
+            if (*done) return;
+            if (alive) {
+                *done = true;
+                t->stop(); t->deleteLater();
+                onReady({});
+            } else if (QDateTime::currentMSecsSinceEpoch() >= deadline) {
+                *done = true;
+                t->stop(); t->deleteLater();
+                onReady(gazeTr(
+                    "服务启动超时(30s)。可手动运行 main.py,或在 设置 → 以文搜图 检查配置"));
+            }
+        });
+    });
+    t->start(400);
+}
+
+// 搜索前按需拉起:alive 直接用;离线时只有 ImgSearch/autoStart 开着才拉
+// (铁律:默认绝不替用户起服务);对话框"启动引擎"走 startServiceAsync。
 inline void ensureRunningAsync(QObject* ctx, std::function<void(QString)> onReady) {
     pingAsync(ctx, [ctx, onReady = std::move(onReady)](bool alive) {
         if (alive) { onReady({}); return; }
-        // #222(2026-09-04 用户令):默认绝不自动拉起万象图搜服务;开关打开才
-        // 按需启动(该功能后期还要大改,此处只做最小开关,不建预热/常驻逻辑)
         if (!AppSettings::instance().get("ImgSearch/autoStart", false).toBool()) {
             onReady(gazeTr(
                 "万象图搜服务未运行。可手动运行 main.py,或在 设置 → 以文搜图 打开自动启动"));
             return;
         }
-        const QString dir = AppSettings::instance().get(
-            "ImgSearch/dir", defaultDir()).toString();
-        const QString py = AppSettings::instance().get(
-            "ImgSearch/python", QStringLiteral("C:/miniconda3")).toString();
-        if (!QFileInfo::exists(dir + "/main.py")) {
-            onReady(gazeTr(
-                "未找到万象图搜项目:%1/main.py —— 可在 设置 → 以文搜图 改目录").arg(dir));
-            return;
-        }
-        qint64 pid = 0;
-        QProcess p;
-        hideConsoleWindow(p);   // python 控制台窗口一闪而过同样难看:静默起服务
-        if (!p.startDetached(py, {"main.py", "--no-browser",
-                                  "--port", QString::number(port())},
-                             dir, &pid)) {
-            onReady(gazeTr(
-                "无法启动 Python 解释器:%1 —— 检查 设置 → 以文搜图").arg(py));
-            return;
-        }
-        servicePid() = pid;
-        const qint64 deadline = QDateTime::currentMSecsSinceEpoch() + 30000;
-        // 轮询请求存在在途并发:done 保证 onReady 只回调一次
-        auto done = QSharedPointer<bool>::create(false);
-        auto* t = new QTimer(ctx);
-        QObject::connect(t, &QTimer::timeout, ctx, [ctx, deadline, onReady, t, done]() {
-            pingAsync(ctx, [deadline, onReady, t, done](bool alive) {
-                if (*done) return;
-                if (alive) {
-                    *done = true;
-                    t->stop(); t->deleteLater();
-                    onReady({});
-                } else if (QDateTime::currentMSecsSinceEpoch() >= deadline) {
-                    *done = true;
-                    t->stop(); t->deleteLater();
-                    onReady(gazeTr(
-                        "服务启动超时(30s)。可手动运行 main.py,或在 设置 → 以文搜图 检查配置"));
-                }
-            });
-        });
-        t->start(400);
+        startServiceAsync(ctx, std::move(onReady));
     });
 }
 

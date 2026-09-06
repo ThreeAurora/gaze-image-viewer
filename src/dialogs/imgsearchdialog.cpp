@@ -89,6 +89,20 @@ ImageSearchDialog::ImageSearchDialog(QWidget* parent) : QDialog(parent) {
     leftBtns->addWidget(retryBtn);
     leftCol->addLayout(leftBtns);
 
+    // 引擎开关(就是服务的启动/停止):状态行旁一颗钮,在线=停止,离线=启动
+    auto* engineRow = new QHBoxLayout;
+    engineRow->setSpacing(6);
+    auto* engineLbl = new QLabel(gazeTr("引擎"));
+    m_engineBtn = new QPushButton(gazeTr("启动"));
+    m_engineBtn->setToolTip(gazeTr(
+        "启动/停止万象图搜服务。停止=结束监听该端口的服务进程\n"
+        "(冷启动需加载模型约 2 秒;空闲 30 分钟服务会自动卸载模型)"));
+    m_engineBtn->setCursor(Qt::PointingHandCursor);
+    connect(m_engineBtn, &QPushButton::clicked, this, [this]() { toggleEngine(); });
+    engineRow->addWidget(engineLbl);
+    engineRow->addWidget(m_engineBtn, 1);
+    leftCol->addLayout(engineRow);
+
     m_svcStatus = new QLabel(gazeTr("服务状态:—"));
     m_svcStatus->setObjectName("imgSearchStatus");
     m_svcStatus->setWordWrap(true);
@@ -438,10 +452,48 @@ void ImageSearchDialog::refreshFolders() {
     });
 }
 
+void ImageSearchDialog::toggleEngine() {
+    if (m_svcAlive) {
+        // 停:优先回收 Gaze 拉起的实例,否则结束监听配置端口的进程
+        const QString err = ImgSearch::stopService();
+        m_svcStatus->setText(err.isEmpty()
+            ? gazeTr("服务已停止") : gazeTr("停止失败:%1").arg(err));
+        m_svcAlive = false;
+        m_engineBtn->setText(gazeTr("启动"));
+        refreshFolders();
+        return;
+    }
+    // 起:用户在窗口里点了启动 = 明确意图,不受"自动启动"开关约束
+    m_engineBtn->setEnabled(false);
+    m_svcStatus->setText(gazeTr("正在唤醒服务…(冷启动需加载模型,约 2 秒)"));
+    QPointer<ImageSearchDialog> self(this);
+    ImgSearch::startServiceAsync(this, [self](const QString& err) {
+        if (!self) return;
+        self->m_engineBtn->setEnabled(true);
+        if (!err.isEmpty()) {
+            self->m_svcStatus->setText(err);
+            self->m_svcAlive = false;
+            self->m_engineBtn->setText(gazeTr("启动"));
+            return;
+        }
+        self->m_svcAlive = true;
+        self->m_engineBtn->setText(gazeTr("停止"));
+        self->m_svcStatus->setText(gazeTr("服务已启动"));
+        self->refreshFolders();
+    });
+}
+
 void ImageSearchDialog::refreshServiceStatus() {
     QPointer<ImageSearchDialog> self(this);
     ImgSearch::statusAsync(this, [self](int status, const QJsonDocument& doc) {
-        if (!self || status != 200) return;
+        if (!self) return;
+        if (status != 200) {   // 轮询离线:引擎钮回到"启动"态
+            if (self->m_engineBtn->isEnabled()) {
+                self->m_svcAlive = false;
+                self->m_engineBtn->setText(gazeTr("启动"));
+            }
+            return;
+        }
         const QJsonObject o = doc.object();
         const bool scanning = o.value("scanning").toBool();
         const double rate = o.value("rate_per_sec").toDouble();
@@ -458,6 +510,8 @@ void ImageSearchDialog::refreshServiceStatus() {
         self->m_svcModel->setText(gazeTr("激活模型:%1")
             .arg(o.value("active_model").toString()));
         self->m_scanBtn->setEnabled(!scanning);
+        if (self->m_engineBtn->isEnabled())
+            self->m_engineBtn->setText(gazeTr("停止"));
     });
 }
 

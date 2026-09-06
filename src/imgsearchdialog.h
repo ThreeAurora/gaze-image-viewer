@@ -34,12 +34,15 @@ private:
     void pauseFolder(int id, bool on);         // 单目录暂停索引处理
     void startScan();                // 触发全量/增量扫描
     void retryStage(const QString& stage);     // 重跑失败项(thumb/ocr/embed)
+    void toggleEngine();             // 引擎开关:未运行→拉起;运行中→按端口结束
 
     QListWidget* m_folderList = nullptr;   // 索引目录(右键:纳入/暂停/删除)
     QLabel*      m_svcStatus = nullptr;    // 服务状态行(scanning/rate/pending/failed)
     QLabel*      m_svcModel  = nullptr;    // 当前激活模型
     QTimer*      m_svcTimer  = nullptr;    // 可见期间 5s 轮询状态
     QPushButton* m_scanBtn = nullptr;
+    QPushButton* m_engineBtn = nullptr;    // 引擎开关:启动/停止服务(2026-09-06 用户令)
+    bool         m_svcAlive = false;       // 最近一次轮询的服务在线状态
 
     QLineEdit*   m_input;
     QComboBox*   m_model;     // CLIP 模型(引擎默认/cn_clip_b16/clip_b32)
