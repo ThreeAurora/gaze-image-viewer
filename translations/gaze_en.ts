@@ -611,6 +611,10 @@ Version 1.0 — C++ + Qt6</translation>
         <translation>&quot;%1&quot; is a reserved layout name; choose another</translation>
     </message>
     <message>
+        <source>▲</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>▼</source>
         <translation>▼</translation>
     </message>
@@ -1756,6 +1760,13 @@ Click once to select the whole path, click again to place the caret</translation
     <message>
         <source>将所有设置恢复为默认值?</source>
         <translation>Restore all settings to their defaults?</translation>
+    </message>
+    <message>
+        <source>将清空整份配置文件 Gaze.ini:
+
+全部设置回到默认,收藏夹与最近的文件也会一并清空,且无法恢复。
+确定继续吗?</source>
+        <translation></translation>
     </message>
     <message>
         <source>将视频拆帧保存到当前目录？</source>
@@ -3175,6 +3186,10 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     <message>
         <source>程序文件夹(便携)</source>
         <translation>Program folder (portable)</translation>
+    </message>
+    <message>
+        <source>空</source>
+        <translation></translation>
     </message>
     <message>
         <source>空。右键文件或文件夹 → 添加到收藏夹</source>
