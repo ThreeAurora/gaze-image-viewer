@@ -69,6 +69,16 @@ void SortHeader::setDetailTail(int w) {
     if (m_detailMode) m_tailSpacer->setFixedWidth(w);
 }
 
+// 列钮尺寸变化:小箭头跟随钉在右缘垂直居中
+bool SortHeader::eventFilter(QObject* obj, QEvent* event) {
+    if (event->type() == QEvent::Resize) {
+        for (const auto& c : m_columns)
+            if (c.btn == obj && c.arrow)
+                c.arrow->move(c.btn->width() - 13, (c.btn->height() - 10) / 2);
+    }
+    return QWidget::eventFilter(obj, event);
+}
+
 void SortHeader::setDetailMode(bool on) {
     if (m_detailMode == on) return;
     m_detailMode = on;
@@ -133,13 +143,24 @@ SortHeader::SortHeader(QWidget* parent) : QWidget(parent) {
     for (auto& c : cols) {
         auto* btn = new QPushButton(c.text);
         btn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+        btn->installEventFilter(this);   // 尺寸变化 → 小箭头跟随右缘
+        // 排序方向箭头:独立小标签(灰 C_SB_ARROW/8px,与筛选框箭头同款观感),
+        // 不再拼进按钮文字(2026-09-06 用户令)
+        auto* arrow = new QLabel(btn);
+        arrow->setStyleSheet(QString("QLabel{color:%1;background:transparent;"
+                                     "font-size:8px;}")
+                                 .arg(QString::fromUtf8(C_SB_ARROW)));
+        arrow->setFixedSize(10, 10);
+        arrow->setAlignment(Qt::AlignCenter);
+        arrow->move(0, 0);
+        arrow->show();
         connect(btn, &QPushButton::clicked, this, [this, id = c.id]() {
             onColumnClicked(id);
         });
         // 名称列独占伸缩(stretch=1):其余按钮停在自然宽,多余空间全给文件名。
         // 详细态下其余按钮转为定宽(见 setDetailMode),名称依旧吸收剩余
         m_layout->addWidget(btn, c.id == SORT_NAME ? 1 : 0);
-        m_columns.append({c.id, btn});
+        m_columns.append({c.id, btn, arrow});
     }
 
     // #267:详细态尾垫片(列区右缘对齐网格行右缘);非详细态宽 0 且隐藏
@@ -181,12 +202,13 @@ void SortHeader::onColumnClicked(int colId) {
 
 void SortHeader::updateArrows() {
     for (auto& c : m_columns) {
-        QString text = c.btn->text();
-        if (text.endsWith(" ▲") || text.endsWith(" ▼"))
-            text = text.left(text.length() - 2);
-        if (c.id == m_currentCol)
-            text += m_ascending ? " ▲" : " ▼";
-        c.btn->setText(text);
+        // 方向箭头画在钮内右缘的小标签上,文字保持干净
+        if (c.arrow) {
+            c.arrow->setText(c.id == m_currentCol
+                                 ? (m_ascending ? gazeTr("▲") : gazeTr("▼"))
+                                 : QString());
+            c.arrow->move(c.btn->width() - 13, (c.btn->height() - 10) / 2);
+        }
     }
 }
 

@@ -2,6 +2,7 @@
 #include <QWidget>
 #include <QPushButton>
 #include <QHBoxLayout>
+#include <QLabel>
 
 // 排序字段 ID（保持与 Python 一致;11+ 为查看菜单扩展字段）
 enum SortCol {
@@ -72,6 +73,10 @@ private:
     struct ColInfo {
         int id;
         QPushButton* btn;
+        QLabel* arrow = nullptr;   // 排序方向小箭头(灰,独立于文字;2026-09-06 用户令)
     };
     QList<ColInfo> m_columns;
+
+protected:
+    bool eventFilter(QObject* obj, QEvent* event) override;
 };

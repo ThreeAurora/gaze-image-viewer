@@ -339,7 +339,7 @@ QString appQss() {
         "}"
         "SortHeader QPushButton {"
         "  background: transparent; color: %1; border: none;"
-        "  padding: 2px 8px; font-size: 11px; text-align: left; border-radius: 4px;"
+        "  padding: 2px 18px 2px 8px; font-size: 11px; text-align: left; border-radius: 4px;"
         "}"
         "SortHeader QPushButton:hover { color: %1; background: %16; }"
         // 全屏胶片条:浮层,原内联硬编码深色,不随主题
