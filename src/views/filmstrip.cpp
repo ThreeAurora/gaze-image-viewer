@@ -22,13 +22,13 @@
 #include <QIcon>
 
 namespace {
-constexpr int kThumbW  = 72;
-constexpr int kThumbH  = 72;      // #230:用户令"缩短",96 → 72(#220 的加高回撤)
+constexpr int kThumbW  = 96;
+constexpr int kThumbH  = 96;      // 加高回撤:72 → 96,条整体随之高一截
 constexpr int kGap     = 4;
-constexpr int kCaptionH = 26;     // #230:题注改 13px 纯白大字,行高放宽一档
+constexpr int kCaptionH = 30;     // 题注行随条加高放宽一档
 constexpr int kPanThresh = 6;     // 按住位移超过这个像素才算拖
 constexpr int kStepPx    = 76;    // 滚动联动:像素累积满一格(缩略+间距)切一张图
-constexpr int kBtnZone   = 200;   // 右端按钮区宽(#226 三类 + #228 其他 四勾选钮 + 退出)
+constexpr int kBtnZone   = 176;   // 右端按钮区宽:2×2 类别方阵(62×2) + 退出竖条(30)
 // #230:非当前项图像画在格子的这个占比,当前项吃满格子 —— 不改格子尺寸,
 // centerRow/滚动数学零变动,视觉上"当前项比其余大"
 constexpr double kIdleShrink = 0.84;
@@ -58,7 +58,7 @@ QIcon whiteIcon(const QIcon& base) {
 }
 }
 
-int FilmStrip::preferredHeight() { return 6 + kThumbH + kCaptionH; }
+int FilmStrip::preferredHeight() { return 10 + kThumbH + kCaptionH; }
 
 // ── 数据模型 ──
 QVariant FilmStripModel::data(const QModelIndex& idx, int role) const {
@@ -194,6 +194,7 @@ FilmStrip::FilmStrip(QWidget* parent)
     // #230:三钮与退出钮统一观感 —— 同排等高 32px、勾选态淡蓝不再整块糊底
     m_btnBar = new QWidget(this);
     m_btnBar->setObjectName("filmBtnBar");   // 按钮样式在应用级 QSS(#89 收敛)
+    // 四类别钮 2×2 方阵(扁平简洁),退出键独立在最右
     auto* grid = new QGridLayout(m_btnBar);
     grid->setContentsMargins(0, 0, 0, 0);
     grid->setSpacing(2);
@@ -209,14 +210,14 @@ FilmStrip::FilmStrip(QWidget* parent)
         b->setToolTip(tip);
         b->setCheckable(true);
         b->setChecked(*flag);
-        b->setFixedSize(34, 32);   // #230:与退出钮同排等高,一排看起来是一组
+        b->setFixedSize(62, 30);
+        grid->addWidget(b, col / 2, col % 2);   // 2×2 方阵:0图片 1视频 / 2音频 3其他
         b->setFocusPolicy(Qt::NoFocus);   // 不吃焦点:方向键继续归全屏键位
         connect(b, &QToolButton::toggled, this, [this, key, flag](bool on) {
             *flag = on;
             AppSettings::instance().set(QLatin1String(key), on);
             refilter();   // 蓝框/居中/题注由 locateCurrent 对账;当前文件被滤掉就收框
         });
-        grid->addWidget(b, 0, col);
     };
     mkCat(gazeTr("图片"), gazeTr("显示/隐藏图片"), "FilmStrip/showImages", &m_showImg, 0);
     mkCat(gazeTr("视频"), gazeTr("显示/隐藏视频"), "FilmStrip/showVideos", &m_showVid, 1);
@@ -235,9 +236,15 @@ FilmStrip::FilmStrip(QWidget* parent)
         connect(b, &QToolButton::clicked, this, fn);
         grid->addWidget(b, 0, c);
     };
-    mkBtn(QStyle::SP_DialogCloseButton, gazeTr("退出全屏"), 4,
-          [this] { emit exitRequested(); });
-    grid->setColumnStretch(5, 1);   // 多余宽度吃在尾列:按钮组靠左贴齐
+    auto* exitBtn = new QToolButton(m_btnBar);
+    exitBtn->setObjectName(QStringLiteral("filmClose"));
+    exitBtn->setIcon(whiteIcon(style()->standardIcon(QStyle::SP_DialogCloseButton)));
+    exitBtn->setIconSize(QSize(14, 14));
+    exitBtn->setFixedSize(30, 62);   // 竖条,与 2×2 方阵同高
+    exitBtn->setToolTip(gazeTr("退出全屏"));
+    connect(exitBtn, &QToolButton::clicked, this, [this] { emit exitRequested(); });
+    grid->addWidget(exitBtn, 0, 2, 2, 1);
+    grid->setColumnStretch(3, 1);   // 多余宽度吃在尾列:按钮组靠左贴齐
 
     m_caption = new QLabel(this);
     m_caption->setObjectName("filmCaption");   // #230:题注纯白大字,样式在应用级 QSS
@@ -446,6 +453,6 @@ void FilmStrip::mouseReleaseEvent(QMouseEvent* e) {
 void FilmStrip::resizeEvent(QResizeEvent* e) {
     QListView::resizeEvent(e);
     m_caption->setGeometry(8, height() - kCaptionH + 4, width() - 20 - kBtnZone, 16);
-    m_btnBar->setGeometry(width() - kBtnZone - 6, (height() - 32) / 2, kBtnZone, 32);
+    m_btnBar->setGeometry(width() - kBtnZone - 6, 4, kBtnZone, 62);
     requestVisibleThumbs();
 }
