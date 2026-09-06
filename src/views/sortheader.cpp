@@ -30,20 +30,24 @@ void SortHeader::dynDetailWidths(int rowW, const bool vis[6], int out[6]) {
         ++n; S += B[i]; Smin += M[i];
     }
     if (n == 0) return;
-    // 名称实际宽度 = rowW - 33(28 图标+偏移 与 5 间隙,见 paintDetailsRow);
-    // 列区可用的上限 = 给名称留足保底之后的剩余
-    const int availMax = rowW - 33 - kNameMin;
+    // 名称实际宽度 = rowW - 33(28 图标+偏移 与 5 间隙,见 paintDetailsRow)。
+    // 名称 200px 是绝对优先项:不够宽时各列按基准**等比**压下来让位
+    // (2026-09-06 复查:旧公式窄窗口下连最小值档都进不去,名称直接被压成 0,
+    // 整列文件名消失——用户截图实锤)。32px 是单列的可读下限(再窄就隐藏级了)。
+    const int availMax = qMax(0, rowW - 33 - kNameMin);
     if (S <= availMax) {
         const int extra = availMax - S;
         const int share = extra / (n + 1);   // 名称也是一份:它弹性吸收余数
         for (int i = 0; i < 6; ++i)
             if (vis[i]) out[i] = B[i] + share;
-    } else if (Smin <= availMax) {
-        const double t = double(S - availMax) / double(S - Smin);
+    } else if (availMax > 32 * n) {
+        const double t = double(availMax) / double(S);
         for (int i = 0; i < 6; ++i)
-            if (vis[i]) out[i] = B[i] - int(t * double(B[i] - M[i]));
+            if (vis[i]) out[i] = qMax(32, int(B[i] * t + 0.5));
+    } else {
+        for (int i = 0; i < 6; ++i)
+            if (vis[i]) out[i] = 32;         // 物理极限:每列 32,名称吃剩余
     }
-    // else:各列已在最小值,名称吃剩余(见 out 初值)
 }
 
 bool SortHeader::detailColumnVisible(int i) const {
