@@ -1,4 +1,5 @@
 #include "settings.h"
+#include "logger.h"
 #include <QCoreApplication>
 #include <QStandardPaths>
 #include <QDir>
@@ -101,6 +102,9 @@ QString AppSettings::dataDir() const {
 }
 
 void AppSettings::clearAll() {
+    // 恢复默认=整份 ini 清空,必须留痕:配置"截断"类报告的第一物证
+    Logger::event(QStringLiteral("settings clearAll: ini wiped (%1)")
+                      .arg(m_settings.fileName()));
     m_settings.clear();   // 清空后 get() 返回代码内默认值(= 用户配置清单)
     m_settings.sync();
     // 必须和 set() 一样广播:否则"恢复默认"之后网格/树/标题/预览/缩略图

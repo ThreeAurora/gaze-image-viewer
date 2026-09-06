@@ -228,8 +228,12 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent) {
     auto* resetBtn = new QPushButton(gazeTr("恢复默认"));
     resetBtn->setObjectName(QStringLiteral("settingsStdBtn"));
     connect(resetBtn, &QPushButton::clicked, this, [this]() {
+        // 确认框把后果说透:这不止是"改回默认值",是整份配置文件清空
+        //(收藏夹、最近文件、全部个性化项一起没),用户有权知道斤两再点 Yes
         if (QMessageBox::question(this, gazeTr("恢复默认"),
-            gazeTr("将所有设置恢复为默认值?"))
+            gazeTr("将清空整份配置文件 Gaze.ini:\n"
+                   "\n全部设置回到默认,收藏夹与最近的文件也会一并清空,且无法恢复。\n"
+                   "确定继续吗?"))
             == QMessageBox::Yes) {
             AppSettings::instance().clearAll();
             populatePages();
