@@ -331,9 +331,11 @@ QPixmap FileGrid::iconPixmap(const FileEntry& e, int side) {
 
     QIcon icon = e.isDir ? folderIcon(side) : typeIcon(e.ext, e.path);
     QPixmap pm = icon.pixmap(side, side);
-    // #17(2026-09-05 用户令):有的 EXE 图标资源不是正方形(或画布内自带留白),
-    // 旧代码把返回的 pixmap 直接顶在左上角,看着就是"左上角一小块"。统一先
-    // 等比放缩,再画到 side×side 透明画布的**正中**:放得满=填满,放不满=原大小居中
+    // #17 复发(2026-09-06):.lnk 一类经 shell 取的图标,JUMBO 档取不到真
+    // 256px 时 Windows 交付的是"256 画布 + 左上角 48px 内容"的填充图 ——
+    // 等比缩放救不了内容在画布内的位置,先裁透明边把内容请回正中
+    // (与缩略图管线 trimPadCenter 同口径),再做等比放缩+正中回贴
+    pm = fg_impl::trimPadCenter(pm);
     if (pm.width() != side || pm.height() != side)
         pm = pm.scaled(side, side, Qt::KeepAspectRatio, Qt::SmoothTransformation);
     {

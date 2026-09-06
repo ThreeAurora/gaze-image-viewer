@@ -33,6 +33,41 @@ inline QIcon findStdIcon(QStyle* st, QStyle::StandardPixmap sp) {
     return QIcon(QPixmap::fromImage(img));
 }
 
+// shell 图标画布去透明边:JUMBO 档取不到真 256 图时,Windows 会把小档图标
+// 画在 256 画布的左上角、其余全透明(.lnk/exe 各档都有)——直接拿去等比
+// 缩放,内容仍是"左上角一小块"。把不透明内容的边界框裁出来,原大小居中
+// 回贴(小图标放缩填满只会糊);内容铺满/贴边的真图标原样返回。
+// 与缩略图管线的 th_impl::trimPadCenter 同一口径的 QPixmap 版(QImage 实现,
+// 不拖 windows.h 依赖)。
+inline QPixmap trimPadCenter(QPixmap pm) {
+    QImage img = pm.toImage().convertToFormat(QImage::Format_ARGB32);
+    if (img.isNull() || !img.hasAlphaChannel()) return pm;
+    int minX = img.width(), minY = img.height(), maxX = -1, maxY = -1;
+    for (int y = 0; y < img.height(); ++y) {
+        const QRgb* line = reinterpret_cast<const QRgb*>(img.constScanLine(y));
+        for (int x = 0; x < img.width(); ++x) {
+            if (qAlpha(line[x]) > 8) {
+                if (x < minX) minX = x;
+                if (x > maxX) maxX = x;
+                if (y < minY) minY = y;
+                if (y > maxY) maxY = y;
+            }
+        }
+    }
+    if (maxX < 0) return pm;                        // 整幅全透明:交给调用方兜底
+    const int cw = maxX - minX + 1, ch = maxY - minY + 1;
+    if (minX == 0 && minY == 0
+        && cw * 4 >= img.width() * 3 && ch * 4 >= img.height() * 3)
+        return pm;                                  // 铺满/贴边:不动
+    QPixmap out(img.size());
+    out.fill(Qt::transparent);
+    QPainter p(&out);
+    p.drawImage((img.width() - cw) / 2, (img.height() - ch) / 2,
+                img.copy(minX, minY, cw, ch));
+    p.end();
+    return out;
+}
+
 // 自绘三角箭头:windowsvista 风格的 SP_ArrowUp/Down 标准图标取位图常为空,
 // 染色后"看起来没有图标"。直接画实心三角,颜色随主题文字色(查找条翻页钮用)
 inline QIcon paintedArrow(QStyle::StandardPixmap sp) {
