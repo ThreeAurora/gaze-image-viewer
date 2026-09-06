@@ -34,6 +34,9 @@ constexpr int kNavEdge  = 56;     // #220:光标进入左右边缘多宽才浮�
 void MainWindow::createFilmStrip() {
     m_filmStrip = new FilmStrip(this);
     m_filmStrip->hide();
+    // 原生窗口化:视频预览内部是原生 HWND,非原生兄弟控件永远被压在底下,
+    // 全屏看视频时画廊就消失了。提前取 winId 变成原生兄弟,show+raise 才有效
+    m_filmStrip->winId();
     // 条上点击 → 与"点击标签"/"导航"同一条路:selectByPath 会一路 loadFile +
     // 刷标题;onSelectionChanged 再把蓝框/题注带回来(见 mainwindow_nav.cpp)
     connect(m_filmStrip, &FilmStrip::jumpRequested, this, [this](const QString& p) {
@@ -85,6 +88,8 @@ void MainWindow::createFilmStrip() {
     };
     m_fullNavPrev = mkNav(QStyle::SP_ArrowBack, gazeTr("上一个文件"));
     m_fullNavNext = mkNav(QStyle::SP_ArrowForward, gazeTr("下一个文件"));
+    m_fullNavPrev->winId();   // 同胶片条:视频之上也要能浮现
+    m_fullNavNext->winId();
     connect(m_fullNavPrev, &QToolButton::clicked, this, [this] {
         if (m_fileGrid) m_fileGrid->navigateSelection(-1);
     });
