@@ -143,7 +143,9 @@ QImage Thumbnailer::folderThumb(const QString& dirPath, int size) {
     if (picked.isEmpty()) return {};
 
     QImage sheet(size, size, QImage::Format_RGB32);
-    sheet.fill(QColor(C_CONTENT));
+    // 底色与"没有四合一的普通文件夹图标"一致:rgb(33,33,38)。此前用
+    // C_CONTENT(近黑),四合一卡片四角/边缝露出的底和普通文件夹卡对不上
+    sheet.fill(QColor(0x21, 0x21, 0x26));
     QPainter pt(&sheet);
     pt.setRenderHint(QPainter::Antialiasing);
     pt.setRenderHint(QPainter::SmoothPixmapTransform);

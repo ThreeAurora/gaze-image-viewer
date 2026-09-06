@@ -172,7 +172,9 @@ QString Thumbnailer::cacheKey(const QString& filePath, int size, bool isVideo) c
     // f6 = #233 那一代:四合一恒 2×2(单图坐左上小格不铺满)+解码失败候选不占格
     //      由备胎顶上 —— 旧条目烤着"单图铺满整块/失败候选占格"的旧布局,不换 key
     //      用户看到的还是旧样式
-    if (QFileInfo(filePath).isDir()) src += "|f6";
+    // f7 = 画布底色换代:C_CONTENT 近黑改 rgb(33,33,38),与普通文件夹卡底一致;
+    //      旧条目四角烤着黑底,不换代看不出来
+    if (QFileInfo(filePath).isDir()) src += "|f7";
     // 视频:取帧位置与四帧拼图决定画面内容,但不吃 key 的话改设置只影响新生成的条目,
     // 老库里永远是旧那一帧 —— 看起来就像设置没接线(#106 那批死设置的同一种病)。
     // 只在取非默认值时追加:默认(pct=0/单帧)与既有库逐字节一致,不改设置的人
