@@ -227,13 +227,19 @@ bool MainWindow::paneVisible(const char* paneId) const {
 // XnView 式面板标题条:左标题 + 右关闭 X
 QWidget* MainWindow::createPaneHeader(const QString& title, const char* paneId) {
     auto* h = new QWidget;
-    // 24px 曾把 12px 雅黑的上下沿裁掉;28px 仍有余量不足的报告,再放宽到 32px
-    h->setFixedHeight(32);
+    h->setFixedHeight(28);   // 12px 字 + 上下各 8px 余量
     h->setObjectName("paneHdr");   // 标题条样式在应用级 QSS(#89 收敛)
     auto* hl = new QHBoxLayout(h);
     hl->setContentsMargins(8, 0, 3, 0);
     hl->setSpacing(0);
     auto* lbl = new QLabel(title);
+    // 字体必须显式给:QDockWidget 自定义标题条里的控件拿不到应用级 QSS 的
+    // font-size(探针实测 label 字体 16px、几何正常却仍裁字),dock 外的
+    // 同名标题却正常 —— 显式像素字体一并喂饱两种宿主
+    QFont hdrFont = lbl->font();
+    hdrFont.setPixelSize(12);
+    lbl->setFont(hdrFont);
+    lbl->setAlignment(Qt::AlignVCenter);
     // 不用 600 字重:雅黑只有 400/700 两档真字重,600 会被就近硬凑,
     // 12px 小字上笔画发虚;全应用其余文字均为常规字重且清晰
     // (底色/字色见应用级 QSS 的 QWidget#paneHdr 规则)
