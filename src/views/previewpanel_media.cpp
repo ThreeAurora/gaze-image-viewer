@@ -269,13 +269,20 @@ void PreviewPanel::ensureVideoWidget() {
 void PreviewPanel::warmUp() {
     static std::atomic<bool> dllWarmed{false};
     if (!dllWarmed.exchange(true)) {
-        QThreadPool::globalInstance()->start([]() {
+        QPointer<PreviewPanel> self(this);
+        QThreadPool::globalInstance()->start([self]() {
             QMediaPlayer probe;          // 无 parent:建、毁都在本池线程
             QAudioOutput out;
             probe.setAudioOutput(&out);
+            // QVideoWidget 必须等探针销毁后再建:两者同时碰媒体 DLL 时,
+            // 加载器锁互卡,QVideoWidget 首建实测从 0ms 恶化到 1.3 秒,
+            // 整个启动期 GUI 定格(双击图片打开时"转圈"的元凶)。
+            // 探针走完 DLL 已驻留进程,回 GUI 线程建即 0ms。
+            QMetaObject::invokeMethod(self, [self]() {
+                if (self) self->ensureVideoWidget();
+            }, Qt::QueuedConnection);
         });
     }
-    ensureVideoWidget();   // 实测 0ms,轻量,主线程直接做
 }
 
 void PreviewPanel::showAudio(const QString& path) {
