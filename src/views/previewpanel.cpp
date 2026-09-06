@@ -524,9 +524,11 @@ void PreviewPanel::loadFile(const QString& path) {
     // 默认不开，打勾是开」)。Markdown 也是文本,一并归到这条裁决下默认关。
     } else if (ext == "txt" && pp_impl::s_bool("Preview/previewTxt", false)) {
         showText(path);
-    } else if (ext == "md" && pp_impl::s_bool("Preview/showMd", false)) {
-        // #240:「是否以 MD 样式展示」独立开关(设置/右键可切);关=纯文本预览
-        if (pp_impl::s_bool("Preview/mdRenderStyle", true)) showMarkdown(path);
+    } else if (ext == "md") {
+        // md 总要给个看的形态:开=渲染样式;关=纯文本(这样右键菜单里
+        // "以 Markdown 样式展示"的开关才摸得着,不至于整个没有预览)
+        if (pp_impl::s_bool("Preview/showMd", false)
+            && pp_impl::s_bool("Preview/mdRenderStyle", true)) showMarkdown(path);
         else showText(path);
     } else if (ext == "pdf" && pp_impl::s_bool("Preview/showPdf", false)) {
         showPdf(path);
