@@ -52,6 +52,9 @@
 #include <QVideoSink>
 #include "previewpanel_internal.h"
 
+// 去封面副本缓存查询(定义在 startAudioRemux 前;showAudio 先用,前置声明)
+static QString remuxedCopyFor(const QString& src);
+
 // Viewer/autoPlayAudioCompanion:图片旁存在同名音频时自动播放
 void PreviewPanel::playAudioCompanion(const QString& imagePath) {
     if (!pp_impl::s_bool("Viewer/autoPlayAudioCompanion", false)) return;
@@ -302,7 +305,10 @@ void PreviewPanel::showAudio(const QString& path) {
 
     setupPlayer();
     if (m_player) {
-        m_player->setSource(QUrl::fromLocalFile(path));
+        // 去封面副本命中 = 直接当源(2026-09-06 用户令"完全忽视封面秒放"):
+        // 不再先载原文件等自检再换,第二次起播放零等待
+        const QString ready = remuxedCopyFor(path);
+        m_player->setSource(QUrl::fromLocalFile(ready.isEmpty() ? path : ready));
         m_player->play();
         m_btnPlay->setIcon(pp_impl::themeIcon(style()->standardIcon(QStyle::SP_MediaPause)));
     }
@@ -319,10 +325,36 @@ void PreviewPanel::showAudio(const QString& path) {
     // 布局激活是异步的:0 尺寸画的占位要在激活后重画一次
     QTimer::singleShot(0, this, [this]() { renderWave(); });
 
-    // 播放卡死自检:带内嵌封面流(mjpeg attached_pic,网易云下载件常态)的音频
+    // 内嵌封面流早发现(2026-09-06 用户报某 mp3 首播等好几秒):带封面流的
+    // 音频会让后端装载慢/位置冻结,靠 3 秒自检兜底体感就是"等好几秒"。
+    // 装载同时后台 ffprobe(~0.2s)主动确认,带视频流就直接换重封装副本
+    //(副本按内容指纹缓存,二次播放秒开);仅 position 未起跳时才换,不打断播放
+    QPointer<PreviewPanel> self(this);
+    QThreadPool::globalInstance()->start([self, path]() {
+        const QString ff = locateFfmpegTool(QStringLiteral("ffprobe"));
+        if (ff.isEmpty()) return;
+        QProcess p;
+        hideConsoleWindow(p);
+        p.setProcessChannelMode(QProcess::MergedChannels);
+        p.start(ff, { QStringLiteral("-v"), QStringLiteral("error"),
+                      QStringLiteral("-show_entries"), QStringLiteral("stream=codec_type"),
+                      QStringLiteral("-of"), QStringLiteral("csv"), path });
+        if (!p.waitForFinished(2500)) return;
+        const QString outp = QString::fromLocal8Bit(p.readAllStandardOutput());
+        if (!outp.contains(QLatin1String("video"))) return;
+        QMetaObject::invokeMethod(self, [self, path]() {
+            if (!self || self->m_mode != "audio" || self->m_filePath != path) return;
+            if (!self->m_player) return;
+            if (self->m_player->source() != QUrl::fromLocalFile(path)) return;
+            if (self->m_player->position() > 200) return;   // 已经在正常播:不打断
+            self->startAudioRemux();
+        }, Qt::QueuedConnection);
+    });
+
+    // 播放卡死自检兜底:带内嵌封面流(mjpeg attached_pic,网易云下载件常态)的音频
     // 会让 FFmpeg 后端装载链全正常(BufferedMedia)但播放位置永远冻结在 0。
-    // 3 秒后仍在 Playing 且 pos==0 → 判卡死,后台重封装去封面副本换源重放
-    QTimer::singleShot(3000, this, [this, path] {
+    // 1.5 秒后仍在 Playing 且 pos==0 → 判卡死,后台重封装去封面副本换源重放
+    QTimer::singleShot(1500, this, [this, path] {
         if (m_mode != "audio" || m_filePath != path || !m_player) return;
         if (m_player->playbackState() == QMediaPlayer::PlayingState
             && m_player->position() <= 0)
@@ -335,6 +367,20 @@ void PreviewPanel::showAudio(const QString& path) {
 // 后者位置正常前进 —— 病根是内嵌封面流,不是文件本身。用随包 ffmpeg 以
 // stream copy(-map 0:a -c:a copy,不重编码,秒级)产只含音频流的副本。
 // 副本落临时目录按内容指纹命名,跨会话复用;失败/切走即弃,诚实降级。
+// 去封面副本的缓存查询:命中(非空文件存在)返回路径,没建过返回空串。
+// showAudio 用它在 setSource 之前就换上副本——第二次播放起真·秒放
+static QString remuxedCopyFor(const QString& src) {
+    const QFileInfo fi(src);
+    const QString ext = fi.suffix().toLower();
+    const QString key = QString::number(qHash(src) ^ qHash(fi.size())
+        ^ qHash(fi.lastModified().toMSecsSinceEpoch()), 16);
+    const QString outDir = QStandardPaths::writableLocation(QStandardPaths::TempLocation)
+                           + QStringLiteral("/gaze-audio-remux");
+    const QString out = outDir + QStringLiteral("/%1.%2")
+                            .arg(key, ext.isEmpty() ? QStringLiteral("mp3") : ext);
+    return QFileInfo(out).size() > 0 ? out : QString();
+}
+
 void PreviewPanel::startAudioRemux() {
     if (m_remuxProc) return;   // 一单在途
     const QString src = m_filePath;
@@ -345,20 +391,22 @@ void PreviewPanel::startAudioRemux() {
         Logger::event("audio remux: ffmpeg 不可用(exe旁 ffmpeg/ 与 PATH 均无),放弃换源");
         return;
     }
+    QDir().mkpath(QStandardPaths::writableLocation(QStandardPaths::TempLocation)
+                  + QStringLiteral("/gaze-audio-remux"));
+    const QString cached = remuxedCopyFor(src);
+    if (!cached.isEmpty()) {   // 旧副本仍在:直接换源,不再重封装
+        Logger::event(QStringLiteral("audio remux: 复用副本 %1").arg(cached));
+        swapAudioSource(cached);
+        return;
+    }
     const QFileInfo fi(src);
     const QString ext = fi.suffix().toLower();
     const QString key = QString::number(qHash(src) ^ qHash(fi.size())
         ^ qHash(fi.lastModified().toMSecsSinceEpoch()), 16);
     const QString outDir = QStandardPaths::writableLocation(QStandardPaths::TempLocation)
                            + QStringLiteral("/gaze-audio-remux");
-    QDir().mkpath(outDir);
     const QString out = outDir + QStringLiteral("/%1.%2")
                             .arg(key, ext.isEmpty() ? QStringLiteral("mp3") : ext);
-    if (QFileInfo(out).size() > 0) {   // 旧副本仍在:直接换源,不再重封装
-        Logger::event(QStringLiteral("audio remux: 复用副本 %1").arg(out));
-        swapAudioSource(out);
-        return;
-    }
     Logger::event(QStringLiteral(
         "audio remux: 播放卡死(疑似内嵌封面流)→ 重封装 '%1'").arg(src));
     m_remuxProc = new QProcess(this);
