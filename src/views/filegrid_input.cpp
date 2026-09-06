@@ -217,6 +217,11 @@ QString FileGrid::entrySizeText(const FileEntry& e) const {
     return gazeTr("统计中…");
 }
 
+// 统计任务被更新请求中断:解除该目录的"已问"标记,下次悬停重新发起
+void FileGrid::retryDirSize(const QString& dirPath) {
+    m_dirSizeAsked.remove(dirPath);
+}
+
 // 主窗统计完成回填:定点重绘该行(统计中的字样换成了真值)
 void FileGrid::setDirSize(const QString& dirPath, qint64 bytes) {
     m_dirSizes.insert(dirPath, bytes);

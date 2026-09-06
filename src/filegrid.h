@@ -106,6 +106,7 @@ public:
     QString pathAt(int idx) const;           // 条目序号 → 路径(越界/空白返回空)
     // #10 悬停文件夹大小:主窗统计完成回填 → 定点重绘该行
     void setDirSize(const QString& dirPath, qint64 bytes);
+    void retryDirSize(const QString& dirPath);   // 统计被中断:解除"已问",下次悬停重发
     QString currentDir() const { return m_currentDir; }   // #203 胶片条对账数据来源
     QStringList allFilePaths() const;   // #225 胶片条数据源:目录全部文件(跳目录行,按 showHidden)
     int    hitTest(const QPoint& canvasPos);  // 画布坐标 → 条目序号(拖放落点判定)

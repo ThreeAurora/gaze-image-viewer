@@ -487,21 +487,43 @@ void MainWindow::onGridDirSizeRequested(const QString& path) {
         m_fileGrid->setDirSize(path, row.size);
         return;
     }
-    if (m_gridDirPending.size() > 32) return;   // 积压上限:悬停刷新快,旧的下轮再说
+    // 2026-09-06 用户报"文件夹卡在统计中":悬停请求全部排队进单线程池且
+    // 不可取消,大目录一占池,后面的全部干等。改为单飞:同一时间只有一个
+    // 悬停任务在跑,新请求只保留最新一个排队,并请运行中的旧任务尽早收手
+    if (!m_gridDirPending.isEmpty()) {
+        if (m_gridDirNext.isEmpty() || m_gridDirNext != path) {
+            if (!m_gridDirNext.isEmpty()) m_gridDirPending.remove(m_gridDirNext);
+            m_gridDirNext = path;
+            m_gridDirPending.insert(path);
+            if (m_gridSizeStop) m_gridSizeStop->store(true);
+        }
+        return;
+    }
+    startGridDirSize(path);
+}
+
+// 悬停统计任务(可中断):stop 置位即弃(不写缓存不落库),该目录由网格侧
+// 清除"已问"标记,下次悬停重新发起;正常跑完则回填缓存/库/网格,并接力
+// 排队中的最新请求
+void MainWindow::startGridDirSize(const QString& path) {
     m_gridDirPending.insert(path);
+    if (!m_gridSizeStop) m_gridSizeStop = std::make_shared<std::atomic_bool>(false);
+    m_gridSizeStop->store(false);
+    const auto stop = m_gridSizeStop;
     if (!m_dirSizePool) {
         m_dirSizePool = new QThreadPool(this);
         m_dirSizePool->setMaxThreadCount(1);
     }
     QPointer<MainWindow> self(this);
-    m_dirSizePool->start([self, path]() {
+    m_dirSizePool->start([self, path, stop]() {
         qint64 sz = 0;
-        QElapsedTimer t; t.start();
         constexpr int kYieldEvery = 512;
         int sinceYield = 0;
+        bool stopped = false;
         QDirIterator it(path, QDir::Files | QDir::NoDotAndDotDot,
                         QDirIterator::Subdirectories);
         while (it.hasNext()) {
+            if (stop->load()) { stopped = true; break; }
             it.next();
             const QFileInfo fi = it.fileInfo();
             if (fi.isFile()) sz += fi.size();
@@ -509,15 +531,24 @@ void MainWindow::onGridDirSizeRequested(const QString& path) {
                 sinceYield = 0;
                 QThread::msleep(1);   // 与选中统计同款节流:别把磁盘队列打满
             }
-            Q_UNUSED(t);
         }
-        QMetaObject::invokeMethod(self, [self, path, sz]() {
+        QMetaObject::invokeMethod(self, [self, path, sz, stopped]() {
             if (!self) return;
             self->m_gridDirPending.remove(path);
+            if (stopped) {
+                // 被更新的悬停请求打断:解除"已问"标记,用户再看它时重新发起
+                if (self->m_fileGrid) self->m_fileGrid->retryDirSize(path);
+                return;
+            }
             self->m_gridDirSizes.insert(path, sz);
             if (self->m_gridDirSizes.size() > 256) self->m_gridDirSizes.clear();
             dirSizeStore(path, sz, dirSizeBasisKey(path));
             if (self->m_fileGrid) self->m_fileGrid->setDirSize(path, sz);
+            if (!self->m_gridDirNext.isEmpty()) {
+                const QString next = self->m_gridDirNext;
+                self->m_gridDirNext.clear();
+                self->startGridDirSize(next);
+            }
         }, Qt::QueuedConnection);
     });
 }
