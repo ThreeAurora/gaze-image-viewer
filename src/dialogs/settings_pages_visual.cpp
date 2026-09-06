@@ -125,16 +125,14 @@ QWidget* SettingsDialog::pageAppearance() {
             const QString shown = exts.size() > 8
                 ? exts.mid(0, 8).join(',') + gazeTr(",…(共 %1 项)").arg(exts.size())
                 : exts.join(',');
-            const QColor col(c);
-            const QString fg = col.lightness() > 140 ? "#000000" : "#FFFFFF";
+            const QString fg = QString::fromUtf8(C_TEXT);   // 与网格名称条同款字色
             t += gazeTr("  <span style=\"background-color:%1;color:%2;\">&nbsp;%3&nbsp;</span>"
                         " ← %4<br>").arg(c, fg, shown, c);
         }
         const QColor fb = LabelColors::fallbackColor();
-        const QString fbf = fb.lightness() > 140 ? "#000000" : "#FFFFFF";
         t += gazeTr("未列出的格式:<span style=\"background-color:%1;color:%2;\">&nbsp;%3&nbsp;</span>"
                     "(上面总开关关掉时一律不上底色)")
-                 .arg(fb.name(), fbf, fb.name());
+                 .arg(fb.name(), QString::fromUtf8(C_TEXT), fb.name());
         auto* lab = new QLabel(t);
         lab->setTextFormat(Qt::RichText);
         lab->setTextInteractionFlags(Qt::TextSelectableByMouse);
@@ -242,7 +240,9 @@ QWidget* SettingsDialog::pageLabelColors() {
             const QColor& col = pair.second;
             auto* it = new QListWidgetItem(ext);
             it->setBackground(col);
-            it->setForeground(col.lightness() > 140 ? QColor("#000000") : QColor("#FFFFFF"));
+            // 文字色与文件网格的名称条同款(主题文字色,深色主题恒白):
+            // 此前按背景亮度挑黑/白,和网格里同色底上实际显示的白字对不上
+            it->setForeground(QColor(QString::fromUtf8(C_TEXT)));
             list->addItem(it);
             if (ext == selExt) list->setCurrentItem(it);
         }
