@@ -44,6 +44,7 @@ public:
     // rowW = 行宽;vis = 各列显隐;out = 求得的各列宽(隐藏列=0)
     static void dynDetailWidths(int rowW, const bool vis[6], int out[6]);
     void setDetailMode(bool on);             // 结构切换:弹性均分 ↔ 定宽列布局
+    void applySharedStretch();               // 非详细态:各列按基准宽分担增量(2026-09-06 用户令)
     bool detailMode() const { return m_detailMode; }
     void setDetailLead(int w);               // 头垫片宽(名称文字起点对齐)
     void setDetailTail(int w);               // 尾垫片宽(列右缘与网格行右缘对齐)
