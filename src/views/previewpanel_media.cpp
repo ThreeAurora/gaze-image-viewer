@@ -281,12 +281,21 @@ void PreviewPanel::warmUp() {
             QMediaPlayer probe;          // 无 parent:建、毁都在本池线程
             QAudioOutput out;
             probe.setAudioOutput(&out);
-            // QVideoWidget 必须等探针销毁后再建:两者同时碰媒体 DLL 时,
-            // 加载器锁互卡,QVideoWidget 首建实测从 0ms 恶化到 1.3 秒,
-            // 整个启动期 GUI 定格(双击图片打开时"转圈"的元凶)。
-            // 探针走完 DLL 已驻留进程,回 GUI 线程建即 0ms。
-            QMetaObject::invokeMethod(self, [self]() {
+            // 探针走完,DLL 已驻留进程。置就绪门闩并回 GUI 线程兑现:
+            // ①建本面板视频控件(0ms,DLL 已在);②重放门闩期间挂起的装载。
+            // 挂在 qApp 上而非面板——就算面板此刻已销毁,门闩也得照常置位,
+            // 否则后续所有视频装载会永远挂起(挂起无人兑现的死循环)。
+            QMetaObject::invokeMethod(qApp, [self]() {
+                pp_impl::mediaReadyFlag().store(true, std::memory_order_release);
                 if (self) self->ensureVideoWidget();
+                for (const auto& r : pp_impl::takePendingMediaLoads()) {
+                    auto* p = qobject_cast<PreviewPanel*>(r.panel.data());
+                    if (p && !r.path.isEmpty()) {
+                        Logger::event(QStringLiteral(
+                            "media gate: replay '%1'").arg(r.path));
+                        p->loadFile(r.path);
+                    }
+                }
             }, Qt::QueuedConnection);
         });
     }

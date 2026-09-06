@@ -15,8 +15,45 @@
 #include <QPainter>
 #include <QPixmap>
 #include <QString>
+#include <QPointer>
+
+#include <atomic>
+#include <mutex>
+#include <vector>
 
 namespace pp_impl {
+
+// ═══ 媒体栈冷启动门闩(2026-09-07)═══
+// FFmpeg 后端 66MB avcodec 首载是同步重活,GUI 线程上首建 QMediaPlayer 会
+// 冻结界面 3~4 秒。启动链路里 dir-scan done 常在 show 后几十 ms 就兑现
+// "上次选中/首项=视频",loadFile 抢在 warmUp 池线程载完 DLL 之前,GUI 就
+// 被钉死——期间 PAINT 与 1.5s 超时兜底全堵在事件队列里发不出,即"任务栏
+// 有图标窗口三秒不出"+灰块期的真身(09-07 日志实锤)。
+// 门闩语义:warmUp 池线程载完 DLL 才置 ready;setupPlayer 见未就绪就把
+// 本次装载挂起(记面板+路径),就绪后回 GUI 线程重放 loadFile。
+inline std::atomic<bool>& mediaReadyFlag() {
+    static std::atomic<bool> f{false};
+    return f;
+}
+inline bool mediaStackReady() {
+    return mediaReadyFlag().load(std::memory_order_acquire);
+}
+struct MediaLoadReq { QPointer<QObject> panel; QString path; };
+inline std::mutex& mediaMx() { static std::mutex m; return m; }
+inline std::vector<MediaLoadReq>& mediaPending() {
+    static std::vector<MediaLoadReq> v;
+    return v;
+}
+inline void deferMediaLoad(QObject* panel, const QString& path) {
+    std::lock_guard<std::mutex> lk(mediaMx());
+    mediaPending().push_back({panel, path});
+}
+inline std::vector<MediaLoadReq> takePendingMediaLoads() {
+    std::lock_guard<std::mutex> lk(mediaMx());
+    std::vector<MediaLoadReq> out;
+    out.swap(mediaPending());
+    return out;
+}
 
 // 标准图标染成白色(深色主题下 QStyle 图标是深色的)
 inline QIcon whiteIcon(const QIcon& base, int size = 32) {

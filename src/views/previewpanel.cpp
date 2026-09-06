@@ -563,6 +563,16 @@ void PreviewPanel::showNoPreview() {
 
 void PreviewPanel::setupPlayer() {
     if (m_player) return;
+    // 媒体栈冷启动门闩(2026-09-07):FFmpeg 后端(66MB avcodec)未就绪时在
+    // GUI 线程建 QMediaPlayer 会同步载 DLL 冻结界面 3~4 秒。挂起本次装载,
+    // warmUp 完成后自动重放(loadFile 会再走到这里,那时已就绪);期间面板
+    // 保持上一画面。音频伴侣/Live Photo/视频三条路都经此闸,一并受保护。
+    if (!pp_impl::mediaStackReady()) {
+        Logger::event(QStringLiteral(
+            "media gate: defer '%1' until DLL warm").arg(m_filePath));
+        pp_impl::deferMediaLoad(this, m_filePath);
+        return;
+    }
 
     // 首次创建实测可达数秒(FFmpeg 后端加载/硬解设备枚举/音频端点),埋探针:
     // 下次日志直接看到这笔开销落在谁头上,不用再靠 loadFile→showVideo 的时间差倒推

@@ -138,24 +138,30 @@ public:
     void armWithTimeout(int ms, QObject* owner) {
         m_timer = new QTimer(this);
         m_timer->setSingleShot(true);
-        connect(m_timer, &QTimer::timeout, this, [this]() { release(); });
+        connect(m_timer, &QTimer::timeout, this, [this]() { release(true); });
         m_timer->start(ms);
         m_owner = owner;
     }
 protected:
     bool eventFilter(QObject* obj, QEvent* ev) override {
         if (ev->type() != QEvent::Paint || m_done) return false;
-        release();
+        release(false);
         return false;
     }
 private:
-    void release() {
+    // byTimeout=超时兜底放行(PAINT 被装载事件挤到队尾)/=首帧真画完放行。
+    // 打点留档:灰四边形排查需要知道"窗口何时可见、由哪条路放行"。
+    void release(bool byTimeout) {
         if (m_done) return;
         m_done = true;
         if (m_timer) m_timer->stop();
         QObject* owner = m_owner ? m_owner : parent();
         if (!owner) owner = this;
         removeEventFilterFrom(owner);
+        Logger::event(QStringLiteral("first-frame gate: released by %1, age=%2ms")
+                          .arg(byTimeout ? QStringLiteral("timeout")
+                                         : QStringLiteral("paint"))
+                          .arg(Logger::processAgeMs()));
         // singleShot 一拍:让本帧 paint 先走完(若还在队列里),再执行阻塞预热
         QTimer::singleShot(0, owner, fire);
     }
@@ -389,15 +395,21 @@ int main(int argc, char *argv[]) {
     // 必须等主窗口就位后再触发 loadFile(见 MainWindow::restoreStartupPreview)。
     // StartupWindowGuard 已提前到 QApplication 之后安装(见 main 开头注释)。
     w.setWindowOpacity(0.0);
+    // 2026-09-07 修:媒体栈预热提前到 show 之前(原在首帧 gate.fire 里):
+    // dir-scan done 常在 show 后几十 ms 就兑现"上次选中/首项=视频",
+    // loadFile 若抢在池线程载完 DLL 前建 QMediaPlayer,GUI 同步载 66MB
+    // avcodec 冻结 3~4 秒——期间 PAINT 与 1.5s 超时兜底全堵在事件队列里
+    // 发不出,即"任务栏有图标窗口三秒不出"+灰块期的真身(日志实锤:
+    // show@2888ms→dir-scan done@2946ms→gate released@6511ms,中间被
+    // QMediaPlayer 首建占满)。现在预热与首帧/装载并行;万一视频装载仍
+    // 先到,setupPlayer 的媒体门闩会挂起,就绪后自动重放。
+    w.warmUpPreviewMedia();
     w.show();
-    // 放行时机=首帧真画完(上方 FirstPaintGate);预热媒体栈放在恢复预览之前:
-    // QMediaPlayer/QVideoWidget 首建要同步加载 FFmpeg 后端与视频渲染管线(日志
-    // 实测 3~4 秒,GUI 线程),恢复的上次文件若是视频,player/渲染栈已就绪,
-    // 选中即秒开;此后点树里首项为视频的文件夹也不再付这笔账
+    // 放行时机=首帧真画完(上方 FirstPaintGate);恢复上次选中在放行后:
+    // QVideoWindow(独立顶层 HWND)必须等主窗就位再装载,防孤立映射一帧
     FirstPaintGate gate;
     gate.fire = [&w]() {
         w.setWindowOpacity(1.0);
-        w.warmUpPreviewMedia();
         w.restoreStartupPreview();
     };
     w.installEventFilter(&gate);
