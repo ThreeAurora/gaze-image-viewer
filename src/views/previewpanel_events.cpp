@@ -87,7 +87,9 @@ static void invokeOnWindow(QObject* from, const char* slot, const QString& arg) 
 
 void PreviewPanel::resizeEvent(QResizeEvent* event) {
     QWidget::resizeEvent(event);
-    if (m_mode == "image") fitAuto();
+    // pdf 与图片同一套"适应窗口":G 全屏/缩放窗口后画面要重新居中放大,
+    // 此前只认 image 模式,pdf 进全屏一直停留在进全屏前的大小
+    if (m_mode == "image" || m_mode == "pdf") fitAuto();
     applyViewerChrome();     // 滚动条/信息条/浮动条/导航小窗都贴边,尺寸变了要重定位
     syncVideoChildren();
     if (m_liveBadge && m_liveBadge->isVisible())
