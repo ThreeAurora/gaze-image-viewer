@@ -355,5 +355,11 @@ void MainWindow::restoreClosedViewerTab() {
 void MainWindow::previewDoubleClicked() {
     if (m_fullView) { exitFullView(); return; }
     if (!m_viewerMode) { openTabForeground(); return; }
+    // 查看器里双击的就是当前这张:标签跟着关掉(只关这一张;还有别的标签
+    // 就看下一张,关到最后一张自动回浏览器)。双击别处的旧语义(全保留)
+    // 保留给"当前预览与标签对不上"的兜底分支
+    const QString cur = m_preview->filePath();
+    const int i = cur.isEmpty() ? -1 : indexOfTabPath(cur);
+    if (i > 0 && !isBrowserTab(i)) { closeViewerTab(i); return; }
     toggleViewer();   // 退出不碰标签表:标签全保留,高亮回「浏览器」签(toggleViewer 内)
 }
