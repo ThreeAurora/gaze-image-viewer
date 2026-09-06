@@ -495,6 +495,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
         if (!m_currentDir.isEmpty()) m_folderTree->focusPath(m_currentDir);
         Logger::event("tree: drives loaded (post-first-frame)");
     });
+
     Logger::boot("ctor:drives(deferred)");
 
     // 启动目录/文件:此前 Start/withFile、Start/withoutFile、Start/rememberFilename

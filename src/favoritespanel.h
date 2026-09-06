@@ -66,10 +66,10 @@ public:
     void setPaths(const QStringList& paths) {
         m_list->clear();
         if (paths.isEmpty()) {
-            // 空态:一行不可选的提示,别让面板白板一块
-            auto* hint = new QListWidgetItem(gazeTr(
-                "空。右键文件或文件夹 → 添加到收藏夹"));
+            // 空态:居中一个"空"字(2026-09-06 用户令,不要长提示)
+            auto* hint = new QListWidgetItem(gazeTr("空"));
             hint->setFlags(Qt::NoItemFlags);
+            hint->setTextAlignment(Qt::AlignCenter);
             m_list->addItem(hint);
             return;
         }
