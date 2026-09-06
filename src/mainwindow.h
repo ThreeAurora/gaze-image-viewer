@@ -118,6 +118,9 @@ private:
     // 一次只统计一个目录(缓存/库命中即时回,否则进共享统计池串行算)
     void onGridDirSizeRequested(const QString& path);
     void startGridDirSize(const QString& path);   // 悬停统计任务启动(可被新请求中断)
+public slots:
+    Q_INVOKABLE void abortGridDirSize();          // 改名/删除前请停悬停扫描(释放目录句柄)
+private:
     void cancelDirSizeRun();                     // 不再看单目录时停旧统计
     void applyDirSizeProgress(const QString& path, quint64 runId, qint64 bytes);  // 线程中途上报
     void applyDirSizeDone(const QString& path, quint64 runId, qint64 bytes);      // 线程收尾
@@ -228,6 +231,7 @@ private:
     QHash<QString,qint64> m_gridDirSizes;   // #10 悬停统计的会话缓存(path→字节)
     QSet<QString>         m_gridDirPending; // 在途去重(网格侧同样有,双保险)
     QString               m_gridDirNext;    // 排队中的最新悬停请求(单飞队列)
+    QString               m_gridDirCurrent; // 正在扫描的目录(中断时交还网格重试标记)
     std::shared_ptr<std::atomic_bool> m_gridSizeStop;  // 在途悬停任务的中断旗
     bool    m_dirSizeRunning = false;
     bool    m_dirSizeDone    = false;  // target 已有精确值(会话内缓存)

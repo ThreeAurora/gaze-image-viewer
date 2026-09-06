@@ -8,6 +8,7 @@
 #include <QApplication>
 #include <QWidget>
 #include <QMetaObject>
+#include <QThread>
 
 inline void releaseGazeFileLocks(const QStringList& paths) {
     if (paths.isEmpty()) return;
@@ -17,5 +18,20 @@ inline void releaseGazeFileLocks(const QStringList& paths) {
         QMetaObject::invokeMethod(w, "releaseFileLocks",
                                   Qt::DirectConnection,
                                   Q_ARG(QStringList, paths));
+        // 悬停大小统计若正在递归扫描,握着目录树句柄也会顶住改名——一并请停
+        if (w->metaObject()->indexOfMethod("abortGridDirSize()") >= 0)
+            QMetaObject::invokeMethod(w, "abortGridDirSize",
+                                      Qt::DirectConnection);
     }
+}
+
+// 改名重试:WMF 后端 teardown 后释放文件句柄是异步的,stop+deleteLater 返回
+// 的瞬间句柄可能还在,首试 rename 会假失败;每 100ms 一次共 1 秒宽限
+inline bool renameWithRetry(const QString& oldPath, const QString& newPath,
+                            int tries = 10) {
+    for (int i = 0; i < tries; ++i) {
+        if (QFile::rename(oldPath, newPath)) return true;
+        QThread::msleep(100);
+    }
+    return false;
 }

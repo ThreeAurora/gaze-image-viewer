@@ -522,7 +522,7 @@ void FileGrid::endInlineRename(bool commit) {
     }
     // #214:改名目标若正被预览播放,句柄不放 rename 会失败
     releaseGazeFileLocks({oldPath});
-    if (!QFile::rename(oldPath, np)) {
+    if (!renameWithRetry(oldPath, np)) {
         QMessageBox::warning(this, gazeTr("重命名失败"), np);
         return;
     }

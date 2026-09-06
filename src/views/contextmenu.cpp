@@ -417,7 +417,7 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
         }
         // #214:改名目标若正被预览播放,句柄不放 rename 会失败
         releaseGazeFileLocks({m_filePath});
-        if (!QFile::rename(m_filePath, np)) {
+        if (!renameWithRetry(m_filePath, np)) {
             QMessageBox::warning(par, gazeTr("重命名失败"), m_filePath);
             return;
         }

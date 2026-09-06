@@ -505,8 +505,22 @@ void MainWindow::onGridDirSizeRequested(const QString& path) {
 // 悬停统计任务(可中断):stop 置位即弃(不写缓存不落库),该目录由网格侧
 // 清除"已问"标记,下次悬停重新发起;正常跑完则回填缓存/库/网格,并接力
 // 排队中的最新请求
+// 改名/删除前的统一出口(releaseGazeFileLocks 经元对象调到这里):
+// 悬停统计递归扫描握着目录树句柄,会顶住同树内的改名操作
+void MainWindow::abortGridDirSize() {
+    if (m_gridSizeStop) m_gridSizeStop->store(true);
+    if (!m_gridDirCurrent.isEmpty()) {
+        if (m_fileGrid) m_fileGrid->retryDirSize(m_gridDirCurrent);
+        m_gridDirCurrent.clear();
+    }
+    if (!m_gridDirNext.isEmpty()) {
+        m_gridDirPending.remove(m_gridDirNext);
+        m_gridDirNext.clear();
+    }
+}
+
 void MainWindow::startGridDirSize(const QString& path) {
-    m_gridDirPending.insert(path);
+    m_gridDirCurrent = path;
     if (!m_gridSizeStop) m_gridSizeStop = std::make_shared<std::atomic_bool>(false);
     m_gridSizeStop->store(false);
     const auto stop = m_gridSizeStop;
@@ -535,6 +549,7 @@ void MainWindow::startGridDirSize(const QString& path) {
         QMetaObject::invokeMethod(self, [self, path, sz, stopped]() {
             if (!self) return;
             self->m_gridDirPending.remove(path);
+            self->m_gridDirCurrent.clear();
             if (stopped) {
                 // 被更新的悬停请求打断:解除"已问"标记,用户再看它时重新发起
                 if (self->m_fileGrid) self->m_fileGrid->retryDirSize(path);
