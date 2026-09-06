@@ -503,7 +503,9 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
                     // closeViewerTab 自己会退回浏览器。
                     // #230:全屏里 Ctrl+W 只退全屏、不接着关签 —— 与双击同语义
                     // (#227 只关最上一层),想关签退全屏后再按
-                    if (ke->key() == Qt::Key_W && m_viewerMode && m_viewerTabs) {
+                    if (ke->key() == Qt::Key_W
+                        && (m_fullView || (m_viewerMode && m_viewerTabs))) {
+                        // G 全屏下 Ctrl+W 也要能退(此前只认查看器形态)
                         if (m_fullView) { exitFullView(); return true; }
                         if (!isBrowserTab(m_viewerTabs->currentIndex())) {
                             closeViewerTab(m_viewerTabs->currentIndex());
