@@ -172,6 +172,7 @@ void PreviewPanel::showText(const QString& path) {
     m_textEdit->setWordWrapMode(pp_impl::s_bool("Preview/textWrap", true)
         ? QTextOption::WordWrap : QTextOption::NoWrap);
 
+    if (m_pdfBar) m_pdfBar->hide();   // pdf 页导航条只属于 pdf 形态,别漏进来
     QFile f(path);
     if (f.open(QIODevice::ReadOnly | QIODevice::Text)) {
         // #111:行数与"单行字符数"都要截。只卡字节数不够 —— 实测一个 512KB 的
@@ -181,6 +182,14 @@ void PreviewPanel::showText(const QString& path) {
         qint64 total = 0;
         const QString raw = TextCut::readHead(f, &byteCut, &total);
         f.close();
+        // 一个字节都没读出来但文件不是空的:读取被占用/权限挡了 —— 如实报错,
+        // 不能走"已截断"的口径(此前小文件被占用时会谎报"文件 0 KB 仅读取前 0 KB")
+        if (raw.isEmpty() && total > 0) {
+            m_textEdit->setPlainText(gazeTr(
+                "无法读取文件内容(可能正被其他程序占用,或没有读取权限)"));
+            m_textEdit->show();
+            return;
+        }
         m_textEdit->setPlainText(TextCut::apply(raw, byteCut, total));
         m_textEdit->show();
     } else {

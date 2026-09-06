@@ -96,14 +96,22 @@ inline Clip clip(const QString& raw, bool byteCut_, qint64 totalBytes_) {
     return out;
 }
 
+// 容量可读化:B/KB/MB 一位小数,小于 1KB 的文件不再显示成"0 KB"
+inline QString sizeTextOf(qint64 bytes) {
+    if (bytes < 1024) return gazeTr("%1 B").arg(bytes);
+    if (bytes < 1024 * 1024)
+        return gazeTr("%1 KB").arg(bytes / 1024.0, 0, 'f', 1);
+    return gazeTr("%1 MB").arg(bytes / 1048576.0, 0, 'f', 2);
+}
+
 // 提示语(纯文本、无前导换行)。没有截任何东西时返回空串。
 inline QString noticeOf(const Clip& c) {
     QStringList notes;
     if (c.lineCut)
         notes << gazeTr("行数超过 %1，仅显示前 %2 行").arg(maxLines).arg(c.lines);
     else if (c.byteCut)
-        notes << gazeTr("文件 %1 KB，仅读取前 %2 KB")
-                     .arg(c.totalBytes / 1024).arg(c.shownBytes / 1024);
+        notes << gazeTr("文件共 %1，仅读取前 %2")
+                     .arg(sizeTextOf(c.totalBytes), sizeTextOf(c.shownBytes));
     if (c.longLines > 0)
         notes << gazeTr("%1 行超过 %2 字符，每行只显示前 %2 字符")
                      .arg(c.longLines).arg(maxLineChars);
