@@ -296,6 +296,9 @@ void FileGrid::sort(int column, bool ascending) {
     // 调用无落盘代价(#75 的教训只针对同步刷盘/逐条目读)
     AppSettings::instance().setPersist("Browser/lastSortCol", column);
     AppSettings::instance().setPersist("Browser/lastSortAsc", ascending);
+    // 表头方向箭头同步:程序侧排序(启动默认/排序菜单/名称顺序)也走这里,
+    // 不再让表头停在构造默认的"修改日期"(2026-09-06 用户报)
+    if (m_header) m_header->setSortIndicator(column, ascending);
 
     QCollator collNormal;
     collNormal.setCaseSensitivity(Qt::CaseInsensitive);

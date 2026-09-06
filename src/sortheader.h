@@ -45,6 +45,7 @@ public:
     static void dynDetailWidths(int rowW, const bool vis[6], int out[6]);
     void setDetailMode(bool on);             // 结构切换:弹性均分 ↔ 定宽列布局
     void applySharedStretch();               // 非详细态:各列按基准宽分担增量(2026-09-06 用户令)
+    void setSortIndicator(int colId, bool ascending);   // 程序侧排序后回填方向箭头
     bool detailMode() const { return m_detailMode; }
     void setDetailLead(int w);               // 头垫片宽(名称文字起点对齐)
     void setDetailTail(int w);               // 尾垫片宽(列右缘与网格行右缘对齐)

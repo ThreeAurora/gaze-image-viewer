@@ -205,6 +205,16 @@ SortHeader::SortHeader(QWidget* parent) : QWidget(parent) {
     });
 }
 
+// 程序侧排序(启动默认/排序菜单/名称顺序切换)后的方向同步:
+// 此前箭头只在点表头时更新,构造默认画着"修改日期"——启动按文件名排序、
+// 表头却显示修改日期,两张皮(2026-09-06 用户报)
+void SortHeader::setSortIndicator(int colId, bool ascending) {
+    if (m_currentCol == colId && m_ascending == ascending) return;
+    m_currentCol = colId;
+    m_ascending = ascending;
+    updateArrows();
+}
+
 void SortHeader::onColumnClicked(int colId) {
     if (m_currentCol == colId)
         m_ascending = !m_ascending;
