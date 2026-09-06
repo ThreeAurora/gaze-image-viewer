@@ -342,8 +342,12 @@ void FileGrid::onCanvasRelease(int index) {
     m_lastClicked = index;
     refreshView();
 
-    // 普通单击选中首排/末排文件时,自动贴边完整展示那一排
-    if (!ctrl) scrollToRow(index);
+    // 单击选中不再自动贴边对齐(2026-09-06 用户令:详细列表下选中行不许跳
+    // 动上下滚动条)。该自动贴边是早期"点首/末排完整展示那一排"的需求,
+    // 缩略图类模式保留;详细/列表行高小、半截行多,点哪都跳,已按令摘除。
+    // 键盘导航(navigateSelection)的滚动保留——方向键翻页依赖它。
+    if (!ctrl && m_viewMode != VM_DETAILS && m_viewMode != VM_LIST)
+        scrollToRow(index);
 
     // 注:这里过去会 emit dirSelected 让文件树镜像选中同一目录(2026-09-03 加的)。
     // 用户裁决「文件页中选中某文件夹时,文件树应当依然在原处;只有双击打开该
