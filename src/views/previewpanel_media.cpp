@@ -134,6 +134,9 @@ void PreviewPanel::progressScrub(qreal x)
         const qint64 pos = static_cast<qint64>(ratio * m_player->duration());
         m_progress->setValue(static_cast<int>(pos));
         m_player->setPosition(pos);
+        // 播完后拖进度条:seek 到位即接续播放(黑屏不等)
+        if (m_player->playbackState() != QMediaPlayer::PlayingState)
+            m_player->play();
     }
 }
 

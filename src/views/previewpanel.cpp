@@ -235,7 +235,13 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
     // 同 m_btnPlay,拖动进度条的槽也移出 setupPlayer 以免重复注册。
     connect(m_progress, &QSlider::sliderMoved, this, [this](int pos) {
         if (m_isGif) { gifSeekMs(pos); return; }
-        if (m_player) m_player->setPosition(pos);
+        if (m_player) {
+            m_player->setPosition(pos);
+            // 播完(EndOfMedia 后已停止)再拖进度条:seek 后要主动接续播放,
+            // 否则画面停在黑帧、拖了也没反应
+            if (m_player->playbackState() != QMediaPlayer::PlayingState)
+                m_player->play();
+        }
     });
     cl->addWidget(m_progress, 1);
     // 滑条与时间文本恒定 8px(4 布局间距 + 4):旧版时间标签 setFixedWidth(120)
