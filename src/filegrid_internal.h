@@ -12,6 +12,7 @@
 #include <QContextMenuEvent>
 #include <QToolTip>
 #include <QStyle>
+#include <QPolygon>
 #include <QIcon>
 
 namespace fg_impl {
@@ -30,6 +31,24 @@ inline QIcon findStdIcon(QStyle* st, QStyle::StandardPixmap sp) {
         }
     }
     return QIcon(QPixmap::fromImage(img));
+}
+
+// 自绘三角箭头:windowsvista 风格的 SP_ArrowUp/Down 标准图标取位图常为空,
+// 染色后"看起来没有图标"。直接画实心三角,颜色随主题文字色(查找条翻页钮用)
+inline QIcon paintedArrow(QStyle::StandardPixmap sp) {
+    const QColor ink = QColor(QString::fromUtf8(Theme::T("#FFFFFF", "#1F1F26")));
+    QPixmap pm(16, 16);
+    pm.fill(Qt::transparent);
+    QPainter p(&pm);
+    p.setRenderHint(QPainter::Antialiasing);
+    p.setPen(Qt::NoPen);
+    p.setBrush(ink);
+    QPolygon tri;
+    if (sp == QStyle::SP_ArrowUp) tri << QPoint(8, 3) << QPoint(14, 12) << QPoint(2, 12);
+    else                          tri << QPoint(2, 4)  << QPoint(14, 4)  << QPoint(8, 13);
+    p.drawPolygon(tri);
+    p.end();
+    return QIcon(pm);
 }
 
 } // namespace fg_impl

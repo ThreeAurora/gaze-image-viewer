@@ -254,8 +254,8 @@ void FileGrid::refreshCurrentDir() {
 void FileGrid::refreshThemeColors() {
     refreshView();
     if (m_findBar) {
-        m_findPrev->setIcon(fg_impl::findStdIcon(style(), QStyle::SP_ArrowUp));
-        m_findNext->setIcon(fg_impl::findStdIcon(style(), QStyle::SP_ArrowDown));
+        m_findPrev->setIcon(fg_impl::paintedArrow(QStyle::SP_ArrowUp));
+        m_findNext->setIcon(fg_impl::paintedArrow(QStyle::SP_ArrowDown));
     }
 }
 

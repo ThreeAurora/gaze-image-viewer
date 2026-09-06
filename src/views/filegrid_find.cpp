@@ -51,6 +51,8 @@
 #include <algorithm>
 #include <cmath>
 #include "filegrid_internal.h"
+#include <QPolygon>
+#include <QPainter>
 
 // ═══════════════════════════════════════════
 // 内联搜索条(#107):Ctrl+F 在文件列表上落一个搜索框,不弹窗。
@@ -97,21 +99,22 @@ void FileGrid::buildFindBar() {
     lay->addWidget(m_findInfo);
 
     m_findPrev = new QToolButton(m_findBar);
-    m_findPrev->setIcon(fg_impl::findStdIcon(style(), QStyle::SP_ArrowUp));
+    m_findPrev->setIcon(fg_impl::paintedArrow(QStyle::SP_ArrowUp));
     m_findPrev->setToolTip(gazeTr("上一个(Shift+Enter)"));
     m_findPrev->setFixedSize(24, 24);
     connect(m_findPrev, &QToolButton::clicked, this, [this]() { findStep(-1); });
     lay->addWidget(m_findPrev);
 
     m_findNext = new QToolButton(m_findBar);
-    m_findNext->setIcon(fg_impl::findStdIcon(style(), QStyle::SP_ArrowDown));
+    m_findNext->setIcon(fg_impl::paintedArrow(QStyle::SP_ArrowDown));
     m_findNext->setToolTip(gazeTr("下一个(Enter)"));
     m_findNext->setFixedSize(24, 24);
     connect(m_findNext, &QToolButton::clicked, this, [this]() { findStep(1); });
     lay->addWidget(m_findNext);
 
     auto* btnClose = new QToolButton(m_findBar);
-    btnClose->setIcon(fg_impl::findStdIcon(style(), QStyle::SP_TitleBarCloseButton));
+    btnClose->setText(gazeTr("✕"));   // 普通 ✕ 文本,不用图标
+    btnClose->setObjectName("findCloseBtn");
     btnClose->setToolTip(gazeTr("关闭(Esc)"));
     btnClose->setFixedSize(24, 24);
     connect(btnClose, &QToolButton::clicked, this, [this]() { closeFind(); });
