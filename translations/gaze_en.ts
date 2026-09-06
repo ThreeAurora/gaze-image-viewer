@@ -68,8 +68,20 @@ Fetching images…</translation>
         <translation>  (default)</translation>
     </message>
     <message>
+        <source>  &lt;span style=&quot;background-color:%1;color:%2;&quot;&gt;&amp;nbsp;%3&amp;nbsp;&lt;/span&gt; ← %4&lt;br&gt;</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>  ·  已选 %1 项 · [%2]</source>
         <translation>  ·  %1 selected · [%2]</translation>
+    </message>
+    <message>
+        <source> [已移出]</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source> [索引已暂停]</source>
+        <translation></translation>
     </message>
     <message>
         <source> · %1 %2</source>
@@ -106,6 +118,18 @@ Fetching images…</translation>
     <message>
         <source>%1 / %2 页</source>
         <translation>Page %1 / %2</translation>
+    </message>
+    <message>
+        <source>%1 B</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>%1 KB</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>%1 MB</source>
+        <translation></translation>
     </message>
     <message>
         <source>%1 · %2 · %3 / %4</source>
@@ -146,6 +170,11 @@ Extracting embedded camera preview…</translation>
     <message>
         <source>%1 项</source>
         <translation>%1 items</translation>
+    </message>
+    <message>
+        <source>%1%2
+已处理 %3 · 待处理 %4 · 失效 %5</source>
+        <translation></translation>
     </message>
     <message>
         <source>%1: %2</source>
@@ -610,6 +639,10 @@ Version 1.0 — C++ + Qt6</translation>
         <translation>✓ service online</translation>
     </message>
     <message>
+        <source>✕</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>✗ 无法连接(服务未运行)</source>
         <translation>✗ cannot connect (service not running)</translation>
     </message>
@@ -1052,6 +1085,11 @@ Next start will restore:
         <translation>Other</translation>
     </message>
     <message>
+        <source>写回副本失败:
+</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>写回文件失败:
 </source>
         <translation>Failed to write file:
@@ -1098,6 +1136,11 @@ Next start will restore:
         <translation>Failed to create copy</translation>
     </message>
     <message>
+        <source>创建副本失败:
+</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>创建失败:
 </source>
         <translation>Failed to create:
@@ -1140,8 +1183,16 @@ Next start will restore:
         <translation>Show a notice in the bottom-left corner after deleting</translation>
     </message>
     <message>
+        <source>删除后服务端会自动清理该目录的索引数据。继续?</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>删除含文件夹时确认(不受上一项影响)</source>
         <translation>Confirm when deleting folders (independent of the option above)</translation>
+    </message>
+    <message>
+        <source>删除失败(HTTP %1)</source>
+        <translation></translation>
     </message>
     <message>
         <source>删除失败:
@@ -1178,6 +1229,14 @@ Next start will restore:
         <translation>Delete entries</translation>
     </message>
     <message>
+        <source>删除目录</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>删除索引目录</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>删除该目录的全部缓存条目?
 %1</source>
         <translation>Delete all cache entries for this folder?
@@ -1190,6 +1249,10 @@ Next start will restore:
         <translation>Delete all thumbnail cache entries for this folder?
 %1
 (rebuilt automatically while browsing)</translation>
+    </message>
+    <message>
+        <source>删除选中</source>
+        <translation></translation>
     </message>
     <message>
         <source>删除选中目录条目</source>
@@ -1346,6 +1409,10 @@ e.g. psd, ai, raw, cr2, nef</translation>
         <translation>Rotate 90° right</translation>
     </message>
     <message>
+        <source>右键目录:纳入/移出搜索、暂停/恢复索引、删除目录(服务端自动清理)</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>右键菜单</source>
         <translation>Context menu</translation>
     </message>
@@ -1362,6 +1429,14 @@ e.g. psd, ai, raw, cr2, nef</translation>
     <message>
         <source>同时搜索文件夹</source>
         <translation>Search folders as well</translation>
+    </message>
+    <message>
+        <source>同步</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>同步(移除已不存在的目录)</source>
+        <translation></translation>
     </message>
     <message>
         <source>同步文件夹</source>
@@ -1440,6 +1515,14 @@ e.g. psd, ai, raw, cr2, nef</translation>
     <message>
         <source>启用缓存目录</source>
         <translation>Enable cache folder</translation>
+    </message>
+    <message>
+        <source>命中 %1 项(双击在 Gaze 打开)</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>命中至少 %1 项,已显示前 500(双击在 Gaze 打开)</source>
+        <translation></translation>
     </message>
     <message>
         <source>命中这些词的结果被排除(同样的词法规则)</source>
@@ -1600,12 +1683,20 @@ Click once to select the whole path, click again to place the caret</translation
         <translation>Size (descending)</translation>
     </message>
     <message>
+        <source>失效键(mtime)</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>奇数页</source>
         <translation>Odd pages</translation>
     </message>
     <message>
         <source>始终</source>
         <translation>Always</translation>
+    </message>
+    <message>
+        <source>媒体文件</source>
+        <translation></translation>
     </message>
     <message>
         <source>子串或通配 * ?;多个词用空格分隔,任一命中即算</source>
@@ -1616,12 +1707,24 @@ Click once to select the whole path, click again to place the caret</translation
         <translation>Done</translation>
     </message>
     <message>
+        <source>定位</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>实际大小 (100%)</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>宽</source>
         <translation>Width</translation>
     </message>
     <message>
         <source>宽度(像素):</source>
         <translation>Width (pixels):</translation>
+    </message>
+    <message>
+        <source>对永久失败条目按阶段重跑</source>
+        <translation></translation>
     </message>
     <message>
         <source>导出清单</source>
@@ -1746,12 +1849,20 @@ or in system Settings → Apps → Default apps → Gaze → &apos;Set default&a
         <translation>Context menu added; takes effect in Explorer immediately.</translation>
     </message>
     <message>
+        <source>已添加目录</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>已清除失效缩略图 %1 条、失效标记 %2 条。</source>
         <translation>Removed %1 stale thumbnail(s) and %2 stale label(s).</translation>
     </message>
     <message>
         <source>已移至回收站</source>
         <translation>Moved to Recycle Bin</translation>
+    </message>
+    <message>
+        <source>已移除 %1 条失效目录缓存。</source>
+        <translation></translation>
     </message>
     <message>
         <source>已移除 %1 条孤立条目。</source>
@@ -1764,6 +1875,10 @@ or in system Settings → Apps → Default apps → Gaze → &apos;Set default&a
     <message>
         <source>已移除右键菜单。</source>
         <translation>Context menu removed.</translation>
+    </message>
+    <message>
+        <source>已触发扫描</source>
+        <translation></translation>
     </message>
     <message>
         <source>已达 %1 个目录上限(可能遇到链接环),其余未扫</source>
@@ -1780,6 +1895,10 @@ or in system Settings → Apps → Default apps → Gaze → &apos;Set default&a
     <message>
         <source>已选「%1」，重启 Gaze 后生效。</source>
         <translation>&quot;%1&quot; selected; it takes effect after restarting Gaze.</translation>
+    </message>
+    <message>
+        <source>已重置 %1 条失败项(%2)</source>
+        <translation></translation>
     </message>
     <message>
         <source>布局</source>
@@ -1840,6 +1959,10 @@ Off (default): a file occupies one tab; opening it again just switches to the ex
 Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the cap below.</translation>
     </message>
     <message>
+        <source>开始扫描</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>开源致谢</source>
         <translation>Open-source credits</translation>
     </message>
@@ -1898,6 +2021,10 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
     <message>
         <source>总是</source>
         <translation>Always</translation>
+    </message>
+    <message>
+        <source>恢复索引处理</source>
+        <translation></translation>
     </message>
     <message>
         <source>恢复默认</source>
@@ -1972,6 +2099,10 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
         <translation>Extension:</translation>
     </message>
     <message>
+        <source>扫描中</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>扫描文件头</source>
         <translation>Scan file headers</translation>
     </message>
@@ -1980,6 +2111,10 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
 (只改数据库记录,不搬动任何文件)</source>
         <translation>Repoint cache records from %1 to %2?
 (Only database records change; no files are moved)</translation>
+    </message>
+    <message>
+        <source>把一个目录加入索引(服务端自动扫描其中的图片)</source>
+        <translation></translation>
     </message>
     <message>
         <source>把目录 %1 的缓存记录搬到新路径:</source>
@@ -2030,12 +2165,20 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
         <translation>Filter current folder by file format</translation>
     </message>
     <message>
+        <source>按文件类型筛选(维度内多选=任一命中)</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>按时间</source>
         <translation>By time</translation>
     </message>
     <message>
         <source>按相关性</source>
         <translation>By relevance</translation>
+    </message>
+    <message>
+        <source>按颜色标记筛选(维度内多选=任一命中)</source>
+        <translation></translation>
     </message>
     <message>
         <source>排序</source>
@@ -2130,6 +2273,10 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
         <translation>Database: %1 · cache entries: %2 · thumbnails total: %3</translation>
     </message>
     <message>
+        <source>数据库:%1  ·  缓存目录:%2  ·  合计:%3</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>数据库引擎的内存占用(MB)</source>
         <translation>Database engine memory usage (MB)</translation>
     </message>
@@ -2146,6 +2293,10 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
 </source>
         <translation>File does not exist:
 </translation>
+    </message>
+    <message>
+        <source>文件共 %1，仅读取前 %2</source>
+        <translation></translation>
     </message>
     <message>
         <source>文件关联</source>
@@ -2208,6 +2359,14 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
         <translation>Folder name:</translation>
     </message>
     <message>
+        <source>文件夹大小数据库维护</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>文件夹大小数据库维护...</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>文件夹总是按字母序排列</source>
         <translation>Folders always sort alphabetically</translation>
     </message>
@@ -2220,12 +2379,25 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
         <translation>Folder tree</translation>
     </message>
     <message>
+        <source>文件当前不存在(可能已被移动或删除):
+%1</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>文件操作</source>
         <translation>File operations</translation>
     </message>
     <message>
         <source>文件数</source>
         <translation>File count</translation>
+    </message>
+    <message>
+        <source>文件极速搜索 (NTFS 全盘索引)</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>文件极速搜索...</source>
+        <translation></translation>
     </message>
     <message>
         <source>文件树左键按住拖动</source>
@@ -2312,6 +2484,11 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
         <translation>Lossless - ZIP compression</translation>
     </message>
     <message>
+        <source>无法为副本取名(重名过多):
+</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>无法写入文件。</source>
         <translation>Cannot write the file.</translation>
     </message>
@@ -2360,6 +2537,10 @@ Try a different selection (a bit larger and farther from the edges).</translatio
         <translation>Cannot read file</translation>
     </message>
     <message>
+        <source>无法读取文件内容(可能正被其他程序占用,或没有读取权限)</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>无法读取该图片</source>
         <translation>Cannot read this image</translation>
     </message>
@@ -2384,6 +2565,10 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     <message>
         <source>显示 %1 项</source>
         <translation>Showing %1 items</translation>
+    </message>
+    <message>
+        <source>显示/隐藏其他类型</source>
+        <translation></translation>
     </message>
     <message>
         <source>显示/隐藏图片</source>
@@ -2442,6 +2627,10 @@ Try a different selection (a bit larger and farther from the edges).</translatio
         <translation>Show color labels</translation>
     </message>
     <message>
+        <source>暂停索引处理(保留搜索)</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>最近的文件</source>
         <translation>Recent files</translation>
     </message>
@@ -2474,6 +2663,19 @@ Try a different selection (a bit larger and farther from the edges).</translatio
         <translation>Start the ImageSeek service automatically before searching when it is not running</translation>
     </message>
     <message>
+        <source>服务状态:%1 · %2 张/秒
+待处理 缩略图 %3 / 文字 %4 · 失败 %5/%6 · 库内 %7 张</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>服务状态:—</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>服务状态:离线(设置 → 以文搜图 可开自动启动,或手动运行 main.py)</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>服务生命周期</source>
         <translation>Service lifecycle</translation>
     </message>
@@ -2486,6 +2688,10 @@ Try a different selection (a bit larger and farther from the edges).</translatio
 (上面总开关关掉时一律不上底色)</source>
         <translation>Formats not listed: %1
 (no background color while the master switch above is off)</translation>
+    </message>
+    <message>
+        <source>未列出的格式:&lt;span style=&quot;background-color:%1;color:%2;&quot;&gt;&amp;nbsp;%3&amp;nbsp;&lt;/span&gt;(上面总开关关掉时一律不上底色)</source>
+        <translation></translation>
     </message>
     <message>
         <source>未找到万象图搜项目:%1/main.py —— 可在 设置 → 以文搜图 改目录</source>
@@ -2538,6 +2744,10 @@ Try a different selection (a bit larger and farther from the edges).</translatio
 </translation>
     </message>
     <message>
+        <source>标签颜色(扩展名 → 文件名底色,当前生效表):&lt;br&gt;</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>标记</source>
         <translation>Labels</translation>
     </message>
@@ -2574,6 +2784,10 @@ Try a different selection (a bit larger and farther from the edges).</translatio
         <translation>Preparing to print…</translation>
     </message>
     <message>
+        <source>正在后台扫描本机 NTFS 卷…</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>正在后台解码 RAW（大文件需数秒）——现在切换文件会立即放弃本次解码</source>
         <translation>Decoding RAW in the background (large files take seconds) — switching files now aborts this decode</translation>
     </message>
@@ -2588,6 +2802,10 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     <message>
         <source>正在解码…</source>
         <translation>Decoding…</translation>
+    </message>
+    <message>
+        <source>正在读取目录…</source>
+        <translation></translation>
     </message>
     <message>
         <source>正在连接…</source>
@@ -2722,12 +2940,36 @@ Try a different selection (a bit larger and farther from the edges).</translatio
         <translation>Add to favorites</translation>
     </message>
     <message>
+        <source>添加目录:%1</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>添加目录…</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>添加目录失败(HTTP %1)</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>添加索引目录</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>添加颜色标记</source>
         <translation>Add Color Label</translation>
     </message>
     <message>
         <source>清理</source>
         <translation>Clean up</translation>
+    </message>
+    <message>
+        <source>清空</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>清空全部文件夹大小缓存?(选中目录时会自动重新统计)</source>
+        <translation></translation>
     </message>
     <message>
         <source>清空收藏夹</source>
@@ -2752,6 +2994,14 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     <message>
         <source>清除缩略图</source>
         <translation>Clear thumbnails</translation>
+    </message>
+    <message>
+        <source>激活模型:%1</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>激活模型:—</source>
+        <translation></translation>
     </message>
     <message>
         <source>瀑布流</source>
@@ -2818,6 +3068,14 @@ Try a different selection (a bit larger and farther from the edges).</translatio
         <translation>White</translation>
     </message>
     <message>
+        <source>目录</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>目录已删除</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>目标名已存在:
 </source>
         <translation>Target name already exists:
@@ -2858,6 +3116,10 @@ Try a different selection (a bit larger and farther from the edges).</translatio
         <translation>Disable GIF/JIF/APNG/ANI animations</translation>
     </message>
     <message>
+        <source>移出搜索与索引</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>移动</source>
         <translation>Move</translation>
     </message>
@@ -2896,6 +3158,10 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     <message>
         <source>空格</source>
         <translation>Space</translation>
+    </message>
+    <message>
+        <source>空闲</source>
+        <translation></translation>
     </message>
     <message>
         <source>窗口适应到图像</source>
@@ -2966,6 +3232,26 @@ Try a different selection (a bit larger and farther from the edges).</translatio
         <translation>System integration</translation>
     </message>
     <message>
+        <source>索引:%1 条</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>索引:未建</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>索引中… 已读 %1 条记录</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>索引就绪,输入关键词回车搜索</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>索引目录</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>红</source>
         <translation>Red</translation>
     </message>
@@ -2976,6 +3262,10 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     <message>
         <source>红色	Ctrl+1</source>
         <translation>Red	Ctrl+1</translation>
+    </message>
+    <message>
+        <source>纳入搜索与索引</source>
+        <translation></translation>
     </message>
     <message>
         <source>纵向</source>
@@ -3012,6 +3302,10 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     <message>
         <source>绿色	Ctrl+4</source>
         <translation>Green	Ctrl+4</translation>
+    </message>
+    <message>
+        <source>缓存大小</source>
+        <translation></translation>
     </message>
     <message>
         <source>缓存数据库</source>
@@ -3094,6 +3388,10 @@ Once set manually, thumbnails scale to the pane edge when resizing, but the colu
     <message>
         <source>缩略图数据库维护...</source>
         <translation>Thumbnail database maintenance...</translation>
+    </message>
+    <message>
+        <source>缩略图条目</source>
+        <translation></translation>
     </message>
     <message>
         <source>缩略图缩放</source>
@@ -3240,6 +3538,10 @@ Once set manually, thumbnails scale to the pane edge when resizing, but the colu
         <translation>Videos (+ folders)</translation>
     </message>
     <message>
+        <source>视频抽帧并发数(机械盘建议 2,SSD 可调高)</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>视频提取帧位置(%,0=第 1 秒)</source>
         <translation>Video frame grab position (%, 0 = second 1)</translation>
     </message>
@@ -3250,6 +3552,14 @@ Once set manually, thumbnails scale to the pane edge when resizing, but the colu
     <message>
         <source>解码失败：内置解码器不支持该 RAW 或文件已损坏</source>
         <translation>Decode failed: the built-in decoder does not support this RAW, or the file is corrupt</translation>
+    </message>
+    <message>
+        <source>触发扫描失败(HTTP %1)</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>触发服务端全量/增量扫描(缩略图/OCR/语义向量)</source>
+        <translation></translation>
     </message>
     <message>
         <source>警告!
@@ -3264,8 +3574,16 @@ Continue?</translation>
         <translation>Remember last</translation>
     </message>
     <message>
+        <source>记住上次会话的排序(关闭则始终按上面的启动默认排序)</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>记录选择的文件名</source>
         <translation>Remember selected file names</translation>
+    </message>
+    <message>
+        <source>记账时间</source>
+        <translation></translation>
     </message>
     <message>
         <source>设为白色</source>
@@ -3366,6 +3684,10 @@ Continue?</translation>
     <message>
         <source>输入扩展名:</source>
         <translation>Enter extensions:</translation>
+    </message>
+    <message>
+        <source>输入文件名的一部分(不区分大小写),回车搜索;如 2026-09 / P_down</source>
+        <translation></translation>
     </message>
     <message>
         <source>输入自然语言、文件名或图片中的文字,如:海边的日落 / IMG_2022 / 发票</source>
@@ -3536,6 +3858,26 @@ Continue?</translation>
         <translation>Relocate</translation>
     </message>
     <message>
+        <source>重试失败</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>重试失败(HTTP %1)</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>重跑文字识别(ocr)</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>重跑缩略图(thumb)</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>重跑语义向量(embed,当前模型)</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>锐化缩略图</source>
         <translation>Sharpen thumbnails</translation>
     </message>
@@ -3628,6 +3970,10 @@ Continue?</translation>
         <translation>Preview</translation>
     </message>
     <message>
+        <source>预览 Markdown 文件(渲染样式展示,超长自动截断)</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>预览 PDF 文档(内置 Ghostscript 渲染)</source>
         <translation>Preview PDF documents (rendered by bundled Ghostscript)</translation>
     </message>
@@ -3646,6 +3992,10 @@ Continue?</translation>
     <message>
         <source>颜色标签</source>
         <translation>Color labels</translation>
+    </message>
+    <message>
+        <source>颜色标记</source>
+        <translation></translation>
     </message>
     <message>
         <source>高</source>
