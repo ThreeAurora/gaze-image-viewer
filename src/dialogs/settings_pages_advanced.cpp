@@ -436,12 +436,16 @@ QWidget* SettingsDialog::pageImgSearch() {
     });
     connect(dirEdit, &QLineEdit::textChanged, dirEdit, probeDir);
     probeDir();
+    // 输入框与按钮分两行:一行塞下路径+浏览+状态时,窗口稍窄右侧就被挤没
     auto* dirRow = new QWidget;
-    auto* dirLay = new QHBoxLayout(dirRow);
+    auto* dirLay = new QVBoxLayout(dirRow);
     dirLay->setContentsMargins(0, 0, 0, 0);
-    dirLay->setSpacing(6);
-    dirLay->addWidget(dirEdit, 1);
-    dirLay->addWidget(dirBrowse);
+    dirLay->setSpacing(4);
+    auto* dirLine1 = new QHBoxLayout;
+    dirLine1->setSpacing(6);
+    dirLine1->addWidget(dirEdit, 1);
+    dirLine1->addWidget(dirBrowse);
+    dirLay->addLayout(dirLine1);
     dirLay->addWidget(dirState);
     fLoc->addRow(gazeTr("项目目录"), dirRow);
 
@@ -466,11 +470,14 @@ QWidget* SettingsDialog::pageImgSearch() {
     connect(pyEdit, &QLineEdit::textChanged, pyEdit, probePy);
     probePy();
     auto* pyRow = new QWidget;
-    auto* pyLay = new QHBoxLayout(pyRow);
+    auto* pyLay = new QVBoxLayout(pyRow);
     pyLay->setContentsMargins(0, 0, 0, 0);
-    pyLay->setSpacing(6);
-    pyLay->addWidget(pyEdit, 1);
-    pyLay->addWidget(pyBrowse);
+    pyLay->setSpacing(4);
+    auto* pyLine1 = new QHBoxLayout;
+    pyLine1->setSpacing(6);
+    pyLine1->addWidget(pyEdit, 1);
+    pyLine1->addWidget(pyBrowse);
+    pyLay->addLayout(pyLine1);
     pyLay->addWidget(pyState);
     fLoc->addRow(gazeTr("Python"), pyRow);
 

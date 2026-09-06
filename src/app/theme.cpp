@@ -557,7 +557,7 @@ QString appQss() {
         "}"
         "QDialog#settingsDialog QComboBox {"
         "  background: %13; color: %1; border: 1px solid %4;"
-        "  border-radius: 3px; padding: 3px 8px; min-width: 180px;"
+        "  border-radius: 3px; padding: 3px 8px; min-width: 96px;"
         "}"
         "QDialog#settingsDialog QComboBox::drop-down {"
         "  width: 16px; border: none; background: transparent;"
