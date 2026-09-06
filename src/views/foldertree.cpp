@@ -103,6 +103,13 @@ static bool hasVisibleSubdirs(const QString& path) {
 }
 
 FolderTree::FolderTree(QWidget* parent) : QTreeWidget(parent) {
+    // 关闭字距微调:雅黑的西文 kerning 在 12px 小字上会把 "Te" 这类字母对
+    // 挤得异常近(Telegram 一类名字肉眼可见地粘连),小字号得不偿失
+    {
+        QFont f = font();
+        f.setKerning(false);
+        setFont(f);
+    }
     setHeaderHidden(true);
     setIndentation(16);
     // 与 XnView 一致：内容少于一页也保留竖向滚动条，整条长拇指表示不可拖动
