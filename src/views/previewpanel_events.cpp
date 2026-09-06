@@ -463,6 +463,29 @@ bool PreviewPanel::eventFilter(QObject* obj, QEvent* event) {
     // 2026-09-05 用户令:Ctrl+滚轮 = 上下滚动文本内容 —— 长文本没有别的滚法。
     // QTextEdit 的视口会自己吃掉 Wheel 并接受,冒泡不到面板 wheelEvent,
     // 只能拦在过滤器里。Ctrl 分支消费事件(不许落到 QTextEdit 的字号缩放)。
+    // 文本预览的右键:整条换成自己的中文菜单(复制/全选/自动换行,
+    // md 文件再加"以 Markdown 样式展示")。QTextEdit 的默认菜单靠 Qt
+    // 自带译文,环境里经常落成英文,索性不依赖它
+    if (obj == m_textEdit->viewport() && event->type() == QEvent::ContextMenu) {
+        QMenu menu(m_textEdit);
+        QAction* aCopy = menu.addAction(gazeTr("复制"));
+        aCopy->setEnabled(m_textEdit->textCursor().hasSelection());
+        QAction* aSelAll = menu.addAction(gazeTr("全选"));
+        menu.addSeparator();
+        QAction* aWrap = menu.addAction(gazeTr("自动换行"));
+        aWrap->setCheckable(true);
+        aWrap->setChecked(pp_impl::s_bool("Preview/textWrap", true));
+        QAction* chosen = menu.exec(static_cast<QContextMenuEvent*>(event)->globalPos());
+        if (chosen == aCopy) m_textEdit->copy();
+        else if (chosen == aSelAll) m_textEdit->selectAll();
+        else if (chosen == aWrap) {
+            const bool on = !pp_impl::s_bool("Preview/textWrap", true);
+            AppSettings::instance().set("Preview/textWrap", on);
+            m_textEdit->setWordWrapMode(on ? QTextOption::WordWrap
+                                           : QTextOption::NoWrap);
+        }
+        return true;
+    }
     if (obj == m_textEdit->viewport() && event->type() == QEvent::Wheel) {
         auto* we = static_cast<QWheelEvent*>(event);
         const int delta = we->angleDelta().y();
