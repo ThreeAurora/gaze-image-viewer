@@ -415,6 +415,27 @@ void PreviewPanel::syncVideoChildren() {
     for (auto* child : m_videoWidget->children()) {
         if (auto* w = qobject_cast<QWidget*>(child)) {
             if (w == m_liveBadge) continue; // 徽章保持右上角小尺寸，不铺满
+            // 视频面按画面宽高比铺(2026-09-06 用户令:浅色主题信封四周应为白):
+            // QVideoWidget 是原生 D3D 画布,它自己的信封恒黑不吃调色板 ——
+            // 把它收缩到画面比例,四周露出 pvVideo 的主题底色(浅白/深黑)
+            if (w == m_vw && m_mode == "video"
+                && m_videoSize.width() > 0 && m_videoSize.height() > 0
+                && m_videoWidget->width() > 4 && m_videoWidget->height() > 4) {
+                const double va = double(m_videoSize.width()) / m_videoSize.height();
+                const double ba = double(m_videoWidget->width()) / m_videoWidget->height();
+                QRect r = m_videoWidget->rect();
+                if (va > ba) {   // 画面更宽:横向顶满,纵向居中
+                    const int h = qMax(1, int(r.width() / va));
+                    r.setHeight(h);
+                    r.moveTop((m_videoWidget->height() - h) / 2);
+                } else {         // 画面更高:纵向顶满,横向居中
+                    const int wd = qMax(1, int(r.height() * va));
+                    r.setWidth(wd);
+                    r.moveLeft((m_videoWidget->width() - wd) / 2);
+                }
+                w->setGeometry(r);
+                continue;
+            }
             w->setGeometry(m_videoWidget->rect());
         }
     }

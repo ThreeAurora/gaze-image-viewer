@@ -656,6 +656,18 @@ void PreviewPanel::setupPlayer() {
         }
     });
 
+    // 视频画面尺寸:首帧到达即记下并重铺视频面 —— 信封(四周留边)由 pvVideo
+    // 的主题底色承担,QVideoWidget 是原生 D3D 画布,自己的信封黑边不吃调色板,
+    // 浅色主题下必须是"我们铺比例、底色露主题"而不是让它满铺涂黑
+    if (QVideoSink* vs = m_player->videoSink()) {
+        connect(vs, &QVideoSink::videoFrameChanged, this,
+                [this](const QVideoFrame& f) {
+            if (!f.isValid() || f.size() == m_videoSize) return;
+            m_videoSize = f.size();
+            if (m_mode == "video") syncVideoChildren();
+        });
+    }
+
     // 播放器错误全模式落日志:后端拒绝解码/打不开文件时这是唯一痕迹
     connect(m_player, &QMediaPlayer::errorOccurred,
             this, [this](QMediaPlayer::Error err, const QString& msg) {
