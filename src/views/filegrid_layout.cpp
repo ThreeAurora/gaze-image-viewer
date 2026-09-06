@@ -116,7 +116,7 @@ void FileGrid::setViewMode(int mode) {
     if (mode != VM_DETAILS && mode != VM_LIST)
         AppSettings::instance().setPersist("Browser/lastThumbMode", m_viewMode);
     m_fitCache.clear();   // 成品图按盒子缓存,查看方式换了盒子形状不同
-    if (m_header) { m_header->setDetailMode(m_viewMode == VM_DETAILS); updateDetailColumns(); }
+    if (m_header) { m_header->setDetailMode(m_viewMode == VM_DETAILS); updateDetailColumnsNow(); }
     updateLayout();
     requestVisibleThumbs();
     emit viewModeChanged(m_viewMode);
@@ -307,6 +307,13 @@ int FileGrid::detailColX(const QRect& r, int i) const {
 //   tail = 列区右缘吸到网格行右缘(差值随滚动条显隐/窗口宽变化,每次重推)
 //   宽   = #3/#5 动态列宽(拖宽均摊/拖窄名称保底),网格绘制与表头同源同值
 void FileGrid::updateDetailColumns() {
+    // 拖动文件页边沿时 resize 以 30ms 频率轰炸,列宽逐帧重算=用户看到的
+    // "诡异动画"(列宽一路小碎步跟手跳)。防抖:拖动中冻结现宽,停止 140ms
+    // 后一次性对齐
+    m_detailColTimer.start(140);
+}
+
+void FileGrid::updateDetailColumnsNow() {
     if (!m_header || m_viewMode != VM_DETAILS) return;
     m_header->setDetailLead(viewport()->x() + 30);
     const int rowRight = viewport()->x() + MARGIN + cardW();
@@ -331,13 +338,13 @@ void FileGrid::setSortHeader(SortHeader* h) {
     m_header = h;
     if (!h) return;
     connect(h, &SortHeader::detailColumnsEdited, this, [this]() {
-        updateDetailColumns();
+        updateDetailColumnsNow();
         refreshView();
     });
     // 启动即恢复详细态(Browser/viewMode):表头构造期后才挂接,这里补形态
     if (m_viewMode == VM_DETAILS) {
         h->setDetailMode(true);
-        updateDetailColumns();
+        updateDetailColumnsNow();
     }
 }
 

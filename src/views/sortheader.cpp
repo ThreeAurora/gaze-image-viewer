@@ -79,15 +79,12 @@ bool SortHeader::eventFilter(QObject* obj, QEvent* event) {
     return QWidget::eventFilter(obj, event);
 }
 
-// 非详细态的列宽分担(2026-09-06 用户令"调整文件页宽度大家的列都变宽"):
-// 此前只有名称列 stretch,拖宽全喂给它;现在各列按基准宽做权重共同吸收,
-// 名称列权重取 260(保底 25 字符 + 适度余量),比例与详细态的分配口径一致
+// 非详细态的列宽分担(2026-09-06 用户令"大家的列都变宽,而且从一开始就
+// 差不多宽"):全部可见列等权,初始与拖宽都均分。此前的名称加权(260)让它
+// 一出生就比别人宽一大截,与诉求相悖。详细态不走这里(定宽列方案)。
 void SortHeader::applySharedStretch() {
-    static const int kNameWeight = 260;
-    for (int i = 0; i < m_columns.size(); ++i) {
-        const int w = (i == 0) ? kNameWeight : detailColWidth(i - 1);
-        m_layout->setStretchFactor(m_columns[i].btn, qMax(1, w));
-    }
+    for (int i = 0; i < m_columns.size(); ++i)
+        m_layout->setStretchFactor(m_columns[i].btn, 1);
 }
 
 void SortHeader::setDetailMode(bool on) {
@@ -109,7 +106,7 @@ void SortHeader::setDetailMode(bool on) {
     }
     if (!on) applySharedStretch();
     // 名称列在详细态恢复独占弹性(动态列宽由 setDetailWidths 推送)
-    m_layout->setStretchFactor(m_columns[0].btn, on ? 1 : qMax(1, 260));
+    m_layout->setStretchFactor(m_columns[0].btn, 1);
     updateGeometry();
 }
 

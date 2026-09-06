@@ -104,6 +104,10 @@ FileGrid::FileGrid(QWidget* parent) : QScrollArea(parent) {
     connect(&Thumbnailer::instance(), &Thumbnailer::thumbnailReady,
             this, &FileGrid::onThumbReady);
 
+    // 详细列宽防抖闸(见 updateDetailColumns)
+    m_detailColTimer.setSingleShot(true);
+    connect(&m_detailColTimer, &QTimer::timeout, this, &FileGrid::updateDetailColumnsNow);
+
     // 悬停统计驻留闸:鼠标在一枚文件夹上停稳 450ms 才发起后台统计
     m_dirSizeTimer.setSingleShot(true);
     connect(&m_dirSizeTimer, &QTimer::timeout, this, [this]() {
