@@ -474,11 +474,13 @@ void FileGrid::onDirScanDone(quint64 gen, const QString& dirPath, bool sameDir,
         requestAllThumbs();
 
     emit fileCountChanged();
-    // 目录装载期间来的选中请求(启动恢复/单实例转交):此刻兑现
+    // 目录装载期间来的选中请求(启动恢复/双击打开/单实例转交):并入
+    // preferPath,由下方默认首选块一次性选中 —— 不另发一次 selectionChanged。
+    // 此前先 selectByPath 再默认选第一项,两次 emit 打架:双击打开的图片
+    // 被第一项抢走预览,状态栏还剩两项选中(实测实锤)
     if (!m_pendingSelectPath.isEmpty()) {
-        const QString want = m_pendingSelectPath;
+        m_preferPath = m_pendingSelectPath;
         m_pendingSelectPath.clear();
-        if (!m_entries.empty()) selectByPath(want);
     }
     if (!m_entries.empty()) {
         // 默认选中第一个;reloadAfterDelete 可用 m_preferPath 指定落点
