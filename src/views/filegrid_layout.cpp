@@ -422,6 +422,14 @@ void FileGrid::requestAllThumbs() {
 
 void FileGrid::onThumbReady(const QString& filePath, const QImage& img) {
     PerfLog::Scope _perf("onThumbReady", 50);
+    // 灰四边形排查:本次装载的首个缩略图回填时刻(dir-scan done 到这里之间的
+    // 差值=用户看到的"灰卡片期"长度)。标志在 onDirScanDone 重置,不进热路径。
+    if (!m_firstThumbLogged) {
+        m_firstThumbLogged = true;
+        Logger::event(QStringLiteral("thumb-first: %1 age=%2ms")
+                          .arg(QFileInfo(filePath).fileName())
+                          .arg(Logger::processAgeMs()));
+    }
     // worker 线程传来 QImage（线程安全）；转 QPixmap 必须在 GUI 线程完成
     const QPixmap pix = QPixmap::fromImage(img);
     // FIFO 逐出:缓存条数封顶,防止浏览大量文件后内存无限膨胀

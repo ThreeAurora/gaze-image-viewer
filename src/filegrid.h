@@ -189,6 +189,7 @@ private:
     quint64 m_loadGen = 0;          // 装载代次:换目录即作废在途扫描
     QString m_pendingSelectPath;    // 目录装载期间来的选中请求(启动恢复),就绪后兑现
     bool    m_dirScanInFlight = false;
+    bool    m_firstThumbLogged = true;  // 本次装载首图打点开关(onDirScanDone 重置)
     int  colsForWidth(int w) const;
     int  cardH(int idx) const;// 卡片高度(瀑布流按宽高比)
 

@@ -404,6 +404,12 @@ void FileGrid::onDirScanDone(quint64 gen, const QString& dirPath, bool sameDir,
     if (gen != m_loadGen) return;   // 迟到的旧扫描:丢弃
     m_loading = false;
     m_dirScanInFlight = false;
+    // 灰四边形排查:装载完成时刻+条目数(show 到这里之间文件页是空白画布/
+    // "正在读取目录…"占位,这段越长用户看到的"灰块期"越久)
+    Logger::event(QStringLiteral("dir-scan done: %1 entries=%2 age=%3ms")
+                      .arg(dirPath).arg(scanned.size())
+                      .arg(Logger::processAgeMs()));
+    m_firstThumbLogged = false;   // 本次装载的首个缩略图打点待命
 
     m_allEntries = std::move(scanned);
 
