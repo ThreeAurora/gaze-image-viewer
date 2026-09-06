@@ -189,13 +189,19 @@ void FileGrid::setHovered(int idx) {
     if (idx >= 0) {
         m_canvas->update(cardRect(idx).adjusted(-4, -4, 4, 4));
         // #10(2026-09-05 用户令):悬停到文件夹时它的"大小"不能再是 0KB ——
-        // 向主窗要统计值(库/缓存命中即时回,否则后台算);同一目录只发一次
+        // 向主窗要统计值(库/缓存命中即时回,否则后台算);同一目录只发一次。
+        // 2026-09-06 复查:悬停即发起会和缩略图解码抢磁盘(扫过一排文件夹 =
+        // 连环递归扫描,用户报浏览卡顿)——改为驻留 450ms 才发起
         if (m_entries[idx].isDir
             && !m_dirSizes.contains(m_entries[idx].path)
             && !m_dirSizeAsked.contains(m_entries[idx].path)) {
-            m_dirSizeAsked.insert(m_entries[idx].path);
-            emit dirSizeRequested(m_entries[idx].path);
+            m_dirSizeHoverPath = m_entries[idx].path;
+            m_dirSizeTimer.start(450);
+        } else if (!m_entries[idx].isDir) {
+            m_dirSizeTimer.stop();
         }
+    } else {
+        m_dirSizeTimer.stop();
     }
 }
 

@@ -104,6 +104,13 @@ FileGrid::FileGrid(QWidget* parent) : QScrollArea(parent) {
     connect(&Thumbnailer::instance(), &Thumbnailer::thumbnailReady,
             this, &FileGrid::onThumbReady);
 
+    // 悬停统计驻留闸:鼠标在一枚文件夹上停稳 450ms 才发起后台统计
+    m_dirSizeTimer.setSingleShot(true);
+    connect(&m_dirSizeTimer, &QTimer::timeout, this, [this]() {
+        if (!m_dirSizeHoverPath.isEmpty())
+            emit dirSizeRequested(m_dirSizeHoverPath);
+    });
+
     // Ctrl+滚轮缩放
     m_canvas->installEventFilter(this);
     viewport()->installEventFilter(this);   // #267:滚动条显隐改变视口宽 → 重排+重推表头列

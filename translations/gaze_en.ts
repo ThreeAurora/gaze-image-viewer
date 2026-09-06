@@ -973,6 +973,10 @@ Next start will restore:
         <translation>Stop (back to start, T)</translation>
     </message>
     <message>
+        <source>停止失败:%1</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>偶数页</source>
         <translation>Even pages</translation>
     </message>
@@ -1497,6 +1501,11 @@ e.g. psd, ai, raw, cr2, nef</translation>
         <translation>Startup</translation>
     </message>
     <message>
+        <source>启动/停止万象图搜服务。停止=结束监听该端口的服务进程
+(冷启动需加载模型约 2 秒;空闲 30 分钟服务会自动卸载模型)</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>启动时打开文件列表和预览框</source>
         <translation>Open file list and preview pane at startup</translation>
     </message>
@@ -1965,6 +1974,10 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
     <message>
         <source>开源致谢</source>
         <translation>Open-source credits</translation>
+    </message>
+    <message>
+        <source>引擎</source>
+        <translation></translation>
     </message>
     <message>
         <source>引擎默认</source>
@@ -2655,8 +2668,20 @@ Try a different selection (a bit larger and farther from the edges).</translatio
         <translation>Service response is not valid JSON</translation>
     </message>
     <message>
+        <source>服务已停止</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>服务已启动</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>服务无响应(连接失败或超时)</source>
         <translation>Service not responding (connection failed or timed out)</translation>
+    </message>
+    <message>
+        <source>服务未在运行</source>
+        <translation></translation>
     </message>
     <message>
         <source>服务未运行时,搜索前自动启动万象图搜服务</source>
