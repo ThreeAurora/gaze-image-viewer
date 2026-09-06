@@ -25,6 +25,7 @@
 // ═══════════════════════════════════════════
 #include <QString>
 #include <QStringList>
+#include <QStringDecoder>
 #include <QFile>
 #include "i18n.h"
 
@@ -44,14 +45,64 @@ struct Clip {
     qint64  totalBytes = 0;   // 文件总大小(用于说清还有多少没显示)
 };
 
-// 读文件头部 maxBytes 字节并解码 UTF-8。
-// 边界上被切碎的 UTF-8 序列会被丢掉(否则末尾凭空多个 ?)。
+// 智能编码判定(2026-09-07,用户报 GB2312 的 txt 预览乱码——旧实现固定
+// fromUtf8):BOM 优先(UTF-8/UTF-16);无 BOM 严格验 UTF-8(尾部因截断切碎的
+// 不完整序列容忍);不过→GB18030(GB2312/GBK 的超集,中文 Windows 记事本
+// 默认码页);再不过→本地 8 位兜底。中文 Windows 环境下 GB2312 双字节的
+// 高位模式(0x81-0xFE)几乎不可能整篇凑成合法 UTF-8 多字节序列,判定可靠。
+inline bool looksUtf8(const QByteArray& a) {
+    int i = 0;
+    const int n = a.size();
+    while (i < n) {
+        const uchar c = static_cast<uchar>(a[i]);
+        if (c < 0x80) { ++i; continue; }
+        int len;
+        if ((c & 0xE0) == 0xC0)      len = 2;
+        else if ((c & 0xF0) == 0xE0) len = 3;
+        else if ((c & 0xF8) == 0xF0) len = 4;
+        else return false;               // 孤立续字节/非法首字节
+        if (i + len > n) break;           // 尾部不完整:截断切碎,容忍
+        for (int k = 1; k < len; ++k)
+            if ((static_cast<uchar>(a[i + k]) & 0xC0) != 0x80) return false;
+        i += len;
+    }
+    return true;
+}
+
+inline QString decodeAuto(const QByteArray& raw) {
+    if (raw.size() >= 3 && static_cast<uchar>(raw[0]) == 0xEF
+        && static_cast<uchar>(raw[1]) == 0xBB
+        && static_cast<uchar>(raw[2]) == 0xBF)
+        return QString::fromUtf8(raw.constData() + 3, raw.size() - 3);
+    if (raw.size() >= 2) {
+        if (static_cast<uchar>(raw[0]) == 0xFF
+            && static_cast<uchar>(raw[1]) == 0xFE) {
+            QStringDecoder dec(QStringDecoder::Utf16LE);
+            return QString(dec(QByteArrayView(raw).mid(2)));
+        }
+        if (static_cast<uchar>(raw[0]) == 0xFE
+            && static_cast<uchar>(raw[1]) == 0xFF) {
+            QStringDecoder dec(QStringDecoder::Utf16BE);
+            return QString(dec(QByteArrayView(raw).mid(2)));
+        }
+    }
+    if (looksUtf8(raw)) return QString::fromUtf8(raw);
+    {
+        QStringDecoder dec("GB18030");
+        const QString s = dec(QByteArrayView(raw));
+        if (!dec.hasError()) return s;
+    }
+    return QString::fromLocal8Bit(raw);
+}
+
+// 读文件头部 maxBytes 字节并按智能编码判定解码(见 decodeAuto)。
+// UTF-8 边界上被切碎的序列会被丢掉(否则末尾凭空多个 ?)。
 inline QString readHead(QFile& f, bool* byteCut, qint64* total) {
     const qint64 size = f.size();
     if (total) *total = size;
     QByteArray raw = f.read(maxBytes);
     if (byteCut) *byteCut = size > raw.size();
-    // 丢掉尾部不完整序列:回看最多 3 字节找序列首字节,长度不足就截掉
+    // 丢掉尾部不完整序列:回看最多 4 字节找序列首字节,长度不足就截掉
     int n = raw.size();
     for (int back = 1; back <= 4 && back <= n; ++back) {
         const uchar c = static_cast<uchar>(raw.at(n - back));
@@ -63,10 +114,10 @@ inline QString readHead(QFile& f, bool* byteCut, qint64* total) {
             if (back < want) n -= back;                  // 后续字节没读全 → 丢掉
             break;
         }
-        if ((c & 0xC0) != 0x80) break;                   // 非法字节,交给 fromUtf8 处理
+        if ((c & 0xC0) != 0x80) break;                   // 非法字节,交给解码器处理
     }
     if (n < raw.size()) raw = raw.left(n);
-    return QString::fromUtf8(raw);
+    return decodeAuto(raw);
 }
 
 // 按 maxLines / maxLineChars 截断(输入应是已 readHead 出来的文本)
