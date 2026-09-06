@@ -56,7 +56,12 @@ public:
         head->addLayout(headText, 1);
         root->addLayout(head);
 
-        root->addWidget(new QFrame);
+        // 分隔线必须有专属对象名:应用级 QSS 的"QDialog#aboutDialog QFrame"
+        // 会连 QLabel 一起命中(QLabel 继承 QFrame),max-height:1px 把全部
+        // 文字压成 1px 细线 —— 这才是"关于窗口挤成一条线"的真正根因
+        auto* rule = new QFrame;
+        rule->setObjectName(QStringLiteral("aboutRule"));
+        root->addWidget(rule);
 
         auto* tribute = new QLabel(gazeTr(
             "Gaze 的界面形态与交互对标 XnView MP —— 本项目受其启发，以现代化技术栈"
