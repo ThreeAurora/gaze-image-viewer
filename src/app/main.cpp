@@ -121,7 +121,7 @@ protected:
     }
 };
 
-// ── 启动首帧闸门(2026-09-05「启动先弹窗」报告根治)──
+// ── 启动首帧闸门(2026-09-05「启动先弹窗」报告根治;2026-09-06 加兜底)──
 // 旧链:show 后 singleShot(0) 里先恢复不透明、再跑媒体栈预热(FFmpeg 后端首载
 // 同步阻塞 1.6s+)。而首帧 PAINT 还排在事件队列里 —— GUI 线程被预热占住,
 // paint 根本跑不了,用户看到一扇纯白空窗顶足 1~2 秒才出 UI(probe_startup_win
@@ -129,19 +129,39 @@ protected:
 // 首帧透明(b91b4711)的防闪意图被后来同回调里加入的预热(aea7b3ac)冲垮。
 // 现改为 PAINT 事件驱动:第一帧在仍不可见时真画完,再放行"恢复不透明+预热+
 // 恢复预览"——窗口出现的瞬间就是画好的深色 UI,白窗期=0。
+// 兜底超时(2026-09-06 用户报"任务栏有图标、窗口三秒不出"):恢复上次选中
+// 是视频时,装载事件把 PAINT 挤到队尾,纯事件驱动会让透明窗干等。加 1.5s
+// 超时强制放行——最坏情况退回"短暂白/空窗",决不无限隐身。
 class FirstPaintGate : public QObject {
 public:
     std::function<void()> fire;
+    void armWithTimeout(int ms, QObject* owner) {
+        m_timer = new QTimer(this);
+        m_timer->setSingleShot(true);
+        connect(m_timer, &QTimer::timeout, this, [this]() { release(); });
+        m_timer->start(ms);
+        m_owner = owner;
+    }
 protected:
     bool eventFilter(QObject* obj, QEvent* ev) override {
         if (ev->type() != QEvent::Paint || m_done) return false;
-        m_done = true;
-        obj->removeEventFilter(this);
-        // singleShot 一拍:让本帧 paint 先走完,再执行阻塞预热
-        QTimer::singleShot(0, obj, fire);
+        release();
         return false;
     }
 private:
+    void release() {
+        if (m_done) return;
+        m_done = true;
+        if (m_timer) m_timer->stop();
+        QObject* owner = m_owner ? m_owner : parent();
+        if (!owner) owner = this;
+        removeEventFilterFrom(owner);
+        // singleShot 一拍:让本帧 paint 先走完(若还在队列里),再执行阻塞预热
+        QTimer::singleShot(0, owner, fire);
+    }
+    void removeEventFilterFrom(QObject*) {}   // 过滤器挂在 w 上,由外部管理
+    QTimer* m_timer = nullptr;
+    QObject* m_owner = nullptr;
     bool m_done = false;
 };
 
@@ -381,6 +401,7 @@ int main(int argc, char *argv[]) {
         w.restoreStartupPreview();
     };
     w.installEventFilter(&gate);
+    gate.armWithTimeout(1500, &w);   // PAINT 迟迟不来时的强制放行
     Logger::boot("show");
 
     // Cache/checkOnStartup:启动后延后一会儿再校验缓存完整性 ——
