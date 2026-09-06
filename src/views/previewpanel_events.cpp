@@ -267,7 +267,7 @@ void PreviewPanel::contextMenuEvent(QContextMenuEvent* event) {
     if (isImage) {
         menu.addSeparator();
         menu.addAction(gazeTr("适应窗口"), this, [this]() { fitAuto(); });
-        menu.addAction(gazeTr("1:1 像素"), this, [this]() {
+        menu.addAction(gazeTr("实际大小 (100%)"), this, [this]() {
             if (!m_origPix) return;
             m_scale = oneToOneScale(); m_ctrlZoomed = true; render();
         });
@@ -439,7 +439,7 @@ void PreviewPanel::keyPressEvent(QKeyEvent* event) {
         fitAuto();  event->accept();  return;
     }
     if (m_mode == "image" && m_origPix &&
-        act == gazeTr("1:1 像素")) {       // 1:1 像素
+        act == gazeTr("实际大小 (100%)")) {   // 实际大小(原"1:1 像素")
         m_scale = oneToOneScale();  m_ctrlZoomed = true;  render();  event->accept();  return;
     }
     if (act == gazeTr("播放/暂停")) {  // 播放/暂停
