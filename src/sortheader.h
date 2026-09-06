@@ -39,12 +39,8 @@ public:
     // ── #267 详细列表形态:lead 垫片 + 名称弹性 + 定宽列 + 尾垫片,与网格行
     // 同源对齐(定宽真源在此,FileGrid 绘制引用同一张表) ──
     static int detailColWidth(int i);        // 第 i 列(i=0 大小 … 5 EXIF)基准宽
-    // #3/#5 用户令:列宽随文件页宽度智能分配 —— 变宽时各列与名称均摊增量,
-    // 变窄时名称保底 200px(约 25 字符,超宽省略号),其余列向最小值等比压缩让路。
-    // rowW = 行宽;vis = 各列显隐;out = 求得的各列宽(隐藏列=0)
-    static void dynDetailWidths(int rowW, const bool vis[6], int out[6]);
     void setDetailMode(bool on);             // 结构切换:弹性均分 ↔ 定宽列布局
-    void applySharedStretch();               // 非详细态:各列按基准宽分担增量(2026-09-06 用户令)
+    void applySharedStretch();               // 非详细态:各列等权起宽
     void setSortIndicator(int colId, bool ascending);   // 程序侧排序后回填方向箭头
     bool detailMode() const { return m_detailMode; }
     void setDetailLead(int w);               // 头垫片宽(名称文字起点对齐)
@@ -55,6 +51,7 @@ public:
 signals:
     void sortChanged(int column, bool ascending);
     void detailColumnsEdited();              // 列显隐/表头尺寸变化 → FileGrid 重推几何
+    void columnWidthDragged(int index, int width);   // 用户拖列边界 → FileGrid 落宽并记忆
 
 protected:
     void resizeEvent(QResizeEvent* event) override;
@@ -78,6 +75,9 @@ private:
         QLabel* arrow = nullptr;   // 排序方向小箭头(灰,独立于文字;2026-09-06 用户令)
     };
     QList<ColInfo> m_columns;
+    int m_dragCol    = -1;   // 正在拖的列边界(-1=无)
+    int m_dragPressX = 0;    // 按下点(钮内坐标)
+    int m_dragStartW = 0;    // 拖动起始列宽
 
 protected:
     bool eventFilter(QObject* obj, QEvent* event) override;

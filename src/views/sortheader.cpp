@@ -5,49 +5,13 @@
 #include <QMenu>
 #include <QContextMenuEvent>
 #include <QResizeEvent>
+#include <QMouseEvent>
 
 // #267 详细列表定宽列(真源):大小/类型/扩展名/创建日期/修改日期/EXIF日期。
 // FileGrid::detailColW 绘制用同一张表,两处永不漂移
 int SortHeader::detailColWidth(int i) {
     static const int W[6] = { 72, 96, 56, 112, 112, 112 };
     return (i >= 0 && i < 6) ? W[i] : 0;
-}
-
-// #3/#5 用户令(2026-09-05):列宽不再是死表 ——
-//   · 拖宽文件页:增量在"名称 + 各列"之间均摊(过去全喂给名称列,大小/类型
-//     纹丝不动,名称列一枝独秀地过宽);
-//   · 拖窄:名称列保底 200px(约 25 字符,画侧右端省略号),其余列从基准向
-//     最小值等比压缩为名称让路;再窄(最小值之和都放不下)才允许名称跌破保底。
-// 基准/最小值:日期列 11px 字体 "yyyy/M/d HH:mm" 需 ~95px,最小 84 仍可读。
-void SortHeader::dynDetailWidths(int rowW, const bool vis[6], int out[6]) {
-    static const int B[6] = { 72, 96, 56, 112, 112, 112 };
-    static const int M[6] = { 56, 64, 40,  84,  84,  84 };
-    constexpr int kNameMin = 200;
-    int n = 0, S = 0, Smin = 0;
-    for (int i = 0; i < 6; ++i) {
-        out[i] = vis[i] ? B[i] : 0;
-        if (!vis[i]) continue;
-        ++n; S += B[i]; Smin += M[i];
-    }
-    if (n == 0) return;
-    // 名称实际宽度 = rowW - 33(28 图标+偏移 与 5 间隙,见 paintDetailsRow)。
-    // 名称 200px 是绝对优先项:不够宽时各列按基准**等比**压下来让位
-    // (2026-09-06 复查:旧公式窄窗口下连最小值档都进不去,名称直接被压成 0,
-    // 整列文件名消失——用户截图实锤)。32px 是单列的可读下限(再窄就隐藏级了)。
-    const int availMax = qMax(0, rowW - 33 - kNameMin);
-    if (S <= availMax) {
-        const int extra = availMax - S;
-        const int share = extra / (n + 1);   // 名称也是一份:它弹性吸收余数
-        for (int i = 0; i < 6; ++i)
-            if (vis[i]) out[i] = B[i] + share;
-    } else if (availMax > 32 * n) {
-        const double t = double(availMax) / double(S);
-        for (int i = 0; i < 6; ++i)
-            if (vis[i]) out[i] = qMax(32, int(B[i] * t + 0.5));
-    } else {
-        for (int i = 0; i < 6; ++i)
-            if (vis[i]) out[i] = 32;         // 物理极限:每列 32,名称吃剩余
-    }
 }
 
 bool SortHeader::detailColumnVisible(int i) const {
@@ -69,8 +33,56 @@ void SortHeader::setDetailTail(int w) {
     if (m_detailMode) m_tailSpacer->setFixedWidth(w);
 }
 
-// 列钮尺寸变化:小箭头跟随钉在右缘垂直居中
+// 列钮事件过滤:右缘 6px = 列宽拖拽区分隔线(2026-09-06 用户令"列宽用户
+// 自己去拖",自动计算退役)。按下开始拖,移动实时落宽(回调给 FileGrid
+// 落 ini 记忆),拖过的释放被吞掉不触发排序;平时右缘给分栏光标提示。
+// 另:钮尺寸变化时小箭头跟随钉在右缘垂直居中。
 bool SortHeader::eventFilter(QObject* obj, QEvent* event) {
+    const int idx = [this, obj]() {
+        for (int i = 0; i < m_columns.size(); ++i)
+            if (m_columns[i].btn == obj) return i;
+        return -1;
+    }();
+    if (idx >= 0 && m_detailMode) {
+        QPushButton* btn = m_columns[idx].btn;
+        switch (event->type()) {
+        case QEvent::MouseButtonPress: {
+            auto* me = static_cast<QMouseEvent*>(event);
+            if (me->button() == Qt::LeftButton
+                && me->position().x() > btn->width() - 6) {
+                m_dragCol    = idx;
+                m_dragPressX = int(me->position().x());
+                m_dragStartW = btn->width();
+                return true;                    // 拖边界:不给按钮吃按下
+            }
+            break;
+        }
+        case QEvent::MouseMove: {
+            auto* me = static_cast<QMouseEvent*>(event);
+            if (m_dragCol == idx) {
+                const int w = qBound(32, m_dragStartW
+                    + int(me->position().x()) - m_dragPressX, 480);
+                if (w != btn->width())
+                    emit columnWidthDragged(idx, w);
+                return true;
+            }
+            btn->setCursor(me->position().x() > btn->width() - 6
+                ? Qt::SplitHCursor : Qt::ArrowCursor);
+            break;
+        }
+        case QEvent::MouseButtonRelease:
+            if (m_dragCol == idx) {
+                m_dragCol = -1;
+                return true;                    // 拖过的释放:不触发排序
+            }
+            break;
+        case QEvent::Leave:
+            if (m_dragCol != idx) btn->setCursor(Qt::ArrowCursor);
+            break;
+        default:
+            break;
+        }
+    }
     if (event->type() == QEvent::Resize) {
         for (const auto& c : m_columns)
             if (c.btn == obj && c.arrow)

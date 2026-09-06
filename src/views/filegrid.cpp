@@ -104,10 +104,6 @@ FileGrid::FileGrid(QWidget* parent) : QScrollArea(parent) {
     connect(&Thumbnailer::instance(), &Thumbnailer::thumbnailReady,
             this, &FileGrid::onThumbReady);
 
-    // 详细列宽防抖闸(见 updateDetailColumns)
-    m_detailColTimer.setSingleShot(true);
-    connect(&m_detailColTimer, &QTimer::timeout, this, &FileGrid::updateDetailColumnsNow);
-
     // 悬停统计驻留闸:鼠标在一枚文件夹上停稳 450ms 才发起后台统计
     m_dirSizeTimer.setSingleShot(true);
     connect(&m_dirSizeTimer, &QTimer::timeout, this, [this]() {
@@ -160,6 +156,22 @@ FileGrid::FileGrid(QWidget* parent) : QScrollArea(parent) {
     m_scrollPreview = AppSettings::instance()
                         .get("Browser/thumbScrollPreview", true).toBool();
     m_lastByExt = AppSettings::instance().get("FileList/recognizeByExt", true).toBool();
+    // 详细列表列宽:用户拖拽落下的记忆优先,没存过用基准死表(2026-09-06 用户令:
+    // 不再自动算名称列宽,列宽归用户拖)
+    {
+        const QStringList csv = AppSettings::instance()
+            .get("Browser/detailColW", QString()).toString().split(',');
+        if (csv.size() == 6) {
+            bool okAll = true;
+            int v[6];
+            for (int i = 0; i < 6; ++i) {
+                v[i] = csv[i].toInt(&okAll);
+                if (!okAll) break;
+            }
+            if (okAll)
+                for (int i = 0; i < 6; ++i) m_dynColW[i] = qBound(32, v[i], 480);
+        }
+    }
     m_lastScanHeader = AppSettings::instance().get("FileList/scanHeader", 0).toInt();
     applyAppearance();   // 逐条目绘制路径只读缓存,这里先灌一次
     // 自定义缩略图宽度:启动即生效(原先只记初值不应用,于是设置页/自定义对话框
