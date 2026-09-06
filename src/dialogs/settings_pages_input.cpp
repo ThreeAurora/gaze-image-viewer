@@ -315,6 +315,8 @@ QWidget* SettingsDialog::pageFileList() {
             gazeTr("大小(降序)"), gazeTr("扩展名"),
             gazeTr("路径"), gazeTr("颜色标签"),
             gazeTr("记住上次")}, 0));
+    form->addRow(chk("Browser/rememberSort",
+                     gazeTr("记住上次会话的排序(关闭则始终按上面的启动默认排序)"), false));
     form->addRow(chk("FileList/newAtEnd", gazeTr("新文件添加至列表末尾"), false));
     form->addRow(chk("FileList/autoSelectNew", gazeTr("自动选择新文件"), false));
     form->addRow(chk("FileList/sizeInBytes", gazeTr("按字节显示文件大小"), false));

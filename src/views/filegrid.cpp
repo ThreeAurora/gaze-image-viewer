@@ -73,8 +73,15 @@ FileGrid::FileGrid(QWidget* parent) : QScrollArea(parent) {
     case 6:  m_sortCol = SORT_EXT;        m_sortAsc = true;  break;
     case 7:  m_sortCol = SORT_PATH;       m_sortAsc = true;  break;
     case 8:  m_sortCol = SORT_COLORLABEL; m_sortAsc = true;  break;
-    case 9:  m_sortCol = AppSettings::instance().get("Browser/lastSortCol", SORT_NAME).toInt();
-             m_sortAsc = AppSettings::instance().get("Browser/lastSortAsc", true).toBool();
+    case 9:  // 记住上次:开关打开才用落盘的上次排序;关=始终按启动默认(文件名升序)
+             if (AppSettings::instance().get("Browser/rememberSort", false).toBool()) {
+                 m_sortCol = AppSettings::instance()
+                     .get("Browser/lastSortCol", SORT_NAME).toInt();
+                 m_sortAsc = AppSettings::instance()
+                     .get("Browser/lastSortAsc", true).toBool();
+             } else {
+                 m_sortCol = SORT_NAME; m_sortAsc = true;
+             }
              break;
     default: m_sortCol = SORT_NAME;       m_sortAsc = true;  break;
     }
