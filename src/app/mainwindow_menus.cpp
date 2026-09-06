@@ -625,6 +625,10 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
     // 历史路径下拉(上限 30,无动画)
     auto* histBtn = new QToolButton;
     histBtn->setObjectName("barArrowBtn");   // 小号箭头灰字(应用级 QSS)
+    // ▼ 观感对齐格式筛选框的箭头(2026-09-06 用户令):同色(C_SB_ARROW)、再小一档。
+    // 内联给字色/字号,QSS 的悬停底/描边不受影响
+    histBtn->setStyleSheet(QString("QToolButton{color:%1;font-size:8px;}")
+                               .arg(QString::fromUtf8(C_SB_ARROW)));
     histBtn->setText(gazeTr("▼")); // ▼
     histBtn->setFixedSize(22, 26);
     histBtn->setToolTip(gazeTr("历史访问路径")); // 历史访问路径
@@ -706,6 +710,10 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
         // (C_SB_ARROW,与滚动条/数字框箭头同色);底色/悬停底仍走工具条规则
         // (应用级表里它排在后面,冲突属性覆盖,其余属性继承)
         btn->setObjectName("barArrowBtn");
+        // ▼ 同格式筛选框箭头观感:同色(C_SB_ARROW)、8px 小一档(内联给字体,
+        //   应用级 QSS 的悬停底仍生效)
+        btn->setStyleSheet(QString("QToolButton{color:%1;font-size:8px;}")
+                               .arg(QString::fromUtf8(C_SB_ARROW)));
         btn->setPopupMode(QToolButton::InstantPopup);
         btn->setMenu(menu);
         b2->addWidget(btn);
@@ -744,6 +752,8 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
     // #134:InstantPopup 按钮的 menu-indicator 被应用级表关掉,补 ▼ 文本承担"点开有菜单"的可见指示
     auto* colsBtn = new QToolButton;
     colsBtn->setObjectName("barArrowBtn");   // 小号箭头灰字(应用级 QSS)
+    colsBtn->setStyleSheet(QString("QToolButton{color:%1;font-size:8px;}")
+                               .arg(QString::fromUtf8(C_SB_ARROW)));
     colsBtn->setIcon(IconLib::appIcon("cmd_paneThumbs"));
     colsBtn->setIconSize(QSize(17, 17));
     colsBtn->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
