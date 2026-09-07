@@ -7,8 +7,8 @@
 #include <QStyle>
 
 // 应用图标库:运行时从 exe 目录 assets/icons/ 加载
-// (图标取自 Material Design Icons,Apache 2.0 可商用分发;由
-//  tools/fetch_mdi_icons.py 拉取并着色、Qt 渲染成 48px PNG,无版权纠纷)
+// (图标取自 Lucide 线性图标集,MIT 可商用分发:白色细描边现代线性风格,
+//  圆头圆角、语义直观,由 tools/fetch_lucide_icons.py 下载并渲染成 96px)
 namespace IconLib {
 
 inline const QString iconDir() {

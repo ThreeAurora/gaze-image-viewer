@@ -59,20 +59,20 @@ MAP = {
     "viewas":                ["view-list-outline", "view-column-outline"],
 }
 
-# 功能组配色(Material 500 系,明亮醒目,深/浅主题通用)
+# 功能组配色(Material 400 系,整体提亮;2026-09-07 用户反馈 500 系"太暗")
 COLORS = {
-    "folder": "#F5A623",   # 打开/浏览/进入文件夹:琥珀金(同原 XnView 文件夹色)
-    "nav":    "#78909C",   # 后退/前进/向上:蓝灰
-    "copy":   "#1976D2",   # 复制/剪切/粘贴/复制路径/移动到:蓝
-    "edit":   "#5E35B1",   # 重命名/属性/元数据编辑:紫
-    "danger": "#E53935",   # 删除:亮红(原 #D32F2F 偏暗,48px 下发灰)
-    "create": "#43A047",   # 新建文件夹:绿
-    "view":   "#3949AB",   # 视图模式/面板/缩略图/全屏:靛蓝
-    "image":  "#7CB342",   # 旋转/翻转/裁剪:浅绿
-    "tool":   "#00897B",   # 选项/搜索/过滤/排序/刷新:青
-    "print":  "#607D8B",   # 打印:蓝灰
-    "label":  "#F9A825",   # 颜色标记/标签:黄
-    "red":    "#E53935",   # 红通道示波:红
+    "folder": "#FFB300",   # 打开/浏览/进入文件夹:亮琥珀金(同原 XnView 文件夹色)
+    "nav":    "#90A4AE",   # 后退/前进/向上:蓝灰(提亮)
+    "copy":   "#42A5F5",   # 复制/剪切/粘贴/复制路径/移动到:亮蓝
+    "edit":   "#7E57C2",   # 重命名/属性/元数据编辑:亮紫
+    "danger": "#EF5350",   # 删除:亮红
+    "create": "#66BB6A",   # 新建文件夹:亮绿
+    "view":   "#5C6BC0",   # 视图模式/面板/缩略图/全屏:亮靛蓝
+    "image":  "#9CCC65",   # 旋转/翻转/裁剪:亮浅绿
+    "tool":   "#26A69A",   # 选项/搜索/过滤/排序/刷新:亮青
+    "print":  "#78909C",   # 打印:蓝灰
+    "label":  "#FFCA28",   # 颜色标记/标签:亮黄
+    "red":    "#F44336",   # 红通道示波:亮红
 }
 
 NAME_COLOR = {  # 个别图标单独指定(默认按组)
@@ -118,25 +118,28 @@ def main():
     ok, miss = 0, []
     for gaze, candidates in MAP.items():
         src_path = os.path.join(SVG_DIR, gaze + ".svg")
-        if not refresh and os.path.exists(src_path):
-            ok += 1
-            print("  %-20s 已缓存" % gaze)
-            continue
+        colored_path = os.path.join(COLORED_DIR, gaze + ".svg")
         text = None
-        for cand in candidates:
-            try:
-                text = fetch_svg(cand)
-                print("  %-20s <- %s" % (gaze, cand))
-                break
-            except Exception:
+        if not refresh and os.path.exists(src_path):
+            with open(src_path, "r", encoding="utf-8") as f:
+                text = f.read()
+            print("  %-20s 已缓存" % gaze)
+        else:
+            for cand in candidates:
+                try:
+                    text = fetch_svg(cand)
+                    print("  %-20s <- %s" % (gaze, cand))
+                    break
+                except Exception:
+                    continue
+            if text is None:
+                miss.append(gaze)
+                print("  %-20s !! 404,无可用替代" % gaze)
                 continue
-        if text is None:
-            miss.append(gaze)
-            print("  %-20s !! 404,无可用替代" % gaze)
-            continue
-        with open(src_path, "w", encoding="utf-8") as f:
-            f.write(text)
-        with open(os.path.join(COLORED_DIR, gaze + ".svg"), "w", encoding="utf-8") as f:
+            with open(src_path, "w", encoding="utf-8") as f:
+                f.write(text)
+        # 着色版每次重算:改 COLORS 后不必 --refresh 重拉 SVG
+        with open(colored_path, "w", encoding="utf-8") as f:
             f.write(colorize(text, color_for(gaze)))
         ok += 1
     print("完成:%d 个成功, %d 个缺失%s" % (ok, len(miss), ("(" + ",".join(miss) + ")") if miss else ""))

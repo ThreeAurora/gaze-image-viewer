@@ -2,5 +2,7 @@
     <qresource prefix="/">
         <file>Gaze.png</file>
         <file>menu_check.png</file>
+        <file>assets/icons/spin_up.png</file>
+        <file>assets/icons/spin_down.png</file>
     </qresource>
 </RCC>
