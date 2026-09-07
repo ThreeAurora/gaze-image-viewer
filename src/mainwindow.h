@@ -124,6 +124,11 @@ private:
     void cancelDirSizeRun();                     // 不再看单目录时停旧统计
     void applyDirSizeProgress(const QString& path, quint64 runId, qint64 bytes);  // 线程中途上报
     void applyDirSizeDone(const QString& path, quint64 runId, qint64 bytes);      // 线程收尾
+    // #251 Everything 引擎:文件夹大小瞬间统计的异步入口/收尾。
+    // try* 返回 true = 查询已挂起(结果 applyEverythingDirSize 收尾);
+    // false = 引擎不可用/已在途,调用方照旧走内置递归扫描。
+    bool tryEverythingDirStat(const QString& path, bool forGrid);
+    void applyEverythingDirSize(const QString& path, bool ok, qint64 bytes, bool forGrid);
     void onSelectionChanged(const QString &path);
     // 注:onGridDirSelected(文件页单选目录卡→树镜像)已按用户 2026-09-03 裁决移除,
     // 单击目录卡不再动树;树只在 navigateTo(双击打开/地址栏/历史/上级)里同步。
@@ -240,6 +245,11 @@ private:
     // #244 缓存库重校验态:库里有旧值,先显旧值、后台静默重算,算完悄悄替换
     bool    m_dirSizeStale      = false;
     qint64  m_dirSizeStaleValue = 0;
+    // #251 Everything 瞬间统计的在途去重(状态栏/悬停各一份):
+    // 同一目录只挂一次查询,结果回来即从集合移除。引擎不可用时这两个集合
+    // 永远为空 —— 判定完全交给 tryEverythingDirStat 的 return 值。
+    QSet<QString> m_everythingDirStatPending;
+    QSet<QString> m_everythingGridStatPending;
     QStringList m_history;   // 目录导航历史
     int m_histIdx = -1;
     bool m_histNav = false;  // 历史跳转中,不再入栈

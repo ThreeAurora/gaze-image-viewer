@@ -35,6 +35,7 @@
 #include "settings.h"
 #include "thumbnailer.h"
 #include "logger.h"
+#include "everything_engine.h"   // #251:退出清理自带 Everything 实例(es -instance gaze -exit)
 
 // 全局对话框键盘语义:Space → 确认(Yes/OK/确定),Yes/No 框的 Esc → No,
 // Enter 交 QDialog 原生(默认按钮)。键事件送达的是焦点控件本身 —— 按收件
@@ -299,6 +300,10 @@ int main(int argc, char *argv[]) {
                          // 静态析构,曾致工作线程在 app 死后继续跑+锁着的锁被
                          // 销毁,waitForDone 永挂=关窗后进程残留(WerFault 实锤)。
                          Thumbnailer::instance().shutdown();
+                         // #251 退出清理:只停 Gaze 自带的 Everything 独立实例
+                         // (es -instance gaze -exit),用户机器上的系统版 Everything
+                         // 完全不受影响。es 进程毫秒级返回,不拖慢退出。
+                         ev_impl::shutdown();
                      });
 
     auto cliPaths = []() {

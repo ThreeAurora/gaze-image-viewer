@@ -236,3 +236,20 @@ add_custom_command(TARGET Gaze POST_BUILD
     COMMENT "编译英文语言包 gaze_en.qm"
     VERBATIM
 )
+
+# ── 内置 Everything 引擎部署(文件夹大小瞬间统计 + 全盘快搜,#251)──
+# 与 ffmpeg/gs 同一套 vendor 规约:exe 旁 everything/ 永远优先于 PATH。
+# Everything 1.5 便携版(MIT)以独立实例 -instance gaze 运行,es.exe 走 IPC
+# 查询。Everything.exe 首次运行会在自身目录生成 Everything-gaze.ini(配置),
+# 整目录拷才能保证 es.exe/Everything.exe/License.txt 齐全。目录不存在
+# (尚未放置二进制)时跳过:gaze 照常编译,统计/快搜自动回退内置引擎。
+if(EXISTS "${CMAKE_SOURCE_DIR}/vendor/everything")
+    add_custom_command(TARGET Gaze POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "${CMAKE_SOURCE_DIR}/vendor/everything" "$<TARGET_FILE_DIR:Gaze>/everything"
+        COMMENT "同步内置 Everything vendor/everything -> 构建目录 everything/"
+        VERBATIM
+    )
+else()
+    message(STATUS "Everything 引擎:vendor/everything 不存在 → 统计/快搜回退内置引擎")
+endif()

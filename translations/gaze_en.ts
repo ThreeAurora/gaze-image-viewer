@@ -237,6 +237,10 @@ Extracting embedded camera preview…</translation>
         <translation>, first %1 shown</translation>
     </message>
     <message>
+        <source>,已显示前 %1 </source>
+        <translation></translation>
+    </message>
+    <message>
         <source>1.00 正方形</source>
         <translation>1.00 Square</translation>
     </message>
@@ -405,6 +409,38 @@ Check = direct numeric inversion (usually too bright), for comparison only; rese
     <message>
         <source>EXR 图片</source>
         <translation>EXR image</translation>
+    </message>
+    <message>
+        <source>Everything 引擎</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>Everything 引擎不可用,已改用内置 NTFS 索引</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>Everything 引擎不可用,已用内置 NTFS 索引搜索</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>Everything 引擎不可用,正在用内置 NTFS 索引(构建中)…</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>Everything 引擎启动中,已先走内置 NTFS 索引</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>Everything 引擎就绪,输入关键词回车搜索</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>Everything 搜索中…</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>Everything 查询失败,已改用内置 NTFS 索引搜索</source>
+        <translation></translation>
     </message>
     <message>
         <source>Excel 表格</source>
@@ -1093,6 +1129,10 @@ Next start will restore:
         <translation>Other</translation>
     </message>
     <message>
+        <source>内置 NTFS 索引</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>写回副本失败:
 </source>
         <translation></translation>
@@ -1528,6 +1568,10 @@ e.g. psd, ai, raw, cr2, nef</translation>
     <message>
         <source>启用缓存目录</source>
         <translation>Enable cache folder</translation>
+    </message>
+    <message>
+        <source>命中 %1 项%2(双击在 Gaze 打开)</source>
+        <translation></translation>
     </message>
     <message>
         <source>命中 %1 项(双击在 Gaze 打开)</source>
@@ -2820,12 +2864,12 @@ Try a different selection (a bit larger and farther from the edges).</translatio
         <translation>Preparing to print…</translation>
     </message>
     <message>
-        <source>正在后台扫描本机 NTFS 卷…</source>
-        <translation></translation>
-    </message>
-    <message>
         <source>正在后台解码 RAW（大文件需数秒）——现在切换文件会立即放弃本次解码</source>
         <translation>Decoding RAW in the background (large files take seconds) — switching files now aborts this decode</translation>
+    </message>
+    <message>
+        <source>正在启动 Everything 索引引擎…</source>
+        <translation></translation>
     </message>
     <message>
         <source>正在唤醒服务…(冷启动需加载模型,约 2 秒)</source>
@@ -3722,12 +3766,12 @@ Continue?</translation>
         <translation>Type keywords and press Enter; the service starts automatically if not running</translation>
     </message>
     <message>
-        <source>输入扩展名:</source>
-        <translation>Enter extensions:</translation>
+        <source>输入关键词回车搜索;Everything 引擎支持语法: 空格 与 | 或 ! 非 ext:jpg size:&gt;1mb dm:today 通配符 *.?</source>
+        <translation></translation>
     </message>
     <message>
-        <source>输入文件名的一部分(不区分大小写),回车搜索;如 2026-09 / P_down</source>
-        <translation></translation>
+        <source>输入扩展名:</source>
+        <translation>Enter extensions:</translation>
     </message>
     <message>
         <source>输入自然语言、文件名或图片中的文字,如:海边的日落 / IMG_2022 / 发票</source>

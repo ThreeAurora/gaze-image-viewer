@@ -137,6 +137,7 @@ void dirSizeStore(const QString& dirPath, qint64 bytes, const QString& basis) {
 #include "settings_dialog.h"
 #include "dbmaintenance.h"
 #include "settings.h"
+#include "everything_engine.h"   // #251:Everything 瞬间统计(不可用时静默回退)
 #include <QDirIterator>
 #include <QElapsedTimer>
 #include <QThreadPool>
@@ -338,7 +339,20 @@ void MainWindow::updateStatus() {
                 if (fresh) {
                     ss = row.size;
                     sizeText = formatSize(ss);
+                } else if (tryEverythingDirStat(dp, /*forGrid*/ false)) {
+                    // #251 Everything 瞬间统计已挂起(通常毫秒级返回)。
+                    // 结果 applyEverythingDirSize 统一收尾:入库 + 刷新状态栏。
+                    // 等结果期间体验与 #244 静默重校验一致:有旧值先显旧值、
+                    // 没旧值显「统计中…」—— 由瞬间查询兜住,不再走递归长等。
+                    if (row.ok) {
+                        ss = row.size;
+                        sizeText = formatSize(ss);
+                    } else {
+                        ss = 0;
+                        sizeText = gazeTr("统计中…");
+                    }
                 } else {
+                    // 引擎不可用/该目录已在途 → 原路 #241 递归统计,行为不劣于现状
                     startDirSizeRun(dp, row.ok ? row.size : -1);
                     if (row.ok) {
                         ss = row.size;
@@ -487,6 +501,9 @@ void MainWindow::onGridDirSizeRequested(const QString& path) {
         m_fileGrid->setDirSize(path, row.size);
         return;
     }
+    // #251:先试 Everything 瞬间统计(不占单飞队列);命中即回,失败再走下面的
+    // 内置递归排队 —— 结果由 applyEverythingDirSize 统一收尾
+    if (tryEverythingDirStat(path, /*forGrid*/ true)) return;
     // 2026-09-06 用户报"文件夹卡在统计中":悬停请求全部排队进单线程池且
     // 不可取消,大目录一占池,后面的全部干等。改为单飞:同一时间只有一个
     // 悬停任务在跑,新请求只保留最新一个排队,并请运行中的旧任务尽早收手
@@ -566,6 +583,61 @@ void MainWindow::startGridDirSize(const QString& path) {
             }
         }, Qt::QueuedConnection);
     });
+}
+
+// ── #251 Everything 瞬间统计(状态栏选中 + 网格悬停共用) ──
+// 引擎已部署 → 挂起异步查询(首次顺带拉起引擎实例)并登记在途集合去重;
+// 引擎不可用/该目录已在途 → 返回 false,调用方照旧走内置递归统计。
+// 命中结果写入 dirsize 库(键=目录 mtime),与 #244 失效键快筛无缝衔接:
+// 本次之后同目录直接被缓存命中,连 es 都不必再查,直到 mtime 变动才重新走
+// Everything 秒查 —— 统计速度与正确性两不误。
+bool MainWindow::tryEverythingDirStat(const QString& path, bool forGrid) {
+    QSet<QString>& pending = forGrid ? m_everythingGridStatPending
+                                     : m_everythingDirStatPending;
+    if (pending.contains(path)) return true;           // 已在途:别重复发
+    if (!ev_impl::deployed()) return false;            // 没部署:一步都不发起
+    pending.insert(path);
+    const QString dp = path;
+    const bool isGrid = forGrid;
+    QPointer<MainWindow> self(this);
+    ev_impl::ensureRunning(self, [self, dp, isGrid](bool ok) {
+        if (!self) return;                             // 窗口没了,结果丢弃
+        if (!ok) { self->applyEverythingDirSize(dp, false, 0, isGrid); return; }
+        ev_impl::dirStatAsync(dp, self, [self, dp, isGrid](bool ok2, qint64 bytes) {
+            if (self) self->applyEverythingDirSize(dp, ok2, bytes, isGrid);
+        });
+    });
+    return true;
+}
+
+void MainWindow::applyEverythingDirSize(const QString& path, bool ok, qint64 bytes,
+                                        bool forGrid) {
+    if (forGrid) m_everythingGridStatPending.remove(path);
+    else         m_everythingDirStatPending.remove(path);
+
+    if (!ok) {
+        // 引擎没起来/查询失败 → 回退各自的内置递归路径,体验不低于现状
+        if (forGrid) {
+            startGridDirSize(path);
+        } else {
+            const DirSizeRow row = dirSizeLookup(path);
+            startDirSizeRun(path, row.ok ? row.size : -1);
+        }
+        return;
+    }
+    // 命中:以目录 mtime 作失效键入库(现有快筛比对 mtime 段,天然兼容)
+    dirSizeStore(path, bytes, dirSizeMtimeStamp(path));
+    if (forGrid) {
+        m_gridDirSizes.insert(path, bytes);
+        if (m_gridDirSizes.size() > 256) m_gridDirSizes.clear();
+        if (m_fileGrid) m_fileGrid->setDirSize(path, bytes);
+    } else {
+        // 选中的还是这个目录 → 刷新状态栏(dirSizeLookup 现已命中,直接精确值)
+        const auto paths = m_fileGrid->selectedPaths();
+        if (paths.size() == 1 && QFileInfo(paths.first()).isDir()
+            && paths.first().compare(path, Qt::CaseInsensitive) == 0)
+            updateStatus();
+    }
 }
 
 void MainWindow::onSelectionChanged(const QString &path) {

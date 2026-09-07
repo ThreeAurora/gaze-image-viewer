@@ -12,6 +12,7 @@
 #include <QLineEdit>
 #include <QLabel>
 #include <QListWidget>
+#include <QComboBox>       // #251 引擎切换下拉(Everything/内置 NTFS)
 #include <QPushButton>
 #include <QThreadPool>
 #include <QPointer>
@@ -30,6 +31,7 @@
 #include <vector>
 #include "i18n.h"
 #include "logger.h"
+#include "everything_engine.h"   // #251:全盘快搜的 Everything 引擎分支(不可用自动回退内置)
 
 #include <QCoreApplication>
 #ifndef NOMINMAX
@@ -148,13 +150,20 @@ public:
         auto* top = new QHBoxLayout;
         m_input = new QLineEdit;
         m_input->setPlaceholderText(gazeTr(
-            "输入文件名的一部分(不区分大小写),回车搜索;如 2026-09 / P_down"));
+            "输入关键词回车搜索;Everything 引擎支持语法: 空格 与 | 或 ! 非 "
+            "ext:jpg size:>1mb dm:today 通配符 *.?"));
+        // #251 引擎切换下拉:默认 Everything(毫秒级);不可用时自动落回内置 NTFS
+        // 索引。Everything 语法是超集,换过去搜索能力只升不降。
+        m_engineCombo = new QComboBox;
+        m_engineCombo->addItem(gazeTr("Everything 引擎"));
+        m_engineCombo->addItem(gazeTr("内置 NTFS 索引"));
         m_countLabel = new QLabel(gazeTr("索引:未建"));
         top->addWidget(m_input, 1);
+        top->addWidget(m_engineCombo);
         top->addWidget(m_countLabel);
         root->addLayout(top);
 
-        m_status = new QLabel(gazeTr("正在后台扫描本机 NTFS 卷…"));
+        m_status = new QLabel(gazeTr("正在启动 Everything 索引引擎…"));
         m_status->setObjectName(QStringLiteral("imgSearchStatus"));
         m_status->setWordWrap(true);
         root->addWidget(m_status);
@@ -186,8 +195,12 @@ public:
                 QApplication::clipboard()->setText(QDir::toNativeSeparators(it->text()));
         });
 
-        // 拉起即后台建索引;期间输入也能搜(搜的是已就绪的部分)
-        QTimer::singleShot(0, this, [this]() { startIndexing(); });
+        // 拉起即:① 后台建内置 NTFS 索引(Everything 掉线时的兜底,双引擎并行);
+        // ② 异步拉起 Everything 独立实例,就绪后引擎下拉转正。
+        QTimer::singleShot(0, this, [this]() {
+            startIndexing();
+            ensureEverythingEngine();
+        });
     }
 
 private:
@@ -247,10 +260,74 @@ private:
         return vol.drive + QLatin1String(":/") + parts.join(QLatin1Char('/'));
     }
 
+    // 引擎就绪前悬着:Everything 出来前只在状态栏说明状态;失败则落回内置
+    void ensureEverythingEngine() {
+        QPointer<FastSearchDialog> self(this);
+        ev_impl::ensureRunning(self, [self](bool ok) {
+            if (!self) return;
+            if (ok) {
+                self->m_evReady = true;
+                self->m_status->setText(gazeTr("Everything 引擎就绪,输入关键词回车搜索"));
+            } else {
+                self->m_evFailed = true;
+                self->m_engineCombo->setCurrentIndex(1);   // 自动落回内置索引
+                self->m_engineCombo->setToolTip(gazeTr("Everything 引擎不可用,已改用内置 NTFS 索引"));
+                if (self->m_scanning)
+                    self->m_status->setText(gazeTr("Everything 引擎不可用,正在用内置 NTFS 索引(构建中)…"));
+                else
+                    self->m_status->setText(gazeTr("Everything 引擎不可用,已改用内置 NTFS 索引"));
+            }
+        });
+    }
+
     void doSearch() {
         const QString q = m_input->text().trimmed();
         m_list->clear();
         if (q.isEmpty()) return;
+        // #251 分流:下拉选了 Everything 且引擎就绪 → 走 Everything 毫秒查询;
+        // 其余(引擎未就绪/已失败/用户切内置)一律走原有 USN 索引
+        if (m_engineCombo->currentIndex() == 0) {
+            if (m_evReady) { searchEverything(q); return; }
+            if (m_evFailed) {
+                m_status->setText(gazeTr("Everything 引擎不可用,已用内置 NTFS 索引搜索"));
+            } else {
+                m_status->setText(gazeTr("Everything 引擎启动中,已先走内置 NTFS 索引"));
+            }
+        }
+        searchUsn(q);
+    }
+
+    void searchEverything(const QString& q) {
+        m_status->setText(gazeTr("Everything 搜索中…"));
+        QPointer<FastSearchDialog> self(this);
+        const int limit = 500;
+        ev_impl::searchFilesAsync(q, limit, this, [self, q](bool ok, const QStringList& paths) {
+            if (!self) return;
+            if (!ok) {
+                // 实例竟在查询时掉线:明确告知并落回内置,别让用户干等
+                self->m_evFailed = true;
+                self->m_engineCombo->setCurrentIndex(1);
+                self->m_status->setText(gazeTr("Everything 查询失败,已改用内置 NTFS 索引搜索"));
+                self->searchUsn(q);
+                return;
+            }
+            self->m_list->clear();
+            for (const QString& p : paths) self->m_list->addItem(p);
+            // 命中总数异步补报(状态栏可见"共命中 N 项")—— 返回慢也不拦结果展示
+            ev_impl::countAsync(q, self, [self, shown = paths.size()](bool okc, qint64 n) {
+                if (!self) return;
+                const auto base = gazeTr("命中 %1 项%2(双击在 Gaze 打开)");
+                if (okc && n > shown)
+                    self->m_status->setText(base.arg(n).arg(
+                        gazeTr(",已显示前 %1 ").arg(shown)));
+                else
+                    self->m_status->setText(base.arg(shown).arg(QString()));
+            });
+        });
+    }
+
+    void searchUsn(const QString& q) {
+        m_list->clear();
         qint64 total = 0;
         int shown = 0;
         for (const FsVolIndex& vol : m_vols) {
@@ -287,9 +364,13 @@ private:
     }
 
     QLineEdit* m_input = nullptr;
+    QComboBox* m_engineCombo = nullptr;   // #251 引擎切换:0=Everything 1=内置 NTFS
     QLabel* m_status = nullptr;
     QLabel* m_countLabel = nullptr;
     QListWidget* m_list = nullptr;
     std::vector<FsVolIndex> m_vols;   // 就绪的卷索引(GUI 线程持有)
     bool m_scanning = false;
+    // #251 Everything 引擎就绪/失败(失败=自动落回内置,下拉置灰切换)
+    bool m_evReady  = false;
+    bool m_evFailed = false;
 };
