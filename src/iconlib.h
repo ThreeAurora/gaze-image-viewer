@@ -6,12 +6,13 @@
 #include <QApplication>
 #include <QStyle>
 
-// 应用图标库:运行时从 exe 目录 assets/icons-48/ 加载
-// (图标源自 XnView MP,仅个人自用,不得分发)
+// 应用图标库:运行时从 exe 目录 assets/icons/ 加载
+// (图标取自 Material Design Icons,Apache 2.0 可商用分发;由
+//  tools/fetch_mdi_icons.py 拉取并着色、Qt 渲染成 48px PNG,无版权纠纷)
 namespace IconLib {
 
 inline const QString iconDir() {
-    static QString dir = QCoreApplication::applicationDirPath() + "/assets/icons-48";
+    static QString dir = QCoreApplication::applicationDirPath() + "/assets/icons";
     return dir;
 }
 

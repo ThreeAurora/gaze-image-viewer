@@ -56,7 +56,7 @@ QString appQss() {
         // 小一点、直角、更扁平)──原生 windowsvista 的对勾在深色菜单上几乎隐形;
         // 未勾=直角细描边空框(预告可勾),勾中=主题色纯色方块+白对勾,无描边无圆角
         // (扁平=没有任何立体/包边装饰)。image 用编译进 qrc 的 menu_check.png
-        // (自有资产,不碰 assets/icons-48 的 XnView 图)。
+        // (自有资产,自绘,与 assets/icons 同套风格)。
         "QMenu::indicator { width: 13px; height: 13px; margin-left: 6px; }"
         "QMenu::indicator:unchecked {"
         "  border: 1px solid %11; border-radius: 0px; background: transparent;"
