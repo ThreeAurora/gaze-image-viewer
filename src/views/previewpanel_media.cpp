@@ -254,8 +254,12 @@ void PreviewPanel::ensureVideoWidget() {
     m_vw->show();
     if (!m_videoCover) {
         // 遮罩是 m_videoWidget 的子件(随 resizeEvent 自动重设几何),
-        // 底色随主题 + 盖在 m_vw 之上;showVideo 时升起,Playing 后收回
+        // 底色随主题 + 盖在 m_vw 之上;showVideo 时升起,Playing 后收回。
+        // 必须带 objectName:裸 QWidget 会被全局 QWidget{background:%2} 命中,
+        // QSS 背景压过调色板 → 缓冲瞬间遮罩被涂成 #212126(33,33,38),
+        // #pvVideoCover 规则(theme.cpp,同 %40 令牌)精确接管底色调。
         m_videoCover = new QWidget(m_videoWidget);
+        m_videoCover->setObjectName("pvVideoCover");
         m_videoCover->setAutoFillBackground(true);
         m_videoCover->setPalette(QPalette(backdropColor()));
     }

@@ -87,7 +87,18 @@ FileGrid::FileGrid(QWidget* parent) : QScrollArea(parent) {
     }
 
     m_canvas = new FileCanvas(this);
+    // QSS 命中锚点:FileCanvas 无 Q_OBJECT,Qt 类型选择器(FileCanvas{...})对
+    // 它不生效,且 QScrollArea 的 viewport 是裸 QWidget —— 两者都会落进全局
+    // QWidget{background:%2}=#212126(33,33,38),把 2026-09-04 定的纯黑内容区
+    // 盖回灰底(09-07 用户报"文件页背景应是 rgb(0,0,0) 却是 33,33,38")。
+    // 改走 objectName 精确命中 theme.cpp 里 QWidget#fileCanvas 规则,与
+    // C_CONTENT(纯黑)令牌绑定,双主题都跟主题走。
+    m_canvas->setObjectName(QStringLiteral("fileCanvas"));
     setWidget(m_canvas);
+    // 同上的 QSS 命中问题:QScrollArea 的 viewport 是裸 QWidget,吃全局
+    // QWidget{background:%2} 灰底;内容不足一屏时视口边缘会露出来。给它
+    // 自己的 objectName,theme.cpp 里 QWidget#fileGridViewport 一条规则盖掉。
+    viewport()->setObjectName(QStringLiteral("fileGridViewport"));
 
     connect(verticalScrollBar(), &QScrollBar::valueChanged,
             this, [this](int val) {

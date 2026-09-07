@@ -37,9 +37,10 @@ void applyLive() {
 }
 
 QString appQss() {
-    // 占位符按 %1..%39 顺序逐个 .arg:单个 arg() 每次替换最小编号占位符,
-    // 取值全是 #hex,不含 %N 字样,链式安全
-    return QStringLiteral(
+    // 模板占位符 %1..%40 由函数尾部逐令牌文字替换(见下);取值全是 #hex,
+    // 不含 %N 字样,替换安全。禁用 QString::arg 链:它只认单数字占位符,
+    // %40 会被拆成 %4 + 字面量"0",多位数令牌全乱 —— video 缓冲灰底即此。
+    const QString tpl = QStringLiteral(
         "QWidget {"
         "  font-family: \"Microsoft YaHei\", \"Segoe UI\", sans-serif;"
         "  font-size: 12px; color: %1; background: %2;"
@@ -311,7 +312,12 @@ QString appQss() {
         // SortHeader/FileCard),普通容器靠 objectName。全屏胶片条与 LIVE 徽章
         // 沿用原内联的硬编码深色(浮层,不随主题换档)。
         "FileGrid { background: %13; border: none; }"
-        "FileCanvas { background: %13; }"
+        // #215 内容区纯黑令牌(%13)须落到实际画面上:FileCanvas 无 Q_OBJECT,
+        // 类型选择器(FileCanvas{...})对它不生效,viewport 又是裸 QWidget ——
+        // 两者原本都吃全局 QWidget{background:%2}=#212126(33,33,38),把
+        // 纯黑内容区盖回灰底(09-07 用户报)。objectName 精确命中,双主题随令牌。
+        "QWidget#fileCanvas { background: %13; }"
+        "QWidget#fileGridViewport { background: %13; }"
         "QWidget#findBar {"
         "  background: %3; border: 1px solid %4; border-radius: 4px;"
         "}"
@@ -396,6 +402,10 @@ QString appQss() {
         // 视频区底:深色恒近黑;浅色主题下用户令"预览视频背景应为白色"。
         // (视频面本体另有调色板,见 applyVideoBackdrop;这里管控件露出的边角)
         "QWidget#pvVideo { background: %40; }"
+        // 切源缓冲遮罩 pvVideoCover 同用 %40 令牌:裸 QWidget 会吃全局
+        // QWidget{background:%2}=#212126(33,33,38),缓冲瞬间遮罩显灰
+        // (09-07 用户报)。与 pvVideo 同色环,深浅两档各取各的值。
+        "QWidget#pvVideoCover { background: %40; }"
         "QWidget#pvControlBar, QWidget#pvControlBar QWidget {"
         "  background: %3; border-top: 1px solid %4;"
         "}"
@@ -730,47 +740,38 @@ QString appQss() {
         "  background: %31; color: %2; font-size: 12px; font-weight: 600;"
         "  padding: 8px 14px; border-radius: 6px; border: 1px solid rgba(0,0,0,70);"
         "}"
-    )
-        .arg(C_TEXT)
-        .arg(C_WIN_BG)
-        .arg(C_TOOLBAR)
-        .arg(C_SEPARATOR)
-        .arg(C_ACCENT)
-        .arg(C_SB_TRACK)
-        .arg(C_SB_HANDLE)
-        .arg(C_SB_HANDLE_H)
-        .arg(C_SB_BUTTON)
-        .arg(C_SB_BUTTON_H)
-        .arg(C_SB_ARROW)
-        .arg(C_CARD_BORDER)
-        .arg(C_CONTENT)
-        .arg(C_SIDEBAR)
-        .arg(C_PREVIEW_BG)
-        .arg(C_CARD_HOVER)
-        .arg(C_SEPARATOR)      // %17:消息框按钮悬停(#215 起 C_PANE_HDR=#191919 不再作 hover,换描边灰=比按钮底亮一档)
-        .arg(C_ACCENT_DOWN)    // %18:默认(确定)按钮悬停/按下,比 C_ACCENT 暗一档
-        .arg(C_MENUBAR)        // %19:菜单栏底(#89 收敛自 mainwindow_menus 内联)
-        .arg(C_PANE_HDR)       // %20:面板标题条底(#89 收敛自 createPaneHeader 内联)
-        .arg(C_STATUSBAR)      // %21:状态栏底(#89 收敛自 createStatusbar 内联)
-        .arg(C_TEXT_HIDDEN)    // %22:标签关闭钮常态字色(#89 收敛自 installTabCloseButton 内联)
-        .arg(Theme::T("#4A4A56", "#9A9AA4"))  // %23:格式筛选框悬停描边(原内联局部双档值)
-        .arg(Theme::T("#2A2A2E", "#C9C9D1"))  // %24:工具条竖分隔线(原内联局部双档值)
-        .arg(C_TEXT_SUB)       // %25:查找条计数文字(#89 收敛自 filegrid_find 内联)
-        .arg(C_TEXT_DIM)       // %26:占位/波形/RAW说明/搜索禁用字(#89 收敛自 previewpanel 等内联)
-        .arg(C_CARD_BG)        // %27:RAW 按钮禁用底/组框卡底(#89 收敛自 previewpanel/settings 内联)
-        .arg(C_TEXT_FAINT)     // %28:状态弱文字/禁用字/命中计数(#89 收敛自多处内联)
-        .arg(C_TEXT_SOFT)      // %29:设置页组框标题(#89 收敛自 settings_dialog group 内联)
-        .arg(C_TREE_HOVER)     // %30:收藏夹列表悬停行(#89 收敛自 favoritespanel 内联)
-        .arg(C_SELECT_YELLOW)  // %31:删除提示琥珀底(#89 收敛自 shelldelete toast 内联)
-        .arg(Theme::T("#D0D0D0", "#44444C"))  // %32:维护页统计行字色(原内联局部双档值)
-        .arg(Theme::T("#B8B8C0", "#77777F"))  // %33:快捷键页鼠标说明字色(同上)
-        .arg(Theme::T("#2A2A31", "#D9D9E0"))  // %34:信息面板直方图条下边线(原 infopanel 内联)
-        .arg(Theme::T("#DCDCE2", "#1F1F26"))  // %35:元数据树行字色(同上)
-        .arg(Theme::T("#232329", "#ECECEF"))  // %36:元数据树表头底(同上)
-        .arg(Theme::T("#C8C8CE", "#44444C"))  // %37:元数据树表头字色(同上)
-        .arg(Theme::T("#141418", "#E9E9ED"))  // %38:裁剪画布底(原 cropdialog 内联)
-        .arg(Theme::T("#C8C8CE", "#44444C"))  // %39:裁剪信息条字色(同上)
-        .arg(Theme::T("#0A0A0C", "#FFFFFF")); // %40:视频区底(浅色=白,#1)
+    );
+    // ⚠ 必须用文字替换(QString::replace)而**不是** QString::arg:
+    // arg 的占位符只支持"单数字"(%1..%9),%40 会被当作 %4 + 字面量"0",
+    // %39→%3+9、%13→%1+3 …… 两位数字色令牌全部错乱 —— 视频缓冲底
+    // 变灰 rgb(33,33,38)(#212126 全局回退色)的根因就在这里。模板里
+    // %N 令牌每个恰好出现一次,replace 精确命中;倒序(40→1)替换避免
+    // "%1" 命中 "%10" 这类子串污染。
+    const QStringList values = {
+        C_TEXT,             C_WIN_BG,         C_TOOLBAR,      C_SEPARATOR,
+        C_ACCENT,           C_SB_TRACK,       C_SB_HANDLE,    C_SB_HANDLE_H,
+        C_SB_BUTTON,        C_SB_BUTTON_H,    C_SB_ARROW,     C_CARD_BORDER,
+        C_CONTENT,          C_SIDEBAR,        C_PREVIEW_BG,   C_CARD_HOVER,
+        C_SEPARATOR,        C_ACCENT_DOWN,    C_MENUBAR,      C_PANE_HDR,
+        C_STATUSBAR,        C_TEXT_HIDDEN,
+        Theme::T("#4A4A56", "#9A9AA4"),   // %23:格式筛选框悬停描边(原内联局部双档值)
+        Theme::T("#2A2A2E", "#C9C9D1"),   // %24:工具条竖分隔线(原内联局部双档值)
+        C_TEXT_SUB,         C_TEXT_DIM,       C_CARD_BG,      C_TEXT_FAINT,
+        C_TEXT_SOFT,        C_TREE_HOVER,     C_SELECT_YELLOW,
+        Theme::T("#D0D0D0", "#44444C"),   // %32:维护页统计行字色(原内联局部双档值)
+        Theme::T("#B8B8C0", "#77777F"),   // %33:快捷键页鼠标说明字色(同上)
+        Theme::T("#2A2A31", "#D9D9E0"),   // %34:信息面板直方图条下边线(原 infopanel 内联)
+        Theme::T("#DCDCE2", "#1F1F26"),   // %35:元数据树行字色(同上)
+        Theme::T("#232329", "#ECECEF"),   // %36:元数据树表头底(同上)
+        Theme::T("#C8C8CE", "#44444C"),   // %37:元数据树表头字色(同上)
+        Theme::T("#141418", "#E9E9ED"),   // %38:裁剪画布底(原 cropdialog 内联)
+        Theme::T("#C8C8CE", "#44444C"),   // %39:裁剪信息条字色(同上)
+        Theme::T("#000000", "#FFFFFF")    // %40:视频区底(09-07 用户令深色档纯黑,原 #0A0A0C=rgb(10,10,12);浅色=白,#1)
+    };
+    QString qss(tpl);
+    for (int i = values.size(); i >= 1; --i)
+        qss.replace(QStringLiteral("%%1").arg(i), values[i - 1]);
+    return qss;
 }
 
 } // namespace Theme
