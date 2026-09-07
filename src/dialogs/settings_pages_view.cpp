@@ -95,6 +95,8 @@ QWidget* SettingsDialog::pageViewerOther() {
     auto* fPlay = new QFormLayout;
     fPlay->setVerticalSpacing(6);
     fPlay->addRow(chk("Viewer/autoPlayVideo", gazeTr("自动播放(视频)"), true));
+    fPlay->addRow(gazeTr("默认音量(%)"),
+        spin("Viewer/defaultVolume", 0, 100, 100));
     fPlay->addRow(chk("Viewer/loopVideo", gazeTr("循环视频播放"), false));
     fPlay->addRow(chk("Viewer/autoPlayAudioCompanion", gazeTr("自动播放音频伴侣文件"), false));
     fPlay->addRow(chk("Viewer/loopFileList", gazeTr("循环文件列表"), false));

@@ -583,7 +583,10 @@ void PreviewPanel::setupPlayer() {
     m_player = new QMediaPlayer(this);
     m_audioOutput = new QAudioOutput(this);
     m_player->setAudioOutput(m_audioOutput);
-    m_audioOutput->setVolume(0.8);
+    // 默认音量可配置(设置:查看→其他→默认音量,0-100,默认 100)
+    const int defVol = AppSettings::instance()
+                           .get(QStringLiteral("Viewer/defaultVolume"), 100).toInt();
+    m_audioOutput->setVolume(qBound(0, defVol, 100) / 100.0);
     Logger::event(QStringLiteral("setupPlayer: QMediaPlayer+QAudioOutput %1 ms")
                       .arg(initSw.elapsed()));
 

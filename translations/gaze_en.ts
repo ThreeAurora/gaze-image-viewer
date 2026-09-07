@@ -4114,6 +4114,10 @@ Continue?</translation>
         <translation>main.py runs manually by default; with auto-start off, image search just reports &quot;service not running&quot;. &quot;Stop on exit&quot; only reclaims service instances started by Gaze — manually started ones are unaffected.</translation>
     </message>
     <message>
+        <source>默认音量(%)</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>默认颜色</source>
         <translation>Default color</translation>
     </message>
