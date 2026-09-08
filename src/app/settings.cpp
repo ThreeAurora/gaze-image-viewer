@@ -19,6 +19,22 @@ AppSettings& AppSettings::instance() {
 // #122 补的一块:换位置时把**当前这份**配置整体拷到目标(目标已存在则不动)。
 //   少了这一步,用户从便携切到 %APPDATA% 后看到的是"所有设置回到默认"——
 //   值其实还在旧文件里,只是没人再读它。观感等同于设置被清空。
+// 2026-09-08 卡死事故修复:QSettings 的 ini 后端默认要"原子同步"——读写都要
+// 抢 ini 同目录的 Gaze.ini.lock(QLockFile)。实测:只要有一个实例持有这把锁
+// (卡死、被强杀留下的陈旧锁也算),其余实例会卡在 QSettings::value() 里无限
+// 等待 —— 表象是启动后白屏、GUI 线程再无心跳、程序"再也起不来"。
+// 栈证据:GUI 线程 事件循环 → 绘制代码(读 Browser/previewBackColor 等)
+//        → QSettings::value → Qt6Core 信号量 → ntdll 等待,永不返回。
+// Gaze 是单用户便携应用,配置读写只在进程内串行,并不需要跨进程原子同步:
+// 关掉它,QSettings 不再碰锁文件,这类死锁从根上消失。
+static void disableAtomicSync(QSettings& s) {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
+    s.setAtomicSyncRequired(false);
+#else
+    Q_UNUSED(s);
+#endif
+}
+
 static QString pathForLocation(int loc, const QString& customDir) {
     const QString portable = QCoreApplication::applicationDirPath() + "/Gaze.ini";
     if (loc == 1) {
@@ -34,6 +50,7 @@ static QString pathForLocation(int loc, const QString& customDir) {
 static QString resolveIniPath() {
     const QString portable = QCoreApplication::applicationDirPath() + "/Gaze.ini";
     QSettings boot(portable, QSettings::IniFormat);
+    disableAtomicSync(boot);
     const int loc = boot.value("Integration/iniLocation", 0).toInt();
     const QString target = pathForLocation(
         loc, boot.value("Integration/customIniDir").toString());
@@ -47,7 +64,9 @@ static QString resolveIniPath() {
 
 AppSettings::AppSettings()
     : m_settings(resolveIniPath(), QSettings::IniFormat)
-{}
+{
+    disableAtomicSync(m_settings);
+}
 
 void AppSettings::set(const QString& key, const QVariant& v) {
     setPersist(key, v);
@@ -66,6 +85,7 @@ void AppSettings::setPersist(const QString& key, const QVariant& v) {
     if (key.startsWith(QStringLiteral("Integration/"))
         && m_settings.fileName() != boot) {
         QSettings b(boot, QSettings::IniFormat);
+        disableAtomicSync(b);
         b.setValue(key, v);
     }
     // #122:换配置文件位置的当下就把值带过去(生效仍是下次启动,但数据不落下)。
@@ -73,6 +93,7 @@ void AppSettings::setPersist(const QString& key, const QVariant& v) {
     if (key == QStringLiteral("Integration/iniLocation")
         || key == QStringLiteral("Integration/customIniDir")) {
         QSettings b(boot, QSettings::IniFormat);
+        disableAtomicSync(b);
         const int loc = b.value("Integration/iniLocation", 0).toInt();
         const QString target = pathForLocation(
             loc, b.value("Integration/customIniDir").toString());
