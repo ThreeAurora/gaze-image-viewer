@@ -159,6 +159,7 @@ void PreviewPanel::mouseMoveEvent(QMouseEvent* event) {
     }
     const QPoint cur = event->position().toPoint();
     updateFloatBar(&cur);            // Fullscreen/floatView:靠近顶/右边缘浮现
+    updateGFullPlaybar(&cur);        // G 全屏视频:进度条光标到底部才出(2026-09-08)
     QWidget::mouseMoveEvent(event);
 }
 
@@ -503,6 +504,12 @@ bool PreviewPanel::eventFilter(QObject* obj, QEvent* event) {
     }
     // 视频区(它盖住面板,鼠标事件到不了 mousePressEvent):
     //   左键 = 播放/暂停;双击 = 浏览器↔查看器(与图片区一致)
+    if ((obj == m_videoWidget || obj == m_vw) && event->type() == QEvent::MouseMove) {
+        // G 全屏视频:视频面盖满面板,move 到不了面板自己的 mouseMoveEvent,
+        // 底部进度条触发带全靠这里喂光标(坐标用全局光标换算,不依赖 obj 局部系)
+        const QPoint cur = mapFromGlobal(QCursor::pos());
+        updateGFullPlaybar(&cur);
+    }
     if ((obj == m_videoWidget || obj == m_vw) && m_mode == "video"
         && (event->type() == QEvent::MouseButtonPress
             || event->type() == QEvent::MouseButtonDblClick)) {

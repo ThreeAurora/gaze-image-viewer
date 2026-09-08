@@ -201,6 +201,36 @@ void PreviewPanel::updateFloatBar(const QPoint* cursor) {
     m_floatBar->show();
 }
 
+// 2026-09-08 用户令:G 全屏视频的进度条(控制栏)默认隐藏,光标挪进底部
+// 触发带才浮现,挪走即藏 —— 与顶部胶片条(到顶出)/左右浮动钮(到边出)
+// 同一套"全屏只留画面,光标到边才出装饰"的语义。
+// 管辖范围:仅 m_gFullView && video。窗口态/查看器/F11 全屏的显隐仍归
+// showVideo 的 Fullscreen/showPlaybar 规则;GIF/音频各走各的 chrome。
+// Fullscreen/showPlaybar=false 仍是总闸:总闸关着就永不浮现。
+// 坐标:面板局部。cursor=nullptr 表示"无光标信息"(进场/切文件)→ 默认藏。
+void PreviewPanel::updateGFullPlaybar(const QPoint* cursor) {
+    if (m_gFullView && inFullscreen() && m_mode == "video") {
+        if (m_isLivePhoto || !pp_impl::s_bool("Fullscreen/showPlaybar", true)) {
+            // Live Photo 无控制栏 / 总闸关着:维持 showVideo 的隐藏,不接管
+            m_gPlaybarAuto = false;
+            return;
+        }
+        m_gPlaybarAuto = true;
+        const int edge = 56;   // 底部触发带高度(与顶部胶片条 kFilmEdge 同档)
+        const bool want = cursor && cursor->y() >= height() - edge;
+        if (want == m_controlBar->isVisible()) return;   // #208 同款:状态没变不碰控件
+        m_controlBar->setVisible(want);
+        return;
+    }
+    // 非 G 全屏视频:只在自己接管过(G 全屏期间藏过/显过)时把栏还回
+    // 普通规则,绝不越权改 showVideo/applyGifChrome 的裁决
+    if (!m_gPlaybarAuto) return;
+    m_gPlaybarAuto = false;
+    const bool live = m_isLivePhoto;
+    const bool playbar = !inFullscreen() || pp_impl::s_bool("Fullscreen/showPlaybar", true);
+    m_controlBar->setVisible(!live && playbar);
+}
+
 // Viewer/showRating:查看器右上角显示当前文件的颜色标记圆点
 // (键名沿用历史 showRating;程序只有颜色标记,没有评级概念)
 void PreviewPanel::updateRatingBadge() {

@@ -153,6 +153,7 @@ void PreviewPanel::showVideo(const QString& path) {
     const bool playbar = !inFullscreen() || pp_impl::s_bool("Fullscreen/showPlaybar", true);
     m_btnVolume->show();   // GIF(#97)会藏掉音量键,回到视频必须还原
     m_controlBar->setVisible(!live && playbar);
+    if (!live && playbar) updateGFullPlaybar(nullptr);   // G 全屏视频:进场先藏,光标到底部才出(2026-09-08)
     m_imgSpace->hide();
     syncVideoChildren();   // videoWidget 刚 show,布局尚未激活,先把当下矩形铺上
     if (m_liveBadge) {

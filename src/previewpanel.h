@@ -67,7 +67,7 @@ public:
     void warmUp();
     // G 全屏预览(MainWindow::m_fullView)置位:顶中浮动工具条整个让位给
     // 胶片条(#209,功能已并入 FilmStrip 右端按钮区)
-    void setGFullView(bool on) { m_gFullView = on; updateFloatBar(); }
+    void setGFullView(bool on) { m_gFullView = on; updateFloatBar(); updateGFullPlaybar(nullptr); }
     void fitAuto();
 
 signals:
@@ -186,6 +186,7 @@ private:
     void applyViewerChrome();              // 改设置/换文件后统一刷新下列元素
     void updateOverlayScrollbars();        // Viewer|Fullscreen/showScrollbar
     void updateFloatBar(const QPoint* cursor = nullptr); // Fullscreen/showToolbar + floatView
+    void updateGFullPlaybar(const QPoint* cursor = nullptr); // G 全屏视频:进度条光标到底部才出(2026-09-08)
     void updatePanTool();                  // Viewer/panTool 平移导航小窗
     void updateSelectionHighlight();       // Viewer/showBorder 白框;蓝框已删(2026-08-30)
     void updateRatingBadge();              // Viewer/showRating 颜色标记点
@@ -324,6 +325,7 @@ private:
     QScrollBar* m_vScroll   = nullptr;
     QWidget*    m_floatBar  = nullptr;     // Fullscreen/showToolbar + floatView
     bool        m_gFullView = false;       // G 全屏预览时工具条让位给胶片条(#209)
+    bool        m_gPlaybarAuto = false;    // G 全屏视频进度条归 updateGFullPlaybar 管辖中
     QWidget*    m_panTool   = nullptr;     // Viewer/panTool
     QLabel*     m_panThumb  = nullptr;
     QLabel*     m_ratingDot = nullptr;     // Viewer/showRating 颜色标记点
