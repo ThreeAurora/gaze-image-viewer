@@ -771,21 +771,33 @@ QString MainWindow::renderTitle(const QString& tplIn, const QString& filePath) c
     subst("y-m-d_h-n-s", fmtT(birthT, "-"));
     subst("y_m_d_h_n_s", fmtT(birthT, "_"));
     // 标题里的路径同样用反斜杠(与地址栏一致);末尾 "\" 只属于可编辑的地址栏
-    subst(gazeTr("路径"),
-          QDir::toNativeSeparators(hasSel ? fi.absoluteFilePath() : dir));
-    subst(gazeTr("文件夹"), QDir::toNativeSeparators(dir));
-    subst(gazeTr("文件夹名"), dirName);
+    // ── 占位符 token 双语兼容 ──
+    // 模板是持久数据(存 ini),语言是会话状态:旧实现 token 走 gazeTr(跟语言),
+    // 英文会话找不到中文 token、中文会话找不到英文 token,占位符原样漏进标题
+    // (用户多次反馈"英文模式标题显示 Folder 不跟文件名")。修法:中英两套
+    // token 都注册(英文对照与 translations batch JSON 一致),模板无论存哪国
+    // 写法、运行在哪种语言,都能命中。长 token 恒先于短 token(花括号定界,
+    // "{文件名}" 不会误伤 "{文件名 含扩展名}",但顺序仍保持先长后短以防万一)。
+    auto subst2 = [&](const QString& zh, const QString& en, const QString& to) {
+        subst(zh, to);   // 中文 token(字面,与语言无关)
+        subst(en, to);   // 英文 token(字面)
+    };
+    subst2("路径", "Path",
+           QDir::toNativeSeparators(hasSel ? fi.absoluteFilePath() : dir));
+    subst2("文件夹", "Folder", QDir::toNativeSeparators(dir));
+    subst2("文件夹名", "Folder name", dirName);
     // 目录没有"扩展名"这一说:两个名字令牌都给完整目录名,
     // 不能套 completeBaseName 的点切分(那会把 "A.B 文件夹" 截成 "A")
-    subst(gazeTr("文件名"),
-          isDirSel ? fi.fileName() : (hasFile ? fi.completeBaseName() : QString()));
-    subst(gazeTr("文件名 含扩展名"), hasSel ? fi.fileName() : QString());
-    subst(gazeTr("大小"), sizeText);
-    subst(gazeTr("修改日期"), mdate);
-    subst(gazeTr("创建日期"), cdate);
-    subst(gazeTr("颜色标签"), label);
-    subst(gazeTr("宽"), w > 0 ? QString::number(w) : QString());
-    subst(gazeTr("高"), h > 0 ? QString::number(h) : QString());
+    subst2("文件名", "File name",
+           isDirSel ? fi.fileName() : (hasFile ? fi.completeBaseName() : QString()));
+    subst2("文件名 含扩展名", "File name with extension",
+           hasSel ? fi.fileName() : QString());
+    subst2("大小", "Size", sizeText);
+    subst2("修改日期", "Date modified", mdate);
+    subst2("创建日期", "Date created", cdate);
+    subst2("颜色标签", "Color labels", label);
+    subst2("宽", "Width", w > 0 ? QString::number(w) : QString());
+    subst2("高", "Height", h > 0 ? QString::number(h) : QString());
     // 单字母时间变量:大写=修改时间,小写=创建时间(N/n=分钟,与 M/m=月 区分)
     auto part = [](const QDateTime& t, QChar which) -> QString {
         if (!t.isValid()) return QString();
