@@ -375,6 +375,19 @@ void FileGrid::onCanvasDblClick(int index) {
     QFileInfo fi(path);
     if (!fi.exists()) return;
 
+    // 双击 = 选中它并打开。两击之间手抖超过 startDragDistance(触控板尤其
+    // 容易)会起拖,第一击的 release 被拖拽吞掉 → onCanvasRelease 没跑,
+    // 选中/m_currentFile 停在上一个文件;随后的 dblclick 照样走到
+    // requestSwitchMode → toggleViewer,拿旧 m_currentFile 进查看器,
+    // 体感就是"双击这张,打开的是别的文件"(2026-09-08 用户报)。
+    // 不带修饰键的双击必是单选:这里先补齐 onCanvasRelease 的单选分支,
+    // 把选中与 m_currentFile 钉到双击的这一项上,再按类型分流。
+    m_selected.clear();
+    m_selected.insert(index);
+    m_lastClicked = index;
+    refreshView();
+    emit selectionChanged(path);
+
     if (fi.isDir()) {
         if (auto* mw = window()) QMetaObject::invokeMethod(mw, "navigateTo",
             Q_ARG(QString, fi.absoluteFilePath()));
