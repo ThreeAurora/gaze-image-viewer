@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(Gaze VERSION 1.1.0 LANGUAGES CXX)
+project(Gaze VERSION 1.2.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -162,12 +162,19 @@ add_custom_command(TARGET Gaze POST_BUILD
 # 用户 2026-08-31 明令:PDF 预览用随 gaze 分发的 Ghostscript,而不是搜系统装没装。
 # 必须整目录拷:gs\bin\gswin64c.exe 靠"相对自身 exe 的 ../Resource"找 gs_init.ps,
 # 还要同目录 gsdll64.dll 与 lib/ 的初始化文件 —— 只拷 exe 会直接报错退出。
-add_custom_command(TARGET Gaze POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${CMAKE_SOURCE_DIR}/vendor/gs" "$<TARGET_FILE_DIR:Gaze>/gs"
-    COMMENT "同步内置 Ghostscript vendor/gs -> 构建目录 gs/"
-    VERBATIM
-)
+# 开源仓库里不放 vendor/gs(体积 + 分发许可),但源码是按"随包分发"写的:
+# 目录不存在时不能让构建直接失败 —— 与下面 ffmpeg 同一套口径:有就拷,没有就
+# 回退系统/PATH 上的 gs,PDF 预览功能照旧(只是不随包)。
+if(EXISTS "${CMAKE_SOURCE_DIR}/vendor/gs")
+    add_custom_command(TARGET Gaze POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "${CMAKE_SOURCE_DIR}/vendor/gs" "$<TARGET_FILE_DIR:Gaze>/gs"
+        COMMENT "同步内置 Ghostscript vendor/gs -> 构建目录 gs/"
+        VERBATIM
+    )
+else()
+    message(STATUS "内置 Ghostscript: vendor/gs 不存在 -> PDF 预览回退 PATH/系统上的 gs")
+endif()
 
 # ── 内置 ffmpeg 部署(视频缩略图,#112)──
 # 与 Ghostscript 同一套思路:exe 旁 ffmpeg/ 永远优先于 PATH,机器上装没装 ffmpeg
