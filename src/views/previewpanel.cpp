@@ -28,6 +28,7 @@
 #include <QApplication>
 #include <QScreen>
 #include <QDir>
+#include <QThread>
 #include <QSplitter>
 #include <QUrl>
 #include <QTimer>
@@ -797,6 +798,26 @@ void PreviewPanel::releaseFileLocks(const QStringList& paths) {
     stopMovie();
     teardownPlayer();
     teardownWave();
+    // 2026-09-08 用户实测回归修复:WMF/FFmpeg 后端把文件句柄放下是异步的,
+    // teardown 返回的瞬间句柄可能还在(实测删除要等 ~11s 才真正能走通)——
+    // 旧版只有改名带 renameWithRetry,删除/移动首试一律假失败。
+    // 这里同步等句柄落地:轮询独占打开,单文件最多 3s;超时放行让 Shell 自己报错。
+    for (const QString& p : paths) {
+        if (!QFileInfo(p).isFile()) continue;
+        const std::wstring w = QDir::toNativeSeparators(p).toStdWString();
+        const ULONGLONG deadline = GetTickCount64() + 3000;
+        for (;;) {
+            HANDLE h = CreateFileW(w.c_str(), GENERIC_READ | GENERIC_WRITE, 0,
+                                   nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,
+                                   nullptr);
+            if (h != INVALID_HANDLE_VALUE) { CloseHandle(h); break; }
+            if (GetTickCount64() >= deadline) {
+                Logger::event(QStringLiteral("releaseFileLocks: still locked after 3s '%1'").arg(p));
+                break;
+            }
+            QThread::msleep(80);
+        }
+    }
 }
 
 void PreviewPanel::clear() {
