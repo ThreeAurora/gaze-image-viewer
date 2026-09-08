@@ -123,6 +123,19 @@ void MainWindow::restoreDocks(const QByteArray& hex) {
     m_restoringDocks = true;
     restoreState(QByteArray::fromHex(hex), mw_impl::kDockStateVersion);
     m_restoringDocks = false;
+    // 自愈(2026-09-08):旧版把"被合并(tabify)而隐藏"误判成"用户关闭",把
+    // paneOn 写成了 false 并存档。升级后这些面板依旧既看不到也唤不回来 ——
+    // 而"dock 处在标签组里、意图却是关"这个组合只可能是误判的产物(真关掉的
+    // 面板不在任何标签组里),这里把它纠正回来,一次到位。
+    for (const QString& id : paneIds()) {
+        QDockWidget* d = dockForPane(id);
+        if (d && !d->isFloating() && !tabifiedDockWidgets(d).isEmpty()
+            && !paneOn(id)) {
+            Logger::event(QStringLiteral(
+                "panes self-heal: '%1' was hidden by tabify, restoring").arg(id));
+            if (!m_panesOn.contains(id)) m_panesOn.append(id);
+        }
+    }
     applyPaneVisibility();
 }
 
@@ -326,6 +339,14 @@ void MainWindow::applyPaneVisibility() {
     }
 }
 
+QDockWidget* MainWindow::dockForPane(const QString& id) const {
+    if (id == QStringLiteral("tree"))      return m_treeDock;
+    if (id == QStringLiteral("favorites")) return m_favDock;
+    if (id == QStringLiteral("filter"))    return m_filterDock;
+    if (id == QStringLiteral("info"))      return m_infoDock;
+    return nullptr;
+}
+
 void MainWindow::setPaneVisible(const char* paneId, bool on, bool remember) {
     const QString id = QString::fromLatin1(paneId);
     if (remember) {
@@ -337,6 +358,14 @@ void MainWindow::setPaneVisible(const char* paneId, bool on, bool remember) {
         m_panesOn = ordered;
     }
     applyPaneVisibility();
+    // 2026-09-08:面板被拖去与别的面板合并成标签组后,它 visible 可能已是 true,
+    // 却压在同组另一页底下 —— 这就是"菜单唤不出来"的最后一环。唤它时顺手
+    // 把这一页顶到前面(只在它确实被合并时做,没合并时 raise 无意义)。
+    if (on) {
+        if (QDockWidget* d = dockForPane(id))
+            if (!d->isFloating() && !tabifiedDockWidgets(d).isEmpty() && d->isVisible())
+                d->raise();
+    }
     for (int i = 0; i < kPaneCount; ++i)
         if (m_paneActs[i] && QString::fromLatin1(kPanes[i]) == id)
             m_paneActs[i]->setChecked(on);

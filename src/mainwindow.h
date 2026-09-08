@@ -44,8 +44,8 @@ public:
     Q_INVOKABLE void openFullscreen(const QString &path);  // 右键"全屏":导航到文件并全屏
     Q_INVOKABLE void revealFile(const QString &path);      // 以文搜图结果:定位到目录并选中
     Q_INVOKABLE void addFavorite(const QString &path);     // #243 右键"添加到收藏夹"(网格/树菜单经元调用进来)
-    Q_INVOKABLE void exitFullscreen();  // F11 界面全屏唯一出口:还原进前窗口状态(最大化不再被 showNormal 打回普通,2026-09-08)
     void enterFullscreen();          // Fullscreen/dualMonitor:可选落到第二显示器
+    Q_INVOKABLE void exitFullscreen();  // F11 界面全屏唯一出口:还原进前窗口状态(最大化不再被 showNormal 打回普通,2026-09-08)
     void renameCurrent();            // F2:按 FileOps/renameDialog 决定对话框/就地改
     // #136:F2/F3 的统一入口 —— 焦点在文件树就改树里那一行,否则改文件页选中项
     void renameFocused();
@@ -177,6 +177,10 @@ private:
     void   createViewMenu();                    // 一级菜单"视图"(面板开关,追加在布局之后)
     QWidget* createPaneHeader(const QString& title, const char* paneId); // XnView 式面板标题条(带关闭 X)
     void   setPaneVisible(const char* paneId, bool on, bool remember = true); // 面板显隐(含记忆用户意图)
+    // 面板 id → 真 dock(仅 tree/favorites/filter/info 四个;preview/addr/tool/status
+    // 是普通部件)。用于"合并成标签"后把指定那一页顶到前面(dock->raise()),
+    // 以及启动时给被旧版误判写坏的意图做自愈。
+    QDockWidget* dockForPane(const QString& id) const;
     bool   paneVisible(const char* paneId) const; // 用户意图(非查看器模式下的临时隐藏)
     void   restorePanes(const QString& csv);     // "tree,preview,.." 恢复可见面板(空=全部)
     void   restoreDocks(const QByteArray& hex);  // dock 位置存档恢复 + 意图纠正(restoreState 包装)

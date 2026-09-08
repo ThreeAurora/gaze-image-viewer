@@ -445,7 +445,16 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     // 不回写(存档可见性不得污染意图)
     auto dockCloseGuard = [this](QDockWidget* dock, const char* paneId) {
         const QString id = QString::fromLatin1(paneId);
-        connect(dock, &QDockWidget::visibilityChanged, this, [this, id](bool vis) {
+        connect(dock, &QDockWidget::visibilityChanged, this, [this, id, dock](bool vis) {
+            // 2026-09-08 用户报:"把面板拖到另一个面板上,不是合并,被拖的那个
+            // 莫名失踪,而且再也唤不出来"。机制:拖到别的面板上 Qt 做的是 tabify
+            // (合并成一组标签),非当前那一页会被 Qt 自己隐藏 —— 于是
+            // visibilityChanged(false)。旧守卫把它当成"用户关了面板"回写成
+            // paneOn=false,applyPaneVisibility 下一拍就真的把它 setVisible(false)
+            // 藏掉,连标签一起没了:既看不到,菜单也唤不回来。
+            // 合并造成的隐藏不是关闭意图,不与意图账本同步。
+            if (!vis && !dock->isFloating() && !tabifiedDockWidgets(dock).isEmpty())
+                return;
             // 主窗最小化/整体不可见期间,dock 会随之收到 visibilityChanged(false)
             // ——这是窗口状态的自然连锁,不是用户意图;不忽略就会把"树/面板被
             // 藏"写成持久意图,还原后面板集体消失(2026-09-05 用户实测:
