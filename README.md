@@ -8,7 +8,7 @@
 
 [English](./README.en-US.md) | 简体中文
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue?style=flat-square)
+![Version](https://img.shields.io/badge/version-1.2.0-blue?style=flat-square)
 ![Platform](https://img.shields.io/badge/platform-Windows-0078D6?style=flat-square&logo=windows&logoColor=white)
 ![C++](https://img.shields.io/badge/C%2B%2B-17-00599C?style=flat-square&logo=cplusplus&logoColor=white)
 ![Qt](https://img.shields.io/badge/Qt-6.8%20LTS-41CD52?style=flat-square&logo=qt&logoColor=white)
@@ -16,22 +16,9 @@
 
 🔥 受 XnView MP 启发的轻量级开源替代方案，以现代化技术栈（C++17 / Qt 6.8 LTS）重新实现 —— 高性能、高舒适度、格式广度优先。
 
+### **无需额外建立文件库，解压即用、直接打开就能用；支持管理所有格式的文件。**
+
 </div>
-
-> 灵感源自 **XnView MP**。本项目尝试做一个轻量级的开源替代：当您想按自己的习惯定制看图工具时，这里提供更多的可能。
-> 致敬原作者 **Pierre-e Gougelet**！
-
----
-
-## ✨ 亮点速览
-
-- **格式广度优先** —— 33 种图片扩展名 + 26 种 RAW（LibRaw 静态编入）+ AVIF / HEIC / JPEG XL；28 种视频容器连 RMVB、MXF 都认；解码组件全随程序分发，零系统依赖
-- **大目录也流畅** —— 虚拟化自绘文件网格 + 后台多线程缩略图引擎 + SQLite 缓存，十万级文件目录依旧滚动如丝
-- **看照片的方式很讲究** —— 四合一文件夹缩略图、8 种查看方式（瀑布流 / 详细信息表…）、1:1 像素长按查看、光标中心缩放
-- **动起来也拿手** —— 动态照片（Motion Photo）单击即播、GIF 逐帧步进、全屏胶卷画廊一页看尽整个目录
-- **整理不费劲** —— Ctrl+1~5 颜色标记、18 种筛选模式、16 列排序、以文搜图（本地 CLIP + OCR 语义检索，不出本机）
-- **细节控狂喜** —— CMYK 印刷口径渲染、JPEG 无损旋转裁剪、音频波形预览、PDF 直读、直方图与 EXIF 面板
-- **随身携带** —— 单目录便携、不写注册表；深浅双主题即点即换；中英双语 828 条全量翻译
 
 ---
 
@@ -101,15 +88,19 @@
 
 ## 📸 程序截图
 
-| 浏览器 · 三栏布局 | 查看器 · Enter 画面占满 |
-|:---:|:---:|
-| ![浏览器](docs/images/screenshot_browser.png) | ![查看器](docs/images/screenshot_viewer.png) |
+**浏览器（三栏布局）**
 
-*深色主题 · 标准测试图库下的实际运行画面，所有界面元素均为程序实时渲染。*
+![浏览器](docs/images/screenshot_browser.webp)
+
+**G 全屏预览（顶部胶片条）**
+
+![G 全屏预览](docs/images/screenshot_gfull.webp)
 
 ---
 
-## 🖼 支持格式
+## 🖼 支持预览的格式
+
+> **所有格式的文件都能浏览与管理**；下表列出的是支持**预览**（看图 / 播放 / 文档渲染）的格式。
 
 | 类别 | 覆盖 |
 |---|---|
@@ -126,14 +117,15 @@
 
 ### 便携版（推荐）
 
-从 [Releases](../../releases) 下载 `Gaze_1.0.0_Portable.zip`，解压到任意位置，双击 `Gaze.exe` 运行。
+从 [Releases](../../releases) 下载 `Gaze_1.2.0_Portable.zip`，解压到任意位置，双击 `Gaze.exe` 运行。
 
 - 所有设置保存在程序目录内的 `Gaze.ini`，缩略图缓存在 `thumbnails.db`
+- **无需导入、无需建立文件库**：目录即所见，打开就是浏览器
 - 不写注册表（仅首次可选的系统集成项），拷贝目录即完成迁移
 
 ### 安装版
 
-从 [Releases](../../releases) 下载 `Gaze_1.0.0_Setup.exe`，按向导安装。首次启动可选择把配置迁移到 `%APPDATA%`（程序目录只读、卸载保留用户配置）。
+从 [Releases](../../releases) 下载 `Gaze_1.2.0_Setup.exe`，按向导安装。首次启动可选择把配置迁移到 `%APPDATA%`（程序目录只读、卸载保留用户配置）。
 
 ### 从源码构建
 
@@ -187,6 +179,10 @@ cmake --build build -j
 - [FFmpeg](https://ffmpeg.org/) —— 音视频解码
 - [Ghostscript](https://ghostscript.com/) —— PDF 渲染
 - [jpegtran](https://jpegclub.org/) —— JPEG 无损操作
+- [XnView MP](https://www.xnview.com/en/xnviewmp/) —— 界面形态与交互的设计参考
+
+> 本项目受 **XnView MP** 启发，旨在作为一个轻量级的替代方案。
+> 致敬原作者 **Pierre-e Gougelet**！
 
 ---
 

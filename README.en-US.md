@@ -8,7 +8,7 @@
 
 简体中文 | [English](./README.en-US.md)
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue?style=flat-square)
+![Version](https://img.shields.io/badge/version-1.2.0-blue?style=flat-square)
 ![Platform](https://img.shields.io/badge/platform-Windows-0078D6?style=flat-square&logo=windows&logoColor=white)
 ![C++](https://img.shields.io/badge/C%2B%2B-17-00599C?style=flat-square&logo=cplusplus&logoColor=white)
 ![Qt](https://img.shields.io/badge/Qt-6.8%20LTS-41CD52?style=flat-square&logo=qt&logoColor=white)
@@ -16,22 +16,9 @@
 
 🔥 A lightweight open-source alternative inspired by XnView MP, rebuilt on a modern stack (C++17 / Qt 6.8 LTS) — high performance, comfort-first UX, and broad format coverage.
 
+### **No media library to build — unpack and it just works. Manage files of every format.**
+
 </div>
-
-> Inspired by **XnView MP** — this project aims to be its lightweight open-source counterpart, opening up more possibilities for users who want to customize their own image viewer.
-> Kudos to the original author, **Pierre-e Gougelet**!
-
----
-
-## ✨ Highlights
-
-- **Format coverage first** — 33 image extensions + 26 RAW formats (LibRaw statically linked) + AVIF / HEIC / JPEG XL; 28 video containers including RMVB and MXF; all decoders ship with the app, zero system dependencies
-- **Huge folders stay smooth** — virtualized custom-drawn file grid + background multi-threaded thumbnail engine + SQLite caching; six-digit file counts still scroll like butter
-- **Photo viewing done right** — four-in-one folder thumbnails, 8 view modes (waterfall / detail sheet…), long-press 1:1 pixel peek, cursor-centered zooming
-- **Motion handled too** — Motion Photos play on a single click, GIF frame-by-frame stepping, full-screen filmstrip gallery covering the whole folder
-- **Organizing without the grind** — Ctrl+1~5 color labels, 18 filter modes, 16 sortable columns, text-to-image search (local CLIP + OCR, nothing leaves your machine)
-- **For the detail-obsessed** — CMYK press-accurate rendering, lossless JPEG rotate/crop, audio waveform preview, built-in PDF, histogram & EXIF panel
-- **Truly portable** — single folder, no registry writes; instant light/dark theme switching; fully translated (828 strings, EN/ZH)
 
 ---
 
@@ -101,15 +88,19 @@
 
 ## 📸 Screenshots
 
-| Browser · three-pane layout | Viewer · Enter to fill the pane |
-|:---:|:---:|
-| ![Browser](docs/images/screenshot_browser.png) | ![Viewer](docs/images/screenshot_viewer.png) |
+**Browser (three-pane layout)**
 
-*Dark theme · actual runtime on a standard test-image library; every UI element is rendered live by the program.*
+![Browser](docs/images/screenshot_browser.webp)
+
+**G fullscreen preview (filmstrip on top)**
+
+![G fullscreen](docs/images/screenshot_gfull.webp)
 
 ---
 
-## 🖼 Supported formats
+## 🖼 Previewable formats
+
+> **Files of every format can be browsed and managed**; the table below lists the formats that support **preview** (images / playback / document rendering).
 
 | Category | Coverage |
 |---|---|
@@ -126,14 +117,15 @@
 
 ### Portable (recommended)
 
-Download `Gaze_1.0.0_Portable.zip` from [Releases](../../releases), extract anywhere, and run `Gaze.exe`.
+Download `Gaze_1.2.0_Portable.zip` from [Releases](../../releases), extract anywhere, and run `Gaze.exe`.
 
 - All settings are stored in `Gaze.ini` inside the program folder, with the thumbnail cache in `thumbnails.db`
+- **No import, no media library**: what you see is the folder — it's a browser the moment it opens
 - No registry writes (only optional first-run shell integration); migration is simply copying the folder
 
 ### Installer
 
-Download `Gaze_1.0.0_Setup.exe` from [Releases](../../releases) and follow the wizard. On first launch you can choose to move the configuration to `%APPDATA%` (the program folder stays read-only and user config survives uninstall).
+Download `Gaze_1.2.0_Setup.exe` from [Releases](../../releases) and follow the wizard. On first launch you can choose to move the configuration to `%APPDATA%` (the program folder stays read-only and user config survives uninstall).
 
 ### Build from source
 
@@ -187,6 +179,10 @@ Full table in [FEATURES.en-US.md §11](FEATURES.en-US.md).
 - [FFmpeg](https://ffmpeg.org/) — audio/video decoding
 - [Ghostscript](https://ghostscript.com/) — PDF rendering
 - [jpegtran](https://jpegclub.org/) — lossless JPEG operations
+- [XnView MP](https://www.xnview.com/en/xnviewmp/) — the design reference for the UI form and interactions
+
+> Inspired by **XnView MP**, this project aims to be a lightweight alternative.
+> Kudos to the original author, **Pierre-e Gougelet**!
 
 ---
 
