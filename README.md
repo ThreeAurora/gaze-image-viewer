@@ -12,11 +12,26 @@
 ![Platform](https://img.shields.io/badge/platform-Windows-0078D6?style=flat-square&logo=windows&logoColor=white)
 ![C++](https://img.shields.io/badge/C%2B%2B-17-00599C?style=flat-square&logo=cplusplus&logoColor=white)
 ![Qt](https://img.shields.io/badge/Qt-6.8%20LTS-41CD52?style=flat-square&logo=qt&logoColor=white)
-![License](https://img.shields.io/badge/license-private-red?style=flat-square)
+![License](https://img.shields.io/badge/license-GPL--3.0-blue?style=flat-square)
 
-🔥 界面与交互对标 XnView MP，以现代化的技术栈（C++17 / Qt 6.8 LTS）重新实现 —— 单进程、便携式、格式广度优先。
+🔥 受 XnView MP 启发的轻量级开源替代方案，以现代化技术栈（C++17 / Qt 6.8 LTS）重新实现 —— 高性能、高舒适度、格式广度优先。
 
 </div>
+
+> 灵感源自 **XnView MP**。本项目尝试做一个轻量级的开源替代：当您想按自己的习惯定制看图工具时，这里提供更多的可能。
+> 致敬原作者 **Pierre-e Gougelet**！
+
+---
+
+## ✨ 亮点速览
+
+- **格式广度优先** —— 33 种图片扩展名 + 26 种 RAW（LibRaw 静态编入）+ AVIF / HEIC / JPEG XL；28 种视频容器连 RMVB、MXF 都认；解码组件全随程序分发，零系统依赖
+- **大目录也流畅** —— 虚拟化自绘文件网格 + 后台多线程缩略图引擎 + SQLite 缓存，十万级文件目录依旧滚动如丝
+- **看照片的方式很讲究** —— 四合一文件夹缩略图、8 种查看方式（瀑布流 / 详细信息表…）、1:1 像素长按查看、光标中心缩放
+- **动起来也拿手** —— 动态照片（Motion Photo）单击即播、GIF 逐帧步进、全屏胶卷画廊一页看尽整个目录
+- **整理不费劲** —— Ctrl+1~5 颜色标记、18 种筛选模式、16 列排序、以文搜图（本地 CLIP + OCR 语义检索，不出本机）
+- **细节控狂喜** —— CMYK 印刷口径渲染、JPEG 无损旋转裁剪、音频波形预览、PDF 直读、直方图与 EXIF 面板
+- **随身携带** —— 单目录便携、不写注册表；深浅双主题即点即换；中英双语 828 条全量翻译
 
 ---
 
@@ -86,13 +101,11 @@
 
 ## 📸 程序截图
 
-**浏览器（三栏布局）**
+| 浏览器 · 三栏布局 | 查看器 · Enter 画面占满 |
+|:---:|:---:|
+| ![浏览器](docs/images/screenshot_browser.png) | ![查看器](docs/images/screenshot_viewer.png) |
 
-![浏览器](docs/images/screenshot_browser.png)
-
-**查看器（Enter 进入，画面占满）**
-
-![查看器](docs/images/screenshot_viewer.png)
+*深色主题 · 标准测试图库下的实际运行画面，所有界面元素均为程序实时渲染。*
 
 ---
 
@@ -126,7 +139,7 @@
 
 ```
 依赖：CMake ≥ 3.16、Qt 6.8.3 (win64_mingw)、MinGW 13.1.0 (SEH)
-外部库：ffmpeg / Ghostscript / jpegtran 已随仓库 vendor/ 目录附带；LibRaw 位于 thirdparty/
+外部库：ffmpeg / Ghostscript / jpegtran 请从官方渠道获取并放置到构建期望的目录；LibRaw 位于 thirdparty/
 ```
 
 ```bash
@@ -134,7 +147,7 @@ cmake -S . -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j
 ```
 
-构建脚本会自动同步 `assets/` 与 `vendor/` 到构建目录，产物直接可运行。
+图标资源由 `tools/fetch_mdi_icons.py` / `tools/fetch_lucide_icons.py` 从上游下载渲染（构建前运行即可再生成），构建脚本会自动同步资源到构建目录，产物直接可运行。
 
 ---
 
@@ -162,9 +175,8 @@ cmake --build build -j
 
 ## 📜 其他说明
 
-- **构建产物入库**：本仓库同时提交编译产物（`build_qt68/Gaze.exe`），便于直接取用验证
-- **开发账本**：任务规格与进度的唯一账本是 [`todo.md`](todo.md)，功能全表见 [`FEATURES.md`](FEATURES.md)，设置键逐键状态见 [`SETTINGS_MATRIX.md`](SETTINGS_MATRIX.md)
-- ⚠️ **公开前须知（内部）**：`src/assets/` 含 144 个自 XnView 提取的图标，公开/开源前必须整体替换
+- **图标资产**：应用图标来自 [Material Design Icons](https://materialdesignicons.com/) 与 [Lucide](https://lucide.dev/)（均为宽松许可、可再分发），部分为自绘；由 `tools/` 下脚本下载渲染，构建前运行即可再生成
+- **构建产物不入库**：`build_qt68/` 等编译产物与第三方运行库不随仓库分发，按上述流程自行构建
 
 ---
 
@@ -175,10 +187,6 @@ cmake --build build -j
 - [FFmpeg](https://ffmpeg.org/) —— 音视频解码
 - [Ghostscript](https://ghostscript.com/) —— PDF 渲染
 - [jpegtran](https://jpegclub.org/) —— JPEG 无损操作
-- [XnView MP](https://www.xnview.com/en/xnviewmp/) —— 界面形态与交互的设计参考
-
-> 本项目受 **XnView MP** 启发，旨在作为一个轻量级的替代方案。
-> 致敬原作者 **Pierre-e Gougelet**！
 
 ---
 
@@ -188,4 +196,4 @@ cmake --build build -j
 
 ## 📄 License
 
-私有项目，暂未授权公开分发。如需使用请与作者联系。
+本项目以 [GPL-3.0](./LICENSE) 许可发布。图标资产来自 Material Design Icons 与 Lucide（宽松许可，可再分发），部分为自绘。

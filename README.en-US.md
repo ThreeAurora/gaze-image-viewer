@@ -12,11 +12,26 @@
 ![Platform](https://img.shields.io/badge/platform-Windows-0078D6?style=flat-square&logo=windows&logoColor=white)
 ![C++](https://img.shields.io/badge/C%2B%2B-17-00599C?style=flat-square&logo=cplusplus&logoColor=white)
 ![Qt](https://img.shields.io/badge/Qt-6.8%20LTS-41CD52?style=flat-square&logo=qt&logoColor=white)
-![License](https://img.shields.io/badge/license-private-red?style=flat-square)
+![License](https://img.shields.io/badge/license-GPL--3.0-blue?style=flat-square)
 
-🔥 Modeled after XnView MP, rebuilt on a modern stack (C++17 / Qt 6.8 LTS) — single process, fully portable, format-coverage first.
+🔥 A lightweight open-source alternative inspired by XnView MP, rebuilt on a modern stack (C++17 / Qt 6.8 LTS) — high performance, comfort-first UX, and broad format coverage.
 
 </div>
+
+> Inspired by **XnView MP** — this project aims to be its lightweight open-source counterpart, opening up more possibilities for users who want to customize their own image viewer.
+> Kudos to the original author, **Pierre-e Gougelet**!
+
+---
+
+## ✨ Highlights
+
+- **Format coverage first** — 33 image extensions + 26 RAW formats (LibRaw statically linked) + AVIF / HEIC / JPEG XL; 28 video containers including RMVB and MXF; all decoders ship with the app, zero system dependencies
+- **Huge folders stay smooth** — virtualized custom-drawn file grid + background multi-threaded thumbnail engine + SQLite caching; six-digit file counts still scroll like butter
+- **Photo viewing done right** — four-in-one folder thumbnails, 8 view modes (waterfall / detail sheet…), long-press 1:1 pixel peek, cursor-centered zooming
+- **Motion handled too** — Motion Photos play on a single click, GIF frame-by-frame stepping, full-screen filmstrip gallery covering the whole folder
+- **Organizing without the grind** — Ctrl+1~5 color labels, 18 filter modes, 16 sortable columns, text-to-image search (local CLIP + OCR, nothing leaves your machine)
+- **For the detail-obsessed** — CMYK press-accurate rendering, lossless JPEG rotate/crop, audio waveform preview, built-in PDF, histogram & EXIF panel
+- **Truly portable** — single folder, no registry writes; instant light/dark theme switching; fully translated (828 strings, EN/ZH)
 
 ---
 
@@ -86,13 +101,11 @@
 
 ## 📸 Screenshots
 
-**Browser (three-pane layout)**
+| Browser · three-pane layout | Viewer · Enter to fill the pane |
+|:---:|:---:|
+| ![Browser](docs/images/screenshot_browser.png) | ![Viewer](docs/images/screenshot_viewer.png) |
 
-![Browser](docs/images/screenshot_browser.png)
-
-**Viewer (Enter to enter, image fills the pane)**
-
-![Viewer](docs/images/screenshot_viewer.png)
+*Dark theme · actual runtime on a standard test-image library; every UI element is rendered live by the program.*
 
 ---
 
@@ -126,7 +139,7 @@ Download `Gaze_1.0.0_Setup.exe` from [Releases](../../releases) and follow the w
 
 ```
 Dependencies: CMake ≥ 3.16, Qt 6.8.3 (win64_mingw), MinGW 13.1.0 (SEH)
-External libraries: ffmpeg / Ghostscript / jpegtran are bundled with the repo under vendor/; LibRaw sits under thirdparty/
+External libraries: obtain ffmpeg / Ghostscript / jpegtran from official channels and place them where the build expects; LibRaw sits under thirdparty/
 ```
 
 ```bash
@@ -134,7 +147,7 @@ cmake -S . -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j
 ```
 
-The build script automatically syncs `assets/` and `vendor/` into the build directory, so the output runs as-is.
+Icon assets are downloaded and rendered by `tools/fetch_mdi_icons.py` / `tools/fetch_lucide_icons.py` (run them before building to regenerate); the build script syncs resources into the build directory, so the output runs as-is.
 
 ---
 
@@ -162,9 +175,8 @@ Full table in [FEATURES.en-US.md §11](FEATURES.en-US.md).
 
 ## 📜 Notes
 
-- **Build artifacts are committed** (`build_qt68/Gaze.exe`) for direct verification
-- **Development ledger**: [`todo.md`](todo.md) is the single ledger for task specs and progress; the full feature table lives in [`FEATURES.en-US.md`](FEATURES.en-US.md); per-key settings status in [`SETTINGS_MATRIX.md`](SETTINGS_MATRIX.md)
-- ⚠️ **Before going public (internal)**: `src/assets/` contains 144 icons extracted from XnView — they must be fully replaced before any public/open-source release
+- **Icon assets**: application icons come from [Material Design Icons](https://materialdesignicons.com/) and [Lucide](https://lucide.dev/) (both permissively licensed and redistributable), plus some hand-drawn ones; rendered by the scripts under `tools/`, regenerate before building
+- **Build artifacts are not committed**: compiled output (`build_qt68/`) and third-party runtime libraries are not distributed with the repo; build from source as described above
 
 ---
 
@@ -175,10 +187,6 @@ Full table in [FEATURES.en-US.md §11](FEATURES.en-US.md).
 - [FFmpeg](https://ffmpeg.org/) — audio/video decoding
 - [Ghostscript](https://ghostscript.com/) — PDF rendering
 - [jpegtran](https://jpegclub.org/) — lossless JPEG operations
-- [XnView MP](https://www.xnview.com/en/xnviewmp/) — design reference for the interface and interactions
-
-> This project is inspired by **XnView MP** and aims to serve as a lightweight alternative.
-> Hats off to the original author, **Pierre-e Gougelet**!
 
 ---
 
@@ -188,4 +196,4 @@ This project is a personal-use tool intended for learning and exchange purposes 
 
 ## 📄 License
 
-Private project, not yet licensed for public distribution. Please contact the author if you wish to use it.
+Released under the [GPL-3.0](./LICENSE). Icon assets come from Material Design Icons and Lucide (permissively licensed, redistributable), plus some hand-drawn ones.
