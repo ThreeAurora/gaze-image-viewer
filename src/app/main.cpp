@@ -262,19 +262,29 @@ static QLocalServer* startSingleInstanceListener(QWidget* w) {
 }
 
 int main(int argc, char *argv[]) {
-    // #101 AV1 黑屏:FFmpeg 原生 av1 解码器只是硬解外壳,拿不到 hwaccel 不会回退软解
-    // (实测 `ffmpeg -c:v av1 -i av1.mp4` exit=69 并打印 "platform doesn't support
-    // hardware accelerated AV1 decoding";本机 RTX 2060 是 Turing,无 AV1 硬解)。
-    // 唯一的软解通路是随 avcodec 一起换入的 libdav1d,而它要求 Qt 别递硬件设备:
-    // 同一份新 avcodec,默认(允许硬解)零帧、none 满帧,两件事缺一不可。
-    // 代价:所有编码都走软解——实测预览场景首帧反而快 2~3 倍(1080p H.264 306→58ms)。
-    // 位置要求:FFmpeg 插件首次载入时读一次,故必须在 QApplication 之前。
-    qputenv("QT_FFMPEG_DECODING_HW_DEVICE_TYPES", "none");
-
+    // #101 AV1 黑屏的历史教训(保留备查):FFmpeg 原生 av1 解码器只是硬解外壳,
+    // 拿不到 hwaccel 不会回退软解(实测 "platform doesn't support hardware
+    // accelerated AV1 decoding";RTX 2060 是 Turing,无 AV1 硬解),当时为救 AV1
+    // 全盘禁了硬解(QT_FFMPEG_DECODING_HW_DEVICE_TYPES=none)。
+    // 2026-09-08 重测(探针实测,Qt 6.8.3 + RTX 2060):
+    //   1080p H264 首帧  none=58ms  vs d3d11va=308ms(浏览首帧软解仍占优)
+    //   4K HEVC     首帧  none=135ms vs d3d11va=393ms,帧率两者都满帧
+    //   8K HDR HEVC      软解 Stalled 卡死(用户实测 pos 不进),硬解是唯一出路
+    //   AV1              d3d11va 零帧复现("Failed setup for format d3d11")
+    // 结论:按设置开关(默认 d3d11va)——4K/8K/HDR 用户受益;AV1 视频、
+    // 无硬解 GPU 的用户在设置里关掉即可。AV1 零帧的自动转码自救另行排期。
+    // 位置要求:FFmpeg 插件首次创建 QMediaPlayer 时才加载,故 QApplication
+    // 之后、主窗构造之前读 ini 并 qputenv 仍然赶得上(与旧注释相反)。
     QApplication app(argc, argv);
     app.setApplicationName("Gaze");
     app.setApplicationDisplayName("Gaze");
     app.setWindowIcon(QIcon(":/Gaze.png"));
+
+    // 视频硬解开关(设置→视频):默认开。必须在任何 QMediaPlayer 创建之前生效。
+    qputenv("QT_FFMPEG_DECODING_HW_DEVICE_TYPES",
+            AppSettings::instance().get("Video/hardwareDecoding", true).toBool()
+                ? QByteArrayLiteral("d3d11va")
+                : QByteArrayLiteral("none"));
 
     // 旧版配置迁移: gaze.ini -> Gaze.ini (仅当新名不存在而旧名存在时一次性改名)
     {

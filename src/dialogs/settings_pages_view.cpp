@@ -94,6 +94,10 @@ QWidget* SettingsDialog::pageViewer() {
 QWidget* SettingsDialog::pageViewerOther() {
     auto* fPlay = new QFormLayout;
     fPlay->setVerticalSpacing(6);
+    // 2026-09-08:硬解开关(main.cpp 据此设 QT_FFMPEG_DECODING_HW_DEVICE_TYPES)。
+    // 默认开:4K/8K/HDR 软解必卡(实测 Stalled);AV1 在无 AV1 硬解的显卡
+    // (Turing 及更早 N卡/老 A卡/老核显)上零帧,需手动关——重启生效。
+    fPlay->addRow(chk("Video/hardwareDecoding", gazeTr("视频硬件解码(4K/8K/HDR 必需;AV1 视频请关闭,重启生效)"), true));
     fPlay->addRow(chk("Viewer/autoPlayVideo", gazeTr("自动播放(视频)"), true));
     fPlay->addRow(gazeTr("默认音量(%)"),
         spin("Viewer/defaultVolume", 0, 100, 100));
