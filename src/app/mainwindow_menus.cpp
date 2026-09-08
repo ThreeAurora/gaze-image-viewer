@@ -147,7 +147,7 @@ void MainWindow::createMenubar() {
     auto* fsAct = viewMenu->addAction(IconLib::appIcon("cmd_fullscreen"),
         gazeTr("界面全屏"), QKeySequence("F11"), this, [this]() {
             if (m_fullView) { exitFullView(); return; }   // F11 也得把全屏预览整个退干净(#154)
-            if (isFullScreen()) showNormal(); else enterFullscreen();
+            if (isFullScreen()) exitFullscreen(); else enterFullscreen();
         });
     fsAct->setCheckable(true);
     // #234:全屏预览的 G 键用 \t 右对齐列显示(不挂 setShortcut——真挂上会连文本框

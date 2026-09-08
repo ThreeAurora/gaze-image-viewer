@@ -572,10 +572,12 @@ void MainWindow::viewerBack() {
     if (m_fullView) { exitFullView(); return; }
     if (m_viewerMode) {
         // #108:全屏里 ESC 先退全屏,停在看图状态 —— 一步跳回浏览器会让人以为图丢了
-        if (isFullScreen()) { showNormal(); return; }
+        if (isFullScreen()) { exitFullscreen(); return; }
         if (st.get("Keyboard/escCloseViewer", true).toBool()) toggleViewer();
         return;
     }
-    if (isFullScreen() && st.get("Keyboard/escCloseBrowser", false).toBool())
-        showNormal();
+    // 2026-09-08 用户令:浏览器 F11 全屏 ESC 退全屏成为默认(与查看器全屏同款
+    // "先退全屏不跳层"),设置仍可关掉
+    if (isFullScreen() && st.get("Keyboard/escCloseBrowser", true).toBool())
+        exitFullscreen();
 }

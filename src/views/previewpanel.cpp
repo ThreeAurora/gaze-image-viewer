@@ -359,7 +359,18 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
         add(QStyle::SP_DialogResetButton, gazeTr("适应窗口"),
             [this]() { fitAuto(); });
         add(QStyle::SP_DialogCloseButton, gazeTr("退出全屏"),
-            [this]() { if (inFullscreen()) window()->showNormal(); });
+            [this]() {
+                // 退 F11 界面全屏走 MainWindow::exitFullscreen(还原进前窗口状态,
+                // 最大化不被打回普通);invokeOnWindow 是 events.cpp 的文件级
+                // static,这里按同一套做法就地沿父链找有该方法的对象元调用
+                if (!inFullscreen()) return;
+                for (QObject* w = this; w; w = w->parent()) {
+                    if (w->metaObject()->indexOfMethod("exitFullscreen()") >= 0) {
+                        QMetaObject::invokeMethod(w, "exitFullscreen");
+                        return;
+                    }
+                }
+            });
     }
 
     // ── Viewer/panTool:右下角平移导航小窗(图溢出视口时才出现) ──

@@ -91,7 +91,7 @@ void MainWindow::requestSwitchMode(const QString& triggerKey) {
 void MainWindow::cycleMode(int spec) {
     switch (spec) {
     case 0:   // 浏览器↔全屏 | 查看器↔全屏:当前模式内切换全屏
-        if (isFullScreen()) showNormal(); else enterFullscreen();
+        if (isFullScreen()) exitFullscreen(); else enterFullscreen();
         return;
     case 1:   // 浏览器↔查看器
         toggleViewer();
@@ -99,14 +99,14 @@ void MainWindow::cycleMode(int spec) {
     case 2: { // 浏览器→全屏→查看器→浏览器
         if (!isFullScreen() && !m_viewerMode) { toggleViewer(); toggleViewer(); enterFullscreen(); }
         else if (isFullScreen() && !m_viewerMode) { toggleViewer(); }
-        else if (m_viewerMode && isFullScreen()) { showNormal(); toggleViewer(); }
+        else if (m_viewerMode && isFullScreen()) { exitFullscreen(); toggleViewer(); }
         else { enterFullscreen(); }
         return;
     }
     case 3: { // 浏览器→查看器→全屏→浏览器
         if (!m_viewerMode && !isFullScreen()) toggleViewer();
         else if (m_viewerMode && !isFullScreen()) enterFullscreen();
-        else { if (isFullScreen()) showNormal(); if (m_viewerMode) toggleViewer(); }
+        else { if (isFullScreen()) exitFullscreen(); if (m_viewerMode) toggleViewer(); }
         return;
     }
     default:

@@ -672,6 +672,7 @@ void MainWindow::onSizeChanged(int value) {
 
 // Fullscreen/dualMonitor:开且有第二块屏时,全屏窗口落到第二屏(默认关=当前屏)
 void MainWindow::enterFullscreen() {
+    if (!isFullScreen()) m_preFsState = windowState();   // 记住进前状态(最大化/普通),退出时还原
     if (AppSettings::instance().get("Fullscreen/dualMonitor", false).toBool()) {
         const QList<QScreen*> screens = QApplication::screens();
         if (screens.size() > 1) {
@@ -682,6 +683,16 @@ void MainWindow::enterFullscreen() {
         }
     }
     showFullScreen();
+}
+
+// F11 界面全屏的唯一退出出口(2026-09-08 用户报:ESC 退全屏丢了原布局)。
+// 旧路径一律 showNormal(),把进前是最大化的窗口打回普通;G 全屏 2026-09-02
+// 已用"进前记状态、退出还原"治过同样的病(m_preFullViewState),这里是
+// 界面全屏的同一味药。G 全屏在场时让位给它的精确还原。
+void MainWindow::exitFullscreen() {
+    if (!isFullScreen()) return;
+    if (m_fullView) { exitFullView(); return; }
+    setWindowState(m_preFsState);
 }
 
 void MainWindow::openFullscreen(const QString& path) {

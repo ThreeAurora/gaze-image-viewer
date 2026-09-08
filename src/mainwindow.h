@@ -44,6 +44,7 @@ public:
     Q_INVOKABLE void openFullscreen(const QString &path);  // 右键"全屏":导航到文件并全屏
     Q_INVOKABLE void revealFile(const QString &path);      // 以文搜图结果:定位到目录并选中
     Q_INVOKABLE void addFavorite(const QString &path);     // #243 右键"添加到收藏夹"(网格/树菜单经元调用进来)
+    Q_INVOKABLE void exitFullscreen();  // F11 界面全屏唯一出口:还原进前窗口状态(最大化不再被 showNormal 打回普通,2026-09-08)
     void enterFullscreen();          // Fullscreen/dualMonitor:可选落到第二显示器
     void renameCurrent();            // F2:按 FileOps/renameDialog 决定对话框/就地改
     // #136:F2/F3 的统一入口 —— 焦点在文件树就改树里那一行,否则改文件页选中项
@@ -266,6 +267,7 @@ private:
     bool m_fullView = false;     // #154 全屏预览中(独立于查看器模式,不碰标签页)
     QList<int> m_fullViewSplitter;  // 进全屏预览前的分栏宽度(退出时原样恢复)
     Qt::WindowStates m_preFullViewState = Qt::WindowNoState; // 进全屏预览前的窗口状态(2026-09-02:退出时恢复最大化,不再被 showNormal 打回普通)
+    Qt::WindowStates m_preFsState = Qt::WindowNoState;       // 进 F11 界面全屏前的窗口状态(退出还原,与 G 全屏同一思路,2026-09-08)
     int  m_redFilterMode = 0; // 红标筛选三态:0全部 1仅红标 2仅非红标
     QToolButton* m_redBtn = nullptr; // 红标三态钮,蓝色背景指示器由 syncFilterIndicators 独家维护(#107)
     QToolButton* m_btnViewToggle = nullptr; // #266:缩略图↔详细信息两态切换钮(勾选态由 syncViewModeUI 维护)
