@@ -23,6 +23,7 @@
 #include <QStatusBar>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <QFontMetrics>
 #include <QToolBar>
 #include <QComboBox>
 #include <QMessageBox>
@@ -227,19 +228,29 @@ bool MainWindow::paneVisible(const char* paneId) const {
 // XnView 式面板标题条:左标题 + 右关闭 X
 QWidget* MainWindow::createPaneHeader(const QString& title, const char* paneId) {
     auto* h = new QWidget;
-    h->setFixedHeight(28);   // 12px 字 + 上下各 8px 余量
     h->setObjectName("paneHdr");   // 标题条样式在应用级 QSS(#89 收敛)
     auto* hl = new QHBoxLayout(h);
     hl->setContentsMargins(8, 0, 3, 0);
     hl->setSpacing(0);
     auto* lbl = new QLabel(title);
-    // 字体必须显式给:QDockWidget 自定义标题条里的控件拿不到应用级 QSS 的
+    // 字体必须显式给:QDockWidget 自定义标题条里的控件吃不到应用级 QSS 的
     // font-size(探针实测 label 字体 16px、几何正常却仍裁字),dock 外的
-    // 同名标题却正常 —— 显式像素字体一并喂饱两种宿主
+    // 同名标题却正常 —— setFont + label 局部 QSS 双保险把字号焊死在 12px
+    // (局部 QSS 优先级最高,防止任何宿主样式插手)
     QFont hdrFont = lbl->font();
     hdrFont.setPixelSize(12);
     lbl->setFont(hdrFont);
+    lbl->setStyleSheet("font-size: 12px;");
     lbl->setAlignment(Qt::AlignVCenter);
+    // 真根因(2026-09-08 截屏实测确认):QDockWidget 给标题条分配的高度用的是
+    // titleBarWidget 的 sizeHint(),setFixedHeight 根本不进它的账 —— QWidget 带
+    // 布局时 sizeHint 委托给 layout,高度只由内容(×钮 18px)决定 ≈18px,条被压到
+    // 18px,label 按字体度量 ~21px 向上溢出条外,文字上半截被上方菜单栏盖住
+    // (即"文件夹/Folder 只剩半截"的元凶)。修法:把高度直接焊进 label
+    // (决定 layout sizeHint 的那颗螺丝),条高随 sizeHint 走。
+    const int hdrH = qMax(28, QFontMetrics(hdrFont).height() + 16);
+    lbl->setFixedHeight(hdrH);   // ← 决定 layout sizeHint,进而决定标题条实际高度
+    h->setFixedHeight(hdrH);     // 与 sizeHint 对齐,双保险(min/max 也收紧)
     // 不用 600 字重:雅黑只有 400/700 两档真字重,600 会被就近硬凑,
     // 12px 小字上笔画发虚;全应用其余文字均为常规字重且清晰
     // (底色/字色见应用级 QSS 的 QWidget#paneHdr 规则)
