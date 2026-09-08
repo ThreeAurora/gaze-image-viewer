@@ -2234,7 +2234,7 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
     </message>
     <message>
         <source>按文件类型筛选(维度内多选=任一命中)</source>
-        <translation></translation>
+        <translation>Filter by file type (multiple picks in one dimension = any match)</translation>
     </message>
     <message>
         <source>按时间</source>
@@ -2246,7 +2246,7 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
     </message>
     <message>
         <source>按颜色标记筛选(维度内多选=任一命中)</source>
-        <translation></translation>
+        <translation>Filter by color label (multiple picks in one dimension = any match)</translation>
     </message>
     <message>
         <source>排序</source>
@@ -3233,7 +3233,7 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     </message>
     <message>
         <source>空</source>
-        <translation></translation>
+        <translation>Empty</translation>
     </message>
     <message>
         <source>空。右键文件或文件夹 → 添加到收藏夹</source>
@@ -3628,6 +3628,10 @@ Once set manually, thumbnails scale to the pane edge when resizing, but the colu
     <message>
         <source>视频提取帧位置(%,0=第 1 秒)</source>
         <translation>Video frame grab position (%, 0 = second 1)</translation>
+    </message>
+    <message>
+        <source>视频硬件解码(4K/8K/HDR 必需;AV1 视频请关闭,重启生效)</source>
+        <translation>Hardware video decoding (required for 4K/8K/HDR; turn off for AV1 videos, takes effect after restart)</translation>
     </message>
     <message>
         <source>解码失败</source>
@@ -4079,7 +4083,7 @@ Continue?</translation>
     </message>
     <message>
         <source>颜色标记</source>
-        <translation></translation>
+        <translation>Color labels</translation>
     </message>
     <message>
         <source>高</source>
