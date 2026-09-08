@@ -509,8 +509,27 @@ bool PreviewPanel::eventFilter(QObject* obj, QEvent* event) {
         auto* me = static_cast<QMouseEvent*>(event);
         if (me->button() == Qt::LeftButton) {
             if (event->type() == QEvent::MouseButtonDblClick) {
-                invokeOnWindow(this, "toggleViewer()");
+                // 双击 = 与图片区同一套分流(previewDoubleClicked):
+                //   G 全屏 → 退全屏;查看器 → 关掉当前这张标签(关到最后一张
+                //   自动回浏览器);浏览器 → 开签进查看器。
+                // 旧写法直通 toggleViewer,而 toggleViewer 的退出分支"标签全
+                // 保留" —— 双击视频回到浏览器后视频标签还挂着,没走图片区
+                // #227 定下的关签语义(2026-09-08 用户报)。
+                // Qt 事件序列 press→release→dblclick 里第一下 press 必然先
+                // 走播/停切换(单次点击语义),那一下对双击是纯副产物:播放中
+                // 双击进查看器,视频就成了暂停态还进得去(2026-09-08 用户报)。
+                // 同文件切标签不重载(currentChanged 的"屏上已是它就别再解"),
+                // 播放位置原地保住 —— 这里只把播/停态还回按下前的样子,双击
+                // 就真正只是"换地方看",播放无缝延续。
+                if (m_player) {
+                    const bool playing =
+                        m_player->playbackState() == QMediaPlayer::PlayingState;
+                    if (playing != m_videoPrePressPlaying) togglePlayPause();
+                }
+                invokeOnWindow(this, "previewDoubleClicked()");
             } else {
+                m_videoPrePressPlaying =
+                    m_player && m_player->playbackState() == QMediaPlayer::PlayingState;
                 togglePlayPause();
             }
             return true;
