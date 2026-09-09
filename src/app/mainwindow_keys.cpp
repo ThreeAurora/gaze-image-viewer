@@ -89,9 +89,14 @@ bool MainWindow::dropOnValidTarget(const QPoint& pos) const {
 //   · 树/网格里"被拖文件所在目录"节点 → 自己移/复制到自己 → 禁止(**含外部拖入**)
 //   · 被拖目录本身(self-drop:把 A 夹拖到树里的 A 夹上)→ 禁止
 bool MainWindow::dropTargetMeaningful(const QPoint& pos, const QDropEvent* e) const {
-    const bool internal = (e->source() == m_fileGrid);
     const QMimeData* md = e->mimeData();
     if (!md || !md->hasUrls()) return false;
+    // 2026-09-09 排查:内部起拖的判定不能只信 e->source() —— Qt 文档明确它可能
+    // 返回 nullptr(Windows/OLE 路径尤其),一旦为 null,内部拖拽会被当成"外部
+    // 拖入",文件页空白处于是放行(禁止光标消失,用户报"修了又失效")。
+    // 起拖端在 FileGrid::maybeStartDrag 里写入自定义格式做可靠标记,source() 只作回退。
+    const bool internal = md->hasFormat(QStringLiteral("application/x-gaze-internal-drag"))
+                          || (e->source() == m_fileGrid);
 
     // 落点必须命中一个文件夹(网格卡片或树节点),否则没地方可挪
     QString dropInto;
@@ -127,6 +132,22 @@ void MainWindow::dragMoveEvent(QDragMoveEvent* e) {
     if (!(e->mimeData() && e->mimeData()->hasUrls())) { hideDragHint(); return; }
     const QPoint pos = e->position().toPoint();
     const bool valid = dropOnValidTarget(pos) && dropTargetMeaningful(pos, e);
+    // 探针(2026-09-09):定位"禁止光标失效"——记录落点/来源/内部判定/结论。
+    // src=null 或 internal 与预期不符,即证明 source() 不可靠(MIME 标记兜底)。
+    // 节流:每 8 次 move 记一条,避免拖动过程刷爆日志。
+    {
+        static int s_dragMoveTick = 0;
+        if (++s_dragMoveTick % 8 == 0) {
+            QWidget* ch = childAt(pos);
+            Logger::event(QStringLiteral("dragMove: pos=%1,%2 child=%3 src=%4 internal=%5 valid=%6")
+                .arg(pos.x()).arg(pos.y())
+                .arg(ch ? QString::fromLatin1(ch->metaObject()->className()) : QStringLiteral("null"))
+                .arg(e->source() ? QString::fromLatin1(e->source()->metaObject()->className()) : QStringLiteral("null"))
+                .arg(e->mimeData()->hasFormat(QStringLiteral("application/x-gaze-internal-drag"))
+                     || e->source() == m_fileGrid)
+                .arg(valid));
+        }
+    }
     if (valid) {
         e->acceptProposedAction();
         updateDragHint(pos, true);              // 2026-09-02:光标旁"复制/移动"浮标

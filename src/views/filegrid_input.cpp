@@ -311,6 +311,9 @@ bool FileGrid::maybeStartDrag(const QPoint& pos) {
     for (const QString& p : paths)
         urls << QUrl::fromLocalFile(QDir::fromNativeSeparators(p));
     mime->setUrls(urls);
+    // 2026-09-09:内部起拖的可靠标记。落点端靠它区分"自己拖的"与"资源管理器
+    // 拖入",不再依赖 QDropEvent::source()(Qt 文档:可能返回 nullptr)。
+    mime->setData(QStringLiteral("application/x-gaze-internal-drag"), QByteArrayLiteral("1"));
 
     auto* drag = new QDrag(this);
     drag->setMimeData(mime);
