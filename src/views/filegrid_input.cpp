@@ -256,6 +256,13 @@ QString FileGrid::tipFor(int idx) const {
 // 拖放(#81)落点判定与追加选中
 int FileGrid::hitTest(const QPoint& canvasPos) { return indexAt(canvasPos); }
 
+// 祖先控件坐标 → 画布内容坐标 → 条目。拖放落点判定的正确入口:
+// m_canvas 是 QScrollArea 的内容控件,其局部坐标即内容坐标(与滚动无关),
+// mapFrom 自动跨越视口与滚动偏移。直接 mapFrom(滚动容器) 会在滚动后错位。
+int FileGrid::hitTestFrom(const QPoint& ancestorPos, const QWidget* from) {
+    return m_canvas ? indexAt(m_canvas->mapFrom(from, ancestorPos)) : -1;
+}
+
 QString FileGrid::pathAt(int idx) const {
     return (idx >= 0 && idx < static_cast<int>(m_entries.size())) ? m_entries[idx].path
                                                                   : QString();

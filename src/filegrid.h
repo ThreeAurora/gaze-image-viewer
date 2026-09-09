@@ -110,6 +110,10 @@ public:
     QString currentDir() const { return m_currentDir; }   // #203 胶片条对账数据来源
     QStringList allFilePaths() const;   // #225 胶片条数据源:目录全部文件(跳目录行,按 showHidden)
     int    hitTest(const QPoint& canvasPos);  // 画布坐标 → 条目序号(拖放落点判定)
+    // 任意祖先控件坐标(如主窗口) → 条目序号:内部换算到画布内容坐标,自动含
+    // 滚动补偿。2026-09-09 拖放禁止光标回归的根因——调用方用 mapFrom(滚动容器)
+    // 得到视口坐标,列表滚动后与内容坐标差一个滚动量,落点解析整体钉在列表顶部。
+    int    hitTestFrom(const QPoint& ancestorPos, const QWidget* from);
     QString neighborOf(const QString& path, int delta) const;  // 相邻文件路径(预读用)
 
     // 选择扩展(编辑菜单)
