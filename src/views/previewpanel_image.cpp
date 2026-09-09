@@ -197,9 +197,10 @@ void PreviewPanel::showImage(const QString& path) {
         return;
     }
 
-    // Viewer/cacheBehind(默认开)= 已定版的"保持上一张画面直到新图就绪";
-    // 关掉则立即清空,解码期间露出背景色
-    if (!pp_impl::s_bool("Viewer/cacheBehind", true)) {
+    // Viewer/cacheBehind:开=保持上一张画面直到新图就绪(无缝,但慢盘/大图会先
+    // 看到"别的文件"好几秒);2026-09-09 用户判定后者是 bug,默认改为立即清空,
+    // 解码期间露背景色。想要无缝体验的可在设置里打开该项。
+    if (!pp_impl::s_bool("Viewer/cacheBehind", false)) {
         delete m_origPix;
         m_origPix = nullptr;
         m_imgLabel->clear();

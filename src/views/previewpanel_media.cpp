@@ -164,6 +164,15 @@ void PreviewPanel::showVideo(const QString& path) {
     }
 
     setupPlayer();
+    if (!m_player) {
+        // 媒体栈冷启动门闩挂起了本次装载(FFmpeg DLL 未预热,1~3 秒后 replay)。
+        // 此时绝不能把视频面留着:它露的是上一路的末帧,用户看到的就是
+        // "双击视频却打开了别的文件"(2026-09-09 用户报)。藏起来 + 升遮罩,
+        // 屏幕上只剩父窗口底色,replay 后正常走首帧 reveal。
+        raiseVideoCover();
+        QTimer::singleShot(0, this, [this]() { syncVideoChildren(); });
+        return;
+    }
     if (m_player) {
         ensureVideoWidget();          // 复用同一 QVideoWidget(切视频不重建)
         applyVideoBackdrop();         // 底色按当前模式/主题取(全屏恒黑,浅色浏览器=白)
