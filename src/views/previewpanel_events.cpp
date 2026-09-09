@@ -100,8 +100,10 @@ void PreviewPanel::resizeEvent(QResizeEvent* event) {
 void PreviewPanel::mousePressEvent(QMouseEvent* event) {
     if (event->button() == Qt::LeftButton) m_lastPressTs = event->timestamp();
     if (event->button() == Qt::LeftButton && m_mode == "image" && m_origPix) {
-        // 动态照片:单击=重播动态部分(临时 1:1 放大只属于普通图片)
-        if (m_liveInfo) { playLivePhoto(); event->accept(); return; }
+        // 动态照片:单击=重播动态部分(临时 1:1 放大只属于普通图片)。
+        // 2026-09-09 用户令:Ctrl+滚轮放大过(m_ctrlZoomed)就改走普通照片的左键
+        // —— 临时 1:1 / 拖动平移,不再"一点就继续播放",避免缩放正查看细节时误播
+        if (m_liveInfo && !m_ctrlZoomed) { playLivePhoto(); event->accept(); return; }
         // 左键动作按修饰符查配置(设置→鼠标;0=缩放与移动 1=什么都不做)
         const Qt::KeyboardModifiers mods = QApplication::keyboardModifiers();
         const char* key = "Mouse/leftNone";
