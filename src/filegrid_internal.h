@@ -115,7 +115,8 @@ protected:
     void mouseReleaseEvent(QMouseEvent* ev) override {
         const int i = m_g->indexAt(ev->pos());
         if (ev->button() == Qt::LeftButton) {
-            if (i >= 0) m_g->onCanvasRelease(i);
+            if (m_g->m_rubberActive) { m_g->endRubber(ev->pos()); }
+            else if (i >= 0) m_g->onCanvasRelease(i);
         } else if (ev->button() == Qt::MiddleButton) {
             if (i >= 0) m_g->onCanvasMiddle(i);
         }
@@ -129,10 +130,23 @@ protected:
     void mousePressEvent(QMouseEvent* ev) override {
         // 拖出起点:先让 FileGrid 记住按下位置与条目,移动够距离才发起拖拽,
         // 避免单击选中被误判成拖文件
-        if (ev->button() == Qt::LeftButton) m_g->onCanvasPressStart(ev->pos());
+        if (ev->button() == Qt::LeftButton) {
+            const int i = m_g->indexAt(ev->pos());
+            if (i < 0 && !(ev->modifiers() & (Qt::ControlModifier | Qt::ShiftModifier))) {
+                // #268 框选:从空白处按下 → 拖矩形框选;单点即空白单击(取消选择)
+                m_g->beginRubber(ev->pos());
+            } else {
+                m_g->onCanvasPressStart(ev->pos());
+            }
+        }
         QWidget::mousePressEvent(ev);
     }
     void mouseMoveEvent(QMouseEvent* ev) override {
+        // #268 框选拖动:框选期间不给悬停/起拖让路(悬停提示会盖住选框范围)
+        if ((ev->buttons() & Qt::LeftButton) && m_g->m_rubberActive) {
+            m_g->updateRubber(ev->pos());
+            return;
+        }
         m_g->setHovered(m_g->indexAt(ev->pos()));
         // 按住左键移动超过阈值 → 发起文件拖拽(复制语义,可拖到资源管理器/别的程序)
         if ((ev->buttons() & Qt::LeftButton) && m_g->maybeStartDrag(ev->pos())) return;

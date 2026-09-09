@@ -103,6 +103,18 @@ void FileGrid::paintCanvas(QPainter& p, const QRect& clipIn) {
         if (r.isNull() || !r.intersects(clip)) continue;
         paintCard(p, i, r);
     }
+
+    // #268 框选:松开前把半透明蓝框画在卡片之上,让"将要选中谁"一眼可见。
+    // 点在空白处未拖成矩形时不画(空手单击=取消选择,画个点反而奇怪)
+    if (m_rubberActive) {
+        const QRect rub = QRect(m_rubberStart, m_rubberCur).normalized();
+        if (rub.width() >= 3 && rub.height() >= 3) {
+            p.fillRect(rub, QColor(0, 120, 215, 36));
+            p.setPen(QPen(QColor(0, 120, 215, 210), 1, Qt::DashLine));
+            p.setBrush(Qt::NoBrush);
+            p.drawRect(rub);
+        }
+    }
 }
 
 void FileGrid::paintCard(QPainter& p, int idx, const QRect& r) {

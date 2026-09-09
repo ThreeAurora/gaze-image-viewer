@@ -382,6 +382,71 @@ void FileGrid::onCanvasRelease(int index) {
     emit selectionChanged(m_entries[index].path);
 }
 
+// ═══════════════════════════════════════════
+// #268 框选拖动(rubber band):从空白处按住左键拖矩形,松开选中框内全部条目。
+// 单点空白单击(= 框退化为点) → 取消选择 —— 与"点击空白清空选中"同义。
+// Ctrl/Shift 修饰键按下时不走这里(mousePressEvent 已挡),框选恒为替换选择。
+// ═══════════════════════════════════════════
+void FileGrid::beginRubber(const QPoint& pos) {
+    m_rubberActive = true;
+    m_rubberStart  = pos;
+    m_rubberCur    = pos;
+}
+
+void FileGrid::updateRubber(const QPoint& pos) {
+    // 只重绘旧框与新框的并集:拖动中逐帧整版重绘大目录会白费 CPU
+    const QRect old = QRect(m_rubberStart, m_rubberCur).normalized();
+    m_rubberCur = pos;
+    if (!m_canvas) return;
+    const QRect now = QRect(m_rubberStart, m_rubberCur).normalized();
+    m_canvas->update(old.united(now).adjusted(-4, -4, 4, 4));
+}
+
+void FileGrid::endRubber(const QPoint& pos) {
+    m_rubberCur = pos;
+    if (!m_rubberActive) return;
+    m_rubberActive = false;
+    if (m_canvas) m_canvas->update();   // 擦掉选框
+
+    const QRect rub = QRect(m_rubberStart, m_rubberCur).normalized();
+    // 空白单击:框退化成一个点,没有任何条目可中 → 取消选择
+    if (rub.width() < 3 && rub.height() < 3) {
+        if (!m_selected.isEmpty()) {
+            m_selected.clear();
+            m_lastClicked = -1;
+            refreshView();
+            emit selectionChanged({});
+        }
+        return;
+    }
+    // 收集框内条目:卡片矩形与选框相交即算中。按 m_byY(顶边排序)遍历,
+    // 得到的"当前落点/键盘起点"取视觉上最靠上的那个,与用户直觉一致
+    ensureGeometry();
+    QSet<int> hit;
+    int first = -1;
+    for (int k = 0; k < static_cast<int>(m_byY.size()); ++k) {
+        const int i = m_byY[k];
+        if (i < 0 || i >= static_cast<int>(m_geom.size())) continue;
+        if (!m_geom[i].intersects(rub)) continue;
+        hit.insert(i);
+        if (first < 0) first = i;
+    }
+    if (hit.isEmpty()) {   // 框远离所有卡片:同样视为取消选择
+        if (!m_selected.isEmpty()) {
+            m_selected.clear();
+            m_lastClicked = -1;
+            refreshView();
+            emit selectionChanged({});
+        }
+        return;
+    }
+    m_selected    = hit;
+    m_lastClicked = first;
+    refreshView();
+    if (first >= 0 && first < static_cast<int>(m_entries.size()))
+        emit selectionChanged(m_entries[first].path);   // 状态栏/预览随框选切换
+}
+
 void FileGrid::onCanvasMiddle(int index) {
     onCanvasRelease(index);
     if (auto* mw = window())

@@ -219,6 +219,13 @@ private:
     void onCanvasDblClick(int idx);
     void onCanvasMiddle(int idx);
     void onCanvasMenu(int idx, const QPoint& globalPos);
+    // #268 框选:光标从空白处按住拖出一个矩形,松开即选中框内全部条目。
+    // 单个空白点击(框退化为点) = 取消选择 —— 与"点击右上角空白清空选中"同义
+    void beginRubber(const QPoint& pos);
+    void updateRubber(const QPoint& pos);
+    void endRubber(const QPoint& pos);
+    bool m_rubberActive = false;   // 框选进行中
+    QPoint m_rubberStart, m_rubberCur;
     void setHovered(int idx);
     void onThumbReady(const QString& filePath, const QImage& img);
     void requestVisibleThumbs();  // 可见行缩略图入队(滚动停止/尺寸稳定后)
