@@ -431,6 +431,16 @@ int main(int argc, char *argv[]) {
     gate.armWithTimeout(1500, &w);   // PAINT 迟迟不来时的强制放行
     Logger::boot("show");
 
+    // #251(2026-09-09 用户令"Everything 引擎就是为了瞬间文件夹大小"):
+    // 引擎改为**随 Gaze 常驻** —— 独立实例建好 NTFS 索引后一直挂着,文件夹
+    // 大小统计/全盘快搜随时秒回。原"懒启动"只在打开快搜框才拉,用户平时
+    // 不进搜索框 → 目录统计退化回内置递归"统计中",与"瞬间统计"相悖。
+    // 延迟 3 秒静默拉起:避开首屏缩略图 I/O 高峰;异步零阻塞,失败不影响
+    // 任何现有路径(查询自动回退内置引擎)。退出收口就在上方 aboutToQuit。
+    QTimer::singleShot(3000, []() {
+        ev_impl::ensureRunning(nullptr, nullptr);   // 拉引擎,结果不需要
+    });
+
     // Cache/checkOnStartup:启动后延后一会儿再校验缓存完整性 ——
     // 与首屏缩略图请求错开,避免一上来就抢 I/O(校验在后台线程跑)
     QTimer::singleShot(4000, &w, []() {

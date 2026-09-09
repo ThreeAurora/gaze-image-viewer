@@ -186,4 +186,4 @@ cmake --build build -j
 
 ## 📄 License
 
-本项目以 [GPL-3.0](./LICENSE) 许可发布。图标资产来自 Material Design Icons 与 Lucide（宽松许可，可再分发），部分为自绘。
+本项目以 [GPL-3.0](./LICENSE) 许可发布。图标资产来自 Lucide（[MIT](https://github.com/lucide-icons/lucide/blob/main/LICENSE)，保留版权声明）与 Material Design Icons（[Apache-2.0](https://github.com/Templarian/MaterialDesign/blob/master/LICENSE)），部分为自绘（`tools/` 下脚本可再生成）。

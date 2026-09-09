@@ -185,4 +185,4 @@ This project is a personal-use tool intended for learning and exchange purposes 
 
 ## 📄 License
 
-Released under the [GPL-3.0](./LICENSE). Icon assets come from Material Design Icons and Lucide (permissively licensed, redistributable), plus some hand-drawn ones.
+Released under the [GPL-3.0](./LICENSE). Icon assets come from Lucide ([MIT](https://github.com/lucide-icons/lucide/blob/main/LICENSE), copyright notice retained) and Material Design Icons ([Apache-2.0](https://github.com/Templarian/MaterialDesign/blob/master/LICENSE)), plus some hand-drawn ones (regenerable via scripts under `tools/`).

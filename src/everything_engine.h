@@ -87,16 +87,18 @@ inline int esSync(const QStringList& tail, QByteArray* out = nullptr,
     return 0;
 }
 
-// 实例是否在跑:es -version 能握手即视为在跑(引擎没起来时 es 立即失败退出)。
+// 实例是否在跑(2026-09-09 修):必须用**走 IPC 真实往返**的查询探测。
+// 旧实现 es -instance gaze -version 只打印 es.exe 自身版本(1.1.0.37),
+// 不需要自带 Everything 实例存活也返回 0 → "永远就绪" → 引擎从没被拉起,
+// 目录统计全走 IPC 全部 Error 8(日志:shutdown rc=8 / done ok=0)。
+// 现在用 -get-result-count 空查询:空查询永远命中、返回总数,实例死活
+// 决定成败 —— 没实例时 Everything IPC not found 退出非 0,毫秒即返。
 inline bool instanceRunning() {
-    const QString es = esExe();
-    if (es.isEmpty() || !QFileInfo::exists(es)) return false;
-    QProcess p;
-    hideConsoleWindow(p);
-    p.start(es, esArgs({QStringLiteral("-version")}), QIODevice::ReadOnly);
-    if (!p.waitForStarted(3000)) return false;
-    if (!p.waitForFinished(3000)) { p.kill(); p.waitForFinished(1000); return false; }
-    return p.exitCode() == 0;
+    QByteArray out;
+    return esSync(QStringList()
+                    << QStringLiteral("-no-result-error")
+                    << QStringLiteral("-get-result-count")
+                    << QString(), &out, /*noResultError*/ true, 5000) == 0;
 }
 
 // 异步拉起自带 Everything 实例,就绪后回调 done(true);ctx 悬空/超时(15s)/
@@ -105,8 +107,13 @@ inline void ensureRunning(QPointer<QObject> ctx, std::function<void(bool)> done)
     struct Waiter { QPointer<QObject> p; std::function<void(bool)> cb; int left = 0; };
     static std::vector<Waiter> waiters;
 
+    // 已就绪快路径(2026-09-09):确认过一次实例在跑就不再反复 spawn es -version
+    // 探测 —— 每次文件夹统计/搜索都被调一次,子进程往返毫无必要。引擎与 Gaze
+    // 生命周期绑定,起过且没退出就一路放行,直到本进程结束(shutdown 才停)。
+    static bool everReady = false;
+    if (everReady) { if (done) done(true); return; }
     if (!deployed()) { if (done) done(false); return; }
-    if (instanceRunning()) { if (done) done(true); return; }
+    if (instanceRunning()) { everReady = true; if (done) done(true); return; }
 
     // 只尝试 startDetached 一次:再失败说明启动必然给不出引擎(缺 VC 运行库等),
     // 后续调用方直接走内置引擎回退,别拿 es 进程循环砸实例。
@@ -132,6 +139,7 @@ inline void ensureRunning(QPointer<QObject> ctx, std::function<void(bool)> done)
         poller->setInterval(500);
         QObject::connect(poller, &QTimer::timeout, []() {
             const bool running = instanceRunning();
+            if (running) everReady = true;
             bool anyAlive = false;
             for (auto& w : waiters) {
                 if (w.left > 0) --w.left;
