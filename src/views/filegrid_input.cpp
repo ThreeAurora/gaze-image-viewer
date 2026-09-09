@@ -324,10 +324,20 @@ bool FileGrid::maybeStartDrag(const QPoint& pos) {
 
     auto* drag = new QDrag(this);
     drag->setMimeData(mime);
-    // 拖拽缩略图:单文件用它的缩略图,多文件用第一个
+    // 拖拽缩略图:单文件用它的缩略图,多文件用第一个。
+    // 2026-09-09:缩略图缺席的类型(mp3/md/文本等)必须回退卡片同款类型图标 ——
+    // QDrag 没设置 pixmap 时 Windows 走默认拖放观感,和视频拖动(有缩略图)的
+    // 红禁止样式不一致;任何 pixmap 都走同一套 OLE 反馈,观感即统一。
+    // 图标比照片缩略图"虚胖"(周围一圈透明),用 64 档小一号,不然拖起来一大团。
     QPixmap cursor = m_thumbCache.value(paths.first());
+    const bool iconOnly = cursor.isNull();
+    if (iconOnly && m_dragOriginIdx >= 0
+        && m_dragOriginIdx < static_cast<int>(m_entries.size())) {
+        cursor = iconPixmap(m_entries[m_dragOriginIdx], 64);
+    }
     if (!cursor.isNull()) {
-        drag->setPixmap(cursor.scaled(96, 96, Qt::KeepAspectRatio,
+        const int side = iconOnly ? 64 : 96;
+        drag->setPixmap(cursor.scaled(side, side, Qt::KeepAspectRatio,
                                       Qt::SmoothTransformation));
     }
     m_dragStarted = true;
