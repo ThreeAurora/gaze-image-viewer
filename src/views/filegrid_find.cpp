@@ -152,35 +152,37 @@ void FileGrid::findRefresh() {
                         ? m_lastClicked : -1;
     m_findHitCount = 0;
     m_findOrdinal  = -1;
-    bool before = false, after = false;
     if (!q.isEmpty()) {
         for (int i = 0; i < static_cast<int>(m_entries.size()); ++i) {
             if (!m_entries[i].name.contains(q, Qt::CaseInsensitive)) continue;
             if (i == cur) m_findOrdinal = m_findHitCount;
-            if (cur < 0 || i < cur) before = true;
-            if (cur < 0 || i > cur) after  = true;
             ++m_findHitCount;
         }
     }
     m_findInfo->setText(m_findHitCount == 0
         ? gazeTr("无匹配")
         : QString("%1/%2").arg(m_findOrdinal >= 0 ? m_findOrdinal + 1 : 0).arg(m_findHitCount));
-    m_findPrev->setEnabled(before);
-    m_findNext->setEnabled(after);
+    // #开启回绕后"上一个/下一个"永远有下一个命中可去,不再置灰
+    // (0/N 是"当前项不命中"的初始态,点按钮即从 1/或 N/ 起跳)
+    m_findPrev->setEnabled(m_findHitCount > 0);
+    m_findNext->setEnabled(m_findHitCount > 0);
 }
 
 void FileGrid::findStep(int delta) {
     if (!m_findBar || !m_findBar->isVisible()) return;
     const QString q = m_findEdit->text().trimmed();
-    if (q.isEmpty() || m_entries.empty()) return;
     const int n = static_cast<int>(m_entries.size());
-    int start = m_lastClicked;
-    if (start < 0 || start >= n) start = delta > 0 ? -1 : n;   // 无落点:从头/从尾扫
+    if (q.isEmpty() || n == 0) return;
+    int cur = m_lastClicked;
+    if (cur < 0 || cur >= n)
+        cur = delta > 0 ? -1 : n;   // 无落点:从头/从尾出发
+    // 循环整一圈(含回绕)找第一个命中:到 13/13 再按"下一个"会绕回 1/13,
+    // 1/13 按"上一个"对称绕回 13/13。k 从 1 起是跳到"下一个匹配",不停留在当前项。
     for (int k = 1; k <= n; ++k) {
-        const int i = start + delta * k;
-        if (i < 0 || i >= n) break;    // 到边界:不回绕(置灰按钮已表达"没有更多")
-        if (m_entries[i].name.contains(q, Qt::CaseInsensitive)) {
-            selectIndex(i);
+        long long i = static_cast<long long>(cur) + static_cast<long long>(delta) * k;
+        i = (i % n + n) % n;   // 负号取模也归位(经典数学取模)
+        if (m_entries[static_cast<int>(i)].name.contains(q, Qt::CaseInsensitive)) {
+            selectIndex(static_cast<int>(i));
             findRefresh();
             return;
         }
