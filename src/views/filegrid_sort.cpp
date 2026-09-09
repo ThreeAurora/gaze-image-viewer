@@ -317,11 +317,13 @@ void FileGrid::sort(int column, bool ascending) {
     };
 
     auto cmp = [&](const FileEntry& a, const FileEntry& b) -> bool {
-        // 目录置顶策略:FileList/mixSort 开 → 文件与目录混排;
-        // 关 → 目录在前,且 FileList/folderAlphabetical 开时目录间恒按名称排
+        // 目录位置策略:FileList/folderSortPos
+        // 0=置顶:目录恒在前;1=参与排序:目录与文件按当前列混排;2=置底:目录恒在后。
         if (a.isDir != b.isDir) {
-            if (!m_mixSort) return a.isDir;   // 关:目录置顶;开:与文件一起按列排
-        } else if (a.isDir && m_folderAlpha && !m_mixSort) {
+            if (m_folderSortPos != 1)           // 参与排序时目录不做特别处理,落 "按列排"
+                return m_folderSortPos == 0 ? a.isDir : !a.isDir;
+        } else if (a.isDir && m_folderAlpha && m_folderSortPos != 1) {
+            // 目录间恒按名称排(置顶/置底两组内部保持 folderAlphabetical 语义)
             int dc = nameCmp(a.name, b.name);
             return ascending ? (dc < 0) : (dc > 0);
         }

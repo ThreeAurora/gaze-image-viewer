@@ -305,7 +305,11 @@ QWidget* SettingsDialog::pageFileList() {
         combo("FileList/scanHeader", {gazeTr("总是"),
             gazeTr("排除软盘/CD/DVD"), gazeTr("仅电脑本地硬盘"),
             gazeTr("从不")}, 0));
-    form->addRow(chk("FileList/mixSort", gazeTr("混合文件/文件夹排序"), false));
+    // 文件夹在排序结果中的位置:置顶 / 参与排序 / 置底(2026-09-09 用户令三态;
+    // 旧 FileList/mixSort 布尔已在 FileGrid 构造里迁移为 0/1)
+    form->addRow(gazeTr("文件夹在排序中的位置"),
+        combo("FileList/folderSortPos",
+              {gazeTr("置顶"), gazeTr("参与排序"), gazeTr("置底")}, 0));
     form->addRow(chk("FileList/folderAlphabetical", gazeTr("文件夹总是按字母序排列"), true));
     // #150:启动默认排序,索引含义与 FileGrid 构造函数里的 switch 一一对应
     form->addRow(gazeTr("启动时默认排序"),

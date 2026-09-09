@@ -1385,6 +1385,10 @@ Unchecked: reuse the pane switches from the last exit (requires a saved layout o
         <translation>Actual size</translation>
     </message>
     <message>
+        <source>参与排序</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>双击</source>
         <translation>Double-click</translation>
     </message>
@@ -2429,6 +2433,10 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
     <message>
         <source>文件夹名:</source>
         <translation>Folder name:</translation>
+    </message>
+    <message>
+        <source>文件夹在排序中的位置</source>
+        <translation></translation>
     </message>
     <message>
         <source>文件夹大小数据库维护</source>
@@ -3484,6 +3492,14 @@ Once set manually, thumbnails scale to the pane edge when resizing, but the colu
     <message>
         <source>缩略图缩放</source>
         <translation>Thumbnail scaling</translation>
+    </message>
+    <message>
+        <source>置底</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>置顶</source>
+        <translation></translation>
     </message>
     <message>
         <source>背景</source>

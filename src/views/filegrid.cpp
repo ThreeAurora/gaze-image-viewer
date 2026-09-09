@@ -157,7 +157,19 @@ FileGrid::FileGrid(QWidget* parent) : QScrollArea(parent) {
     m_filterMode = qBound(int(FILTER_ALL), AppSettings::instance().get("Browser/filterMode", int(FILTER_ALL)).toInt(), int(FILTER_CUSTOM));
     m_spacing   = qBound(0, AppSettings::instance().get("Appearance/spacing", 6).toInt(), 40);
     m_showHidden  = AppSettings::instance().get("FileList/showHidden", true).toBool();
-    m_mixSort     = AppSettings::instance().get("FileList/mixSort", false).toBool();
+    // 文件夹排序位置:0置顶/1参与排序/2置底。老版本只有 FileList/mixSort 布尔
+    // (真=混排),没存过新键时按旧开关迁移(2026-09-09 用户令三态)
+    {
+        const int v = AppSettings::instance().get("FileList/folderSortPos", -1).toInt();
+        if (v >= 0 && v <= 2) {
+            m_folderSortPos = v;
+        } else {
+            m_folderSortPos = AppSettings::instance()
+                                  .get("FileList/mixSort", false).toBool() ? 1 : 0;
+            AppSettings::instance().setPersist("FileList/folderSortPos",
+                                               m_folderSortPos);   // 迁移落盘,下次直达
+        }
+    }
     m_folderAlpha = AppSettings::instance().get("FileList/folderAlphabetical", true).toBool();
     m_showSubFolders = AppSettings::instance().get("FileList/showSubFolders", false).toBool();
     // Appearance/customThumbH:0=与宽同高(默认),>0=按设置值定缩略图框高
@@ -202,11 +214,11 @@ FileGrid::FileGrid(QWidget* parent) : QScrollArea(parent) {
         const bool spacingChanged = (sp != m_spacing);
         m_spacing = sp;
         const bool hidden = st.get("FileList/showHidden", true).toBool();
-        const bool mix    = st.get("FileList/mixSort", false).toBool();
+        const int pos   = qBound(0, st.get("FileList/folderSortPos", 0).toInt(), 2);
         const bool alpha  = st.get("FileList/folderAlphabetical", true).toBool();
-        const bool listChanged = (hidden != m_showHidden) || (mix != m_mixSort)
+        const bool listChanged = (hidden != m_showHidden) || (pos != m_folderSortPos)
                               || (alpha != m_folderAlpha);
-        m_showHidden = hidden; m_mixSort = mix; m_folderAlpha = alpha;
+        m_showHidden = hidden; m_folderSortPos = pos; m_folderAlpha = alpha;
         // 外观页"自定义缩略图尺寸 - 宽":值变了才应用(setCardSize 也写这个键,
         // 回到这里时 cw == m_cardSize,不会二次重排)
         const int cw = qBound(THUMB_W_MIN,
