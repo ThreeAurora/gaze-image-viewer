@@ -14,73 +14,53 @@
 ![Qt](https://img.shields.io/badge/Qt-6.8%20LTS-41CD52?style=flat-square&logo=qt&logoColor=white)
 ![License](https://img.shields.io/badge/license-GPL--3.0-blue?style=flat-square)
 
-🔥 A lightweight open-source alternative inspired by XnView MP, rebuilt on a modern stack (C++17 / Qt 6.8 LTS) — high performance, comfort-first UX, and broad format coverage.
+### 🔥 One program that does the whole job: browser + viewer + player + manager
+
+**Every format** (33 images · 26 RAW · 28 videos · 10 audio · PDF/TXT/MD) · **real-time 8K HDR10 playback** · **full-speed software-decoded AV1** · **Everything-powered instant search** · **local CLIP text-to-image search** · **buttery scrolling in 100k-file folders** · ~250 features · 166 setting keys
 
 ### **No media library to build — unpack and it just works. Manage files of every format.**
+
+> Inspired by **XnView MP**, this project aims to be a lightweight alternative.
+> Kudos to the original author, **Pierre-e Gougelet**!
 
 </div>
 
 ---
 
+## ✨ What Gaze does that others don't
+
+| | Gaze | Typical alternatives |
+|---|---|---|
+| 📂 Media library | **Zero library**: open it and the whole disk is there — folders are what you see, no scanning wait | Build / import a library first, wait for indexing |
+| 📦 Install | **Unpack and run**: no registry writes, migrate by copying the folder; installer also available | Installer + registry + config scattered around |
+| 🧩 Codecs | **FFmpeg / Ghostscript / LibRaw / dav1d all bundled** — AVIF / HEIC / RAW / PDF open on a bare system | Requires system codecs or extensions |
+| 🗂 Format handling | **Files of every format can be browsed and managed**; preview coverage listed separately | Images only — everything else invisible |
+| 🔎 Disk-wide search | **Everything engine integration**: instant exact folder sizes, whole-disk file search in a blink | You get to browse one folder at a time |
+| 🧠 Text-to-image | **Local CLIP+OCR semantic search**: find that picture with a sentence, data never leaves the machine | No such capability |
+| 🎬 Video | Real-time 8K HDR10 / full-speed software AV1 / Motion Photos play on a single click | Often handed off to an external player |
+| ⚡ Performance | **Extremely optimized thumbnail generation** (background multithreading + instant cache hits) · **instant, precise video seeking** | Waiting on thumbnails, scrubbing that drifts |
+| 🖨 CMYK printing | **Color-managed CMYK JPEG decoding** + one-click print-intent toggle | Unsupported, or decoded with a color cast |
+
+---
+
+> From file switching and thumbnail generation to labeling, deletion and filtering — every path of the browse-and-preview experience is tuned to the limit.
+
 ## 📑 Features
 
 <details>
-<summary><b>Click to expand all features</b> (~250 items, full table in <a href="FEATURES.en-US.md">FEATURES.en-US.md</a>)</summary>
+<summary><b>Only a brief list of ~250 features here</b> — see <a href="FEATURES.en-US.md">FEATURES.en-US.md</a> for the full inventory</summary>
 
-**🖼 Browser**
-- ✅ Three-pane layout: folder tree / file grid / preview panel, each toggleable, layout fully remembered
-- ✅ 8 view modes: thumbnails, thumbnails+filename, +labels, details, icons, list, details table, waterfall
-- ✅ 4-in-1 folder thumbnails: folders aggregate 4 preview images, fetched at high resolution then downsampled
-- ✅ Persistent multi-tabs with tab thumbnails; Ctrl+W close, Ctrl+Shift+T restore, middle-click/double-click close
-- ✅ Virtualized owner-drawn file grid: smooth scrolling in 100k-file folders, fixed 7-column header
-- ✅ Thumbnail engine: background multithreaded + SQLite cache, 384/768/custom sizes
-- ✅ Inline search (Ctrl+F type-to-search) + folder search dialog (include/exclude regex)
-
-**🔍 Sort · Filter · Labels**
-- ✅ 16-column header sorting: name/size/type/extension/created/modified/EXIF dual dates/dimensions/ratio/print size…
-- ✅ Natural sorting (1, 2, … 10, not 1, 10, 2)
-- ✅ 18 filter modes: images/videos/audio/documents/executables/folders/custom extension sets
-- ✅ Color labels Ctrl+1~5: stored in SQLite, kept across sessions
-- ✅ Filename color editor (extension → background color)
-
-**👁 Viewer**
-- ✅ Enter to enter, ESC to return — tree and grid hide, image fills the pane
-- ✅ 1:1 pixel view (long-press), cursor-centered zoom, navigator mini-map with draggable blue frame
-- ✅ GIF frame stepping / back-scrubbing / loop rewind
-- ✅ Motion Photo: click the preview to play, XMP/ftyp dual-protocol detection
-- ✅ PDF (Ghostscript) and text preview (auto truncation, word-wrap toggle, MD rendering)
-- ✅ Metadata panel + histogram + EXIF overview
-- ✅ Multi-image print layouts
-
-**🎬 Video & Audio**
-- ✅ 28 containers: MP4/MKV/WebM/FLV/RMVB/MXF…
-- ✅ AV1 (bundled libdav1d, faulty hardware decoders refused), H.264/H.265, VP9 10-bit HDR10
-- ✅ Playback bar: click-to-seek, remaining-time toggle, volume readout, left-click play/pause
-- ✅ Fullscreen filmstrip gallery: whole folder included, image/video/audio filter buttons
-- ✅ Audio waveform preview: decoded on a background thread, never blocks browsing
-- ✅ Delete/move/rename while playing automatically releases the file
-
-**🗃 Format & codec support (charter: all formats)**
-- ✅ 33 image extensions: JPEG/PNG/GIF/WebP/BMP/TGA/TIFF/SVG/ICO/DDS/EXR/QOI/JPEG 2000…
-- ✅ Modern formats: AVIF, HEIF (HEIC/HIF via bundled FFmpeg), JPEG XL
-- ✅ RAW: 26 vendor extensions, LibRaw 0.21.4 statically linked, "Load original RAW" button
-- ✅ CMYK JPEG: unified print-intent rendering + color interpretation toggle
-- ✅ All codec components ship with the program (FFmpeg/Ghostscript/jpegtran) — zero system extensions required
-
-**📂 File management**
-- ✅ Delete to Recycle Bin (folders & batches included), F3 open with default app, F2/double-click rename
-- ✅ Lossless JPEG rotate/crop (jpegtran)
-- ✅ Drag & drop between tree and grid with clear forbidden-target feedback
-- ✅ Single instance: launching again raises the existing window
-
-**⚙️ Settings & integration**
-- ✅ 20 settings pages, ~166 setting keys
-- ✅ Dark/light theme switching live (no restart)
-- ✅ Bilingual UI (Chinese/English, 828 strings fully translated)
-- ✅ Explorer context menu "Browse with Gaze", file association registration, ms-settings shortcuts
-- ✅ Search images by text: local CLIP+OCR semantic retrieval service
-- ✅ Folder size computation (accurate background recursion + cache DB)
-- ✅ Database maintenance page, crash minidump + event log self-diagnostics
+| | |
+|---|---|
+| 🖼 **Browsing & views** | Three-pane layout (tree / grid / preview; six pane types toggled & remembered) · 8 view modes · layout presets · persistent multi-tabs (thumbnail tabs, restorable) · back/forward auto-locates · address bar (history, file:/// support) · two-way tree sync · hidden items tinted · drag & drop move / copy · title templates · five startup modes · single instance |
+| 🗂 **Thumbnails** | Background multithreaded generation, instant on cache hit · 4-in-1 folder thumbnails · three-tier decoding (Qt → Shell → ffmpeg fallback) · single-cover mode · configurable frame position · HDR tone-mapping · 48–1024px custom · SQLite cache & maintenance tools |
+| 👁 **Viewer & preview** | Eight preview kinds (image / GIF / video / audio / TXT / MD / PDF / RAW) · 1:1 pixel view · cursor-centered zoom · navigator mini-map · Gamma / sharpen / HiDPI 1px=1px · three fullscreen layers (exact layout restore) · top gallery · Markdown rendering · PDF rendering · RAW background decode · EXIF tree + histogram · instant folder sizes · video flicker eliminated |
+| 🎬 **Video & audio** | 28 containers · real-time 8K HDR10 · full-speed software AV1 · instant precise seeking · Motion Photos on one click · GIF bidirectional scrubbing · progressively drawn waveforms · configurable seek step · delete/move while playing without file locks |
+| 🔎 **Search & sort** | Everything-powered instant disk search · local CLIP text-to-image search · 16 sort columns · natural sort · 10 startup presets · 18 filter modes · five color labels · Ctrl+F type-to-search · folder regex search (time-sliced, never freezes) |
+| 📋 **File management** | ~25-item context menu · Recycle-Bin delete (folders & batches) · lossless JPEG rotate / flip / crop · lossless non-JPEG transforms · multi-image print layouts (15 persisted options) · EXIF auto-rotate · rename focus routing · recent files |
+| 🗃 **Formats & decoding** | AVIF / JXL → ffmpeg (dav1d / libjxl) · HEIC → WIC · color-managed CMYK decoding + print-intent toggle · file-header sniffing · RAW whitelist (LibRaw statically linked) · every codec ships bundled |
+| ⚙️ **Settings & integration** | Hundreds of setting keys · 20 pages · fully remappable shortcuts (visual editor) · dark / light themes · filename background editor · Explorer context-menu integration · file associations · portable / %APPDATA% migration |
+| 🛡 **Stability & diagnostics** | GUI heartbeat watchdog · crash minidumps · startup checkpoints · full-level self-diagnostics logs |
 
 </details>
 
@@ -88,13 +68,25 @@
 
 ## 📸 Screenshots
 
-**Browser (three-pane layout)**
+**Browser (three-pane layout · multi-format preview)**
 
 ![Browser](docs/images/screenshot_browser.webp)
 
-**G fullscreen preview (filmstrip on top)**
+**Viewer (multi-tab · multilingual UI)**
 
-![G fullscreen](docs/images/screenshot_gfull.webp)
+![Viewer](docs/images/screenshot_viewer_en.webp)
+
+**Fullscreen preview (gallery on top)**
+
+![Fullscreen preview](docs/images/screenshot_gfull.webp)
+
+**Settings (hundreds of keys, down to every behavior)**
+
+![Settings](docs/images/screenshot_settings.webp)
+
+**Shortcuts (the genuinely handy kind)**
+
+![Shortcuts](docs/images/screenshot_shortcuts.webp)
 
 ---
 
@@ -147,19 +139,23 @@ Icon assets are downloaded and rendered by `tools/fetch_mdi_icons.py` / `tools/f
 
 | Key | Action |
 |---|---|
-| Enter / double-click | Enter the viewer (browser ↔ viewer toggle) |
+| C / V | Previous / next file |
+| Space | Play / pause |
+| F | Color label |
+| D | Clear label |
+| Ctrl+1~5 | Pick one of five labels |
+| X | New folder |
+| S | Delete to Recycle Bin |
+| Right-drag + wheel | Seek the progress bar |
+| Long-press left button | Zoom at cursor |
+| Ctrl+Wheel | Zoom the picture |
+| Enter / double-click | Enter the viewer |
 | ESC | Return to the browser |
-| G | Fullscreen preview (image only; layout restored exactly on exit) |
+| G | Fullscreen preview (exact layout restore) |
 | F11 | Fullscreen window |
-| Space | Default action / play-pause |
 | Ctrl+F | Inline search |
-| F2 / F3 | Rename / open with default app |
-| Ctrl+W | Close the current tab |
-| Ctrl+PgUp / PgDn | Switch tabs (progress seek on media pages) |
-| Ctrl+1~5 | Color labels |
-| B / F | Browse history back / forward |
-| Home / End | First / last item |
-| Long-press left button | 1:1 pixel view (cursor-focused) |
+| Ctrl+W | Close current tab |
+| Ctrl+PgUp / PgDn | Switch tabs |
 
 Full table in [FEATURES.en-US.md §11](FEATURES.en-US.md).
 
@@ -180,9 +176,6 @@ Full table in [FEATURES.en-US.md §11](FEATURES.en-US.md).
 - [Ghostscript](https://ghostscript.com/) — PDF rendering
 - [jpegtran](https://jpegclub.org/) — lossless JPEG operations
 - [XnView MP](https://www.xnview.com/en/xnviewmp/) — the design reference for the UI form and interactions
-
-> Inspired by **XnView MP**, this project aims to be a lightweight alternative.
-> Kudos to the original author, **Pierre-e Gougelet**!
 
 ---
 
