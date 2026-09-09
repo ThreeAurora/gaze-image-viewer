@@ -239,7 +239,7 @@ bool MainWindow::paneVisible(const char* paneId) const {
 }
 
 // XnView 式面板标题条:左标题 + 右关闭 X
-QWidget* MainWindow::createPaneHeader(const QString& title, const char* paneId) {
+QWidget* MainWindow::createPaneHeader(const QString& title, const char* paneId, QWidget* extra) {
     auto* h = new QWidget;
     h->setObjectName("paneHdr");   // 标题条样式在应用级 QSS(#89 收敛)
     auto* hl = new QHBoxLayout(h);
@@ -268,6 +268,7 @@ QWidget* MainWindow::createPaneHeader(const QString& title, const char* paneId) 
     // 12px 小字上笔画发虚;全应用其余文字均为常规字重且清晰
     // (底色/字色见应用级 QSS 的 QWidget#paneHdr 规则)
     hl->addWidget(lbl, 1);
+    if (extra) hl->addWidget(extra);   // 面板专属钮(如树"定位当前文件夹"),X 钮左侧
     auto* x = new QToolButton;
     x->setText(gazeTr("×"));   // ×
     x->setFixedSize(18, 18);

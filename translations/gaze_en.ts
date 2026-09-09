@@ -1768,6 +1768,10 @@ Click once to select the whole path, click again to place the caret</translation
         <translation></translation>
     </message>
     <message>
+        <source>定位当前文件夹</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>实际大小 (100%)</source>
         <translation></translation>
     </message>

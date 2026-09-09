@@ -177,7 +177,7 @@ private:
     QMenu* createFilterMenu(QWidget* parent);     // 筛选子菜单
     void   createToolbar2(QVBoxLayout* intoCenter); // 工具栏第二行
     void   createViewMenu();                    // 一级菜单"视图"(面板开关,追加在布局之后)
-    QWidget* createPaneHeader(const QString& title, const char* paneId); // XnView 式面板标题条(带关闭 X)
+    QWidget* createPaneHeader(const QString& title, const char* paneId, QWidget* extra = nullptr); // XnView 式面板标题条(带关闭 X;extra 可挂自定义钮)
     void   setPaneVisible(const char* paneId, bool on, bool remember = true); // 面板显隐(含记忆用户意图)
     // 面板 id → 真 dock(仅 tree/favorites/filter/info 四个;preview/addr/tool/status
     // 是普通部件)。用于"合并成标签"后把指定那一页顶到前面(dock->raise()),

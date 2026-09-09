@@ -204,7 +204,33 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     // 不给 Closable:关闭只走自绘标题条的 X(setPaneVisible 单一出口,意图不脱节)
     m_treeDock->setFeatures(QDockWidget::DockWidgetMovable
                             | QDockWidget::DockWidgetFloatable);
-    m_treeDock->setTitleBarWidget(createPaneHeader(gazeTr("文件夹"), "tree"));
+    // 标题条"定位当前文件夹"钮(2026-09-09 用户令):点了在树上选中并滚动到当前
+    // 目录,与"进入文件夹时树自动跟随"走同一落点 focusPath。样式仿面板 × 钮。
+    {
+        auto* locateBtn = new QToolButton;
+        locateBtn->setText(QStringLiteral("◎"));
+        locateBtn->setFixedSize(18, 18);
+        locateBtn->setCursor(Qt::PointingHandCursor);
+        locateBtn->setToolTip(gazeTr("定位当前文件夹"));
+        connect(locateBtn, &QToolButton::clicked, this, [this]() {
+            if (!m_folderTree || m_currentDir.isEmpty()) return;
+            // focusPath 对"树当前选中 == 目标目录"会早退(导航自动跟随后的常态),
+            // 此时按钮的价值恰是"把它找回来"——滚回可视区中央,不能跟着早退。
+            // 只有选了别处/没选中才走完整定位(展开祖先链+居中)。
+            const QString want = QDir::cleanPath(m_currentDir);
+            if (QTreeWidgetItem* cur = m_folderTree->currentItem()) {
+                const QString curPath =
+                    QDir::cleanPath(cur->data(0, Qt::UserRole).toString());
+                if (curPath.compare(want, Qt::CaseInsensitive) == 0) {
+                    m_folderTree->scrollToItem(cur,
+                                               QAbstractItemView::PositionAtCenter);
+                    return;
+                }
+            }
+            m_folderTree->focusPath(m_currentDir);
+        });
+        m_treeDock->setTitleBarWidget(createPaneHeader(gazeTr("文件夹"), "tree", locateBtn));
+    }
     m_treeDock->setWidget(treePane);
     addDockWidget(Qt::LeftDockWidgetArea, m_treeDock);
 
