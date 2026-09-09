@@ -1,49 +1,55 @@
-# ── Gaze 仓库忽略清单（2026-09-02 起 = 防丢模式）──
-# 用户令：github 不是给人看的，是防丢 + 任意 AI 可读进度；过程文件全量入库，
-# 项目做完后的最终提交再统一清理（含 build 产物、日志、缓存）。
+# ── Gaze 公开仓忽略清单 ──
+# 原则:仓库只跟踪源码、构建脚本与文档;构建产物、运行时状态、开发账本不入库。
 
-# 仍排除的只有三类：
-# 1) 超 GitHub 单文件 100MB 硬限、且可由脚本再生的中间物
-cache/tmp/timeline.fi
-# 2) 时间线验证仓库本体（其内容=已推送的 GitHub 历史，且含嵌套 .git）
-cache/tmp/replay_repo/
-# 3) 正向重放工作树镜像（= HEAD 全量副本；仅保留其中的 progress.md 早期会话日志原件）
-cache/tmp/fw_work/*
-!cache/tmp/fw_work/progress.md
+# 构建产物与中间物
+build/
+build_*/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+*_autogen/
+moc_*.cpp
+qrc_*.cpp
+ui_*.h
+*.o
+*.obj
+*.a
+*.lib
 
-# 编译器中间物（cmake 重跑即回，防丢价值为零）
-build_qt68/CMakeFiles/
-build_qt68/CMakeCache.txt
+# 运行时状态(含个人路径与缩略图数据库,绝不入库)
+Gaze.ini
+*.log
+*.db
+*.db-shm
+*.db-wal
+*.dmp
 
-# IDE 本地配置
+# 第三方运行库:按 README「从源码构建」自行获取
+vendor/
+
+# 分发产物与本地工作区
+dist/
+release/
+backups/
+cache/
+tmp_probe/
+
+# 开发账本(含私人路径与开发过程记录,单独存放)
+todo.md
+HANDOFF.md
+项目追溯_ZCode.md
+仓库公开前审计_勿提交.md
+需用户处理的区外事项.md
+ref_features.md
+ref_settings.md
+SETTINGS_MATRIX.md
+ref_menu_zh.ts
+
+# IDE 与编辑器
 .vscode/
 .idea/
-cache/tmp/Gaze-v*.zip
 
-# 分发产物目录（铁律 1 例外项，HANDOFF.md 明确点名：dist/ 与 portable_test/）
-/dist/
-cache/tmp/portable_test/
-
+# Python
 __pycache__/
 *.pyc
-
-
-# ── v1.0.0 发布前收尾（历史手术后的运行时产物与磁盘孤儿归位）──
-# 过程工作区(时间线脚本/bundle/重放流/事件解析中间物)——v10 历史已整体剔除跟踪
-cache/
-# CMYK 4096 副本缓存(ImgProc::decodeCmykCached 原子写,可再生)
-build_qt68/cmykpyr/
-# moc 增量目录(已跟踪的旧快照除外,新生成目录不再冒头)
-build_qt68/Gaze_autogen/
-
-# 历史重写时的整树备份(backups/20260905_*),体量大且可再生成,不入库
-backups/
-
-# Everything 引擎运行时产物(vendor/everything 与构建目录都会生成):
-# 独立实例索引 Everything-gaze.db 单文件可达 300MB+(超 GitHub 100MB 硬限),
-# ini/backup/session 为实例配置与会话状态,全部可再生 —— 只入库发行二进制
-# (Everything.exe/es.exe/Everything.lng/License.txt)
-**/Everything-gaze.db
-**/Everything-gaze.ini
-**/Everything-gaze.backup.ini
-**/Session-gaze.json
