@@ -190,6 +190,9 @@ private:
     void updatePanTool();                  // Viewer/panTool 平移导航小窗
     void updateSelectionHighlight();       // Viewer/showBorder 白框;蓝框已删(2026-08-30)
     void updateRatingBadge();              // Viewer/showRating 颜色标记点
+    // 2026-09-09 用户令:LIVE 徽章不再只挂播放态 —— 静态图识别出 live photo 时
+    // 就亮在预览区右上角(提示"这是动态照片,单击可动");位置与 RAW/CMYK 钮同位
+    void updateLiveBadge();
     double oneToOneScale() const;          // 1:1 = 1 图像像素 : 1 屏幕像素
     double stepZoom(double cur, bool up) const;  // Viewer/zoomMode=0 的固定档位
     // 以屏幕锚点为中心缩放:锚点下的图像点缩放前后停在原地(滚轮/长按都走这里)

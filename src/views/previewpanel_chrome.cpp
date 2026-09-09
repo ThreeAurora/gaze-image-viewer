@@ -250,6 +250,25 @@ void PreviewPanel::updateRatingBadge() {
     m_ratingDot->show();
 }
 
+// 2026-09-09 用户令:LIVE 徽章不只在播放时出现 —— 静态图识别为 live photo
+// 就亮在预览区右上角,提示"这是动态照片,单击可播放动态部分"。挂在面板上,
+// 与 RAW/CMYK 钮同机制:同位右上角、随面板缩放重定位、得 raise 盖在最上层。
+// showImage/applyImage/resize 都走这里(播放 live 时 m_isLivePhoto=true 保持亮)。
+void PreviewPanel::updateLiveBadge() {
+    if (!m_liveBadge) return;
+    // 亮徽章的条件:当前文件是 live photo(识别期 m_liveInfo 已置位)
+    // 或正在播放它的动态视频(finishLivePhoto 回到静态图前 m_isLivePhoto=true)
+    const bool isLive = m_liveInfo.has_value() || m_isLivePhoto;
+    if (!isLive || (m_mode != "image" && !m_isLivePhoto)) {
+        m_liveBadge->hide();
+        return;
+    }
+    m_liveBadge->raise();
+    m_liveBadge->adjustSize();
+    m_liveBadge->move(width() - m_liveBadge->width() - 12, 12);
+    m_liveBadge->show();
+}
+
 // 缩略图 pixmap 在导航小窗里的**实际摆放矩形**,坐标系是 m_panTool(蓝框的父)。
 // QLabel 用 AlignCenter 画 pixmap,留边时图并不铺满控件;而 m_panThumb 又嵌在
 // m_panTool 的 (1,1)。蓝框与指尖映射都只走这一个函数,不在两处各算一遍偏移

@@ -156,12 +156,7 @@ void PreviewPanel::showVideo(const QString& path) {
     if (!live && playbar) updateGFullPlaybar(nullptr);   // G 全屏视频:进场先藏,光标到底部才出(2026-09-08)
     m_imgSpace->hide();
     syncVideoChildren();   // videoWidget 刚 show,布局尚未激活,先把当下矩形铺上
-    if (m_liveBadge) {
-        m_liveBadge->raise();
-        m_liveBadge->adjustSize();
-        m_liveBadge->move(m_videoWidget->width() - m_liveBadge->width() - 12, 12);
-        m_liveBadge->setVisible(live);
-    }
+    updateLiveBadge();     // 播放 live 视频时徽章照常亮在面板右上角(与静态态同位)
 
     setupPlayer();
     if (!m_player) {

@@ -216,6 +216,7 @@ void PreviewPanel::showImage(const QString& path) {
         return;
     }
     quint64 gen = ++m_imgReqGen;
+    updateLiveBadge();      // 静态态:live 识别完成即亮右上角徽章,不等解码结果
     if (m_fullBusy) return;                 // 在飞任务完成后会自动补发最新请求
     decodeFullAsync(path, gen);
 }
@@ -274,6 +275,7 @@ void PreviewPanel::applyImage(const QImage& img) {
     applyViewerChrome();
     updateRawFullBtn();             // #140b:RAW 的图片形态(内嵌图/全解结果)亮悬浮全解钮
     updateCmykBtn();                // #243:重排后 CMYK 切换钮跟着重定位(与 RAW 钮互斥,不会同时亮)
+    updateLiveBadge();              // live 文件解码就绪同样亮徽章(预读命中/解码完成都经过这里)
 }
 
 // ── #243 CMYK 切换钮:显隐+右上角定位,与 m_rawFullBtn 同一套悬浮机制 ──

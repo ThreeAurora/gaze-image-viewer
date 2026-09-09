@@ -260,8 +260,10 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
 
     layout->addWidget(m_controlBar);
 
-    // LIVE 徽章(动态照片播放时的右上角标识,child of videoWidget;样式在应用级 QSS)
-    m_liveBadge = new QLabel("LIVE", m_videoWidget);
+    // LIVE 徽章(动态照片标识,2026-09-09 用户令:静态图识别为 live photo 时也要
+    // 亮在预览区右上角,不能等点击播放才出现 —— 故挂面板而非 videoWidget,
+    // videoWidget 隐藏时徽章照常显示;样式在应用级 QSS)
+    m_liveBadge = new QLabel("LIVE", this);
     m_liveBadge->setObjectName("pvLiveBadge");
     m_liveBadge->adjustSize();
     m_liveBadge->hide();

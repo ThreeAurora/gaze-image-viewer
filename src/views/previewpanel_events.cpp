@@ -92,8 +92,7 @@ void PreviewPanel::resizeEvent(QResizeEvent* event) {
     if (m_mode == "image" || m_mode == "pdf") fitAuto();
     applyViewerChrome();     // 滚动条/信息条/浮动条/导航小窗都贴边,尺寸变了要重定位
     syncVideoChildren();
-    if (m_liveBadge && m_liveBadge->isVisible())
-        m_liveBadge->move(m_videoWidget ? m_videoWidget->width() - m_liveBadge->width() - 12 : 0, 12);
+    updateLiveBadge();       // 徽章贴面板右上角:随面板缩放重定位(与 RAW/CMYK 钮同机制)
     updateRawFullBtn();      // #140b:悬浮 RAW 钮贴右上角,面板缩放跟着挪
     updateCmykBtn();         // #243:CMYK 切换钮同机制
 }
