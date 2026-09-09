@@ -470,13 +470,19 @@ void PreviewPanel::syncVideoChildren() {
             if (w == m_vw && m_mode == "video"
                 && m_videoSize.width() > 0 && m_videoSize.height() > 0
                 && m_videoWidget->width() > 4 && m_videoWidget->height() > 4) {
+                // 与图片 fitAuto 同口径:v/音频用同一块"可站地"——扣除控制栏。
+                // 此前按 m_videoWidget 全高算包络,栏(40px)占据的高度还在,视频
+                // 信封再从中裁比例,成品比同面板的图片矮一大截(2026-09-09 用户
+                // 报:"播放的视频比图片的宽高要小,应同样贴合扩展框")。
+                // live 播放时控制栏隐藏→barReserve==0,信封即铺满整个预览区。
+                const int usableH = m_videoWidget->height() - barReserve();
                 const double va = double(m_videoSize.width()) / m_videoSize.height();
-                const double ba = double(m_videoWidget->width()) / m_videoWidget->height();
-                QRect r = m_videoWidget->rect();
+                const double ba = double(m_videoWidget->width()) / qMax(1, usableH);
+                QRect r(0, 0, m_videoWidget->width(), usableH);
                 if (va > ba) {   // 画面更宽:横向顶满,纵向居中
                     const int h = qMax(1, int(r.width() / va));
                     r.setHeight(h);
-                    r.moveTop((m_videoWidget->height() - h) / 2);
+                    r.moveTop(qMax(0, (usableH - h) / 2));
                 } else {         // 画面更高:纵向顶满,横向居中
                     const int wd = qMax(1, int(r.height() * va));
                     r.setWidth(wd);
