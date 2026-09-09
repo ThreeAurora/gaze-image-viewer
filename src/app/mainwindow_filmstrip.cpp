@@ -184,6 +184,10 @@ void MainWindow::updateDragHint(const QPoint& pos, bool valid) {
     if (!m_dragHint) {
         m_dragHint = new QLabel(this);
         m_dragHint->setObjectName("filmDragHint");
+        // 2026-09-09:浮标必须鼠标穿透——它贴着光标右下 16px,拖动中光标会压到
+        // 它,childAt/落点判定把它当普通子控件 → valid 瞬间翻 false(禁止光标
+        // 闪烁),dropEvent 也可能被它截胡。
+        m_dragHint->setAttribute(Qt::WA_TransparentForMouseEvents);
     }
     const bool copy = (QApplication::keyboardModifiers() & Qt::ControlModifier) != 0;
     const QString verb = copy ? gazeTr("复制") : gazeTr("移动");
