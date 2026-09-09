@@ -132,6 +132,7 @@ void MainWindow::dragMoveEvent(QDragMoveEvent* e) {
     if (!(e->mimeData() && e->mimeData()->hasUrls())) { hideDragHint(); return; }
     const QPoint pos = e->position().toPoint();
     const bool valid = dropOnValidTarget(pos) && dropTargetMeaningful(pos, e);
+    updateTreeDwellExpand(pos);   // 树节点驻留自动展开(定时器驱动,与 valid 分支解耦)
     // 探针(2026-09-09 二次加码):禁止光标在"同目录文件卡片"上仍放行,1/8 节流
     // 采样太稀丢关键帧——改 1/3,并把命中条目名/isDir/标记位/source 位拆开记录,
     // 下一次复现即可直接定位是 hitTest 解析错位还是判定分支走偏。

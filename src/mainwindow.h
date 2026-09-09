@@ -15,6 +15,8 @@
 #include <QThreadPool>
 #include <QSet>
 #include <QHash>
+#include <QElapsedTimer>
+class QTreeWidgetItem;
 #include <atomic>
 #include <memory>
 
@@ -210,6 +212,8 @@ private:
     void updateDragHint(const QPoint& pos, bool valid);  // valid=落在可放置区
     void hideDragHint();
     void updateFolderDropTarget(const QPoint& pos, bool highlight); // 树落点白框
+    void updateTreeDwellExpand(const QPoint& pos); // 拖动悬停树节点驻留自动展开
+    void treeDwellReset();                         // 拖动结束清驻留
 
     QSplitter *m_splitter = nullptr;
     FolderTree *m_folderTree = nullptr;
@@ -288,6 +292,11 @@ private:
     QToolButton*        m_fullNavNext = nullptr;
     // 2026-09-02 拖放:光标旁"复制/移动"浮标 + 落点文件夹高亮
     QLabel*             m_dragHint = nullptr;   // 拖动时跟随光标的动作提示(隐藏态)
+    // 拖动悬停树节点驻留自动展开(2026-09-09 用户令):只展开光标所在节点一级,
+    // 不级联。定时器驱动——OLE 在光标停住时不发 dragMove,靠移动事件攒驻留永远
+    // 等不到展开(11:44 日志实锤)。
+    class QTreeWidgetItem* m_treeDwellItem = nullptr;
+    QTimer*                m_treeDwellTimer = nullptr;
     bool   m_viewerNoSync = false;       // 进查看器时不要就地改标签(由"开新标签"自己追加)
     bool m_viewerMode = false; // 查看器(单图)模式
     QDockWidget* m_treeDock = nullptr;  // objectName="tree" → 左停靠区(收藏夹/筛选器/信息可拖其正下方自由拼列)

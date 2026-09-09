@@ -217,3 +217,39 @@ void MainWindow::updateFolderDropTarget(const QPoint& pos, bool highlight) {
     m_folderTree->setProperty("_dropItem", it ? QVariant::fromValue(it) : QVariant());
     m_folderTree->viewport()->update();
 }
+
+// 拖动悬停树节点驻留自动展开(2026-09-09 用户令):同一文件夹节点驻留 800ms 只
+// 展开它一级,不级联、不动别处。OLE 在光标停住时不发 dragMove(11:44 日志两次
+// move 之间空窗 500ms 实锤),驻留判定必须走定时器,不能指望"攒移动事件"——
+// 否则停住永远等不到展开,挪开那一瞬的最后一次移动才补枪(用户报的正是这个)。
+// 驻留状态只在 dragMoveEvent 里按"光标下节点"单一口径更新,与 valid/禁止分支
+// 和白框逻辑彻底解耦(此前混在 updateFolderDropTarget 里被 clear+重启来回搅)。
+void MainWindow::updateTreeDwellExpand(const QPoint& pos) {
+    if (!m_folderTree) return;
+    if (!m_treeDwellTimer) {
+        m_treeDwellTimer = new QTimer(this);
+        m_treeDwellTimer->setSingleShot(true);
+        m_treeDwellTimer->setInterval(800);
+        connect(m_treeDwellTimer, &QTimer::timeout, this, [this]() {
+            QTreeWidgetItem* it = m_treeDwellItem;
+            if (it && !it->isExpanded() && it->childCount() > 0)
+                m_folderTree->expandItem(it);   // 占位行经 itemExpanded 懒加载真子项
+        });
+    }
+    QTreeWidgetItem* it = nullptr;
+    if (QWidget* ch = childAt(pos);
+        ch && (ch == m_folderTree || m_folderTree->isAncestorOf(ch)))
+        it = m_folderTree->itemAt(m_folderTree->mapFrom(this, pos));
+    if (it == m_treeDwellItem) return;   // 仍在同一节点:计时继续跑,不被移动打断
+    m_treeDwellItem = it;
+    if (it && !it->isExpanded() && it->childCount() > 0)
+        m_treeDwellTimer->start();       // childCount>0 兼容懒加载占位行
+    else
+        m_treeDwellTimer->stop();
+}
+
+// 拖动结束(落地/离窗):驻留状态一并清场
+void MainWindow::treeDwellReset() {
+    m_treeDwellItem = nullptr;
+    if (m_treeDwellTimer) m_treeDwellTimer->stop();
+}
