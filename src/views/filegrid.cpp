@@ -641,9 +641,19 @@ int FileGrid::selectedCount() const {
 
 int64_t FileGrid::selectedSize() const {
     int64_t total = 0;
-    for (int idx : m_selected)
-        if (idx >= 0 && idx < static_cast<int>(m_entries.size()))
-            total += m_entries[idx].size;
+    for (int idx : m_selected) {
+        if (idx < 0 || idx >= static_cast<int>(m_entries.size()))
+            continue;
+        const FileEntry& e = m_entries[idx];
+        // 目录自身的 size 恒 0(见 entryFromFindData):多选里若混着文件夹,
+        // 直加条目 size 会把整组统计成 0(2026-09-09 用户报)。已统计过的
+        // 目录(悬停提示/单选统计/Everything 回填)用 m_dirSizes 的真值;
+        // 还没统计的目录暂时按 0,由状态栏兜底提示「统计中」不展示 0。
+        if (e.isDir && m_dirSizes.contains(e.path))
+            total += m_dirSizes.value(e.path);
+        else
+            total += e.size;
+    }
     return total;
 }
 

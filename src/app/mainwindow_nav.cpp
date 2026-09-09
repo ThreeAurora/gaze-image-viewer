@@ -370,17 +370,32 @@ void MainWindow::updateStatus() {
         cancelDirSizeRun();
     }
     if (sc > 0) {
+        auto paths = m_fileGrid->selectedPaths();
+        // 多选混着"还没统计过的目录":尽力用 Everything 秒查把真值补上(入
+        // m_dirSizes 后下次刷新即精确)。阈值 40:全选大目录时不至于一次发爆
+        int unsizedDirs = 0;
+        if (sc > 1 && !paths.isEmpty()) {
+            for (const QString& p : paths) {
+                if (!QFileInfo(p).isDir() || m_fileGrid->m_dirSizes.contains(p))
+                    continue;
+                if (++unsizedDirs <= 40) tryEverythingDirStat(p, /*forGrid*/ true);
+            }
+        }
+        // 统计值只在方括号里出现一次;尾部「文件名+修改时间」不再重抄大小 ——
+        // 否则同一趟状态栏会出现两个一模一样的大小(2026-09-09 用户报)
+        QString shownSize = sizeText;
+        if (shownSize.isEmpty()) {
+            if (sc > 1 && unsizedDirs > 0 && ss == 0)
+                shownSize = gazeTr("统计中…");   // 全没算出来:不亮 0,落地后自动刷新
+            else
+                shownSize = formatSize(ss);
+        }
         text += gazeTr("  ·  已选 %1 项 · [%2]")
                     .arg(sc)
-                    .arg(sizeText.isEmpty() ? formatSize(ss) : sizeText);
-        auto paths = m_fileGrid->selectedPaths();
+                    .arg(shownSize);
         if (!paths.isEmpty()) {
             QFileInfo fi(paths.first());
-            const QString oneSize = (fi.isDir() && sc == 1)
-                                  ? sizeText
-                                  : formatSize(fi.size());
             text += "  " + fi.fileName()
-                  + "  " + oneSize
                   + "  " + fi.lastModified().toString("yyyy/M/d - HH:mm:ss");
         }
     }
