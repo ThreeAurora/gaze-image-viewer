@@ -339,17 +339,22 @@ void FolderTree::mouseDoubleClickEvent(QMouseEvent* event) {
 // 按下即切与扫过模式**解耦**(2026-09-02 用户复验仍不立刻跳,根因在此):
 // 无论 leftDragSweep 取 0/1,单击按下就切 —— 这是 #130 的基本承诺;
 // 扫过只是"按住拖动掠过其他目录"时是否也跟着切(拖动多选档禁用它)。
-// 展开箭头那一列(分支槽 + 其左侧)按下只做展开/收起,不切目录 —— 否则
-// 用户点"+"想看子目录,主视图就被拽走了,这是资源管理器/浏览器都不有的行为。
+// 行首第一格的真箭头(展开/收起钮)按下只做展开/收起,不切目录 —— 否则
+// 用户点"+"想看子目录,主视图就被拽走了,这是资源管理器/浏览器都不有的行为;
+// 箭头右侧(深层目录文字左的几格留白)按下同样算"点中目录",立即切换
+// (2026-09-09 探针取证:原判定把整条分支槽当禁区,留白按住总像"没反应")。
 void FolderTree::mousePressEvent(QMouseEvent* event) {
     m_sweepCur = itemAt(event->pos());
     if (event->button() == Qt::LeftButton && m_sweepCur) {
-        int depth = 0;                       // 层级:QTreeWidgetItem 没有 depth(),自己数
-        for (QTreeWidgetItem* p = m_sweepCur->parent(); p; p = p->parent()) ++depth;
-        const int branchRight = visualRect(indexFromItem(m_sweepCur)).left()
-                              + (depth + 1) * indentation();
+        // 展开箭头只占行首第一个缩进格(QProxyStyle 只在那格画 PE_IndicatorBranch)。
+        // 此前把整条分支槽 (depth+1)*indentation() 都当"箭头区",深层目录文字左
+        // 那几格留白按住被误判为点箭头 → 不切目录(2026-09-09 探针取证:depth=4
+        // 节点按下 x=107 < brX=160,用户说"按住文件夹却没反应")。
+        // 收紧:只有真正的箭头格不切(只展开/收起),箭头右侧留白也按"点中目录"立即切
+        const int arrowRight = visualRect(indexFromItem(m_sweepCur)).left()
+                             + indentation();
         const QString path = pathOf(m_sweepCur);
-        if (!path.isEmpty() && event->pos().x() >= branchRight) {
+        if (!path.isEmpty() && event->pos().x() >= arrowRight) {
             m_pressActivated = path;
             setCurrentItem(m_sweepCur);
             emit folderSelected(path);       // 按下那一刻就切,不等到松开
