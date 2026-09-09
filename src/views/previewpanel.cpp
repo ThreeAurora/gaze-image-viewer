@@ -29,6 +29,7 @@
 #include <QScreen>
 #include <QDir>
 #include <QThread>
+#include <QEventLoop>
 #include <QSplitter>
 #include <QUrl>
 #include <QTimer>
@@ -758,6 +759,12 @@ void PreviewPanel::teardownPlayer() {
     // 必须断连以免回调读到 nullptr 成员(见 mediaStatusChanged/positionChanged/durationChanged)
     disconnect(m_player, nullptr, this, nullptr);
     m_player->stop();
+    // 2026-09-09:必须显式清空 source。只 stop+deleteLater 时后端(WMF/FFmpeg)
+    // 放掉文件句柄要等事件循环跑到 deleteLater;而 releaseFileLocks 的句柄轮询
+    // 就在同一 GUI 线程里用 msleep 阻塞事件循环 → deleteLater 永不执行、句柄
+    // 永不释放,删除/改名必然报占用(用户报"依然被 Gaze 锁着删不掉")。
+    // setSource(空) 让后端当场卸掉当前媒体,句柄立即落地,与事件循环无关。
+    m_player->setSource(QUrl());
     // deleteLater：对象在事件循环末尾销毁，避免同步 delete 的 UAF 风险
     m_player->deleteLater();
     m_player = nullptr;
@@ -815,6 +822,9 @@ void PreviewPanel::releaseFileLocks(const QStringList& paths) {
                 Logger::event(QStringLiteral("releaseFileLocks: still locked after 3s '%1'").arg(p));
                 break;
             }
+            // 轮询期间必须让事件循环喘气:teardownPlayer 的 deleteLater、波形线程的
+            // finished→deleteLater 都排在事件队列里,纯 msleep 会把它们永远堵住。
+            QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
             QThread::msleep(80);
         }
     }
