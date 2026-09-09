@@ -246,8 +246,9 @@ inline QString stopService() {
 inline void startServiceAsync(QObject* ctx, std::function<void(QString)> onReady) {
     const QString dir = AppSettings::instance().get(
         "ImgSearch/dir", defaultDir()).toString();
+    // 默认解释器现场探测(环境变量 → 各盘 conda → PATH),公开仓不写死盘符
     const QString py = AppSettings::instance().get(
-        "ImgSearch/python", QStringLiteral("C:/miniconda3")).toString();
+        "ImgSearch/python", locatePython()).toString();
     if (!QFileInfo::exists(dir + "/main.py")) {
         onReady(gazeTr(
             "未找到万象图搜项目:%1/main.py —— 可在 设置 → 以文搜图 改目录").arg(dir));

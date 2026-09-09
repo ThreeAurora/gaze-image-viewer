@@ -450,8 +450,8 @@ QWidget* SettingsDialog::pageImgSearch() {
     fLoc->addRow(gazeTr("项目目录"), dirRow);
 
     // Python 解释器:输入 + 浏览 + 存在性指示
-    auto* pyEdit = edit("ImgSearch/python",
-                        QStringLiteral("C:/miniconda3"));
+    // 默认值现场探测(环境变量 → 各盘 conda → PATH),公开仓不写死盘符
+    auto* pyEdit = edit("ImgSearch/python", locatePython());
     auto* pyState = new QLabel;
     auto probePy = [pyEdit, pyState] {
         const bool ok = QFileInfo::exists(pyEdit->text().trimmed());

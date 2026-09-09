@@ -19,6 +19,7 @@ gaze 国际化构建脚本(2026-09-03)
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 
@@ -233,18 +234,26 @@ def main():
     if not target_dir:
         return
     qm_path = os.path.join(target_dir, "gaze_en.qm")
+    # lrelease 定位:GAZE_LRELEASE → PATH → 各盘 Qt 常见安装位置。
+    # 公开仓不写死盘符;旧候选里的 "C:/Qt" 是目录不是 exe,os.path.exists
+    # 为真会把 lrelease 设成目录,subprocess 必然失败——一并修掉。
     lrelease = os.environ.get("GAZE_LRELEASE", "")
     if not lrelease:
-        candidates = [
-            r"C:/Qt",
-            r"C:\Qt\6.8.3\mingw_64\bin\lrelease.exe",
-        ]
+        lrelease = shutil.which("lrelease") or ""
+    if not lrelease:
+        candidates = []
+        for drive in ("C:", "D:", "E:", "F:"):
+            for ver in ("6.9.0", "6.8.3", "6.8.2", "6.8.1", "6.8.0", "6.7.3"):
+                candidates.append(f"{drive}/Qt/{ver}/mingw_64/bin/lrelease.exe")
+                candidates.append(f"{drive}/Qt/{ver}/msvc2022_64/bin/lrelease.exe")
+                candidates.append(f"{drive}/Qt/{ver}/msvc2019_64/bin/lrelease.exe")
+            candidates.append(f"{drive}/Qt/Tools/QtCreator/bin/lrelease.exe")
         for c in candidates:
-            if os.path.exists(c):
+            if os.path.isfile(c):
                 lrelease = c
                 break
-    if not lrelease or not os.path.exists(lrelease):
-        print("[!] 未找到 lrelease(设 GAZE_LRELEASE 环境变量指向它)")
+    if not lrelease or not os.path.isfile(lrelease):
+        print("[!] 未找到 lrelease(设 GAZE_LRELEASE 环境变量,或把它加入 PATH)")
         return 1
     print("== lrelease ->", qm_path, "==")
     r = subprocess.run([lrelease, "-silent", TS_PATH, "-qm", qm_path])
