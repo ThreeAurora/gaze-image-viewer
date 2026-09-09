@@ -226,7 +226,9 @@ void FileGrid::retryDirSize(const QString& dirPath) {
 void FileGrid::setDirSize(const QString& dirPath, qint64 bytes) {
     m_dirSizes.insert(dirPath, bytes);
     m_dirSizeAsked.insert(dirPath);
-    if (m_dirSizes.size() > 400) m_dirSizes.clear();   // 会话封顶,防无限涨
+    if (m_dirSizes.size() > 4096) m_dirSizes.clear();   // 会话封顶(#248 排序批量补值放大)
+    // #248 大小排序:目录吃饱精确值 → 30ms 合并窗口重排,文件夹按真实体积归位
+    if (m_sortCol == SORT_SIZE) { m_dirResortTimer.start(); return; }
     const int i = m_pathRow.value(dirPath, -1);
     if (i < 0) return;
     ensureGeometry();

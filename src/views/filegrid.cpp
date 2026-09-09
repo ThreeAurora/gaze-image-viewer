@@ -122,6 +122,14 @@ FileGrid::FileGrid(QWidget* parent) : QScrollArea(parent) {
             emit dirSizeRequested(m_dirSizeHoverPath);
     });
 
+    // #248(2026-09-10):大小排序时大量目录补值到达 → 30ms 合并窗口里连续回填
+    // 只重排一次,文件夹按真实体积归位;只有当前排大小才动列表,其余照旧定点重绘
+    m_dirResortTimer.setSingleShot(true);
+    m_dirResortTimer.setInterval(30);
+    connect(&m_dirResortTimer, &QTimer::timeout, this, [this]() {
+        if (m_sortCol == SORT_SIZE) sort(m_sortCol, m_sortAsc);
+    });
+
     // Ctrl+滚轮缩放
     m_canvas->installEventFilter(this);
     viewport()->installEventFilter(this);   // #267:滚动条显隐改变视口宽 → 重排+重推表头列

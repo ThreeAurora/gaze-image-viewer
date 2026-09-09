@@ -155,6 +155,7 @@ public:
     QHash<QString,qint64> m_dirSizes;      // 已知目录大小(path→字节)
     QSet<QString>         m_dirSizeAsked;  // 已请求过(防重复发信号)
     QTimer                m_dirSizeTimer;  // 悬停驻留闸(450ms 后才发起统计)
+    QTimer                m_dirResortTimer; // #248:大小排序下补值到达 → 30ms 合并重排
     QString               m_dirSizeHoverPath;
 
 signals:

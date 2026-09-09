@@ -330,7 +330,18 @@ void FileGrid::sort(int column, bool ascending) {
 
         int c;
         switch (column) {
-        case SORT_SIZE: c = cmp3(a.size, b.size); break;
+        case SORT_SIZE: {
+            // #248(2026-09-10):目录按精确体积参与大小排序 —— 优先吃 Everything
+            // 秒查/统计回填的 m_dirSizes,没有则先按条目自带 size 兜底;补值到达后
+            // setDirSize 会启动合并重排,文件夹自动归位到真实位次
+            const auto szOf = [this](const FileEntry& e) -> qint64 {
+                if (!e.isDir) return e.size;
+                const auto it = m_dirSizes.constFind(e.path);
+                return it != m_dirSizes.constEnd() ? *it : e.size;
+            };
+            c = cmp3(szOf(a), szOf(b));
+            break;
+        }
         case SORT_TYPE: c = mimeType(a.ext).compare(mimeType(b.ext)); break;
         case SORT_EXT:  c = a.ext.compare(b.ext); break;
         case SORT_CDATE: c = cmp3(a.ctime, b.ctime); break;
@@ -422,6 +433,18 @@ void FileGrid::sort(int column, bool ascending) {
 
     m_geomDirty = true;
     refreshView();
+
+    // #248:大小排序下未吃过精确体积的目录一次性请求(可发几百个),主窗 pending
+    // 去重 + 持久库 mtime 快筛兜底;值回来 setDirSize → m_dirResortTimer 合并重排
+    if (column == SORT_SIZE) {
+        for (const FileEntry& e : m_entries) {
+            if (e.isDir && !m_dirSizes.contains(e.path)
+                        && !m_dirSizeAsked.contains(e.path)) {
+                m_dirSizeAsked.insert(e.path);
+                emit dirSizeRequested(e.path);
+            }
+        }
+    }
 }
 
 void FileGrid::setNameOrder(int order) {
