@@ -133,6 +133,9 @@ protected:
             // Qt 的双击序列是 press → release → dblclick → release(第二下按下被
             // dblclick 顶替)。后一个 release 与这记双击是同一轮操作,先立标记
             // 让它在 release 分支里被吞掉,不再按光标位置改一次选中。
+            // 注意:下面 QWidget::mouseDoubleClickEvent 的默认实现会把本事件
+            // **原样转调**回 mousePressEvent(事件 type 仍是 MouseButtonDblClick),
+            // 所以"清标记"那一句必须认事件类型,见 mousePressEvent。
             m_g->m_swallowNextRelease = true;
             m_g->onCanvasDblClick(i);
         }
@@ -140,8 +143,14 @@ protected:
     }
     void mousePressEvent(QMouseEvent* ev) override {
         // 新的一次按下 = 新的一轮点击:清掉上一记双击留下的标记,免得
-        // 一次真实单击的松开被误吞(双击与收尾松开之间不会有 press,清这里安全)
-        m_g->m_swallowNextRelease = false;
+        // 一次真实单击的松开被误吞。
+        // 但"双击转调进来的按下"不算新一轮:Qt 的 QWidget::mouseDoubleClickEvent
+        // 默认实现就是 mousePressEvent(ev),且传的是同一个事件对象(type 仍是
+        // MouseButtonDblClick)。无条件清标记 = 双击刚立的标记当场被抹掉,收尾
+        // 松开照样按光标位置补选 —— 上一版修复正是栽在这一句(2026-09-10 实测:
+        // 子目录 31 项,先选中左上角首个,73ms 后又被补选成光标所在那一个)。
+        if (ev->type() != QEvent::MouseButtonDblClick)
+            m_g->m_swallowNextRelease = false;
         // 拖出起点:先让 FileGrid 记住按下位置与条目,移动够距离才发起拖拽,
         // 避免单击选中被误判成拖文件
         if (ev->button() == Qt::LeftButton) {
