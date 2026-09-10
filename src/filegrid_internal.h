@@ -115,7 +115,12 @@ protected:
     void mouseReleaseEvent(QMouseEvent* ev) override {
         const int i = m_g->indexAt(ev->pos());
         if (ev->button() == Qt::LeftButton) {
-            if (m_g->m_rubberActive) { m_g->endRubber(ev->pos()); }
+            if (m_g->m_swallowNextRelease) {
+                // 双击的收尾松开:双击已经完成选中(并可能已进入子目录),
+                // 这次松开若再按光标位置补选一次,就会覆盖掉新目录刚选好的
+                // 左上角第一个 —— 正是用户报的"多余的一次选中"。
+                m_g->m_swallowNextRelease = false;
+            } else if (m_g->m_rubberActive) { m_g->endRubber(ev->pos()); }
             else if (i >= 0) m_g->onCanvasRelease(i);
         } else if (ev->button() == Qt::MiddleButton) {
             if (i >= 0) m_g->onCanvasMiddle(i);
@@ -124,10 +129,19 @@ protected:
     }
     void mouseDoubleClickEvent(QMouseEvent* ev) override {
         const int i = m_g->indexAt(ev->pos());
-        if (i >= 0 && ev->button() == Qt::LeftButton) m_g->onCanvasDblClick(i);
+        if (i >= 0 && ev->button() == Qt::LeftButton) {
+            // Qt 的双击序列是 press → release → dblclick → release(第二下按下被
+            // dblclick 顶替)。后一个 release 与这记双击是同一轮操作,先立标记
+            // 让它在 release 分支里被吞掉,不再按光标位置改一次选中。
+            m_g->m_swallowNextRelease = true;
+            m_g->onCanvasDblClick(i);
+        }
         QWidget::mouseDoubleClickEvent(ev);
     }
     void mousePressEvent(QMouseEvent* ev) override {
+        // 新的一次按下 = 新的一轮点击:清掉上一记双击留下的标记,免得
+        // 一次真实单击的松开被误吞(双击与收尾松开之间不会有 press,清这里安全)
+        m_g->m_swallowNextRelease = false;
         // 拖出起点:先让 FileGrid 记住按下位置与条目,移动够距离才发起拖拽,
         // 避免单击选中被误判成拖文件
         if (ev->button() == Qt::LeftButton) {

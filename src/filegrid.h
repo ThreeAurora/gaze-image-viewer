@@ -245,6 +245,12 @@ private:
     QPoint   m_dragOrigin;             // 拖出起点(画布坐标)
     int      m_dragOriginIdx = -1;     // 按下时命中的条目
     bool     m_dragStarted   = false;  // 本次按下已发起过拖拽
+    // 双击已定案,它收尾的那次"松开左键"不再参与选择(2026-09-10 用户报:
+    // 双击进入子文件夹 B 后,左上角第一个先被选中,随后又被补选成"光标位置那一个")。
+    // 成因:双击处理里 navigateTo 同步换好了新目录,而双击的 release 被这次
+    // 扫描/布局堵在事件队列里、晚几十毫秒才处理——那时 indexAt() 已经按新目录
+    // 算坐标,命中项恰好又等于旧目录里被双击那一项的索引,于是覆盖掉 selInit 的选中。
+    bool     m_swallowNextRelease = false;
     QLineEdit* m_renameEdit = nullptr; // 就地改名编辑器(存在时表示正在改名)
     int        m_renameIdx  = -1;
     QString    m_renamePath;
