@@ -8,7 +8,7 @@
 
 [English](./README.en-US.md) | 简体中文
 
-![Version](https://img.shields.io/badge/version-1.2.0-blue?style=flat-square)
+![Version](https://img.shields.io/github/v/release/ThreeAurora/gaze-image-viewer?style=flat-square&label=version&color=blue)
 ![Platform](https://img.shields.io/badge/platform-Windows-0078D6?style=flat-square&logo=windows&logoColor=white)
 ![C++](https://img.shields.io/badge/C%2B%2B-17-00599C?style=flat-square&logo=cplusplus&logoColor=white)
 ![Qt](https://img.shields.io/badge/Qt-6.8%20LTS-41CD52?style=flat-square&logo=qt&logoColor=white)
@@ -110,7 +110,7 @@
 
 ### 便携版（推荐）
 
-从 [Releases](../../releases) 下载 `Gaze_1.2.0_Portable.zip`，解压到任意位置，双击 `Gaze.exe` 运行。
+从 [Releases](../../releases) 下载最新的便携版 `Gaze_*_Portable.zip`，解压到任意位置，双击 `Gaze.exe` 运行。
 
 - 所有设置保存在程序目录内的 `Gaze.ini`，缩略图缓存在 `thumbnails.db`
 - **无需导入、无需建立文件库**：目录即所见，打开就是浏览器
@@ -118,7 +118,7 @@
 
 ### 安装版
 
-从 [Releases](../../releases) 下载 `Gaze_1.2.0_Setup.exe`，按向导安装。首次启动可选择把配置迁移到 `%APPDATA%`（程序目录只读、卸载保留用户配置）。
+从 [Releases](../../releases) 下载最新的安装版 `Gaze_*_Setup.exe`，按向导安装。首次启动可选择把配置迁移到 `%APPDATA%`（程序目录只读、卸载保留用户配置）。
 
 ### 从源码构建
 

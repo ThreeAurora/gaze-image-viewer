@@ -1,6 +1,7 @@
 # ═══════════════════════════════════════════════════════
 # 安装版 Setup.exe 打包:Inno Setup 6(ISCC)编译 deploy/gaze.iss。
-#   用法: powershell -ExecutionPolicy Bypass -File deploy/make_installer.ps1 [-Version 1.0.0]
+#   用法: powershell -ExecutionPolicy Bypass -File deploy/make_installer.ps1 [-Version X.Y.Z]
+#         不传 -Version 时,版本号取自 src/constants.h 的 GAZE_VERSION(单一来源)
 #
 # 产物链: dist/GazePortable(便携集合,由 make_portable.ps1 生成)
 #         + deploy/bootstrap.ini([Integration] iniLocation=1 引导)
@@ -8,13 +9,22 @@
 # 安装语义: 装进 Program Files\Gaze(管理员一次到位);exe 旁只留引导 ini,
 #           用户配置/缓存落 %APPDATA%(卸载保留,与便携版 exe 相对存放分流)。
 # ═══════════════════════════════════════════════════════
-param([string]$Version = "1.0.0")
-if ([string]::IsNullOrWhiteSpace($Version)) { $Version = "1.0.0" }
+param([string]$Version = "")
 
 $ErrorActionPreference = "Stop"
 $root  = Split-Path $PSScriptRoot -Parent
 $dist  = Join-Path $root "dist"
 $base  = Join-Path $dist "GazePortable"
+
+# 版本号单一来源 = src/constants.h 的 GAZE_VERSION,免去打包版本与源码版本两处手改
+if ([string]::IsNullOrWhiteSpace($Version)) {
+    $verMatch = Select-String -Path (Join-Path $root "src/constants.h") `
+                              -Pattern 'GAZE_VERSION[ ]*=[ ]*"([0-9]+\.[0-9]+\.[0-9]+)"' |
+                Select-Object -First 1
+    if (!$verMatch) { Write-Error "未能从 src/constants.h 解析 GAZE_VERSION(X.Y.Z)" }
+    $Version = $verMatch.Matches[0].Groups[1].Value
+}
+
 $setup = Join-Path $dist "Gaze_${Version}_Setup.exe"
 
 if (!(Test-Path (Join-Path $base "Gaze.exe"))) {

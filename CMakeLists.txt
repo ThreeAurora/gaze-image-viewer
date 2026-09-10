@@ -1,5 +1,16 @@
 cmake_minimum_required(VERSION 3.16)
-project(Gaze VERSION 1.2.0 LANGUAGES CXX)
+
+# 版本号单一来源 = src/constants.h 的 GAZE_VERSION(格式 X.Y.Z)。
+# 这里从源码里读出来喂给 project(),打包脚本读同一行,全工程不再有第二份手改副本。
+file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/src/constants.h" GAZE_VERSION_LINE
+     REGEX "GAZE_VERSION[ ]*=[ ]*\"")
+string(REGEX MATCH "\"([0-9]+\\.[0-9]+\\.[0-9]+)\"" _gaze_ver "${GAZE_VERSION_LINE}")
+set(GAZE_VERSION "${CMAKE_MATCH_1}")
+if(NOT GAZE_VERSION)
+    message(FATAL_ERROR "未能从 src/constants.h 解析 GAZE_VERSION(X.Y.Z)")
+endif()
+
+project(Gaze VERSION ${GAZE_VERSION} LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

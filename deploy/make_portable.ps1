@@ -1,6 +1,7 @@
 # ═══════════════════════════════════════════════════════
 # 便携版 Portable 打包:build_qt68 运行期集合 -> dist/GazePortable/ + zip
-# 用法: powershell -ExecutionPolicy Bypass -File deploy/make_portable.ps1 [-Version 1.0]
+# 用法: powershell -ExecutionPolicy Bypass -File deploy/make_portable.ps1 [-Version X.Y.Z]
+#       不传 -Version 时,版本号取自 src/constants.h 的 GAZE_VERSION(单一来源)
 #
 # 打包口径(与安装版共用同一份"运行期集合"清单,见下方 $Excludes):
 #   带什么: Gaze.exe + Qt/ffmpeg/msvcrt dll + plugins(imageformats/platforms/…)
@@ -9,11 +10,20 @@
 #            Gaze.ini、探针 exe、librawdec.a、rel_avif.json)——
 #            首次运行自动重建 Gaze.ini/thumbnails.db,保证干净首启。
 # ═══════════════════════════════════════════════════════
-param([string]$Version = "1.0")
-if ([string]::IsNullOrWhiteSpace($Version)) { $Version = "1.0" }
+param([string]$Version = "")
 
 $ErrorActionPreference = "Stop"
 $root   = Split-Path $PSScriptRoot -Parent
+
+# 版本号单一来源 = src/constants.h 的 GAZE_VERSION,免去打包版本与源码版本两处手改
+if ([string]::IsNullOrWhiteSpace($Version)) {
+    $verMatch = Select-String -Path (Join-Path $root "src/constants.h") `
+                              -Pattern 'GAZE_VERSION[ ]*=[ ]*"([0-9]+\.[0-9]+\.[0-9]+)"' |
+                Select-Object -First 1
+    if (!$verMatch) { Write-Error "未能从 src/constants.h 解析 GAZE_VERSION(X.Y.Z)" }
+    $Version = $verMatch.Matches[0].Groups[1].Value
+}
+
 $build  = Join-Path $root "build_qt68"
 $dist   = Join-Path $root "dist"
 $out    = Join-Path $dist "GazePortable"

@@ -8,7 +8,7 @@
 
 简体中文 | [English](./README.en-US.md)
 
-![Version](https://img.shields.io/badge/version-1.2.0-blue?style=flat-square)
+![Version](https://img.shields.io/github/v/release/ThreeAurora/gaze-image-viewer?style=flat-square&label=version&color=blue)
 ![Platform](https://img.shields.io/badge/platform-Windows-0078D6?style=flat-square&logo=windows&logoColor=white)
 ![C++](https://img.shields.io/badge/C%2B%2B-17-00599C?style=flat-square&logo=cplusplus&logoColor=white)
 ![Qt](https://img.shields.io/badge/Qt-6.8%20LTS-41CD52?style=flat-square&logo=qt&logoColor=white)
@@ -109,7 +109,7 @@
 
 ### Portable (recommended)
 
-Download `Gaze_1.2.0_Portable.zip` from [Releases](../../releases), extract anywhere, and run `Gaze.exe`.
+Download the latest `Gaze_*_Portable.zip` from [Releases](../../releases), extract anywhere, and run `Gaze.exe`.
 
 - All settings are stored in `Gaze.ini` inside the program folder, with the thumbnail cache in `thumbnails.db`
 - **No import, no media library**: what you see is the folder — it's a browser the moment it opens
@@ -117,7 +117,7 @@ Download `Gaze_1.2.0_Portable.zip` from [Releases](../../releases), extract anyw
 
 ### Installer
 
-Download `Gaze_1.2.0_Setup.exe` from [Releases](../../releases) and follow the wizard. On first launch you can choose to move the configuration to `%APPDATA%` (the program folder stays read-only and user config survives uninstall).
+Download the latest `Gaze_*_Setup.exe` from [Releases](../../releases) and follow the wizard. On first launch you can choose to move the configuration to `%APPDATA%` (the program folder stays read-only and user config survives uninstall).
 
 ### Build from source
 
