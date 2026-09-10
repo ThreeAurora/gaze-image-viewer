@@ -42,7 +42,8 @@ if (!$iscc) { Write-Error "找不到 ISCC.exe,请安装 Inno Setup 6" }
 
 # ISCC 编译(版本经 /DAppVersion 注入 gaze.iss,包名随之 Gaze_<ver>_Setup)
 & $iscc "/DAppVersion=$Version" (Join-Path $PSScriptRoot "gaze.iss")
-if ($LASTEXITCODE -ne 0) { Write-Error "ISCC 编译失败(exit $LASTEXITCODE)" }
-if (!(Test-Path $setup)) { Write-Error "ISCC 未产出 $setup,检查 gaze.iss" }
+# 成败以"产物在不在"为准:$LASTEXITCODE 在本机某些非交互宿主里取不到值(会误报
+# "exit "),而 ISCC 其实已经成功 —— 曾据此误判过失败。产物才是硬事实。
+if (!(Test-Path $setup)) { Write-Error "ISCC 未产出 $setup(exit $LASTEXITCODE),检查 gaze.iss" }
 $sz = [math]::Round((Get-Item $setup).Length / 1MB, 1)
 Write-Host "Installer OK: $setup ($sz MB)"
