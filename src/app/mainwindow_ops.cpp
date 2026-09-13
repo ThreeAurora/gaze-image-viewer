@@ -97,7 +97,10 @@ void MainWindow::cycleMode(int spec) {
         toggleViewer();
         return;
     case 2: { // 浏览器→全屏→查看器→浏览器
-        if (!isFullScreen() && !m_viewerMode) { toggleViewer(); toggleViewer(); enterFullscreen(); }
+        // 浏览器态直进全屏:不能借 toggleViewer×2 绕行——每次 toggleViewer
+        // 都会顺带给当前文件开出一张查看器标签(用户按一下切换键,退出全屏
+        // 后标签栏凭空多签、分栏快照也被动过)
+        if (!isFullScreen() && !m_viewerMode) { enterFullscreen(); }
         else if (isFullScreen() && !m_viewerMode) { toggleViewer(); }
         else if (m_viewerMode && isFullScreen()) { exitFullscreen(); toggleViewer(); }
         else { enterFullscreen(); }
