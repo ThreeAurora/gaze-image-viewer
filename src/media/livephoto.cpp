@@ -294,7 +294,10 @@ QString extractEmbeddedVideo(const QString& imagePath, const Info& info) {
     // 用 ffmpeg 修复 MOOV atom（faststart）
     QTemporaryFile fixed(QDir::tempPath() + "/xnn_live_fixed_XXXXXX.mp4");
     fixed.setAutoRemove(false);
-    if (!fixed.open()) return {};
+    if (!fixed.open()) {
+        QFile::remove(rawPath);   // 修复路走不通,原始临时文件也别留下
+        return {};
+    }
     QString fixedPath = fixed.fileName();
     fixed.close();
 
@@ -314,7 +317,12 @@ QString extractEmbeddedVideo(const QString& imagePath, const Info& info) {
         "-y", fixedPath
     });
 
-    if (proc.waitForFinished(10000) && proc.exitCode() == 0
+    const bool finished = proc.waitForFinished(10000);
+    if (!finished) {
+        proc.kill();              // 栈对象析构不杀子进程:超时必须显式杀,
+        proc.waitForFinished(2000);   // 否则孤儿 ffmpeg 继续写临时文件
+    }
+    if (finished && proc.exitCode() == 0
         && QFileInfo::exists(fixedPath)
         && QFileInfo(fixedPath).size() > 0) {
         Logger::event(QStringLiteral("ffmpeg-ext: ok %1 ms exit=%2 fixed='%3' (%4 bytes)")
@@ -325,7 +333,7 @@ QString extractEmbeddedVideo(const QString& imagePath, const Info& info) {
     }
 
     // ffmpeg 修复失败，返回原始提取文件
-    const QString why = proc.state() == QProcess::Running
+    const QString why = !finished
         ? QStringLiteral("timeout(>10s)")
         : QStringLiteral("exit=%1").arg(proc.exitCode());
     Logger::event(QStringLiteral("ffmpeg-ext: FALLBACK raw, %1, %2 ms")
