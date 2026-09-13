@@ -101,6 +101,13 @@ inline bool instanceRunning() {
                     << QString(), &out, /*noResultError*/ true, 5000) == 0;
 }
 
+// es 查询专用池:独占 1 线程,查询彼此串行,不挤压全局池(缩略图/缓存清扫)。
+inline QThreadPool& esPool() {
+    static QThreadPool pool;
+    pool.setMaxThreadCount(1);
+    return pool;
+}
+
 // 拉起/等待的会话级状态(提为具名 static:探测在 es 专用池跑,结果回 GUI
 // 兑现,函数内局部 static 的写法撑不起这个拆分)
 struct EsWaiter { QPointer<QObject> p; std::function<void(bool)> cb; int left = 0; };
@@ -172,13 +179,6 @@ inline void ensureRunning(QPointer<QObject> ctx, std::function<void(bool)> done)
         QObject::connect(esPoller(), &QTimer::timeout, []() { esProbeAsync(); });
     }
     if (!esPoller()->isActive()) esPoller()->start();
-}
-
-// es 查询专用池:独占 1 线程,查询彼此串行,不挤压全局池(缩略图/缓存清扫)。
-inline QThreadPool& esPool() {
-    static QThreadPool pool;
-    pool.setMaxThreadCount(1);
-    return pool;
 }
 
 // 异步 es 查询:池线程里跑 esSync,结果经 QueuedConnection 回 ctx 所在线程。
