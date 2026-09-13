@@ -517,8 +517,13 @@ void ImageSearchDialog::refreshServiceStatus() {
         self->m_svcModel->setText(gazeTr("激活模型:%1")
             .arg(o.value("active_model").toString()));
         self->m_scanBtn->setEnabled(!scanning);
-        if (self->m_engineBtn->isEnabled())
+        if (self->m_engineBtn->isEnabled()) {
             self->m_engineBtn->setText(gazeTr("停止"));
+            // 服务由外部启动(用户手动跑 main.py 等)时按钮显示"停止",
+            // 状态机也得跟上 —— 不然点按钮走的是"启动"分支,再拉一个
+            // 同端口实例,端口服后变僵尸
+            self->m_svcAlive = true;
+        }
     });
 }
 
