@@ -186,6 +186,9 @@ FileGrid::FileGrid(QWidget* parent) : QScrollArea(parent) {
     // Browser/thumbScrollPreview:滚动过程中要不要就出缩略图
     m_scrollPreview = AppSettings::instance()
                         .get("Browser/thumbScrollPreview", true).toBool();
+    // 定时器间隔在 148 行按"默认值 true"设过一次,持久化值读到后要回设,
+    // 否则关掉该设置的用户启动后合并间隔仍是 0(滚动中照样补图)
+    m_scrollCoalesce.setInterval(m_scrollPreview ? 0 : 120);
     m_lastByExt = AppSettings::instance().get("FileList/recognizeByExt", true).toBool();
     // 详细列表列宽:用户拖拽落下的记忆优先,没存过用基准死表(2026-09-06 用户令:
     // 不再自动算名称列宽,列宽归用户拖)
