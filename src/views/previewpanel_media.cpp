@@ -488,8 +488,13 @@ void PreviewPanel::ensureWave() {
 
 void PreviewPanel::teardownWave() {
     if (!m_waveThread) return;
-    if (m_waveWorker)
-        QMetaObject::invokeMethod(m_waveWorker, "cancel");
+    if (m_waveWorker) {
+        // cancel 用阻塞式投递:它与 quit 之间若隔着一个 queued 排队,事件循环
+        // 可能先退出把 cancel 丢掉——兜底 ffmpeg 就成了无人 kill 的孤儿。
+        // cancel 内部只是置代次 + kill(≤500ms),阻塞代价可接受
+        QMetaObject::invokeMethod(m_waveWorker, "cancel",
+                                  Qt::BlockingQueuedConnection);
+    }
     m_waveThread->quit();
     m_waveThread->wait(2000);
     m_waveThread = nullptr;
