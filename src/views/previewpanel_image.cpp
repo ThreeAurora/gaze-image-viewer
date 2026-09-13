@@ -234,6 +234,10 @@ void PreviewPanel::showImageHint(const QString& text) {
     delete m_origPix;
     m_origPix = nullptr;
     m_panKey.clear();
+    // 按住左键(临时 1:1)滚轮切到坏图时,残留的临时缩放态会在松开瞬间把
+    // 提示条甩到左上角(松开路径 move(0,0),fitAuto 又因无位图直接返回)
+    m_tempZoom = false;
+    m_dragging = false;
     m_imgLabel->setText(text);
     m_imgLabel->setFixedSize(qBound(140, width() / 3, 300), 40);
     m_imgLabel->move((width() - m_imgLabel->width()) / 2,
