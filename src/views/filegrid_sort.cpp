@@ -272,15 +272,16 @@ void FileGrid::exifPrefillVisible() {
             const double t = ExifDate::dateTimeOriginal(path);
             // context 传 QPointer:self 已析构时 invokeMethod 直接丢弃回调;
             // 传裸 this 会在池线程解引用悬垂指针(Qt 内部要取 context->thread())
-            QMetaObject::invokeMethod(self, [this, self, path, gen, t]() {
-                m_exifPending.remove(path);
-                if (!self || gen != m_exifGen) return;   // 期间换了目录/又重排了一轮
-                if (m_exifCache.size() > 50000) m_exifCache.clear();
-                m_exifCache.insert(path, t > 0 ? t : 0);
-                const int row = m_pathRow.value(path, -1);
+            QMetaObject::invokeMethod(self, [self, path, gen, t]() {
+                self->m_exifPending.remove(path);
+                if (gen != self->m_exifGen) return;   // 期间换了目录/又重排了一轮
+                if (self->m_exifCache.size() > 50000) self->m_exifCache.clear();
+                self->m_exifCache.insert(path, t > 0 ? t : 0);
+                const int row = self->m_pathRow.value(path, -1);
                 if (row < 0) return;
-                ensureGeometry();   // 排序后异步重绘未 flush 前到达,别按旧几何算脏矩形
-                m_canvas->update(cardRect(row));
+                // 排序后异步重绘未 flush 前到达,别按旧几何算脏矩形
+                self->ensureGeometry();
+                self->m_canvas->update(self->cardRect(row));
             }, Qt::QueuedConnection);
         });
     }
