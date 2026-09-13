@@ -237,11 +237,16 @@ inline void pidListeningOnPortAsync(int portNo, QPointer<QObject> ctx,
         qint64 pid = 0;
         if (p.waitForFinished(3000)) {
             const QString out = QString::fromLocal8Bit(p.readAllStandardOutput());
-            const QString suffix = QStringLiteral(":%1").arg(portNo);
+            // 端口段必须精确相等:"1.2.3.4:18747" 用 endsWith 也命中 ":8747",
+            // 会把无关进程的整棵树 taskkill /F 掉
+            const QString want = QString::number(portNo);
             for (const QString& raw : out.split(QLatin1Char('\n'))) {
                 const QStringList cols = raw.trimmed().split(QRegularExpression("\\s+"));
                 if (cols.size() < 5 || cols.at(0) != QLatin1String("TCP")) continue;
-                if (cols.at(1).endsWith(suffix) && cols.at(3) == QLatin1String("LISTENING")) {
+                const QString local = cols.at(1);
+                const int colon = local.lastIndexOf(QLatin1Char(':'));
+                if (colon >= 0 && local.mid(colon + 1) == want
+                    && cols.at(3) == QLatin1String("LISTENING")) {
                     pid = cols.at(4).toLongLong();
                     break;
                 }
