@@ -274,8 +274,12 @@ void DbMaintenanceDialog::relocateSelected() {
     if (!ok) return;
     QString newDir = QDir::fromNativeSeparators(input.trimmed());
     if (!newDir.isEmpty() && !newDir.endsWith('/')) newDir += '/';
-    // 搬移实现是"复制到新键再删旧键",新路径在原路径之下会自吞刚搬入的记录
-    if (newDir.isEmpty() || newDir == oldDir || newDir.startsWith(oldDir)) {
+    // 搬移实现是"复制到新键再删旧键",新路径在原路径之下会自吞刚搬入的记录。
+    // 比较必须大小写不敏感:Windows 路径同义,而键是 BINARY 排序、删除的 LIKE
+    // 又不分大小写 —— 仅大小写不同的"新路径"插入后随即被整批删除
+    if (newDir.isEmpty()
+        || newDir.compare(oldDir, Qt::CaseInsensitive) == 0
+        || newDir.startsWith(oldDir, Qt::CaseInsensitive)) {
         QMessageBox::warning(this, gazeTr("重新定位"),
             gazeTr("新路径不能与原路径相同或位于原路径之下。"));
         return;
