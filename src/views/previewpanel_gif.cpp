@@ -117,7 +117,9 @@ static bool parseGifDelays(const QString& path, QVector<int>& outMs)
                 if (len == 0) break;
                 pos += len;
             }
-            outMs << (curDelay < 0 ? 100 : curDelay);
+            // delay 写 0 的 GIF(大量工具会这么生成)按社区惯例兜 100ms:
+            // 没写(<0)与明确写 0 都不该按 0 兑成 20ms/帧的狂奔
+            outMs << (curDelay <= 0 ? 100 : curDelay);
             curDelay = -1;
             continue;
         }
