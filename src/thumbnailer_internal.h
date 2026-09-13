@@ -69,8 +69,12 @@ inline QSqlDatabase threadDb(int cacheMB) {
                 q.exec("PRAGMA journal_mode=WAL");
                 q.exec("PRAGMA synchronous=NORMAL");
                 q.exec("CREATE TABLE IF NOT EXISTS thumbs "
-                       "(key TEXT PRIMARY KEY, png BLOB, mtime REAL, atime REAL DEFAULT 0)");
+                       "(key TEXT PRIMARY KEY, png BLOB, mtime REAL, atime REAL DEFAULT 0, src TEXT)");
                 q.exec("CREATE INDEX IF NOT EXISTS idx_atime ON thumbs(atime)");
+                // src 列迁移(幂等):键是 MD5 单向哈希,没有明文媒体路径列,
+                // 维护对话框只能展示一串哈希、目录级清理也无从下手。
+                // 旧库补列,新库建表已带;列已存在时 ALTER 失败,静默即可
+                q.exec("ALTER TABLE thumbs ADD COLUMN src TEXT");
                 // #244 文件夹大小缓存库:路径→精确总大小+失效键+统计时刻。
                 // 失效键=目录 mtime|直接子项数|直接子项字节和(读写双方都用
                 // 同一算法算,不用建索引——主键 path 就是唯一入口)
