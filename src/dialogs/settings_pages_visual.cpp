@@ -107,7 +107,16 @@ QWidget* SettingsDialog::pageAppearance() {
     form->addRow(gazeTr("标签排列"),
         combo("Appearance/labelAlign", {gazeTr("左"), gazeTr("居中"),
             gazeTr("右")}, 1));
-    form->addRow(chk("Appearance/formatColor", gazeTr("文件根据格式显示以下颜色(文件名底色)"), true));
+    // 该键在外观页与标签颜色页各有一份复选框,监听变化实时对齐显示
+    // (值不变时 setChecked 不发 toggled,不会成环)
+    {
+        auto* fmtChk = chk("Appearance/formatColor", gazeTr("文件根据格式显示以下颜色(文件名底色)"), true);
+        connect(&AppSettings::instance(), &AppSettings::changed, fmtChk, [fmtChk]() {
+            fmtChk->setChecked(AppSettings::instance()
+                .get("Appearance/formatColor", true).toBool());
+        });
+        form->addRow(fmtChk);
+    }
     // #126:这里原来是一段写死的 XnView 说明 + "(颜色编辑器即将支持)"。
     //   编辑器其实早就存在(「缩略图 → 标签颜色」:增删改扩展名、取色、写 ini、
     //   FileCard 真生效),那句占位话就是谎话。改成显示**当前真表**并一键跳过去。
@@ -152,8 +161,16 @@ QWidget* SettingsDialog::pageLabelColors() {
     auto* root = new QVBoxLayout;
     root->setSpacing(6);
 
-    root->addWidget(chk("Appearance/formatColor",
-                        gazeTr("文件根据格式显示以下颜色(文件名底色)"), true));
+    // 该键在外观页与标签颜色页各有一份复选框,监听变化实时对齐显示
+    {
+        auto* fmtChk = chk("Appearance/formatColor",
+                           gazeTr("文件根据格式显示以下颜色(文件名底色)"), true);
+        connect(&AppSettings::instance(), &AppSettings::changed, fmtChk, [fmtChk]() {
+            fmtChk->setChecked(AppSettings::instance()
+                .get("Appearance/formatColor", true).toBool());
+        });
+        root->addWidget(fmtChk);
+    }
 
     auto* body = new QHBoxLayout;
     body->setSpacing(8);
