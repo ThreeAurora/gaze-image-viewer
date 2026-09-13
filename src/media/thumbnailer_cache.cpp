@@ -218,7 +218,7 @@ void Thumbnailer::cacheStore(const QString& key, const QImage& pix, double mtime
             q.addBindValue(QVariant(blob));
             q.addBindValue(QVariant(mtime));
             q.addBindValue(QVariant(static_cast<double>(
-                std::chrono::system_clock::now().time_since_epoch())));
+                std::chrono::system_clock::now().time_since_epoch().count())));
             // 媒体路径明文(键是 MD5,这是唯一的可读线索);统一正斜杠形态
             q.addBindValue(QVariant(QDir::fromNativeSeparators(src)));
             q.exec();
