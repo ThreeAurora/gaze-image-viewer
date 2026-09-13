@@ -360,8 +360,6 @@ void MainWindow::previewDoubleClicked() {
     // 保留给"当前预览与标签对不上"的兜底分支
     const QString cur = m_preview->filePath();
     const int i = cur.isEmpty() ? -1 : indexOfTabPath(cur);
-    Logger::event(QStringLiteral("previewDbl: cur='%1' idx=%2 tabs=%3")
-                      .arg(cur).arg(i).arg(m_viewerTabs ? m_viewerTabs->count() : -1));
     if (i > 0 && !isBrowserTab(i)) { closeViewerTab(i); return; }
     toggleViewer();   // 退出不碰标签表:标签全保留,高亮回「浏览器」签(toggleViewer 内)
 }

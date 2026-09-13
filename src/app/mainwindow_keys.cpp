@@ -134,27 +134,7 @@ void MainWindow::dragMoveEvent(QDragMoveEvent* e) {
     const QPoint pos = e->position().toPoint();
     const bool valid = dropOnValidTarget(pos) && dropTargetMeaningful(pos, e);
     updateTreeDwellExpand(pos);   // 树节点驻留自动展开(定时器驱动,与 valid 分支解耦)
-    // 探针(2026-09-09 二次加码):禁止光标在"同目录文件卡片"上仍放行,1/8 节流
-    // 采样太稀丢关键帧——改 1/3,并把命中条目名/isDir/标记位/source 位拆开记录,
-    // 下一次复现即可直接定位是 hitTest 解析错位还是判定分支走偏。
-    {
-        static int s_dragMoveTick = 0;
-        if (++s_dragMoveTick % 3 == 0) {
-            QWidget* ch = childAt(pos);
-            const int idx = m_fileGrid ? m_fileGrid->hitTestFrom(pos, this) : -1;
-            const QString hit = m_fileGrid ? m_fileGrid->pathAt(idx) : QString();
-            Logger::event(QStringLiteral(
-                "dragMove: pos=%1,%2 child=%3 src=%4 marker=%5 srcEq=%6 hit=%7 isDir=%8 valid=%9")
-                .arg(pos.x()).arg(pos.y())
-                .arg(ch ? QString::fromLatin1(ch->metaObject()->className()) : QStringLiteral("null"))
-                .arg(e->source() ? QString::fromLatin1(e->source()->metaObject()->className()) : QStringLiteral("null"))
-                .arg(e->mimeData()->hasFormat(QStringLiteral("application/x-gaze-internal-drag")) ? 1 : 0)
-                .arg(e->source() == m_fileGrid ? 1 : 0)
-                .arg(hit.isEmpty() ? QStringLiteral("-") : QFileInfo(hit).fileName())
-                .arg(hit.isEmpty() ? QStringLiteral("-") : (QFileInfo(hit).isDir() ? QStringLiteral("1") : QStringLiteral("0")))
-                .arg(valid));
-        }
-    }
+    // (2026-09-09 排查拖放误选的 dragMove 采样探针已剪除)
     if (valid) {
         e->acceptProposedAction();
         updateDragHint(pos, true);              // 2026-09-02:光标旁"复制/移动"浮标
@@ -211,13 +191,7 @@ void MainWindow::dropEvent(QDropEvent* e) {
             if (!hit.isEmpty() && QFileInfo(hit).isDir()) dropIntoDir = hit;
         }
     }
-    // 探针(2026-09-09):落地瞬间真相——dropEvent 竟然被执行时,记录解析结果
-    Logger::event(QStringLiteral(
-        "drop: pos=%1,%2 dropInto=%3 n=%4 marker=%5")
-        .arg(gpos.x()).arg(gpos.y())
-        .arg(dropIntoDir.isEmpty() ? QStringLiteral("-") : dropIntoDir)
-        .arg(paths.size())
-        .arg(md->hasFormat(QStringLiteral("application/x-gaze-internal-drag")) ? 1 : 0));
+    // (2026-09-09 排查拖放的 dropEvent 落地探针已剪除)
 
     // 拖放语义(用户 2026-08-31 明令):拖放=移动,Ctrl+拖放=复制。
     // 落点压在文件夹上会改动文件;是否弹窗由 FileOps/dropConfirm 控制,
