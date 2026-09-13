@@ -197,6 +197,7 @@ private:
     bool    m_firstThumbLogged = true;  // 本次装载首图打点开关(onDirScanDone 重置)
     int  colsForWidth(int w) const;
     int  cardH(int idx) const;// 卡片高度(瀑布流按宽高比)
+    int  rowPitch(int idx) const; // 行距真源:滚动/几何/滚轮共用,防两套口径漂移
 
     // 自绘:整个列表只有 FileCanvas 一个控件
     void  paintCanvas(QPainter& p, const QRect& clip);

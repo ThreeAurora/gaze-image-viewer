@@ -124,7 +124,7 @@ void FileGrid::scrollToRow(int idx) {
 
     int row = idx / m_cols;
     int lastRow = (static_cast<int>(m_entries.size()) - 1) / m_cols;
-    int rowH = cardH(idx) + m_spacing;
+    int rowH = rowPitch(idx);   // 与 rebuildGeometry 同源,否则滚动定位随行号漂移
     int y = row * rowH;
     if (row == 0) {
         verticalScrollBar()->setValue(0);

@@ -57,7 +57,7 @@ void FileGrid::wheelEvent(QWheelEvent* event) {
     // 第一次滚动先对齐:把该排贴到文件页顶端完整显示,下次滚动才正常滚一行
     if (m_entries.empty() || m_cols < 1) { event->accept(); return; }
     // 缩略图请求由 valueChanged 统一合并处理,滚轮同样会改滚动条值,这里不再另开路径
-    int rowH = cardH(0) + m_spacing;
+    int rowH = rowPitch(0);
     if (rowH <= 0) { event->accept(); return; }
     int vpTop = verticalScrollBar()->value();
     int maxV = verticalScrollBar()->maximum();
@@ -172,6 +172,15 @@ int FileGrid::cardH(int idx) const {
     return m_cardSize + 22;
 }
 
+// 行距真源:详细/列表行与行只隔 2px,其余模式行距=卡高+卡片间距。
+// rebuildGeometry/scrollToRow/wheelEvent 三处必须同源,否则键盘导航的
+// 滚动定位与实际几何随行号线性漂移(每行差 m_spacing-2)
+int FileGrid::rowPitch(int idx) const {
+    if (m_viewMode == VM_LIST || m_viewMode == VM_DETAILS)
+        return cardH(idx) + 2;
+    return cardH(idx) + m_spacing;
+}
+
 int FileGrid::colsForWidth(int w) const {
     if (m_viewMode == VM_LIST || m_viewMode == VM_DETAILS) return 1;
     if (m_viewMode == VM_WATERFALL)
@@ -234,7 +243,7 @@ void FileGrid::rebuildGeometry() {
 
     int bottom = 0;   // 内容真实底边(不含尾部间距)
     if (m_viewMode == VM_LIST || m_viewMode == VM_DETAILS) {
-        const int rowH = cardH(0) + 2;
+        const int rowH = rowPitch(0);
         const int h = cardH(0);
         for (int i = 0; i < n; ++i)
             m_geom[i] = QRect(MARGIN, i * rowH, cardW(), h);
