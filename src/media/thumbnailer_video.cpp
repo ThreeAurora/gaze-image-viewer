@@ -217,6 +217,13 @@ QImage Thumbnailer::videoThumbFFmpeg(const QString& filePath, int size, int pctO
     AVPacket* pkt = av_packet_alloc();
     bool gotFrame = false;
 
+    // 包数/时长预算:损坏容器或超长 GOP(监控录像常见)会让 seek 后的解码
+    // 跑几十秒到分钟级,单任务占死 worker、整个缩略图队列停摆。到预算即断,
+    // 走外部 ffmpeg 回退(那边还有 5s 进程级超时兜底)
+    const int kMaxPackets = 2048;
+    QElapsedTimer loopClock;
+    loopClock.start();
+    int packets = 0;
     while (av_read_frame(fmtCtx, pkt) >= 0) {
         if (pkt->stream_index == videoStream) {
             if (avcodec_send_packet(codecCtx, pkt) >= 0) {
@@ -225,6 +232,7 @@ QImage Thumbnailer::videoThumbFFmpeg(const QString& filePath, int size, int pctO
             }
         }
         av_packet_unref(pkt);
+        if (++packets >= kMaxPackets || loopClock.elapsed() > 8000) break;
     }
 
     QImage result;
