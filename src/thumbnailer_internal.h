@@ -169,7 +169,9 @@ inline QImage windowsShellThumb(const QString& filePath, int size) {
     bi.biBitCount = 32;
     bi.biCompression = BI_RGB;
 
-    QImage img(bm.bmWidth, bm.bmHeight, QImage::Format_ARGB32);
+    // Shell 返回的 32bpp 位图是预乘 alpha(GDI 惯例),直接按非预乘解释会
+    // 让半透明边缘发暗发黑;目标格式取 ARGB32_Premultiplied 与之对齐
+    QImage img(bm.bmWidth, bm.bmHeight, QImage::Format_ARGB32_Premultiplied);
     HDC hdc = GetDC(NULL);
     GetDIBits(hdc, hbmp, 0, bm.bmHeight, img.bits(),
               reinterpret_cast<BITMAPINFO*>(&bi), DIB_RGB_COLORS);
@@ -186,7 +188,8 @@ inline QImage windowsShellThumb(const QString& filePath, int size) {
 // 或轻微透明留白)原样返回;只有明显偏居一隅的才按原大小居中回贴
 // (图标再放大只会糊,不采用放缩填满)。
 inline QImage trimPadCenter(QImage img) {
-    if (img.isNull() || img.format() != QImage::Format_ARGB32
+    if (img.isNull() || (img.format() != QImage::Format_ARGB32
+                         && img.format() != QImage::Format_ARGB32_Premultiplied)
         || !img.hasAlphaChannel())
         return img;
     int minX = img.width(), minY = img.height(), maxX = -1, maxY = -1;
