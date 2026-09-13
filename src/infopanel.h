@@ -74,7 +74,7 @@ public:
         const quint64 gen = m_gen;
         const bool wantHist = isImage(path);
         QPointer<InfoPanel> self(this);
-        QThreadPool::globalInstance()->start([this, self, path, gen, wantHist]() {
+        QThreadPool::globalInstance()->start([self, path, gen, wantHist]() {
             // ── 后台:元数据 + 直方图 ──
             const QList<ExifMeta::Field> fields = ExifMeta::read(path);
             QImage thumb;
@@ -95,10 +95,12 @@ public:
                     }
                 }
             }
-            QMetaObject::invokeMethod(this, [this, self, path, gen, fields, thumb]() {
-                if (!self || gen != m_gen) return;   // 期间又换了文件
-                if (path != m_path) return;
-                fill(fields, thumb);
+            // context 传 QPointer:self 已析构时回调直接丢弃;裸 this 会在池
+            // 线程解引用悬垂指针(Qt 内部要取 context->thread())
+            QMetaObject::invokeMethod(self, [self, path, gen, fields, thumb]() {
+                if (!self || gen != self->m_gen) return;   // 期间又换了文件
+                if (path != self->m_path) return;
+                self->fill(fields, thumb);
             }, Qt::QueuedConnection);
         });
     }
