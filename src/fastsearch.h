@@ -302,9 +302,12 @@ private:
     void searchEverything(const QString& q) {
         m_status->setText(gazeTr("Everything 搜索中…"));
         QPointer<FastSearchDialog> self(this);
+        // 查询代次:前一次查询还在途时又发起新查询,慢的旧结果回来会
+        // clear+重填整个列表,把新结果顶掉 —— 代次不符的回调一律丢弃
+        const quint64 seq = ++m_evSeq;
         const int limit = 500;
-        ev_impl::searchFilesAsync(q, limit, this, [self, q](bool ok, const QStringList& paths) {
-            if (!self) return;
+        ev_impl::searchFilesAsync(q, limit, this, [self, q, seq](bool ok, const QStringList& paths) {
+            if (!self || seq != self->m_evSeq) return;
             if (!ok) {
                 // 实例竟在查询时掉线:明确告知并落回内置,别让用户干等
                 self->m_evFailed = true;
@@ -316,8 +319,8 @@ private:
             self->m_list->clear();
             for (const QString& p : paths) self->m_list->addItem(p);
             // 命中总数异步补报(状态栏可见"共命中 N 项")—— 返回慢也不拦结果展示
-            ev_impl::countAsync(q, self, [self, shown = paths.size()](bool okc, qint64 n) {
-                if (!self) return;
+            ev_impl::countAsync(q, self, [self, seq, shown = paths.size()](bool okc, qint64 n) {
+                if (!self || seq != self->m_evSeq) return;
                 const auto base = gazeTr("命中 %1 项%2(双击在 Gaze 打开)");
                 if (okc && n > shown)
                     self->m_status->setText(base.arg(n).arg(
@@ -375,4 +378,5 @@ private:
     // #251 Everything 引擎就绪/失败(失败=自动落回内置,下拉置灰切换)
     bool m_evReady  = false;
     bool m_evFailed = false;
+    quint64 m_evSeq = 0;   // 查询代次:慢的旧查询回来不得覆盖新结果
 };
