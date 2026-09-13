@@ -72,9 +72,13 @@ QImage Thumbnailer::videoContactSheet(const QString& filePath, int size) {
         QImage f = videoThumbFFmpeg(filePath, cell, pct);
         if (f.isNull()) continue;
         f = f.scaled(cell, cell, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
+        // 居中裁切到格框:固定从左上角取会让竖版视频只剩画面顶部一条
+        const int cx = qMax(0, (f.width() - cell) / 2);
+        const int cy = qMax(0, (f.height() - cell) / 2);
         const int ox = (i % 2) * (cell + gap);
         const int oy = (i / 2) * (cell + gap);
-        pt.drawImage(ox, oy, f.copy(0, 0, qMin(cell, f.width()), qMin(cell, f.height())));
+        pt.drawImage(ox, oy, f.copy(cx, cy, qMin(cell, f.width() - cx),
+                                    qMin(cell, f.height() - cy)));
         ++drawn;
     }
     pt.end();
