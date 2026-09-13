@@ -221,7 +221,10 @@ QWidget* SettingsDialog::pageMaintenance() {
         if (q.exec("SELECT key FROM thumbs")) {
             while (q.next()) {
                 const QString p = q.value(0).toString();
-                if (!QFileInfo::exists(p)) gone << p;
+                // 缓存键形如"媒体路径|尺寸|代际",存在性检查只看媒体路径
+                const int bar = p.indexOf('|');
+                const QString media = bar > 0 ? p.left(bar) : p;
+                if (!QFileInfo::exists(media)) gone << p;
             }
         }
         d.transaction();
@@ -271,7 +274,10 @@ QWidget* SettingsDialog::pageMaintenance() {
                 if (q.exec("SELECT key FROM thumbs")) {
                     while (q.next()) {
                         const QString p = q.value(0).toString();
-                        if (!QFileInfo::exists(p)) gone << p;
+                        // 缓存键形如"媒体路径|尺寸|代际",存在性检查只看媒体路径
+                        const int bar = p.indexOf('|');
+                        const QString media = bar > 0 ? p.left(bar) : p;
+                        if (!QFileInfo::exists(media)) gone << p;
                     }
                 }
                 d.transaction();
