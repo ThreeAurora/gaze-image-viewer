@@ -188,6 +188,14 @@ QImage Thumbnailer::videoThumbFFmpeg(const QString& filePath, int size, int pctO
     }
 
     AVCodecParameters* codecPar = fmtCtx->streams[videoStream]->codecpar;
+    // HDR(PQ/HLG)交给带 tonemap 的回退管线:内置 swscale 直转 RGB 不做传输
+    // 函数映射与 BT2020→BT709,iPhone 默认 HDR 录制的缩略图整体发灰、色彩失真
+    if (codecPar->color_trc == AVCOL_TRC_SMPTE2084
+        || codecPar->color_trc == AVCOL_TRC_ARIB_STD_B67) {
+        avcodec_free_context(&codecCtx);
+        avformat_close_input(&fmtCtx);
+        return videoThumbFallback(filePath, size, pct);
+    }
     const AVCodec* codec = avcodec_find_decoder(codecPar->codec_id);
     if (!codec) {
         avformat_close_input(&fmtCtx);
