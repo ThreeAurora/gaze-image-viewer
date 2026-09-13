@@ -153,7 +153,11 @@ QWidget* SettingsDialog::pageShortcuts() {
                     table->insertRow(r);
                     table->setItem(r, 0, new QTableWidgetItem(name));
                     table->setItem(r, 1, new QTableWidgetItem("Shortcuts/" + name));
-                    table->item(r, 0)->setData(Qt::UserRole, a->shortcut().toString());
+                    // UserRole 存"出厂默认键":运行期 shortcut 已被 ini 自定义
+                    // 值覆盖,"默认"按钮要恢复的是构造期快照,不是当前值
+                    const QVariant fac = a->property("factoryShortcut");
+                    table->item(r, 0)->setData(Qt::UserRole,
+                        fac.isValid() ? fac.toString() : a->shortcut().toString());
                     auto* ed = new QKeySequenceEdit(a->shortcut());
                     QString key = QString("Shortcuts/") + name;
                     connect(ed, &QKeySequenceEdit::keySequenceChanged, this,

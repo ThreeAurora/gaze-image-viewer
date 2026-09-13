@@ -597,6 +597,13 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 
     Logger::boot("ctor:startdir");
 
+    // 出厂键位快照:必须在 applyShortcuts 把 ini 自定义键覆上去之前拍下
+    // 构造期默认值,设置页的"默认"按钮靠它恢复出厂(运行期 shortcut 已被
+    // 自定义值覆盖,读它只能读到自定义键)
+    for (QAction* a : findChildren<QAction*>())
+        if (!a->shortcut().isEmpty() && a->property("factoryShortcut").isNull())
+            a->setProperty("factoryShortcut", a->shortcut().toString());
+
     applyShortcuts();   // 应用用户自定义快捷键(ini 覆盖默认)
     Logger::boot("ctor:shortcuts");
 
