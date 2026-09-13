@@ -309,10 +309,17 @@ void FileGrid::paintDetailsRow(QPainter& p, int idx, const QRect& r) {
                 break;
             case 1: txt = e.isDir ? gazeTr("文件夹") : mimeType(e.ext); break;
             case 2: txt = e.ext.isEmpty() ? QString() : e.ext.mid(1).toUpper(); break;
-            case 3: txt = QDateTime::fromSecsSinceEpoch(static_cast<qint64>(e.ctime))
-                              .toString(dateFmt); break;
-            case 4: txt = QDateTime::fromSecsSinceEpoch(static_cast<qint64>(e.mtime))
-                              .toString(dateFmt); break;
+            case 3:
+                // FAT/exFAT 设备上创建时间可为 0:画成 1970/1/1 是噪声,留空
+                txt = e.ctime > 0
+                    ? QDateTime::fromSecsSinceEpoch(static_cast<qint64>(e.ctime))
+                          .toString(dateFmt) : QString();
+                break;
+            case 4:
+                txt = e.mtime > 0
+                    ? QDateTime::fromSecsSinceEpoch(static_cast<qint64>(e.mtime))
+                          .toString(dateFmt) : QString();
+                break;
             case 5: {
                 const double t = m_exifCache.value(e.path, 0.0);
                 if (t > 0)
