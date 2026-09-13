@@ -368,7 +368,8 @@ void PreviewPanel::setGifPaused(bool p)
     m_gifPlaying = !p;
     if (p) m_gifPlayTimer->stop();         // 暂停即在源头掐掉未决拍,不靠 tick 里自灭
     else   gifScheduleNext();              // 恢复:立即排下一拍
-    m_btnPlay->setIcon(pp_impl::whiteIcon(style()->standardIcon(
+    // 白图标在浅色主题的浅灰控制栏上隐身(构造注释裁决):染随主题反转的文字色
+    m_btnPlay->setIcon(pp_impl::themeIcon(style()->standardIcon(
         p ? QStyle::SP_MediaPlay : QStyle::SP_MediaPause)));
 }
 
