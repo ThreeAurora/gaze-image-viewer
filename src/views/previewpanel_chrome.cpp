@@ -223,9 +223,11 @@ void PreviewPanel::updateGFullPlaybar(const QPoint* cursor) {
         return;
     }
     // 非 G 全屏视频:只在自己接管过(G 全屏期间藏过/显过)时把栏还回
-    // 普通规则,绝不越权改 showVideo/applyGifChrome 的裁决
+    // 普通规则,绝不越权改 showVideo/applyGifChrome 的裁决。
+    // GIF 形态的控制栏由 applyGifChrome 无条件 show,同样不归这里管
     if (!m_gPlaybarAuto) return;
     m_gPlaybarAuto = false;
+    if (m_isGif) return;
     const bool live = m_isLivePhoto;
     const bool playbar = !inFullscreen() || pp_impl::s_bool("Fullscreen/showPlaybar", true);
     m_controlBar->setVisible(!live && playbar);
