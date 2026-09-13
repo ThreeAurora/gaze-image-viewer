@@ -133,7 +133,10 @@ void FileGrid::startFind() {
 
 void FileGrid::closeFind() {
     if (m_findBar) m_findBar->hide();
-    m_canvas->setFocus(Qt::OtherFocusReason);
+    // 焦点还给 FileGrid 本体:画布是 NoFocus(焦点归 FileGrid 的自绘方案),
+    // setFocus 会绕过策略把焦点真落到画布上,hasFocus() 随之为假 —— 选中
+    // 画成暗蓝"残留"色、焦点线不画,直到下一次导航才纠正
+    setFocus(Qt::OtherFocusReason);
 }
 
 void FileGrid::placeFindBar() {
