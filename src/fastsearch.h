@@ -88,6 +88,7 @@ bool enumerateVolumeUsn(const QString& driveLetter, FsVolIndex& out,
     const QString fs = QString::fromWCharArray(fsName);
     if (!fs.startsWith(QLatin1String("NTFS"), Qt::CaseInsensitive))
         return false;
+    out.drive = driveLetter;   // 拼结果全路径要用,漏了会产出缺盘符的 ":/..." 路径
 
     const QString path = QStringLiteral("\\\\.\\%1:").arg(driveLetter);
     HANDLE h = CreateFileW(reinterpret_cast<const wchar_t*>(path.utf16()),
