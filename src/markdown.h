@@ -26,8 +26,10 @@ inline QString escapeHtml(const QString& s) {
 }
 
 // 行内代码手动替换:Qt 6.8 的 QString::replace(QRegularExpression, Functor)
-// 在本工具链上不可用,这里自己走 globalMatch
-inline QString wrapInlineCode(const QString& s) {
+// 在本工具链上不可用,这里自己走 globalMatch。
+// 命中的代码块整段抽成占位符存进 store:代码里的 * _ ~~ 不再参与后续强调
+// 规则(旧实现只转义不占位,`__init__` 会被斜体正则啃成错排)
+inline QString wrapInlineCode(const QString& s, QStringList& store) {
     QRegularExpression re(QStringLiteral("`([^`]+)`"));
     QString out;
     int last = 0;
@@ -35,18 +37,21 @@ inline QString wrapInlineCode(const QString& s) {
     while (it.hasNext()) {
         const auto m = it.next();
         out += s.mid(last, m.capturedStart() - last);
-        out += QStringLiteral("<code>") + escapeHtml(m.captured(1))
-             + QStringLiteral("</code>");
+        out += QStringLiteral("\x01%1\x01").arg(store.size());
+        store << QStringLiteral("<code>") + escapeHtml(m.captured(1))
+              + QStringLiteral("</code>");
         last = m.capturedEnd();
     }
     out += s.mid(last);
     return out;
 }
 
-// 行内:先抽行内代码占位(避免代码里的 * _ 被当强调),再按顺序应用强调规则
-inline QString inlineMd(QString s, const QStringList& codeStore) {
+// 行内:先抽行内代码占位(避免代码里的 * _ 被当强调),再按顺序应用强调规则,
+// 最后回填代码段
+inline QString inlineMd(QString s) {
+    QStringList codeStore;
     // 行内代码 `x`
-    s = wrapInlineCode(s);
+    s = wrapInlineCode(s, codeStore);
     // 图片 ![alt](src) —— 摆在链接之前,否则会被链接规则吃掉
     s.replace(QRegularExpression(QStringLiteral("!\\[([^\\]]*)\\]\\(([^\\s)]+)(?:\\s+\"([^\"]*)\")?\\)")),
               QStringLiteral(R"(<img src="\2" alt="\1" title="\3"/>)"));
@@ -70,7 +75,9 @@ inline QString inlineMd(QString s, const QStringList& codeStore) {
               QStringLiteral("<i>\\1</i>"));
     s.replace(QRegularExpression(QStringLiteral("~~(.+?)~~")),
               QStringLiteral("<s>\\1</s>"));
-    Q_UNUSED(codeStore);
+    // 回填行内代码段(占位符字符不会出现在上述任何规则的匹配里)
+    for (int i = 0; i < codeStore.size(); ++i)
+        s.replace(QStringLiteral("\x01%1\x01").arg(i), codeStore.at(i));
     return s;
 }
 
@@ -84,14 +91,13 @@ inline bool isBlockStart(const QString& line) {
 
 inline QString render(const QString& src) {
     const QStringList lines = src.split(QLatin1Char('\n'));
-    const QStringList codeStore;
-    QString html;
+        QString html;
     html.reserve(src.size() * 2);
 
     QStringList para;      // 累积中的段落行
     auto flushPara = [&]() {
         if (para.isEmpty()) return;
-        html += QStringLiteral("<p>") + inlineMd(para.join(QStringLiteral("<br/>")), codeStore)
+        html += QStringLiteral("<p>") + inlineMd(para.join(QStringLiteral("<br/>")))
               + QStringLiteral("</p>\n");
         para.clear();
     };
@@ -139,7 +145,7 @@ inline QString render(const QString& src) {
         if (h.hasMatch()) {
             flushPara(); closeList();
             const int lv = h.captured(1).length();
-            html += QStringLiteral("<h%1>%2</h%1>\n").arg(lv).arg(inlineMd(h.captured(2), codeStore));
+            html += QStringLiteral("<h%1>%2</h%1>\n").arg(lv).arg(inlineMd(h.captured(2)));
             ++i; continue;
         }
 
@@ -165,13 +171,13 @@ inline QString render(const QString& src) {
             ++i; ++i;   // 跳过表头与分隔行
             html += QStringLiteral("<table border=\"1\" cellspacing=\"0\" cellpadding=\"4\">\n<thead><tr>");
             for (const QString& c : head)
-                html += QStringLiteral("<th>%1</th>").arg(inlineMd(c.trimmed(), codeStore));
+                html += QStringLiteral("<th>%1</th>").arg(inlineMd(c.trimmed()));
             html += QStringLiteral("</tr></thead>\n<tbody>\n");
             while (i < lines.size() && lines[i].trimmed().contains(QLatin1Char('|'))) {
                 const QStringList row = cells(lines[i]);
                 html += QStringLiteral("<tr>");
                 for (const QString& c : row)
-                    html += QStringLiteral("<td>%1</td>").arg(inlineMd(c.trimmed(), codeStore));
+                    html += QStringLiteral("<td>%1</td>").arg(inlineMd(c.trimmed()));
                 html += QStringLiteral("</tr>\n");
                 ++i;
             }
@@ -190,7 +196,7 @@ inline QString render(const QString& src) {
                 ++i;
             }
             html += QStringLiteral("<blockquote>%1</blockquote>\n")
-                        .arg(inlineMd(quote.trimmed(), codeStore));
+                        .arg(inlineMd(quote.trimmed()));
             continue;
         }
 
@@ -211,9 +217,9 @@ inline QString render(const QString& src) {
                                   && task.captured(1) != QLatin1String(" ");
                 html += QStringLiteral("<li><input type=\"checkbox\" disabled%1/> %2</li>\n")
                             .arg(done ? QStringLiteral(" checked") : QString())
-                            .arg(inlineMd(task.captured(2), codeStore));
+                            .arg(inlineMd(task.captured(2)));
             } else {
-                html += QStringLiteral("<li>%1</li>\n").arg(inlineMd(item, codeStore));
+                html += QStringLiteral("<li>%1</li>\n").arg(inlineMd(item));
             }
             ++i; continue;
         }
