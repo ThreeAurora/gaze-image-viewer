@@ -26,9 +26,11 @@ inline double parseTiff(const uchar* p, qint64 avail) {
     quint32 offsets[2] = { ifd0, 0 };
     for (int round = 0; round < 2 && offsets[round]; ++round) {
         quint32 off = offsets[round];
-        if (off + 2 > (quint64)avail) break;
+        // 偏移完全由文件内容控制,先提升成 quint64 再做加法:quint32 加法回绕
+        // (如 off=0xFFFFFFFE 时 off+2=0)会让下面的边界检查形同虚设,直接野读
+        if (quint64(off) + 2 > quint64(avail)) break;
         const quint16 count = u16(p + off);
-        if (off + 2 + count * 12ull > (quint64)avail) break;
+        if (quint64(off) + 2 + count * 12ull > quint64(avail)) break;
         for (quint16 i = 0; i < count; ++i) {
             const uchar* e = p + off + 2 + i * 12;
             const quint16 tag = u16(e);
@@ -42,7 +44,7 @@ inline double parseTiff(const uchar* p, qint64 avail) {
             if (tag == 0x9003 || tag == 0x9004 || tag == 0x0132) {
                 if (type != 2 || cnt < 19) continue;
                 const quint32 valOff = u32(e + 8);   // 20 字节 ASCII 恒外置
-                if (valOff + 19 > (quint64)avail) continue;
+                if (quint64(valOff) + 19 > quint64(avail)) continue;
                 QDateTime dt = QDateTime::fromString(
                     QString::fromLatin1((const char*)p + valOff, 19),
                     "yyyy:MM:dd HH:mm:ss");
