@@ -148,14 +148,19 @@ QString Thumbnailer::cacheKey(const QString& filePath, int size, bool isVideo) c
     // v2 + 锐化位:旧代条目烤着"1.0 强锐化 + WebP q75"的伪影,换 key 整体弃用,
     // 随容量淘汰自然清掉;锐化开关进 key,设置切换后缩略图真的重生成而非吃旧缓存
     const Prefs p = prefs();
-    QString src = filePath + '|' + QString::number(size)
+    // 输入规范化:同一个文件以 "G:\a\b.jpg" 与 "G:/a/b.jpg" 两种写法进来,过去
+    // 会算出两个键 —— 库里躺着两份一模一样的缩略图,按目录维护时还分成两行。
+    // 统一成干净的正斜杠形态再拼键(键是路径的哈希,规范化后才唯一);
+    // src 明文列写库时走同一套规范化,两者口径一致。
+    const QString path = QDir::cleanPath(QDir::fromNativeSeparators(filePath));
+    QString src = path + '|' + QString::number(size)
                 + "|v2s" + (p.sharpen ? '1' : '0');
     // c1 = CMYK JPG 换代(#57):旧条目烤着 Qt/libjpeg 简单反演(偏亮)的图;
     // 换 key 使已有缓存整体弃用,重生成走 WIC 色彩管理。只探测 jpg/jpeg,
     // 其它后缀免一次文件头读取(非 JPG 会因魔数不符在 isFourChannelJpeg 内快速失败)
-    const QString suf = QFileInfo(filePath).suffix().toLower();
+    const QString suf = QFileInfo(path).suffix().toLower();
     if (suf == "jpg" || suf == "jpeg") {
-        if (WicDecode::isFourChannelJpeg(filePath)) src += "|c1";
+        if (WicDecode::isFourChannelJpeg(path)) src += "|c1";
     }
     // i2 = 图标型文件换代(#242):旧条目可能烤着"小图标贴画布左上角"的 shell
     // 原样,换代后经 trimPadCenter 居中重生成
@@ -174,7 +179,7 @@ QString Thumbnailer::cacheKey(const QString& filePath, int size, bool isVideo) c
     //      用户看到的还是旧样式
     // f7 = 画布底色换代:C_CONTENT 近黑改 rgb(33,33,38),与普通文件夹卡底一致;
     //      旧条目四角烤着黑底,不换代看不出来
-    if (QFileInfo(filePath).isDir()) src += "|f7";
+    if (QFileInfo(path).isDir()) src += "|f7";
     // 视频:取帧位置与四帧拼图决定画面内容,但不吃 key 的话改设置只影响新生成的条目,
     // 老库里永远是旧那一帧 —— 看起来就像设置没接线(#106 那批死设置的同一种病)。
     // 只在取非默认值时追加:默认(pct=0/单帧)与既有库逐字节一致,不改设置的人
@@ -219,8 +224,10 @@ void Thumbnailer::cacheStore(const QString& key, const QImage& pix, double mtime
             q.addBindValue(QVariant(mtime));
             q.addBindValue(QVariant(static_cast<double>(
                 std::chrono::system_clock::now().time_since_epoch().count())));
-            // 媒体路径明文(键是 MD5,这是唯一的可读线索);统一正斜杠形态
-            q.addBindValue(QVariant(QDir::fromNativeSeparators(src)));
+            // 媒体路径明文(键是 MD5,这是唯一的可读线索);与 cacheKey 用同一套
+            // 规范化(正斜杠 + cleanPath),否则键和列会各说各的
+            q.addBindValue(QVariant(
+                QDir::cleanPath(QDir::fromNativeSeparators(src))));
             q.exec();
             evictIfNeeded();
         }
