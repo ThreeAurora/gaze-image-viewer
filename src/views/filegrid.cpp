@@ -222,6 +222,7 @@ FileGrid::FileGrid(QWidget* parent) : QScrollArea(parent) {
         const bool spacingChanged = (sp != m_spacing);
         m_spacing = sp;
         const bool hidden = st.get("FileList/showHidden", true).toBool();
+        const bool hiddenChanged = (hidden != m_showHidden);
         const int pos   = qBound(0, st.get("FileList/folderSortPos", 0).toInt(), 2);
         const bool alpha  = st.get("FileList/folderAlphabetical", true).toBool();
         const bool listChanged = (hidden != m_showHidden) || (pos != m_folderSortPos)
@@ -262,8 +263,31 @@ FileGrid::FileGrid(QWidget* parent) : QScrollArea(parent) {
             return;
         }
         if (listChanged) {
+            // showHidden 增减列表成员,旧索引在新列表整体错位:与换筛选档同款
+            // 收尾,先清选中再筛排,成员集变化后重选首项;仅顺序变化的置顶/
+            // 字母序由 sort 按路径重映射,不动选中
+            if (hiddenChanged) {
+                m_selected.clear();
+                m_lastClicked = -1;
+                m_hoverIdx = -1;
+                m_thumbCache.clear();
+                m_thumbOrder.clear();
+                m_fitCache.clear();
+            }
             applyFilter();
             sort(m_sortCol, m_sortAsc);
+            if (hiddenChanged) {
+                updateLayout();
+                requestVisibleThumbs();
+                emit fileCountChanged();
+                if (!m_entries.empty()) {
+                    m_selected.insert(0);
+                    m_lastClicked = 0;
+                    emit selectionChanged(m_entries[0].path);
+                } else {
+                    emit selectionChanged({});
+                }
+            }
         } else if (spacingChanged) {
             updateLayout();
         }
