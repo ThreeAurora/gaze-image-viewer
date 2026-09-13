@@ -460,6 +460,12 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
                 return true;
             }
             if (!forText) {
+                // #234 全屏预览键位:按查看器热键表做整序列匹配(QKeySequence
+                // 本身含修饰符信息),不按修饰符分流——分流的话用户给它配上
+                // 带 Ctrl 的组合后,按键在 Ctrl/NoModifier 分支里都无人认领
+                if (m_preview->triggersAction(ke, "全屏预览")) {
+                    toggleFullView(); return true;
+                }
                 // #220(2026-09-04 用户令):G 全屏预览里 C/V/方向键 = 滚轮(上一个/
                 // 下一个)。网格被藏起、焦点不在它身上,FileGrid::keyPressEvent 收
                 // 不到这些键;查看器形态的 Left/Right 早在 bypass 处被查看器热键表
@@ -561,15 +567,8 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
                     // 裸 F 已让位给历史前进(上面),红色标记改走 Ctrl+1(0~5 通道);
                     // D=取消标记不受影响
                     if (ke->key() == Qt::Key_D) { applyColorLabel(0); return true; }
-                    // G=全屏预览(#154):直接铺满只留画面,不进查看器不碰标签;
-                    // 再按 G/ESC 完全回到按 G 前的布局。走这道过滤器而不是菜单
-                    // QAction 的 shortcut:上面那几层 forText/弹窗判断才是"裸键
-                    // 不该抢文本框"的防线(#61)。
-                    // #234:键位改由查看器热键表驱动(ViewerShortcut/全屏预览,默认
-                    // G)——设置→快捷键可改,主窗/预览右键菜单右列跟着同一张表
-                    if (m_preview->triggersAction(ke, "全屏预览")) {
-                        toggleFullView(); return true;
-                    }
+                    // G=全屏预览(#154)的触发检查已上提到 !forText 块头:键位由
+                    // 查看器热键表驱动,需支持带修饰键的自定义组合
                     // 回车:按 SwitchMode/enterKey 切换模式
                     if ((ke->key() == Qt::Key_Return || ke->key() == Qt::Key_Enter)
                         && !forActivation) {
