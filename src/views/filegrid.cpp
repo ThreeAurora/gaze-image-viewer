@@ -362,7 +362,9 @@ void FileGrid::reloadAfterDelete(const QStringList& deleted) {
     const QString dir = m_currentDir;
     if (dir.isEmpty()) { m_preferPath.clear(); return; }
     loadDirectory(dir);
-    m_preferPath.clear();   // 重载被中止时不让落点串到下次导航
+    // m_preferPath 此处不能清:目录装载是异步的,落点由 onDirScanDone 在
+    // 回 GUI 应用时消费并清掉;提前清会让"选中下一项"永远落空。
+    // 防串到下次导航的清空由 loadDirectory 在换目录分支负责。
     // 删掉的文件若还开在查看器标签里,标签就成了指向不存在路径的幽灵
     // (以前只在"进查看器"时清)。这里是所有删除路径唯一的落点:右键/Del/S/
     // 预览侧删都汇到这一处,所以逐标签 stat 也只跟着删除发生,不进导航热路径。
@@ -404,6 +406,10 @@ void FileGrid::loadDirectory(const QString& dirPath) {
     QSet<QString> prevPaths;
     if (sameDir)
         for (const auto& e : m_allEntries) prevPaths.insert(e.path);
+    // 换目录时丢弃遗留落点(删除后重载等场景写入),不让它串到新目录的选中;
+    // 同目录重载(刷新/删除/改名落点)要保留,由 onDirScanDone 消费
+    if (!sameDir)
+        m_preferPath.clear();
 
     m_currentDir = dirPath;
 
