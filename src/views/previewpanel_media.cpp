@@ -416,7 +416,12 @@ void PreviewPanel::startAudioRemux() {
     if (m_remuxProc) return;   // 一单在途
     const QString src = m_filePath;
     if (src.isEmpty() || !m_player) return;
-    if (m_player->source() != QUrl::fromLocalFile(src)) return;   // 已换过源(重入闸)
+    // 副本也是自救手段之一:卡在副本上同样要能进来自救,重入闸因此放宽为
+    // "当前源既不是原件也不是它的去封面副本才算已切走"
+    const QString cached = remuxedCopyFor(src);
+    if (m_player->source() != QUrl::fromLocalFile(src)
+        && (cached.isEmpty() || m_player->source() != QUrl::fromLocalFile(cached)))
+        return;   // 已切到别的文件(重入闸)
     const QString exe = locateFfmpegTool(QStringLiteral("ffmpeg"));
     if (exe.isEmpty()) {
         Logger::event("audio remux: ffmpeg 不可用(exe旁 ffmpeg/ 与 PATH 均无),放弃换源");
@@ -424,11 +429,18 @@ void PreviewPanel::startAudioRemux() {
     }
     QDir().mkpath(QStandardPaths::writableLocation(QStandardPaths::TempLocation)
                   + QStringLiteral("/gaze-audio-remux"));
-    const QString cached = remuxedCopyFor(src);
-    if (!cached.isEmpty()) {   // 旧副本仍在:直接换源,不再重封装
+    if (!cached.isEmpty() && m_player->source() != QUrl::fromLocalFile(cached)) {
+        // 旧副本仍在且尚未用上:直接换源,不再重封装
         Logger::event(QStringLiteral("audio remux: 复用副本 %1").arg(cached));
         swapAudioSource(cached);
         return;
+    }
+    if (!cached.isEmpty()) {
+        // 正卡在副本上 = 副本也已坏:先放掉句柄删掉,重新封装一份
+        Logger::event(QStringLiteral("audio remux: 副本也卡死,删除后重新封装 %1").arg(cached));
+        m_player->stop();
+        m_player->setSource(QUrl());
+        QFile::remove(cached);
     }
     const QFileInfo fi(src);
     const QString ext = fi.suffix().toLower();
