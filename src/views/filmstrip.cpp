@@ -400,7 +400,9 @@ void FilmStrip::wheelEvent(QWheelEvent* e) {
             e->accept();
             return;
         }
-        m_pxAcc += -dy / 4;   // 高分辨率滚轮
+        // 高分辨率滚轮:方向必须与像素滚动一致 —— 向上滚 dy>0 是"上一张",
+        // 取负会把高分辨率滚轮/触控板的方向整个反过来
+        m_pxAcc += dy / 4;
     }
     while (qAbs(m_pxAcc) >= kStepPx) {
         const int s = m_pxAcc > 0 ? -1 : 1;
