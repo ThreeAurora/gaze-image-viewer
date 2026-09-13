@@ -133,17 +133,24 @@ private:
             return false;
         }
         m_ffBytes = 0;
+        m_ffTail.clear();
         m_ff = new QProcess(this);
         hideConsoleWindow(*m_ff);   // 控制台程序,不藏就闪黑窗
         m_ff->setProcessChannelMode(QProcess::ForwardedErrorChannel);
         connect(m_ff, &QProcess::readyReadStandardOutput, this, [this, gen] {
             if (gen != m_gen || !m_ff) return;
-            const QByteArray pcm = m_ff->readAllStandardOutput();
-            if (pcm.size() < 2) return;
+            // s16le 两字节一帧,而管道 chunk 尺寸任意:奇数尾字节缓存到下一块
+            // 拼合。否则"整除丢弃 + 全量计字节"会让后续样本整体错位一帧,
+            // 波形退化成满幅噪声
+            QByteArray pcm = m_ffTail + m_ff->readAllStandardOutput();
+            m_ffTail.clear();
+            const int usable = pcm.size() & ~1;
+            if (usable < pcm.size()) m_ffTail = pcm.mid(usable);
+            if (usable < 2) return;
             // s16le 单声道:两字节一帧;起点按已消费字节推算
             const qint64 t0 = qint64(m_ffBytes) * 1000000 / kPcmRate;
-            aggregatePcm(pcm, t0, kPcmRate);
-            m_ffBytes += pcm.size();
+            aggregatePcm(pcm.left(usable), t0, kPcmRate);
+            m_ffBytes += usable;
             maybeEmit(gen);
         });
         connect(m_ff, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
@@ -280,6 +287,7 @@ private:
     // ffmpeg 兜底态(仅 QAudioDecoder 零产出时在途)
     QProcess* m_ff = nullptr;
     qint64  m_ffBytes = 0;  // 已消费的 PCM 字节(推算当前 chunk 的时间起点)
+    QByteArray m_ffTail;    // 管道 chunk 的奇数尾字节:缓存到下一块拼合
     QString m_ffStderr;     // ffmpeg 的 stderr,退出时归因用
     QString m_path;         // 当前解码文件(start 存,兜底管道的 -i 参数)
     int m_fbTries = 0;      // 兜底等分母的重试计数(start 清零)
