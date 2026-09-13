@@ -84,6 +84,11 @@ void PreviewPanel::showPdf(const QString& path) {
     m_controlBar->hide();
     if (m_imgSpace) m_imgSpace->hide();
     if (m_liveBadge) m_liveBadge->hide();
+    // 首页渲染在途(百毫秒级)先把上一张图收掉:否则旧图一直挂着,期间
+    // 拉伸窗口还会对旧图执行 fitAuto,观感就是"PDF 里套着别的图片"
+    delete m_origPix;
+    m_origPix = nullptr;
+    m_imgLabel->hide();
 
     m_pdfPath = path;
     // 换文件才重置页码;同一文件翻页时沿用
