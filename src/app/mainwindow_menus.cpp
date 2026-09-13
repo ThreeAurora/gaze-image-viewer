@@ -777,14 +777,24 @@ void MainWindow::createToolbar2(QVBoxLayout* intoCenter) {
     connect(autoAct, &QAction::triggered, this,
             [this](){ m_fileGrid->setFixedCols(0); });
     colsMenu->addSeparator();
+    QList<QAction*> colActs;
     for (int n = 1; n <= 16; ++n) {
         QAction* a = colsMenu->addAction(gazeTr("%1 列").arg(n));
         a->setCheckable(true);
         a->setChecked(curFixed == n);
         colsGroup->addAction(a);
+        colActs.append(a);
         connect(a, &QAction::triggered, this,
                 [this, n](){ m_fileGrid->setFixedCols(n); });
     }
+    // 菜单在构造期建,网格那时还没创建,初始勾选只设一次会永远停在"自动";
+    // 每次打开菜单按当前实际列数重勾(与缩略图尺寸菜单同口径)
+    connect(colsMenu, &QMenu::aboutToShow, this, [this, autoAct, colActs]() {
+        const int cur = m_fileGrid ? m_fileGrid->fixedCols() : 0;
+        autoAct->setChecked(cur == 0);
+        for (int n = 1; n <= colActs.size(); ++n)
+            colActs[n - 1]->setChecked(cur == n);
+    });
     colsBtn->setMenu(colsMenu);
     b2->addWidget(colsBtn);
 
