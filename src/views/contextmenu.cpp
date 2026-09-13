@@ -212,10 +212,15 @@ static void backupOriginal(const QString& path) {
 
 // 内容换了但修改/创建时间按原值还回去(排序、"最近修改"筛选都不该被旋转打乱)
 static void restoreFileTimes(const QString& path, const QDateTime& mod, const QDateTime& birth) {
+    // Windows 的 SetFileTime 要求句柄具写属性访问权;只读打开必得
+    // ERROR_ACCESS_DENIED,还原静默失效 —— 必须以读写方式开
     QFile tf(path);
-    if (!tf.open(QIODevice::ReadOnly)) return;
-    tf.setFileTime(mod, QFileDevice::FileModificationTime);
-    if (birth.isValid()) tf.setFileTime(birth, QFileDevice::FileBirthTime);
+    if (!tf.open(QIODevice::ReadWrite)) return;
+    const bool modOk = tf.setFileTime(mod, QFileDevice::FileModificationTime);
+    const bool birthOk = !birth.isValid()
+        || tf.setFileTime(birth, QFileDevice::FileBirthTime);
+    if (!modOk || !birthOk)
+        Logger::event(QStringLiteral("restoreFileTimes failed on %1").arg(path));
 }
 
 // ── 非 JPEG 或 jpegtran 不可用/失败:QImage 重编码到 tmp。true=结果可用 ──
