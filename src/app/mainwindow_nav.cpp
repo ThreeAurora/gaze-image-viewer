@@ -64,6 +64,10 @@ namespace {
 
 constexpr qint64 kDirSizeRevalidateMs = 10 * 60 * 1000;   // 10 分钟强制复核
 
+// 同一目录最多向 Everything 发起几次统计(结果迟迟落不进库时收手,交给内置
+// 递归)。2 = 允许"库恰好被锁住"这种一次性的失败重试一次,再多就是空转
+constexpr int kEvStatMaxTries = 2;
+
 // 父目录 mtime 的单次 stat —— 失效键的"快筛"段。NTFS 下直接子项增删/改名
 // 都会翻新父目录 mtime,所以 mtime 没变(绝大多数选中场景)就不必做下面的
 // 全目录枚举比对:过去每次选中都 entryInfoList+逐项 stat 一遍,大目录一选
@@ -108,10 +112,12 @@ DirSizeRow dirSizeLookup(const QString& dirPath) {
     return r;
 }
 
-void dirSizeStore(const QString& dirPath, qint64 bytes, const QString& basis) {
+// 返回是否真的落库成功:Everything 统计路径要靠它判断"结果有没有留下痕迹",
+// 落库失败时输入再正确也查不出来 —— 那正是自激空转的入口(见 m_evStatTries)
+bool dirSizeStore(const QString& dirPath, qint64 bytes, const QString& basis) {
     QSqlDatabase db = th_impl::threadDb(
         AppSettings::instance().get("Cache/dbCacheMB", 64).toInt());
-    if (!db.isOpen()) return;
+    if (!db.isOpen()) return false;
     QSqlQuery q(db);
     q.prepare("INSERT OR REPLACE INTO dirsize(path, size, basis, computed) "
               "VALUES(?, ?, ?, ?)");
@@ -119,7 +125,7 @@ void dirSizeStore(const QString& dirPath, qint64 bytes, const QString& basis) {
     q.addBindValue(bytes);
     q.addBindValue(basis);
     q.addBindValue(QDateTime::currentMSecsSinceEpoch());
-    q.exec();
+    return q.exec();
 }
 
 } // namespace
@@ -487,7 +493,8 @@ void MainWindow::applyDirSizeDone(const QString& path, quint64 runId,
     m_dirSizeStale   = false;
     m_dirSizeValue   = bytes;
     // #244:算完顺手入库(带当下失效键),下次选中同目录直接命中
-    dirSizeStore(path, bytes, dirSizeBasisKey(path));
+    if (dirSizeStore(path, bytes, dirSizeBasisKey(path)))
+        m_evStatTries.remove(path);   // 内置兜底能落库=库是好的,解除 Everything 限流
     updateStatus();
 }
 
@@ -595,7 +602,8 @@ void MainWindow::startGridDirSize(const QString& path) {
             }
             self->m_gridDirSizes.insert(path, sz);
             if (self->m_gridDirSizes.size() > 256) self->m_gridDirSizes.clear();
-            dirSizeStore(path, sz, dirSizeBasisKey(path));
+            if (dirSizeStore(path, sz, dirSizeBasisKey(path)))
+                self->m_evStatTries.remove(path);   // 同上:库是好的,解除限流
             if (self->m_fileGrid) self->m_fileGrid->setDirSize(path, sz);
             if (!self->m_gridDirNext.isEmpty()) {
                 const QString next = self->m_gridDirNext;
@@ -617,6 +625,13 @@ bool MainWindow::tryEverythingDirStat(const QString& path, bool forGrid) {
                                      : m_everythingDirStatPending;
     if (pending.contains(path)) return true;           // 已在途:别重复发
     if (!ev_impl::deployed()) return false;            // 没部署:一步都不发起
+    // 自激防御(2026-09-13 用户令):结果回来要落 dirsize 库才算数,而库打不开/
+    // 写不进时这句是静默失败的 —— updateStatus 下一秒再查还是没有记录,于是又
+    // 挂一次 Everything,来回空转不休。同一路径累计挂满 2 次仍未落库,就不再挂,
+    // 交给下面的内置递归兜底(它有会话内终态 m_dirSizeDone,不会自激)。
+    if (m_evStatTries.value(path) >= kEvStatMaxTries) return false;
+    if (m_evStatTries.size() > 512) m_evStatTries.clear();   // 防悬停路径刷爆表
+    m_evStatTries[path] = m_evStatTries.value(path) + 1;
     pending.insert(path);
     const QString dp = path;
     const bool isGrid = forGrid;
@@ -647,7 +662,10 @@ void MainWindow::applyEverythingDirSize(const QString& path, bool ok, qint64 byt
         return;
     }
     // 命中:以目录 mtime 作失效键入库(现有快筛比对 mtime 段,天然兼容)
-    dirSizeStore(path, bytes, dirSizeMtimeStamp(path));
+    // 入库成功才清计数 —— 落库失败的话,这个目录下次还会被问到,计数得留着
+    // 往上限上走,否则"查了→没留下→再查"会一直循环
+    if (dirSizeStore(path, bytes, dirSizeMtimeStamp(path)))
+        m_evStatTries.remove(path);
     if (forGrid) {
         m_gridDirSizes.insert(path, bytes);
         if (m_gridDirSizes.size() > 256) m_gridDirSizes.clear();

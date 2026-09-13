@@ -259,6 +259,11 @@ private:
     // 永远为空 —— 判定完全交给 tryEverythingDirStat 的 return 值。
     QSet<QString> m_everythingDirStatPending;
     QSet<QString> m_everythingGridStatPending;
+    // 每条路径已向 Everything 发起过多少次目录统计(自激防御,2026-09-13)。
+    // dirsize 库写不进去时,结果"查到了却没留下",刷新状态栏又会问一次 ——
+    // 无上限就是死循环。上限见 kEvStatMaxTries;落库成功即清零(内置递归
+    // 兜底成功也清零,免得某目录被永久降级成慢路径)。
+    QHash<QString,int> m_evStatTries;
     QStringList m_history;   // 目录导航历史
     int m_histIdx = -1;
     bool m_histNav = false;  // 历史跳转中,不再入栈
