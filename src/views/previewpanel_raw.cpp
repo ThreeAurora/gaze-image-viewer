@@ -71,6 +71,7 @@ void PreviewPanel::showRawPlaceholder(const QString& path) {
     m_textEdit->hide();
     m_controlBar->hide();
     m_imgSpace->hide();
+    if (m_pdfBar) m_pdfBar->hide();   // pdf 页导航条只属于 pdf 形态,别漏进来
 
     m_rawBusy = false;
     m_rawFromImage = false;

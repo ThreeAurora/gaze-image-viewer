@@ -146,6 +146,7 @@ void PreviewPanel::showVideo(const QString& path) {
     m_imgLabel->hide();
     setAudioChrome(false);
     m_textEdit->hide();
+    if (m_pdfBar) m_pdfBar->hide();   // pdf 页导航条只属于 pdf 形态,别漏进来
     m_videoWidget->show();
 
     // Live Photo：自动播放的几秒短片，无需控制栏，仅显示 LIVE 徽章
@@ -316,6 +317,7 @@ void PreviewPanel::showAudio(const QString& path) {
     m_imgLabel->hide();
     m_videoWidget->hide();
     m_textEdit->hide();
+    if (m_pdfBar) m_pdfBar->hide();   // pdf 页导航条只属于 pdf 形态,别漏进来
     m_controlBar->show();
     m_imgSpace->hide();
     m_btnVolume->show();   // GIF(#97)会藏掉音量键,回到音频必须还原

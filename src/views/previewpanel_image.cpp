@@ -185,6 +185,7 @@ void PreviewPanel::showImage(const QString& path) {
     m_controlBar->hide();
     m_imgSpace->hide();
     if (m_liveBadge) m_liveBadge->hide();
+    if (m_pdfBar) m_pdfBar->hide();   // pdf 页导航条只属于 pdf 形态,别漏进来
 
     // #243:CMYK 对比口径只属于"正在看的那一个文件",切文件即回印刷口径;
     // CMYK JPEG 在此识别并亮出右上角切换钮(GIF 早退分支也在其后,判定照常)

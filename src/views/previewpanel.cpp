@@ -574,6 +574,7 @@ void PreviewPanel::showNoPreview() {
     m_textEdit->hide();
     m_controlBar->hide();
     m_imgSpace->hide();
+    if (m_pdfBar) m_pdfBar->hide();   // pdf 页导航条只属于 pdf 形态,别漏进来
 }
 
 void PreviewPanel::setupPlayer() {
@@ -850,6 +851,7 @@ void PreviewPanel::clear() {
     m_imgSpace->hide();
     m_placeholder->show();
     if (m_liveBadge) m_liveBadge->hide();
+    if (m_pdfBar) m_pdfBar->hide();   // pdf 页导航条只属于 pdf 形态,别漏进来
     m_mode = "none";
     m_scale = 1.0;
     m_filePath.clear();   // 屏上已空:filePath() 不能还谎报旧路径
