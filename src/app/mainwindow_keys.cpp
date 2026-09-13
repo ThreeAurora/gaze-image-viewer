@@ -8,6 +8,7 @@
 #include "infopanel.h"
 #include "shelldelete.h"   // showDeleteToast:拖放复制成功的左下角提示
 #include "filelockrelease.h"   // #214:拖放移动前放掉预览握着的句柄
+#include "clipboardops.h"   // copyTree:Ctrl+拖放目录时整树复制
 #include "sortheader.h"
 #include "fileentry.h"
 #include "livephoto.h"
@@ -258,8 +259,9 @@ void MainWindow::dropEvent(QDropEvent* e) {
             const QFileInfo fi(p);
             const QString dst = dropIntoDir + "/" + fi.fileName();
             if (QFileInfo::exists(dst)) { errs << dst; continue; }
-            // 移动 = rename(Windows MoveFileEx 跨盘也能走);复制 = 文件 copy、目录 rename
-            const bool ok = copy ? (fi.isDir() ? QDir().rename(p, dst)
+            // 移动 = rename(Windows MoveFileEx 跨盘也能走);复制 = 文件 copy、
+            // 目录整树递归拷贝 —— 目录拿 rename 当复制就是把源目录移走
+            const bool ok = copy ? (fi.isDir() ? copyTree(p, dst)
                                                : QFile::copy(p, dst))
                                  : (QDir().rename(p, dst) || QFile::rename(p, dst));
             if (!ok) { errs << dst; continue; }
