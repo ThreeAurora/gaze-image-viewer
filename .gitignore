@@ -50,6 +50,9 @@ ref_menu_zh.ts
 .vscode/
 .idea/
 
+# 工具侧工作区数据(与 todo.md 等开发账本同类:留在本地不入库)
+.workbuddy/
+
 # Python
 __pycache__/
 *.pyc
