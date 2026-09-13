@@ -374,6 +374,7 @@ void FileGrid::onCanvasRelease(int index) {
     }
     m_lastClicked = index;
     refreshView();
+    findRefresh();   // 查找条开着时,点选别处会改变"当前序号 k/N"
 
     // 单击选中不再自动贴边对齐(2026-09-06 用户令:详细列表下选中行不许跳
     // 动上下滚动条)。该自动贴边是早期"点首/末排完整展示那一排"的需求,
@@ -479,6 +480,7 @@ void FileGrid::onCanvasDblClick(int index) {
     m_selected.insert(index);
     m_lastClicked = index;
     refreshView();
+    findRefresh();   // 查找条开着时,"当前序号 k/N"跟着双击的落点刷新
     emit selectionChanged(path);
 
     if (fi.isDir()) {
