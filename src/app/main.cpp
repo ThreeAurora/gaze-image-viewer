@@ -95,8 +95,11 @@ protected:
                 QAbstractButton* yes = box->button(QMessageBox::Yes);
                 QAbstractButton* no  = box->button(QMessageBox::No);
                 if (yes && no) {
-                    box->setDefaultButton(QMessageBox::Yes);
-                    box->setEscapeButton(QMessageBox::No);
+                    // 调用方已显式指定默认键(如"清空收藏夹"设 No 防手滑)时不覆盖
+                    if (!box->defaultButton())
+                        box->setDefaultButton(QMessageBox::Yes);
+                    if (!box->escapeButton())
+                        box->setEscapeButton(QMessageBox::No);
                 }
             }
             return false;
