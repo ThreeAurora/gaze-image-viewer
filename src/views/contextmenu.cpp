@@ -585,24 +585,36 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
             const QString ext = tfi.suffix().toLower();
             QDateTime mod = tfi.lastModified(), birth = tfi.birthTime();
             const QString tmp = target + ".Gaze_crop_tmp";
-            bool ok = false;
 
-            if ((ext == "jpg" || ext == "jpeg") && !findJpegtran().isEmpty()) {
-                const QString spec = QStringLiteral("%1x%2+%3+%4")
-                                         .arg(r.width()).arg(r.height()).arg(r.x()).arg(r.y());
-                QStringList args = AppSettings::instance()
-                        .get("FileOps/losslessKeepMeta", true).toBool()
-                    ? QStringList{"-copy", "all"} : QStringList{"-copy", "none"};
-                args << "-crop" << spec << "-perfect" << target;
-                QProcess proc;
-                proc.setStandardOutputFile(tmp);
-                proc.start(findJpegtran(), args);
-                ok = proc.waitForFinished(20000) && proc.exitCode() == 0
-                     && QFileInfo(tmp).size() > 0;
-                if (!ok) QFile::remove(tmp);
-            }
-
-            if (!ok) {   // 非 JPEG,或 jpegtran 拒绝(-perfect 失败)
+            // 收尾段不碰菜单对象(FileContextMenu 关掉即析构,异步续上去就是
+            // UAF):需要网格自己带 QPointer
+            QPointer<FileGrid> gridP(grid);
+            const QString src = m_filePath;
+            auto finalize = [src, target, tmp, mod, birth, gridP](bool ok) {
+                if (!ok) {
+                    // 裁剪没成:刚建的空壳副本一并删掉,如实报错(原件分毫未动)
+                    QFile::remove(tmp);
+                    QFile::remove(target);
+                    QMessageBox::warning(nullptr, gazeTr("裁剪失败"),
+                        gazeTr("无法无损完成该裁剪:\n%1\n\n"
+                                      "可换个选区(建议选区再大一点、离边缘远一点)重试。")
+                            .arg(src));
+                    return;
+                }
+                if (!QFile::rename(tmp, target)) {
+                    QFile::remove(tmp);
+                    QFile::remove(target);
+                    QMessageBox::warning(nullptr, gazeTr("裁剪失败"),
+                                         gazeTr("写回副本失败:\n") + target);
+                    return;
+                }
+                // 时间戳照旧保留(与原件一致),与旋转同一规矩
+                restoreFileTimes(target, mod, birth);
+                if (gridP) { gridP->setPreferPath(target); gridP->refreshCurrentDir(); }
+            };
+            // 非 JPEG 或 jpegtran 拒绝(-perfect 失败):QImage 重编码兜底
+            auto reencodeFallback = [target, tmp, ext, r, finalize]() {
+                bool ok = false;
                 QImage img(target);
                 if (!img.isNull()) {
                     QImage out = img.copy(r);
@@ -612,32 +624,26 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
                                       ext == "png" ? -1 : 95);
                     f.close();
                 }
-                if (!ok) QFile::remove(tmp);
+                finalize(ok);
+            };
+
+            if ((ext == "jpg" || ext == "jpeg") && !findJpegtran().isEmpty()) {
+                const QString spec = QStringLiteral("%1x%2+%3+%4")
+                                         .arg(r.width()).arg(r.height()).arg(r.x()).arg(r.y());
+                QStringList args = AppSettings::instance()
+                        .get("FileOps/losslessKeepMeta", true).toBool()
+                    ? QStringList{"-copy", "all"} : QStringList{"-copy", "none"};
+                args << "-crop" << spec << "-perfect" << target;
+                // jpegtran 异步跑(#70 同款):大图/杀软拦截时整窗冻结 20 秒的教训
+                runProcessAsync(findJpegtran(), args, tmp, 20000,
+                                [finalize, reencodeFallback](bool ok, const QString&) {
+                    if (ok) finalize(true);
+                    else reencodeFallback();   // jpegtran 拒绝 → 重编码兜底
+                });
+                return;
             }
 
-            if (!ok) {
-                // 裁剪没成:刚建的空壳副本一并删掉,如实报错(原件分毫未动)
-                QFile::remove(target);
-                QMessageBox::warning(nullptr, gazeTr("裁剪失败"),
-                    gazeTr("无法无损完成该裁剪:\n%1\n\n"
-                                      "可换个选区(建议选区再大一点、离边缘远一点)重试。")
-                        .arg(m_filePath));
-                return;
-            }
-            if (!QFile::rename(tmp, target)) {
-                QFile::remove(tmp);
-                QFile::remove(target);
-                QMessageBox::warning(nullptr, gazeTr("裁剪失败"),
-                                     gazeTr("写回副本失败:\n") + target);
-                return;
-            }
-            // 时间戳照旧保留(与原件一致),与旋转同一规矩
-            QFile tf(target);
-            if (tf.open(QIODevice::ReadOnly)) {
-                tf.setFileTime(mod, QFileDevice::FileModificationTime);
-                if (birth.isValid()) tf.setFileTime(birth, QFileDevice::FileBirthTime);
-            }
-            if (grid) { grid->setPreferPath(target); grid->refreshCurrentDir(); }
+            reencodeFallback();   // 非 JPEG(或 jpegtran 缺失):当场重编码
         });
     }
 
