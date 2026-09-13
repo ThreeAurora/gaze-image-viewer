@@ -169,9 +169,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
         menu.addAction(gazeTr("关闭此标签卡"), this, [this, i]() { closeViewerTab(i); });
         menu.addAction(gazeTr("关闭所有标签卡"), this, [this]() {
             // QTabBar 没有 clear():一张一张摘。摘的过程中不发 currentChanged,
-            // 否则每摘一张预览区就重解码下一张,白白解到底
+            // 否则每摘一张预览区就重解码下一张,白白解到底。
+            // 索引 0 是常驻「浏览器」标签(isBrowserTab),必须留下:全摘光会
+            // 留下空标签栏且常驻出口缺失,直到下次开签才被 ensureBrowserTab 补回
             m_viewerTabs->blockSignals(true);
-            while (m_viewerTabs->count() > 0) m_viewerTabs->removeTab(0);
+            while (m_viewerTabs->count() > 1) m_viewerTabs->removeTab(1);
             m_viewerTabs->blockSignals(false);
             if (m_viewerMode) toggleViewer();
         });
