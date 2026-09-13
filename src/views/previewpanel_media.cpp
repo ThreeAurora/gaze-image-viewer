@@ -300,11 +300,17 @@ void PreviewPanel::warmUp() {
                 if (self) self->ensureVideoWidget();
                 for (const auto& r : pp_impl::takePendingMediaLoads()) {
                     auto* p = qobject_cast<PreviewPanel*>(r.panel.data());
-                    if (p && !r.path.isEmpty()) {
+                    if (!p || r.path.isEmpty()) continue;
+                    // 门闩期间用户又点了别的文件,面板已在显示新目标:这份旧
+                    // 挂起直接作废,不回投(否则会把用户的当前选择顶回旧媒体)
+                    if (p->filePath() != r.path) {
                         Logger::event(QStringLiteral(
-                            "media gate: replay '%1'").arg(r.path));
-                        p->loadFile(r.path);
+                            "media gate: drop stale '%1'").arg(r.path));
+                        continue;
                     }
+                    Logger::event(QStringLiteral(
+                        "media gate: replay '%1'").arg(r.path));
+                    p->loadFile(r.path);
                 }
             }, Qt::QueuedConnection);
         });
