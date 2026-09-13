@@ -213,6 +213,11 @@ void PreviewPanel::showImage(const QString& path) {
     // 期间旧图仍可交互(拖动/缩放),属预期行为。
     // 相邻预读命中 → 直接应用,零等待
     if (m_preloadCache.contains(path)) {
+        // 当前文件已就绪显示:作废任何在飞的旧解码并同步已发代次。不做的
+        // 话旧解码回调会按"补发最新期望"重解当前文件——重解完成后走
+        // applyImage,把用户刚做的缩放/拖动整批重置
+        ++m_imgReqGen;
+        m_issuedGen = m_imgReqGen;
         applyImage(m_preloadCache.take(path));
         return;
     }
