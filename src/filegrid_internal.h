@@ -156,8 +156,15 @@ protected:
         if (ev->button() == Qt::LeftButton) {
             const int i = m_g->indexAt(ev->pos());
             if (i < 0 && !(ev->modifiers() & (Qt::ControlModifier | Qt::ShiftModifier))) {
-                // #268 框选:从空白处按下 → 拖矩形框选;单点即空白单击(取消选择)
-                m_g->beginRubber(ev->pos());
+                // #268 框选:从空白处按下 → 拖矩形框选;单点即空白单击(取消选择)。
+                // 双击的第二击落进卡片间隙时,QWidget 默认实现把 dblclick 原样转调
+                // 回这里(type 还是 DblClick):若武装框选,随后的收尾释放会把框
+                // 退化成"空白单击"、清掉第一次击打刚选中的条目。转调来的按下
+                // 只记拖出起点;真实空白单击的 type 是 MouseButtonPress,不受影响
+                if (ev->type() != QEvent::MouseButtonDblClick)
+                    m_g->beginRubber(ev->pos());
+                else
+                    m_g->onCanvasPressStart(ev->pos());
             } else {
                 m_g->onCanvasPressStart(ev->pos());
             }
