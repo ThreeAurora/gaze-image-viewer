@@ -115,6 +115,10 @@ inline QSqlDatabase threadDb(int cacheMB) {
                                         "WHERE substr(key,1,2) <> '//' AND key LIKE '%//%'");
                                 mq.exec("UPDATE OR REPLACE dirsize SET path = REPLACE(path, '//', '/') "
                                         "WHERE substr(path,1,2) <> '//' AND path LIKE '%//%'");
+                                // 旧代哈希键条目(无 src 明文)整体换代:键是 MD5,
+                                // 没有媒体路径的缓存既不可读也不可按目录维护,
+                                // 留着只会以哈希行的形式骚扰用户;随浏览自动重建
+                                mq.exec("DELETE FROM thumbs WHERE src IS NULL");
                                 uniSlashState.store(2, std::memory_order_release);
                             });
                         } else {
@@ -122,6 +126,7 @@ inline QSqlDatabase threadDb(int cacheMB) {
                                    "WHERE substr(key,1,2) <> '//' AND key LIKE '%//%'");
                             q.exec("UPDATE OR REPLACE dirsize SET path = REPLACE(path, '//', '/') "
                                    "WHERE substr(path,1,2) <> '//' AND path LIKE '%//%'");
+                            q.exec("DELETE FROM thumbs WHERE src IS NULL");
                             uniSlashState.store(2, std::memory_order_release);
                         }
                     }
