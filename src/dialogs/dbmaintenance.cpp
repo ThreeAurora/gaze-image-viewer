@@ -24,6 +24,20 @@
 #include <algorithm>
 
 namespace {
+// 一条缩略图记录的媒体路径明文(src)是否属于某个缓存目录行(dir 形如 "G:/a/",
+// 聚合时按最后一个分隔符切出来,带尾斜杠)。
+//   前缀命中 = 目录内的文件/子目录;
+//   等值命中 = 目录自身的入口(文件夹缩略图,path 不带尾斜杠)——它显示在上一级
+//   列表里,但语义上属于这个目录,删这个目录时自然要连它一起。
+// 比较大小写不敏感:Windows 路径同义,而旧实现走 SQL LIKE,ASCII 大小写本来
+// 就不区分,不能因为改成 C++ 判断就让行为变得更严。
+bool srcInDir(const QString& src, const QString& dir) {
+    if (src.isEmpty() || dir.isEmpty()) return false;
+    if (src.startsWith(dir, Qt::CaseInsensitive)) return true;
+    const QString bare = dir.endsWith('/') ? dir.left(dir.size() - 1) : dir;
+    return !bare.isEmpty() && src.compare(bare, Qt::CaseInsensitive) == 0;
+}
+
 // 体积列:显示 MB 文本、按真实字节数排序(直接存字符串会让 9.9 排在 10.2 后面)
 class BytesItem : public QTableWidgetItem {
 public:
@@ -196,12 +210,37 @@ void DbMaintenanceDialog::deleteSelected() {
             .arg(dirs.size()).arg(preview))
         != QMessageBox::Yes) return;
     QSqlDatabase d = maintenanceDb();
+    // thumbs 的键是 MD5(键里没有任何路径信息),拿它写 LIKE '目录%' 是永远
+    // 0 命中的空转 —— 缩略图条目实际一条都没删掉过。改成整表读一遍
+    // (key, src),在 C++ 侧按 src 归属挑出要删的键(几万条毫秒级,对话框内
+    // 可接受);比较用 startsWith 而不是 LIKE,顺带免疫目录名里的 % 和 _。
+    QStringList doomedThumbs;
+    {
+        QSqlQuery pick(d);
+        if (pick.exec("SELECT key, src FROM thumbs")) {
+            while (pick.next()) {
+                const QString src = pick.value(1).toString();
+                for (const QString& dir : dirs) {
+                    if (srcInDir(src, dir)) {
+                        doomedThumbs << pick.value(0).toString();
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    if (!doomedThumbs.isEmpty()) {
+        if (d.transaction()) {
+            QSqlQuery del(d);
+            del.prepare("DELETE FROM thumbs WHERE key = ?");
+            for (const QString& key : doomedThumbs) { del.addBindValue(key); del.exec(); }
+            d.commit();
+        }
+    }
+    // labels / dirsize 的主键就是真实路径,原样走 SQL
     for (const QString& dir : dirs) {
         const QString bare = dir.endsWith('/') ? dir.left(dir.size() - 1) : dir;
         QSqlQuery q(d);
-        q.prepare("DELETE FROM thumbs WHERE key LIKE ? ESCAPE '\\'");
-        q.addBindValue(likePrefixPattern(dir));
-        q.exec();
         q.prepare("DELETE FROM labels WHERE path LIKE ? ESCAPE '\\'");
         q.addBindValue(likePrefixPattern(dir));
         q.exec();
@@ -229,17 +268,26 @@ void DbMaintenanceDialog::syncSelected() {
 
     QSqlDatabase d = maintenanceDb();
     QStringList deadThumbs, deadLabels;
+    // thumbs:同上,键是 MD5、没有路径,判定"源文件还在不在"只能读 src 列。
+    // 旧实现拿 key.left(第一个 '|' 之前)当路径 —— 那在哈希键上根本无意义,
+    // 且 SELECT 的 LIKE 又永远 0 命中,等于这段从来没工作过
+    {
+        QSqlQuery q(d);
+        if (q.exec("SELECT key, src FROM thumbs")) {
+            while (q.next()) {
+                const QString src = q.value(1).toString();
+                if (src.isEmpty()) continue;   // 无明文的旧代条目由迁移整体清,这里不碰
+                bool inSel = false;
+                for (const QString& dir : dirs) {
+                    if (srcInDir(src, dir)) { inSel = true; break; }
+                }
+                if (inSel && !QFileInfo::exists(src))
+                    deadThumbs << q.value(0).toString();
+            }
+        }
+    }
     for (const QString& dir : dirs) {
         QSqlQuery q(d);
-        q.prepare("SELECT key FROM thumbs WHERE key LIKE ? ESCAPE '\\'");
-        q.addBindValue(likePrefixPattern(dir));
-        q.exec();
-        while (q.next()) {
-            const QString key = q.value(0).toString();
-            const int bar = key.indexOf('|');
-            if (bar > 0 && !QFileInfo::exists(key.left(bar)))
-                deadThumbs << key;
-        }
         q.prepare("SELECT path FROM labels WHERE path LIKE ? ESCAPE '\\'");
         q.addBindValue(likePrefixPattern(dir));
         q.exec();
@@ -296,16 +344,24 @@ void DbMaintenanceDialog::relocateSelected() {
     QSqlDatabase d = maintenanceDb();
     if (!d.transaction()) return;
     QSqlQuery q(d);
-    // thumbs:键=路径|尺寸|后缀,整串前缀替换;撞新键时 REPLACE 保留新档
-    q.prepare("INSERT OR REPLACE INTO thumbs(key,png,mtime,atime) "
-              "SELECT ?||substr(key,?),png,mtime,atime FROM thumbs "
-              "WHERE key LIKE ? ESCAPE '\\'");
+    const QString oldBare = oldDir.left(oldDir.size() - 1);
+    const QString newBare = newDir.left(newDir.size() - 1);
+    // thumbs:键是 MD5,路径搬移**不需要动键** —— 键里没有路径,记录照样命中,
+    // 缩略图不会白重建。要改的只有 src 明文列,而且必须改:否则维护对话框里
+    // 这些条目还挂在旧目录名下,同步/删除都会认错地方。
+    // (旧实现是"按 key 前缀复制到新键再删旧键",在哈希键上永远 0 命中,
+    //  等于重新定位对缩略图这条完全没生效。)
+    // 前缀形:目录内的文件/子目录,整段换成新前缀
+    q.prepare("UPDATE thumbs SET src = ?||substr(src,?) "
+              "WHERE src LIKE ? ESCAPE '\\'");
     q.addBindValue(newDir);
     q.addBindValue(oldDir.size() + 1);
     q.addBindValue(likePrefixPattern(oldDir));
     q.exec();
-    q.prepare("DELETE FROM thumbs WHERE key LIKE ? ESCAPE '\\'");
-    q.addBindValue(likePrefixPattern(oldDir));
+    // 精确形:目录自身的缩略图,src 就是裸目录路径(无尾斜杠),整条替换
+    q.prepare("UPDATE thumbs SET src = ? WHERE src = ? COLLATE NOCASE");
+    q.addBindValue(newBare);
+    q.addBindValue(oldBare);
     q.exec();
     // labels:path 即媒体路径;UPDATE 撞主键时 REPLACE 落新删旧
     q.prepare("UPDATE OR REPLACE labels SET path = ?||substr(path,?) "
@@ -322,7 +378,6 @@ void DbMaintenanceDialog::relocateSelected() {
     q.addBindValue(oldDir.size() + 1);
     q.addBindValue(likePrefixPattern(oldDir));
     q.exec();
-    const QString oldBare = oldDir.left(oldDir.size() - 1);
     q.prepare("UPDATE OR REPLACE dirsize SET path = ?||substr(path,?) "
               "WHERE path = ?");
     q.addBindValue(newDir);
