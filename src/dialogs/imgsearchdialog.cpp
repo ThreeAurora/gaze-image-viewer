@@ -454,13 +454,20 @@ void ImageSearchDialog::refreshFolders() {
 
 void ImageSearchDialog::toggleEngine() {
     if (m_svcAlive) {
-        // 停:优先回收 Gaze 拉起的实例,否则结束监听配置端口的进程
-        const QString err = ImgSearch::stopService();
-        m_svcStatus->setText(err.isEmpty()
-            ? gazeTr("服务已停止") : gazeTr("停止失败:%1").arg(err));
-        m_svcAlive = false;
-        m_engineBtn->setText(gazeTr("启动"));
-        refreshFolders();
+        // 停:优先回收 Gaze 拉起的实例,否则结束监听配置端口的进程。
+        // netstat/taskkill 全程异步,GUI 线程不再同步等 6 秒
+        m_engineBtn->setEnabled(false);
+        m_svcStatus->setText(gazeTr("正在停止服务…"));
+        QPointer<ImageSearchDialog> self(this);
+        ImgSearch::stopServiceAsync(this, [self](const QString& err) {
+            if (!self) return;
+            self->m_engineBtn->setEnabled(true);
+            self->m_svcAlive = false;
+            self->m_engineBtn->setText(gazeTr("启动"));
+            self->m_svcStatus->setText(err.isEmpty()
+                ? gazeTr("服务已停止") : gazeTr("停止失败:%1").arg(err));
+            self->refreshFolders();
+        });
         return;
     }
     // 起:用户在窗口里点了启动 = 明确意图,不受"自动启动"开关约束

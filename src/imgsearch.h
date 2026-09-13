@@ -38,6 +38,7 @@
 #include <QPointer>
 #include <QSharedPointer>
 #include <QThread>
+#include <QThreadPool>
 #include <QDateTime>
 #include "settings.h"
 #include "toolpath.h"
@@ -208,37 +209,69 @@ inline void killStartedService() {
     p.waitForFinished(3000);
 }
 
-// 端口上监听进程的 PID(netstat -ano 找 LISTENING 行);找不到返回 0。
-// 用于停掉"不是由 Gaze 拉起"的服务实例——端口就是配置里定下的那个,
-// 占着它的就是图搜服务本体
-inline qint64 pidListeningOnPort(int portNo) {
-    QProcess p;
-    hideConsoleWindow(p);   // netstat 是控制台程序,不藏会闪黑窗
-    p.start("netstat", {"-ano", "-p", "TCP"});
-    if (!p.waitForFinished(3000)) return 0;
-    const QString out = QString::fromLocal8Bit(p.readAllStandardOutput());
-    const QString suffix = QStringLiteral(":%1").arg(portNo);
-    for (const QString& raw : out.split(QLatin1Char('\n'))) {
-        const QStringList cols = raw.trimmed().split(QRegularExpression("\\s+"));
-        if (cols.size() < 5 || cols.at(0) != QLatin1String("TCP")) continue;
-        if (cols.at(1).endsWith(suffix) && cols.at(3) == QLatin1String("LISTENING"))
-            return cols.at(4).toLongLong();
-    }
-    return 0;
+// 服务管理专用池:netstat/taskkill 一次一条,串行足矣
+inline QThreadPool& svcPool() { static QThreadPool p; p.setMaxThreadCount(1); return p; }
+
+// taskkill /PID <pid> /T /F,等进程在池线程里跑(3s 上限),GUI 无感
+inline void killPidAsync(qint64 pid, QPointer<QObject> ctx, std::function<void()> done) {
+    svcPool().start([pid, ctx, done = std::move(done)]() {
+        QProcess p;
+        hideConsoleWindow(p);   // taskkill 是控制台程序,别闪黑窗
+        p.start("taskkill", {"/PID", QString::number(pid), "/T", "/F"});
+        p.waitForFinished(3000);
+        QMetaObject::invokeMethod(qApp, [ctx, done = std::move(done)]() {
+            if (ctx && done) done();
+        }, Qt::QueuedConnection);
+    });
 }
 
-// 引擎开关的"关":优先回收由 Gaze 拉起的实例;否则按端口找监听进程结束。
-// 返回空串 = 已结束(或本来就没在跑);非空 = 需要给用户看的失败说明。
-inline QString stopService() {
-    qint64 pid = servicePid();
-    if (pid <= 0) pid = pidListeningOnPort(port());
-    if (pid <= 0) return gazeTr("服务未在运行");
-    QProcess p;
-    hideConsoleWindow(p);
-    p.start("taskkill", {"/PID", QString::number(pid), "/T", "/F"});
-    p.waitForFinished(3000);
-    servicePid() = 0;
-    return {};
+// 端口上监听进程的 PID(netstat -ano 找 LISTENING 行,解析在池线程跑)。
+// 用于停掉"不是由 Gaze 拉起"的服务实例——端口就是配置里定下的那个,
+// 占着它的就是图搜服务本体
+inline void pidListeningOnPortAsync(int portNo, QPointer<QObject> ctx,
+                                    std::function<void(qint64)> done) {
+    svcPool().start([portNo, ctx, done = std::move(done)]() {
+        QProcess p;
+        hideConsoleWindow(p);   // netstat 是控制台程序,不藏会闪黑窗
+        p.start("netstat", {"-ano", "-p", "TCP"});
+        qint64 pid = 0;
+        if (p.waitForFinished(3000)) {
+            const QString out = QString::fromLocal8Bit(p.readAllStandardOutput());
+            const QString suffix = QStringLiteral(":%1").arg(portNo);
+            for (const QString& raw : out.split(QLatin1Char('\n'))) {
+                const QStringList cols = raw.trimmed().split(QRegularExpression("\\s+"));
+                if (cols.size() < 5 || cols.at(0) != QLatin1String("TCP")) continue;
+                if (cols.at(1).endsWith(suffix) && cols.at(3) == QLatin1String("LISTENING")) {
+                    pid = cols.at(4).toLongLong();
+                    break;
+                }
+            }
+        }
+        QMetaObject::invokeMethod(qApp, [ctx, done = std::move(done), pid]() {
+            if (ctx && done) done(pid);
+        }, Qt::QueuedConnection);
+    });
+}
+
+// 引擎开关的"关"(异步,#70):netstat/taskkill 各自同步等 3 秒,在 GUI 线程
+// 就是整窗冻结 6 秒。优先回收由 Gaze 拉起的实例;否则按端口找监听进程结束。
+// done 空串 = 已结束(或本来就没在跑);非空 = 需要给用户看的失败说明。
+inline void stopServiceAsync(QObject* ctx, std::function<void(QString)> done) {
+    const qint64 known = servicePid();
+    if (known > 0) {
+        killPidAsync(known, ctx, [done = std::move(done)]() {
+            servicePid() = 0;
+            if (done) done({});
+        });
+        return;
+    }
+    QPointer<QObject> guard(ctx);
+    pidListeningOnPortAsync(port(), ctx, [guard, done = std::move(done)](qint64 pid) {
+        if (pid <= 0) { if (done) done(gazeTr("服务未在运行")); return; }
+        killPidAsync(pid, guard, [done = std::move(done)]() {
+            if (done) done({});
+        });
+    });
 }
 
 // 拉起服务并轮询到就绪(不做任何开关检查——调用方自己拿主意:
