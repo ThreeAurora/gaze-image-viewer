@@ -691,9 +691,11 @@ void FolderTree::renameItem(QTreeWidgetItem* item) {
             gazeTr("目标名已存在:\n") + newPath);
         return;
     }
-    // #214:改名的目录若正被预览播放(里面的视频/音频),句柄不放 rename 会失败
+    // #214:改名的目录若正被预览播放(里面的视频/音频),句柄不放 rename 会失败。
+    // WMF 后端 teardown 后句柄释放是异步的:单次 rename 首试必假失败,
+    // 与网格/主窗入口同款走宽限重试
     releaseGazeFileLocks({oldPath});
-    if (!QFile::rename(oldPath, newPath)) {
+    if (!renameWithRetry(oldPath, newPath)) {
         QMessageBox::warning(this, gazeTr("重命名失败"), oldPath);
         return;
     }
