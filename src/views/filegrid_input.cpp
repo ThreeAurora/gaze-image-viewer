@@ -616,7 +616,7 @@ void FileGrid::endInlineRename(bool commit) {
         return;
     }
     const QString np = QDir(fi.absolutePath()).filePath(newName);
-    if (QFileInfo::exists(np)) {
+    if (QFileInfo::exists(np) && !isCaseOnlyRename(oldPath, np)) {
         QMessageBox::warning(this, gazeTr("重命名"),
                              gazeTr("目标名已存在:\n") + np);
         return;

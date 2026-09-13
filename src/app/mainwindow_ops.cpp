@@ -183,7 +183,7 @@ void MainWindow::renameCurrent() {
         return;
     }
     const QString np = QDir(fi.absolutePath()).filePath(name);
-    if (QFileInfo::exists(np)) {
+    if (QFileInfo::exists(np) && !isCaseOnlyRename(paths.first(), np)) {
         QMessageBox::warning(this, gazeTr("重命名"),
                              gazeTr("目标名已存在:\n") + np);
         return;

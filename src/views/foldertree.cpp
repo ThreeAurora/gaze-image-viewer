@@ -686,7 +686,7 @@ void FolderTree::renameItem(QTreeWidgetItem* item) {
     }
     const QString parent = QFileInfo(oldPath).dir().absolutePath();
     const QString newPath = QDir(parent).filePath(name);
-    if (QFileInfo::exists(newPath)) {
+    if (QFileInfo::exists(newPath) && !isCaseOnlyRename(oldPath, newPath)) {
         QMessageBox::warning(this, gazeTr("重命名"),
             gazeTr("目标名已存在:\n") + newPath);
         return;

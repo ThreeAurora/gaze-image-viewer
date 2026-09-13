@@ -35,3 +35,10 @@ inline QString invalidNameReason(const QString& name) {
         return gazeTr("名称过长(上限 255 个字符)");
     return {};
 }
+
+// 新旧路径仅大小写不同(Windows 惯用的"规范化大小写"改名):NTFS 允许,
+// 存在性检查必须放行 —— QFileInfo::exists 大小写不敏感,命中的是文件自己,
+// 会误报"目标名已存在"。重命名各入口共用一份口径
+inline bool isCaseOnlyRename(const QString& oldPath, const QString& newPath) {
+    return oldPath.compare(newPath, Qt::CaseInsensitive) == 0;
+}
