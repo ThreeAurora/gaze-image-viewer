@@ -111,8 +111,9 @@ bool enumerateVolumeUsn(const QString& driveLetter, FsVolIndex& out,
         while (off + sizeof(UsnRecV2) <= got) {
             auto* rec = reinterpret_cast<UsnRecV2*>(buf.data() + off);
             if (rec->RecordLength == 0) break;
+            // FileNameOffset 是相对记录起始的偏移,要加上本记录在缓冲区的 off
             const QString name = QString::fromWCharArray(
-                reinterpret_cast<const wchar_t*>(buf.data() + rec->FileNameOffset),
+                reinterpret_cast<const wchar_t*>(buf.data() + off + rec->FileNameOffset),
                 rec->FileNameLength / 2);
             if (!name.isEmpty()) {
                 FsRec r;
