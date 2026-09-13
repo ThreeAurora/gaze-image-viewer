@@ -194,6 +194,10 @@ void MainWindow::renameCurrent() {
         QMessageBox::warning(this, gazeTr("重命名失败"), np);
         return;
     }
+    // 已开在查看器标签里的文件跟着换指:标签没人更新的话它就成了指旧名的
+    // 幽灵,点它加载失败,下次进查看器还会被静默摘掉(对照 reloadAfterDelete)
+    if (const int t = indexOfTabPath(paths.first()); t >= 0)
+        setViewerTabPath(t, np);
     m_fileGrid->setPreferPath(np);
     m_fileGrid->refreshCurrentDir();
 }
