@@ -239,9 +239,10 @@ PreviewPanel::PreviewPanel(QWidget* parent) : QWidget(parent) {
         if (m_isGif) { gifSeekMs(pos); return; }
         if (m_player) {
             m_player->setPosition(pos);
-            // 播完(EndOfMedia 后已停止)再拖进度条:seek 后要主动接续播放,
-            // 否则画面停在黑帧、拖了也没反应
-            if (m_player->playbackState() != QMediaPlayer::PlayingState)
+            // 仅"播完(EndOfMedia 后已停止)"的态才接续播放,防黑帧;
+            // 暂停中拖动是跳看位置,不该被强制重新播放
+            if (m_player->playbackState() != QMediaPlayer::PlayingState
+                && m_player->mediaStatus() == QMediaPlayer::EndOfMedia)
                 m_player->play();
         }
     });
