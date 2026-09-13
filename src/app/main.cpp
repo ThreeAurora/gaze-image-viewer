@@ -283,19 +283,22 @@ int main(int argc, char *argv[]) {
     app.setApplicationDisplayName("Gaze");
     app.setWindowIcon(QIcon(":/Gaze.png"));
 
-    // 视频硬解开关(设置→视频):默认开。必须在任何 QMediaPlayer 创建之前生效。
-    qputenv("QT_FFMPEG_DECODING_HW_DEVICE_TYPES",
-            AppSettings::instance().get("Video/hardwareDecoding", true).toBool()
-                ? QByteArrayLiteral("d3d11va")
-                : QByteArrayLiteral("none"));
-
-    // 旧版配置迁移: gaze.ini -> Gaze.ini (仅当新名不存在而旧名存在时一次性改名)
+    // 旧版配置迁移: gaze.ini -> Gaze.ini (仅当新名不存在而旧名存在时一次性改名)。
+    // 必须先于任何 AppSettings/QSettings 的使用:单例首次构造会把 Gaze.ini 的
+    // 内容缓存成快照,文件改名发生在构造后的话,本次会话读到的永远是空快照,
+    // 表现为"升级后第一次打开全部设置回到默认"
     {
         const QString oldIni = QCoreApplication::applicationDirPath() + QStringLiteral("/gaze.ini");
         const QString newIni = QCoreApplication::applicationDirPath() + QStringLiteral("/Gaze.ini");
         if (QFileInfo::exists(oldIni) && !QFileInfo::exists(newIni))
             QFile::rename(oldIni, newIni);
     }
+
+    // 视频硬解开关(设置→视频):默认开。必须在任何 QMediaPlayer 创建之前生效。
+    qputenv("QT_FFMPEG_DECODING_HW_DEVICE_TYPES",
+            AppSettings::instance().get("Video/hardwareDecoding", true).toBool()
+                ? QByteArrayLiteral("d3d11va")
+                : QByteArrayLiteral("none"));
 
     static DialogKeyFilter s_dialogKeyFilter;
     app.installEventFilter(&s_dialogKeyFilter);
