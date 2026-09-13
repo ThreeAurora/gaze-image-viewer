@@ -597,6 +597,26 @@ void FileGrid::onDirScanDone(quint64 gen, const QString& dirPath, bool sameDir,
         m_preferPath.clear();
         emit selectionChanged({});
     }
+
+    // 挂起的批量选中请求(多文件拖入)在默认选择之后兑现:覆盖上面的单选
+    if (!m_pendingSelectPaths.isEmpty()) {
+        m_selected.clear();
+        m_lastClicked = -1;
+        for (const QString& p : m_pendingSelectPaths) {
+            const QString want = QDir::cleanPath(p);
+            for (int i = 0; i < static_cast<int>(m_entries.size()); ++i) {
+                if (m_entries[i].path == p
+                    || QDir::cleanPath(m_entries[i].path) == want) {
+                    m_selected.insert(i);
+                    m_lastClicked = i;
+                    break;
+                }
+            }
+        }
+        m_pendingSelectPaths.clear();
+        if (m_lastClicked >= 0)
+            emit selectionChanged(m_entries[m_lastClicked].path);
+    }
 }
 
 // 树右键"显示子文件夹中的文件"的落点:开关改变的是条目集合本身(整棵子树),

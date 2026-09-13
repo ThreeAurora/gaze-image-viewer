@@ -280,16 +280,17 @@ void MainWindow::dropEvent(QDropEvent* e) {
         return;
     }
 
-    // 拖到空白 = 导航到目标目录并选中拖进来的文件
+    // 拖到空白 = 导航到目标目录并选中拖进来的文件。
+    // 装载是异步的:当场补选遍历的还是旧目录的列表,全部 no-op(实测拖入
+    // 多选只有第一项被 preferPath 选中)。拖入路径挂起,装载完成后统一兑现
     const QFileInfo first(paths.first());
     const QString dir = first.isDir() ? first.absoluteFilePath() : first.absolutePath();
-    // 目录加载完成后按 m_preferPath 选中首项;同目录的其余项随后补选
-    if (!first.isDir()) m_fileGrid->setPreferPath(first.absoluteFilePath());
-    navigateTo(dir);
-    if (!first.isDir()) {
+    QStringList sel;
+    if (!first.isDir())
         for (const QString& p : paths)
-            if (QFileInfo(p).absolutePath() == dir) m_fileGrid->selectPathAdditive(p);
-    }
+            if (QFileInfo(p).absolutePath() == dir) sel << p;
+    if (!sel.isEmpty()) m_fileGrid->setPendingSelectPaths(sel);
+    navigateTo(dir);
 }
 
 // 用户自定义快捷键:ini "Shortcuts/<功能名>" 覆盖默认(设置→快捷键页编辑)

@@ -146,6 +146,9 @@ public:
     int  colorLabelOf(const QString& path) const;   // 标题模板 {颜色标签}
     // 一次性落点:下次 loadDirectory 完成后选中该路径(创建副本后选中新文件用)
     void setPreferPath(const QString& p) { m_preferPath = p; }
+    // 一次性批量选中:装载是异步的,当场补选遍历的是旧列表全部 no-op;
+    // 多文件拖入等场景把路径挂起,装载完成后统一兑现
+    void setPendingSelectPaths(const QStringList& paths) { m_pendingSelectPaths = paths; }
     // FileOps/renameDialog=关:在卡片上就地改名(F2 / 右键"重命名"入口)
     void beginInlineRename();
     void endInlineRename(bool commit);
@@ -193,6 +196,7 @@ private:
                        std::vector<FileEntry> scanned, bool allowHdr);
     quint64 m_loadGen = 0;          // 装载代次:换目录即作废在途扫描
     QString m_pendingSelectPath;    // 目录装载期间来的选中请求(启动恢复),就绪后兑现
+    QStringList m_pendingSelectPaths;   // 装载期间挂起的批量选中请求(多文件拖入)
     bool    m_dirScanInFlight = false;
     bool    m_firstThumbLogged = true;  // 本次装载首图打点开关(onDirScanDone 重置)
     int  colsForWidth(int w) const;
