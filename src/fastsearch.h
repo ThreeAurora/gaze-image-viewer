@@ -28,6 +28,8 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <functional>
+#include <atomic>
+#include <memory>
 #include <vector>
 #include "i18n.h"
 #include "logger.h"
@@ -203,9 +205,18 @@ public:
             startIndexing();
             ensureEverythingEngine();
         });
+        // 关闭即置取消旗:全盘索引一扫数秒到数十秒,对话框没了不该陪扫到尾
+        connect(this, &QDialog::finished, this, [this](int) {
+            if (m_indexStop) m_indexStop->store(true);
+        });
     }
 
 private:
+    // 全盘 USN 索引专用池(单线程):不挤全局池(缩略图/缓存清扫同挤会互饿),
+    // 配取消旗:对话框关闭后任务尽早收手,不陪扫到尾
+    QThreadPool* m_indexPool = nullptr;
+    std::shared_ptr<std::atomic_bool> m_indexStop;
+
     void startIndexing() {
         if (m_scanning) return;
         m_scanning = true;
@@ -218,9 +229,16 @@ private:
                     reinterpret_cast<const wchar_t*>((letter + ":\\").utf16()));
                 if (type == DRIVE_FIXED) drives << letter;   // 移动介质/网络盘不进索引
             }
+        if (!m_indexPool) {
+            m_indexPool = new QThreadPool(this);
+            m_indexPool->setMaxThreadCount(1);
+        }
+        m_indexStop = std::make_shared<std::atomic_bool>(false);
+        auto stop = m_indexStop;
         QPointer<FastSearchDialog> self(this);
-        QThreadPool::globalInstance()->start([self, drives]() {
+        m_indexPool->start([self, drives, stop]() {
             for (const QString& d : drives) {
+                if (stop->load()) break;   // 关闭即收手,不再枚举下一卷
                 FsVolIndex vol;
                 const bool ok = enumerateVolumeUsn(d, vol, [self](qint64 n) {
                     QMetaObject::invokeMethod(self, [self, n]() {
