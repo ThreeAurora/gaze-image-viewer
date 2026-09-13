@@ -268,9 +268,11 @@ void FileGrid::exifPrefillVisible() {
         m_exifPending.insert(e.path);
         const QString path = e.path;
         QPointer<FileGrid> self(this);
-        QThreadPool::globalInstance()->start([this, self, path, gen]() {
+        QThreadPool::globalInstance()->start([self, path, gen]() {
             const double t = ExifDate::dateTimeOriginal(path);
-            QMetaObject::invokeMethod(this, [this, self, path, gen, t]() {
+            // context 传 QPointer:self 已析构时 invokeMethod 直接丢弃回调;
+            // 传裸 this 会在池线程解引用悬垂指针(Qt 内部要取 context->thread())
+            QMetaObject::invokeMethod(self, [this, self, path, gen, t]() {
                 m_exifPending.remove(path);
                 if (!self || gen != m_exifGen) return;   // 期间换了目录/又重排了一轮
                 if (m_exifCache.size() > 50000) m_exifCache.clear();
