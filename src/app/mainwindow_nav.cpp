@@ -585,6 +585,12 @@ void MainWindow::startGridDirSize(const QString& path) {
             if (stopped) {
                 // 被更新的悬停请求打断:解除"已问"标记,用户再看它时重新发起
                 if (self->m_fileGrid) self->m_fileGrid->retryDirSize(path);
+                // 排队中的最新请求要接上,否则单飞管线空转,悬停大小永远"统计中"
+                if (!self->m_gridDirNext.isEmpty()) {
+                    const QString next = self->m_gridDirNext;
+                    self->m_gridDirNext.clear();
+                    self->startGridDirSize(next);
+                }
                 return;
             }
             self->m_gridDirSizes.insert(path, sz);
