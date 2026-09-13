@@ -288,6 +288,7 @@ void FileGrid::selectPathAdditive(const QString& path) {
         m_selected.insert(i);
         m_lastClicked = i;
         refreshView();
+        emit selectionChanged(path);   // 状态栏选中统计要跟着刷新
         return;
     }
 }
@@ -670,6 +671,8 @@ void FileGrid::selectAllEntries() {
     for (int i = 0; i < static_cast<int>(m_entries.size()); ++i)
         m_selected.insert(i);
     refreshView();   // 只需重绘:几何未变
+    const int idx = firstSelectedIndex();
+    emit selectionChanged(idx >= 0 ? m_entries[idx].path : QString());
 }
 
 void FileGrid::selectInvert() {
@@ -678,6 +681,8 @@ void FileGrid::selectInvert() {
         if (!m_selected.contains(i)) inverted.insert(i);
     m_selected = inverted;
     refreshView();   // 只需重绘:几何未变
+    const int idx = firstSelectedIndex();
+    emit selectionChanged(idx >= 0 ? m_entries[idx].path : QString());
 }
 
 void FileGrid::selectByKind(int kind) {
@@ -699,6 +704,8 @@ void FileGrid::selectByKind(int kind) {
         if (ok) m_selected.insert(i);
     }
     refreshView();   // 只需重绘:几何未变
+    const int idx = firstSelectedIndex();
+    emit selectionChanged(idx >= 0 ? m_entries[idx].path : QString());
 }
 
 int FileGrid::firstSelectedIndex() const {
