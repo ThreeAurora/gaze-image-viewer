@@ -101,63 +101,77 @@ inline bool instanceRunning() {
                     << QString(), &out, /*noResultError*/ true, 5000) == 0;
 }
 
+// 拉起/等待的会话级状态(提为具名 static:探测在 es 专用池跑,结果回 GUI
+// 兑现,函数内局部 static 的写法撑不起这个拆分)
+struct EsWaiter { QPointer<QObject> p; std::function<void(bool)> cb; int left = 0; };
+inline std::vector<EsWaiter>& esWaiters() { static std::vector<EsWaiter> v; return v; }
+inline bool& esEverReady() { static bool v = false; return v; }
+inline bool& esLaunchTried() { static bool v = false; return v; }
+inline bool& esLaunchOk() { static bool v = false; return v; }
+inline QTimer*& esPoller() { static QTimer* v = nullptr; return v; }
+
+// 兑现/淘汰等待者(必须 GUI 线程;done 回调约定同原实现)
+inline void esSettle(bool running) {
+    if (running) esEverReady() = true;
+    bool anyAlive = false;
+    for (auto& w : esWaiters()) {
+        if (w.left > 0) --w.left;
+        if (running || w.left == 0) {
+            // 兑现(不管 ctx 在不在):结果丢了就丢了,窗口走了不拦引擎
+            if (w.p && w.cb) w.cb(running);
+            w.cb = nullptr;
+        } else {
+            anyAlive = true;
+        }
+    }
+    esWaiters().erase(std::remove_if(esWaiters().begin(), esWaiters().end(),
+                        [](const EsWaiter& w) { return !w.cb; }),
+                      esWaiters().end());
+    if (!anyAlive && esPoller()) esPoller()->stop();
+}
+
+// 实例探测跑进 es 专用池:instanceRunning 是同步等子进程(上限 5s),在 GUI
+// 线程跑一次就是一次整窗冻结(引擎冷启动被杀软拦时踩实)——与"永不阻塞
+// GUI"的模块承诺相悖。结果经队列回 GUI 再兑现
+inline void esProbeAsync() {
+    esPool().start([]() {
+        const bool running = instanceRunning();
+        QMetaObject::invokeMethod(qApp, [running]() { esSettle(running); },
+                                  Qt::QueuedConnection);
+    });
+}
+
 // 异步拉起自带 Everything 实例,就绪后回调 done(true);ctx 悬空/超时(15s)/
 // 压根没部署 → done(false)。懒启动:已就绪的实例直接兑现,不重复拉起。
 inline void ensureRunning(QPointer<QObject> ctx, std::function<void(bool)> done) {
-    struct Waiter { QPointer<QObject> p; std::function<void(bool)> cb; int left = 0; };
-    static std::vector<Waiter> waiters;
-
-    // 已就绪快路径(2026-09-09):确认过一次实例在跑就不再反复 spawn es -version
-    // 探测 —— 每次文件夹统计/搜索都被调一次,子进程往返毫无必要。引擎与 Gaze
-    // 生命周期绑定,起过且没退出就一路放行,直到本进程结束(shutdown 才停)。
-    static bool everReady = false;
-    if (everReady) { if (done) done(true); return; }
+    // 已就绪快路径(2026-09-09):确认过一次实例在跑就不再反复 spawn 探测
+    // 子进程 —— 引擎与 Gaze 生命周期绑定,起过且没退出就一路放行,直到
+    // 本进程结束(shutdown 才停)
+    if (esEverReady()) { if (done) done(true); return; }
     if (!deployed()) { if (done) done(false); return; }
-    if (instanceRunning()) { everReady = true; if (done) done(true); return; }
 
     // 只尝试 startDetached 一次:再失败说明启动必然给不出引擎(缺 VC 运行库等),
     // 后续调用方直接走内置引擎回退,别拿 es 进程循环砸实例。
-    static bool launchTried = false;
-    static bool launchOk = false;
-    if (!launchTried) {
-        launchTried = true;
+    if (!esLaunchTried()) {
+        esLaunchTried() = true;
         const QString wd = QFileInfo(everythingExe()).absolutePath();
-        launchOk = QProcess::startDetached(
+        esLaunchOk() = QProcess::startDetached(
             everythingExe(),
             {QStringLiteral("-instance"), kInstanceName(), QStringLiteral("-startup")},
             wd);
-        if (!launchOk) { if (done) done(false); return; }
+        if (!esLaunchOk()) { if (done) done(false); return; }
         Logger::event(QStringLiteral("everything engine: start detached (instance gaze)"));
     }
-    if (!launchOk) { if (done) done(false); return; }
+    if (!esLaunchOk()) { if (done) done(false); return; }
 
-    waiters.push_back({ctx, std::move(done), 30});   // 30×500ms = 15s 上限
+    esWaiters().push_back({ctx, std::move(done), 30});   // 30×500ms = 15s 上限
 
-    static QTimer* poller = nullptr;
-    if (!poller) {
-        poller = new QTimer;   // 进程生命周期常驻,GUI 线程事件循环驱动
-        poller->setInterval(500);
-        QObject::connect(poller, &QTimer::timeout, []() {
-            const bool running = instanceRunning();
-            if (running) everReady = true;
-            bool anyAlive = false;
-            for (auto& w : waiters) {
-                if (w.left > 0) --w.left;
-                if (running || w.left == 0) {
-                    // 兑现(不管 ctx 在不在):结果丢了就丢了,窗口走了不拦引擎
-                    if (w.p && w.cb) w.cb(running);
-                    w.cb = nullptr;
-                } else {
-                    anyAlive = true;
-                }
-            }
-            waiters.erase(std::remove_if(waiters.begin(), waiters.end(),
-                             [](const Waiter& w) { return !w.cb; }),
-                          waiters.end());
-            if (!anyAlive) poller->stop();
-        });
+    if (!esPoller()) {
+        esPoller() = new QTimer;   // 进程生命周期常驻,GUI 线程事件循环驱动
+        esPoller()->setInterval(500);
+        QObject::connect(esPoller(), &QTimer::timeout, []() { esProbeAsync(); });
     }
-    if (!poller->isActive()) poller->start();
+    if (!esPoller()->isActive()) esPoller()->start();
 }
 
 // es 查询专用池:独占 1 线程,查询彼此串行,不挤压全局池(缩略图/缓存清扫)。
