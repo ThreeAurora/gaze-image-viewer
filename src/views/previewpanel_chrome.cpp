@@ -218,8 +218,12 @@ void PreviewPanel::updateGFullPlaybar(const QPoint* cursor) {
         m_gPlaybarAuto = true;
         const int edge = 56;   // 底部触发带高度(与顶部胶片条 kFilmEdge 同档)
         const bool want = cursor && cursor->y() >= height() - edge;
-        if (want == m_controlBar->isVisible()) return;   // #208 同款:状态没变不碰控件
-        m_controlBar->setVisible(want);
+        if (want != m_controlBar->isVisible()) {
+            m_controlBar->setVisible(want);
+            // 栏预留高度 0↔40 变了,视频信封跟着重铺;只 setVisible 的话
+            // 信封停在旧几何上,浮现栏会遮住画面底部一条
+            syncVideoChildren();
+        }
         return;
     }
     // 非 G 全屏视频:只在自己接管过(G 全屏期间藏过/显过)时把栏还回
@@ -477,7 +481,8 @@ void PreviewPanel::syncVideoChildren() {
                 // 信封再从中裁比例,成品比同面板的图片矮一大截(2026-09-09 用户
                 // 报:"播放的视频比图片的宽高要小,应同样贴合扩展框")。
                 // live 播放时控制栏隐藏→barReserve==0,信封即铺满整个预览区。
-                const int usableH = m_videoWidget->height() - barReserve();
+                // 面板极矮(拖分屏 <40px)时差值可能为负,钳成 1 防负高几何
+                const int usableH = qMax(1, m_videoWidget->height() - barReserve());
                 const double va = double(m_videoSize.width()) / m_videoSize.height();
                 const double ba = double(m_videoWidget->width()) / qMax(1, usableH);
                 QRect r(0, 0, m_videoWidget->width(), usableH);
