@@ -10,7 +10,7 @@
 //   deploy/make_portable.ps1 与 make_installer.ps1 也从本行取默认打包版本。
 //   发版只改这一处,不再有第二份手改副本(过去 CMake 与打包脚本各写一份,漂过)。
 //   格式必须是 X.Y.Z —— CMake 与 PowerShell 两侧都按这个正则抓。
-inline constexpr const char* GAZE_VERSION = "1.3.2";
+inline constexpr const char* GAZE_VERSION = "1.4.0";
 
 // ── 设计令牌:深色分层调色板(对标 XnView MP 的灰阶层级,不再全纯黑) ──
 //   由外到内逐层变暗:菜单栏 > 工具条 > 树 > 列表 > 预览

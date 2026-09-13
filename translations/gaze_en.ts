@@ -72,6 +72,10 @@ Fetching images…</translation>
         <translation></translation>
     </message>
     <message>
+        <source>  ·  (另有 %1 条旧格式条目待重建后自动消失)</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>  ·  已选 %1 项 · [%2]</source>
         <translation>  ·  %1 selected · [%2]</translation>
     </message>
@@ -2345,6 +2349,10 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
         <translation>Database: %1 · folders: %2 · cache entries: %3 · labels: %4 · thumbnails total: %5</translation>
     </message>
     <message>
+        <source>数据库:%1  ·  目录:%2  ·  缓存条目:%3  ·  标记:%4  ·  缩略图合计:%5%6</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>数据库:%1  ·  缓存条目:%2  ·  缩略图合计:%3</source>
         <translation>Database: %1 · cache entries: %2 · thumbnails total: %3</translation>
     </message>
@@ -2870,6 +2878,10 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     <message>
         <source>橙色	Ctrl+2</source>
         <translation>Orange	Ctrl+2</translation>
+    </message>
+    <message>
+        <source>正在停止服务…</source>
+        <translation></translation>
     </message>
     <message>
         <source>正在准备打印…</source>
