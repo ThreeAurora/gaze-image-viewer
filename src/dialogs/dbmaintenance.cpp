@@ -107,6 +107,7 @@ void DbMaintenanceDialog::reload() {
     qint64 totalBytes = 0;
     int totalThumbs = 0;
     int totalLabels = 0;
+    int noSrcThumbs = 0;   // 无路径明文的旧代条目(理论上迁移已清,兜底计数不展示)
 
     auto dirOf = [](const QString& path) {
         int slash = path.lastIndexOf('/');
@@ -114,16 +115,16 @@ void DbMaintenanceDialog::reload() {
         return slash > 0 ? path.left(slash + 1) : path;
     };
 
-    // 缩略图键 = 媒体路径|尺寸|代际后缀;Windows 文件名不可能含 '|',首个 '|' 前即路径
+    // 缩略图键是 MD5(单向哈希),媒体路径看 src 列 —— 没有它的旧代条目
+    // 不进表格:给用户看的必须是真实路径,哈希行没有任何信息量
     QSqlQuery q(d);
-    if (q.exec("SELECT key, LENGTH(png) FROM thumbs")) {
+    if (q.exec("SELECT src, LENGTH(png) FROM thumbs")) {
         while (q.next()) {
-            const QString key = q.value(0).toString();
+            const QString src = q.value(0).toString();
             const qint64 bytes = q.value(1).toLongLong();
-            const int bar = key.indexOf('|');
-            const QString file = bar > 0 ? key.left(bar) : key;
-            DirStat& rec = m_byDir[dirOf(file)];
-            rec.files.insert(file);
+            if (src.isEmpty()) { ++noSrcThumbs; continue; }
+            DirStat& rec = m_byDir[dirOf(src)];
+            rec.files.insert(src);
             rec.thumbs += 1;
             rec.bytes += bytes;
             totalBytes += bytes;
@@ -143,12 +144,15 @@ void DbMaintenanceDialog::reload() {
     QFileInfo fi(d.databaseName());
     qint64 dbSize = fi.size();
     m_summary->setText(gazeTr(
-        "数据库:%1  ·  目录:%2  ·  缓存条目:%3  ·  标记:%4  ·  缩略图合计:%5")
+        "数据库:%1  ·  目录:%2  ·  缓存条目:%3  ·  标记:%4  ·  缩略图合计:%5%6")
         .arg(fi.fileName() + QString(" (%1 MB)").arg(dbSize / 1024 / 1024))
         .arg(m_byDir.size())
         .arg(totalThumbs)
         .arg(totalLabels)
-        .arg(QString::asprintf("%.2f MB", totalBytes / 1024.0 / 1024.0)));
+        .arg(QString::asprintf("%.2f MB", totalBytes / 1024.0 / 1024.0))
+        .arg(noSrcThumbs > 0
+            ? gazeTr("  ·  (另有 %1 条旧格式条目待重建后自动消失)").arg(noSrcThumbs)
+            : QString()));
 
     // 按目录名升序填表;填表期间关排序,否则 sortByColumn 会边插边搬行
     m_table->setSortingEnabled(false);
