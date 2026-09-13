@@ -111,6 +111,9 @@ void PreviewPanel::requestPdf(bool needPageCount) {
         QMetaObject::invokeMethod(self, [self, img, path, page, n]() {
             if (!self) return;
             self->m_pdfBusy = false;
+            // 渲染期间切到了图片/视频/音频等别的形态:结果整批丢弃,不能再
+            // 把 PDF 页写进预览区(m_pdfPath 只由 showPdf 更新,单靠它拦不住)
+            if (self->m_mode != "pdf") return;
             if (path != self->m_pdfPath) { self->renderPdfPage(); return; }   // 期间换了文件
             if (n > 0) self->m_pdfPages = n;
             if (img.isNull()) {
