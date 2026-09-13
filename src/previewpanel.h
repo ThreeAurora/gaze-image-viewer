@@ -232,6 +232,7 @@ private:
     QPushButton *m_rawFullBtn = nullptr;        // 悬浮右上角的「加载原始RAW」(#140b):
                                                 // 内嵌预览正看着时 rawBox 已藏,全解入口靠它
     bool m_rawBusy = false;                     // RAW 全解进行中(结果可能被代次作废)
+    quint64 m_rawBusyGen = 0;                   // 在途全解所属的装载代次(忙标志按代次清)
     bool m_rawFromImage = false;                // 本次全解发起自图片形态(内嵌图/上一次全解结果)
     QPushButton *m_cmykBtn = nullptr;           // 悬浮右上角的 CMYK 切换钮(#243):只对 CMYK JPEG 亮,
                                                 // 勾选=Qt 数值反演口径对比;不勾=印刷口径(默认)

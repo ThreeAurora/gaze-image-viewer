@@ -73,7 +73,9 @@ void PreviewPanel::showRawPlaceholder(const QString& path) {
     m_imgSpace->hide();
     if (m_pdfBar) m_pdfBar->hide();   // pdf 页导航条只属于 pdf 形态,别漏进来
 
-    m_rawBusy = false;
+    // 忙标志不能在这里复位:旧文件的全解还在池里飞,复位会让新文件的
+    // 解码闸失效、两个 LibRaw 并发跑;忙标志由 decodeRawAsync/onRawDecoded
+    // 按代次管理。按钮视觉复位保留(新文件有自己的两颗按钮状态)
     m_rawFromImage = false;
     setRawBtnBusy(false);    // 两颗按钮一起复位(含悬浮钮 hide:非图片形态)
     QFileInfo fi(path);
@@ -114,9 +116,12 @@ void PreviewPanel::onEmbeddedRawReady(const QImage& img, const QString& path, qu
 }
 
 void PreviewPanel::decodeRawAsync() {
-    if (m_rawBusy) return;
+    // 同一次装载已有全解在途 → 拦;跨代次(旧文件的任务还在飞)放行,
+    // 旧结果回来会被代次闸丢弃
+    if (m_rawBusy && m_rawBusyGen == m_imgReqGen) return;
 #ifdef HAS_RAWDEC
     m_rawBusy = true;
+    m_rawBusyGen = m_imgReqGen;
     m_rawFromImage = (m_mode == "image");   // #140b:从内嵌图/上一结果形态发起的全解
     setRawBtnBusy(true);
     m_rawCaption->setText(gazeTr(
@@ -138,9 +143,12 @@ void PreviewPanel::decodeRawAsync() {
 }
 
 void PreviewPanel::onRawDecoded(const QImage& img, const QString& path, quint64 gen) {
-    m_rawBusy = false;
+    // 只有"当前在飞的那次"才能清忙标志:旧代次的迟到回调抢先清零,会让
+    // 新文件的解码重复发起
+    const bool mine = (gen == m_rawBusyGen);
+    if (mine) m_rawBusy = false;
     const bool fromImage = m_rawFromImage;
-    m_rawFromImage = false;
+    if (mine) m_rawFromImage = false;
     // 代次/路径对不上 = 用户已切走:直接丢弃,不碰新文件的占位状态
     if (gen != m_imgReqGen || path != m_filePath) return;
     // 形态守卫:占位形态、或"从图片形态发起的全解"才收;其余丢弃
