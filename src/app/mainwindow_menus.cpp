@@ -389,8 +389,12 @@ void MainWindow::createMenubar() {
                     // 2026-09-03 夜补漏:只启新进程不退出自己,会堆出多个
                     // Gaze 并存(旧窗口还留在任务栏)。先拉起新进程再退自己 ——
                     // 新进程 --restart 跳过单实例握手直接开窗,无竞态。
-                    QTimer::singleShot(0, QCoreApplication::instance(),
-                                       &QCoreApplication::quit);
+                    // 先 close 再退:closeEvent 里的布局/面板/最近文件存档必须
+                    // 走一遍,直接 quit 会跳过,新进程读到上一次关闭的旧存档
+                    QTimer::singleShot(0, this, [this]() {
+                        close();
+                        QCoreApplication::quit();
+                    });
                 }
             });
         }
