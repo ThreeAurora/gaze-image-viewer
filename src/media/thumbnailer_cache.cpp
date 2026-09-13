@@ -201,7 +201,8 @@ bool Thumbnailer::cacheLookup(const QString& key, double mtime, QImage& out) {
     return false;
 }
 
-void Thumbnailer::cacheStore(const QString& key, const QImage& pix, double mtime) {
+void Thumbnailer::cacheStore(const QString& key, const QImage& pix, double mtime,
+                             const QString& src) {
     const Prefs p = prefs();
 
     // 写入 SQLite（异步无害，这里同步写；连接为本线程专属）
@@ -211,12 +212,15 @@ void Thumbnailer::cacheStore(const QString& key, const QImage& pix, double mtime
             QSqlDatabase db = th_impl::threadDb(p.dbCacheMB);
             if (!db.isOpen()) return;
             QSqlQuery q(db);
-            q.prepare("INSERT OR REPLACE INTO thumbs VALUES (?,?,?,?)");
+            q.prepare("INSERT OR REPLACE INTO thumbs(key,png,mtime,atime,src) "
+                      "VALUES (?,?,?,?,?)");
             q.addBindValue(QVariant(key));
             q.addBindValue(QVariant(blob));
             q.addBindValue(QVariant(mtime));
             q.addBindValue(QVariant(static_cast<double>(
-                std::chrono::system_clock::now().time_since_epoch().count())));
+                std::chrono::system_clock::now().time_since_epoch())));
+            // 媒体路径明文(键是 MD5,这是唯一的可读线索);统一正斜杠形态
+            q.addBindValue(QVariant(QDir::fromNativeSeparators(src)));
             q.exec();
             evictIfNeeded();
         }

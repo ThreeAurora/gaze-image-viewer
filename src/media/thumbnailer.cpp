@@ -285,7 +285,7 @@ QImage Thumbnailer::generate(const QString& filePath, int size, bool isVideo) {
 
     // 写入缓存(useCatalog 关时不落库)
     if (!pix.isNull() && p.useCatalog) {
-        cacheStore(ck, pix, mtime);
+        cacheStore(ck, pix, mtime, filePath);
     }
 
     QMutexLocker lk(&m_queueMutex);

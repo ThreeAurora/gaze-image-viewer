@@ -90,7 +90,10 @@ private:
     // ── 缓存 ──
     QString cacheKey(const QString& filePath, int size, bool isVideo = false) const;
     bool    cacheLookup(const QString& key, double mtime, QImage& out);
-    void    cacheStore(const QString& key, const QImage& pix, double mtime);
+    // src = 媒体路径明文:键是 MD5 单向哈希,库里的"这张缩略图属于哪个文件"
+    // 只能靠这一列(维护对话框按路径聚合/清理全靠它)
+    void    cacheStore(const QString& key, const QImage& pix, double mtime,
+                       const QString& src);
     void    initDatabase();
     void    evictIfNeeded();
 
