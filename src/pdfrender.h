@@ -66,19 +66,31 @@ inline QString gsExe() {
     return cached;
 }
 
+// PostScript 字符串字面量转义:反斜杠与圆括号都会提前闭合字符串 —— 文件名
+// 含"(1)"一类时页数探测失败,构造文件名甚至能把余下内容当代码执行(注入)
+inline QString psEscape(QString s) {
+    s.replace(QLatin1Char('\\'), QStringLiteral("\\\\"));
+    s.replace(QLatin1Char('('), QStringLiteral("\\("));
+    s.replace(QLatin1Char(')'), QStringLiteral("\\)"));
+    return s;
+}
+
 // 页数:用 Ghostscript 的 pdfpagecount。拿不到返回 0(表示"未知",UI 不显示页数)
 inline int pageCount(const QString& pdfPath) {
     const QString gs = gsExe();
     if (gs.isEmpty()) return 0;
+    // PS 串里嵌正斜杠路径:实测反斜杠路径即便逐字转义,SAFER 的许可匹配也对不上
+    const QString gsPath = QDir::fromNativeSeparators(pdfPath);
     QProcess proc;
     hideConsoleWindow(proc);   // gswin* 是控制台程序,页数探测不闪黑窗
     proc.setProcessChannelMode(QProcess::MergedChannels);
     proc.start(gs, {
-        QStringLiteral("-q"), QStringLiteral("-dNODISPLAY"), QStringLiteral("-dNOSAFER"),
+        QStringLiteral("-q"), QStringLiteral("-dNODISPLAY"), QStringLiteral("-dSAFER"),
+        // SAFER 下显式 file 打开要显式许可:只放行这一个 PDF 的读
+        QStringLiteral("--permit-file-read=%1").arg(gsPath),
         QStringLiteral("-c"),
         QStringLiteral("(%1) (r) file runpdfbegin pdfpagecount = quit")
-            .arg(QDir::toNativeSeparators(pdfPath).replace(QLatin1Char('\\'),
-                                                           QStringLiteral("\\\\")))
+            .arg(psEscape(gsPath))
     });
     if (!proc.waitForFinished(6000)) { proc.kill(); return 0; }
     bool ok = false;
