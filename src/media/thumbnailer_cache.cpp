@@ -264,6 +264,10 @@ QByteArray Thumbnailer::pixmapToBlob(const QImage& pix) const {
     case 3:         codec = "jpg";  quality = 70;  break;
     default:        codec = "webp"; quality = 90;  break;
     }
+    // JPEG 不支持 alpha:带透明通道的图硬存 jpg 会把透明像素压成黑底,
+    // 这类条目回落 png(读取端按格式自动识别,混存无碍)
+    if (qstrcmp(codec, "jpg") == 0 && pix.hasAlphaChannel())
+        codec = "png";
     QByteArray ba;
     QBuffer buf(&ba);
     buf.open(QIODevice::WriteOnly);
