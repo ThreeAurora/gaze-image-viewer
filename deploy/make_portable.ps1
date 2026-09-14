@@ -62,8 +62,28 @@ foreach ($f in $files) {
             $src = Join-Path $f.FullName $keep
             if (Test-Path $src) { Copy-Item -Force $src (Join-Path $out "everything") }
         }
+    } elseif ($f.Name -eq "multimedia") {
+        # Qt 的 ffmpeg 插件(ffmpegmediaplugin.dll)按 QLibrary 走朴素 LoadLibrary
+        # (qtbase/src/corelib/plugin/qlibrary_win.cpp,Qt 6.8 实测),其 av*/sw*
+        # 依赖从"应用程序目录"(本包根)解析 —— 根目录已带整套。windeployqt 在
+        # multimedia/ 里又放了一份同名运行库,加载器根本不会看它:纯冗余(约 89MB,
+        # 每版 zip 都白胖这么大)。这里只保留 Qt 自己的插件 dll,不搬 ffmpeg 运行库。
+        New-Item -ItemType Directory -Force -Path (Join-Path $out "multimedia") | Out-Null
+        Get-ChildItem $f.FullName -File |
+            Where-Object { $_.Name -notmatch '^(avcodec|avformat|avutil|swresample|swscale)-' } |
+            ForEach-Object { Copy-Item -Force $_.FullName (Join-Path $out "multimedia") }
     } else {
         Copy-Item -Recurse -Force $f.FullName (Join-Path $out $f.Name)
+    }
+}
+
+# 硬校验:multimedia/ 里的 ffmpeg 运行库已剥离,根目录那一套就必须齐全,
+# 否则视频播放会缺 avcodec。宁可打包失败,也不产出"能启动但放不了视频"的包。
+# 用通配匹配,免得 ffmpeg 大版本号(avcodec-61…)一变就失效。
+foreach ($pat in @("avcodec-*.dll", "avformat-*.dll", "avutil-*.dll",
+                   "swresample-*.dll", "swscale-*.dll")) {
+    if (!(Get-ChildItem (Join-Path $out $pat) -ErrorAction SilentlyContinue)) {
+        Write-Error "打包缺根目录 $pat:ffmpeg 运行库不全,检查 build_qt68"
     }
 }
 
