@@ -37,8 +37,8 @@ $Excludes = @(
     "CMakeCache.txt", "Makefile", "cmake_install.cmake",
     "Gaze_autogen", "rawdec_autogen", "CMakeFiles", ".qt",
     "librawdec.a",
-    # 探针/工具 exe
-    "cmyk_probe.exe", "rawtest.exe", "hw_probe.exe",
+    # 探针/工具 exe(开发期产物,绝不随包分发;名字带 probe 的由下面 -notlike 兜底)
+    "cmyk_probe.exe", "rawtest.exe", "hw_probe.exe", "iconrender.exe",
     # 日志/转储/缓存(首次运行自建)
     "gaze.log", "gaze.log.old", "perf.log", "winhook.log", "gaze_crash.dmp",
     "hang.dmp", "mdmp.py", "mdmp_out.txt", "mdmp_threads.py", "dump_prog.py",
@@ -51,7 +51,9 @@ $Excludes = @(
 if (Test-Path $out) { Remove-Item -Recurse -Force $out }
 New-Item -ItemType Directory -Force -Path $out | Out-Null
 
-$files = Get-ChildItem $build -Force | Where-Object { $_.Name -notin $Excludes }
+# 探针 exe 一律不打包:名字带 probe 的全部拦掉(比逐个登记名字更耐新探针)。
+$files = Get-ChildItem $build -Force |
+    Where-Object { $_.Name -notin $Excludes -and $_.Name -notlike "*probe*.exe" }
 foreach ($f in $files) {
     if ($f.Name -eq "everything") {
         # 引擎只带本体:Everything.exe/es.exe/语言/许可。绝不打包本机的
