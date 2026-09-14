@@ -307,6 +307,7 @@ void FileGrid::applyAppearance() {
     m_labelGap   = st.get("Appearance/labelSpacing", true).toBool() ? 6 : 0;
     m_showRating = st.get("Browser/showRating", true).toBool();
     m_sizeBytes  = st.get("FileList/sizeInBytes", false).toBool();
+    m_shadow     = st.get("Appearance/shadow", false).toBool();
 }
 
 // 设置改动后的重排:重算列宽 + 重算几何 + 重绘

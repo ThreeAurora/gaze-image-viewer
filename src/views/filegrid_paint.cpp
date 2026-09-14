@@ -140,6 +140,23 @@ void FileGrid::paintCard(QPainter& p, int idx, const QRect& r) {
     // (XnView 同款)。目录内没有可用图片时 Thumbnailer 返回空 → 落回文件夹图标。
     QRect imgR = bx.img;
     const QPixmap raw = m_thumbCache.value(e.path);
+    // ── Appearance/shadow:缩略图一圈柔和投影(默认关,保持既有观感) ──
+    // 四边逐层渐隐描边模拟;不用 QGraphicsDropShadowEffect —— 逐卡片挂 effect
+    // 会在滚动时把重绘放大数倍(与原 FileCard 同一取舍)。必须先于图片绘制,
+    // 投影圈才落在图后面、只露出外沿
+    if (m_shadow && !bx.img.isEmpty()) {
+        const QRect sr = (raw.isNull()
+            ? bx.img
+            : fittedRect(raw.size(), bx.img, bx.cover, m_imageAlign))
+            .adjusted(-1, -1, 1, 1);
+        const int d = 4;
+        for (int i = d; i >= 1; --i) {
+            const int a = 90 * (d - i + 1) / d / d;
+            p.setPen(QPen(QColor(0, 0, 0, a), 1));
+            p.setBrush(Qt::NoBrush);
+            p.drawRect(sr.adjusted(-i, -i, i, i));
+        }
+    }
     if (!raw.isNull()) {
         const QPixmap fit = fitFor(e.path, bx.img);
         if (fit.isNull()) {

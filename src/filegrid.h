@@ -356,6 +356,7 @@ private:
     int  m_labelGap   = 6;    // Appearance/labelSpacing 真=6px 假=0
     bool m_showRating = true; // Browser/showRating 颜色标记圈
     bool m_sizeBytes  = false;// FileList/sizeInBytes
+    bool m_shadow     = false;// Appearance/shadow 缩略图投影
     void applyAppearance();   // 启动时 + 设置变更后各刷一次
 
     void relayoutNow();     // 设置改动后重算列宽并重排(间距/尺寸类)
