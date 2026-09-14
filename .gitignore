@@ -7,7 +7,8 @@ build_*/
 CMakeFiles/
 CMakeCache.txt
 cmake_install.cmake
-Makefile
+# 注:CMake 生成的 Makefile 落在 build_*/ 下,已由上面的规则覆盖;
+# 不写裸 "Makefile" —— 那会连 thirdparty/LibRaw 的合法 Makefile 一起忽略。
 *_autogen/
 moc_*.cpp
 qrc_*.cpp
