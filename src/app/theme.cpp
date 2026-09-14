@@ -365,13 +365,6 @@ QString appQss() {
         "QLabel#filmCaption {"
         "  background: transparent; color: #FFFFFF; font-size: 13px; font-weight: 600;"
         "}"
-        // 文件卡片:本体透明(图片之外纯黑由卡片父级透出)
-        "FileCard { background: transparent; border: none; }"
-        "QLabel#cardThumb { background: transparent; }"
-        "QLabel#cardLiveBadge {"
-        "  background: rgba(0,0,0,150); color: #FFF; font-size: 9px; font-weight: bold;"
-        "  padding: 2px 7px; border-radius: 8px; border: 1px solid rgba(255,255,255,60);"
-        "}"
         // ── #89 收敛(批4):预览面板静态表面。控件上的动态样式(图片边框态、
         // 评级点、CMYK 勾选后切换解码等)仍留控件级。播放控制栏/全屏浮动条/PDF 条
         // 原内联是裸声明(底色边框泼给全部子孙),此处用 QWidget 后代选择器
