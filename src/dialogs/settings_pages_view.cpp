@@ -107,7 +107,7 @@ QWidget* SettingsDialog::pageViewerOther() {
     fPlay->addRow(chk("Viewer/twoPassRender", gazeTr("加载时两段式渲染"), false));
     fPlay->addRow(chk("Viewer/readAhead", gazeTr("预先读取一幅图像"), true));
     fPlay->addRow(chk("Viewer/cacheBehind", gazeTr("保持当前图像"), true));
-    fPlay->addRow(chk("Viewer/disableAnimation", gazeTr("禁用 GIF/JIF/APNG/ANI 动画"), false));
+    fPlay->addRow(chk("Viewer/disableAnimation", gazeTr("禁用 GIF/JIF/APNG/ANI/动图 WebP 动画"), false));
     fPlay->addRow(chk("Viewer/gamma", gazeTr("使用 Gamma 纠正"), false));
     fPlay->addRow(chk("Viewer/sharpen", gazeTr("使用锐化 50%"), false));
 

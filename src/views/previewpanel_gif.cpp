@@ -128,7 +128,84 @@ static bool parseGifDelays(const QString& path, QVector<int>& outMs)
     return !outMs.isEmpty();
 }
 
-// GIF:第一帧当"整图"走静态图那套 fit/render 定几何,动画期间只换像素不改尺寸。
+// 走一遍 WebP 的 RIFF 容器拿逐帧时长(ms)。动图 WebP 的每一帧是一个 ANMF 块:
+//   ANMF: 4B 'ANMF' + 4B size(小端,含自身 16 字节头)
+//         帧头 16 字节 = 3B x/6 + 3B y/6 + 3B w-1 + 3B h-1 + 3B duration + 1B flags
+//         → duration(帧内偏移 12,文件内偏移 off+8+12)是 24 位小端,单位就是 ms
+// 只认 ANMF 并整体按 RIFF 规则跳块(块大小为奇数补 1 字节),不做像素解码。
+// 成本实测(cache/tmp/probe_webp):8MB/203 帧的文件本函数 3ms;改成逐帧
+// read()+nextImageDelay() 要 767ms —— 切文件时那就是一次肉眼可见的卡顿,
+// 所以时长必须走字节解析,和 GIF 同一个道理。
+// 视频编码的 WebP(VP8/VP8L 单帧,无 ANMF)解析出的表为空 → 返回 false,
+// 上层按"没有逐帧时长"处理,不会把静态图当成动图。
+static bool parseWebpDelays(const QString& path, QVector<int>& outMs)
+{
+    QFile f(path);
+    if (!f.open(QIODevice::ReadOnly)) return false;
+    if (f.size() > 64LL * 1024 * 1024) { f.close(); return false; }   // 与 GIF 同口径
+    const QByteArray d = f.readAll();
+    f.close();
+    const int n = d.size();
+    if (n < 12 || memcmp(d.constData(), "RIFF", 4) != 0 || memcmp(d.constData() + 8, "WEBP", 4) != 0)
+        return false;
+
+    auto u8 = [&](int at) -> int { return static_cast<quint8>(d.at(at)); };
+    auto u32 = [&](int at) -> quint32 {
+        return quint32(u8(at)) | (quint32(u8(at+1)) << 8)
+             | (quint32(u8(at+2)) << 16) | (quint32(u8(at+3)) << 24);
+    };
+
+    int off = 12;
+    while (off + 8 <= n) {
+        const quint32 sz = u32(off + 4);
+        if (memcmp(d.constData() + off, "ANMF", 4) == 0 && sz >= 16) {
+            if (off + 8 + 16 > n) return false;
+            const int dur = u8(off + 20) | (u8(off + 21) << 8) | (u8(off + 22) << 16);
+            // duration 写 0 的帧按 GIF 同款惯例兜 100ms(0 会让该帧一闪而过)
+            outMs << (dur <= 0 ? 100 : dur);
+        }
+        off += 8 + int(sz) + int(sz & 1);    // RIFF 块按偶数字节对齐
+        if (sz == 0) break;
+    }
+    return !outMs.isEmpty();
+}
+
+// 逐帧时长总入口:先按容器字节解析(GIF / WebP),都认不出才算"没有时长表"。
+// 分派只看文件头,不看扩展名 —— 扩展名可以是错的(用户那张 webp 内容确实是 webp,
+// 但也存在 .webp 里塞 GIF、.gif 里塞 WebP 的情况,按内容认永远不会被扩展名骗)。
+static bool parseAnimDelays(const QString& path, QVector<int>& outMs)
+{
+    outMs.clear();
+    QFile f(path);
+    if (!f.open(QIODevice::ReadOnly)) return false;
+    char hdr[12] = {0};
+    const qint64 got = f.read(hdr, sizeof(hdr));
+    f.close();
+    if (got < 6) return false;
+    if (memcmp(hdr, "GIF8", 4) == 0) return parseGifDelays(path, outMs);
+    if (got >= 12 && memcmp(hdr, "RIFF", 4) == 0 && memcmp(hdr + 8, "WEBP", 4) == 0)
+        return parseWebpDelays(path, outMs);
+    return false;    // APNG 等其它格式:交给上层按帧数兜底
+}
+
+// 是不是"会动的图"?判据只有一条:解码器实际报得出多于一帧。
+// 2026-09-18 用户令:此前按扩展名认(.gif/.jif 才走动画),动图 WebP、APNG
+// 一律被当静态图,预览框里只显示第一帧 —— 用户拿一张 203 帧的动图 WebP 问
+// "怎么不把它当 gif 播放"。扩展名清单永远是漏的,QImageReader 有真帧数,
+// 就用真帧数。静态文件 imageCount 恒为 1,不进这条分支,零额外成本。
+// setDecideFormatFromContent:有些来源扩展名与实际编码不符(见 showGif 同款)。
+bool PreviewPanel::isAnimatedImage(const QString& path)
+{
+    if (path.isEmpty()) return false;
+    QImageReader r(path);
+    r.setDecideFormatFromContent(true);
+    // 静态格式(JPEG/PNG 单帧)只要读到格式就够;imageCount 对不支持帧计数的
+    // 格式返回 1,不会误判成动画
+    return r.imageCount() > 1;
+}
+
+// 动画形态总入口(GIF / 动图 WebP / APNG 共用;历史函数名沿用 showGif)。
+// 第一帧当"整图"走静态图那套 fit/render 定几何,动画期间只换像素不改尺寸。
 // 旧实现只 setMovie 从不定尺寸:蓝框套的是**上一张图**的大小(#103);
 // 而 label 从没定过尺寸时(目录里第一张就是 GIF)只剩左上角一块,
 // 看起来就是"GIF 放不了"(#96)。
@@ -191,15 +268,15 @@ void PreviewPanel::buildGifTimeline()
     if (!m_isGif) return;
 
     QVector<int> delays;
-    const bool parsed = parseGifDelays(m_filePath, delays);
-    if (parsed) {
+    const bool parsed = parseAnimDelays(m_filePath, delays);
+    if (parsed && !delays.isEmpty()) {
         m_gifDelay = delays;
     } else if (m_gifReader && m_gifReader->imageCount() > 0) {
-        // 退路:字节解析没成功(非标准块链/超大文件)但解码器报得出帧数
+        // 退路:字节解析没成功(APNG / 超大文件 / 非标准块链)但解码器报得出帧数
         // → 用统一时长撑出一条能拖能定位的轴,刻度不精确但比没有轴好
         m_gifDelay = QVector<int>(m_gifReader->imageCount(), 100);
     } else {
-        Logger::event("gif timeline: no per-frame durations available");
+        Logger::event("anim timeline: no per-frame durations available");
     }
     if (m_gifDelay.isEmpty()) {
         // 连帧数都报不出来:轴和时长一律归零,绝不能留着上一条视频的数字装样子
@@ -212,7 +289,7 @@ void PreviewPanel::buildGifTimeline()
     for (int i = 0; i < m_gifDelay.size(); ++i) { m_gifStart << acc; acc += m_gifDelay[i]; }
     m_gifStart << acc;
     m_progress->setRange(0, qMax(1, acc));
-    Logger::event(QStringLiteral("gif timeline: frames=%1 total=%2ms src=%3")
+    Logger::event(QStringLiteral("anim timeline: frames=%1 total=%2ms src=%3")
                       .arg(m_gifDelay.size()).arg(acc)
                       .arg(parsed ? QStringLiteral("parsed") : QStringLiteral("uniform")));
     gifSyncToFrame(m_gifFrameIdx);
@@ -264,7 +341,7 @@ void PreviewPanel::gifApplySeek()
     if (!gifDecodeTo(f, img)) {
         // 解不出来绝不能静默返回:那正是"点了没反应"的长相。
         // 留下日志并把播放头拉回真正显示的那一帧,滑块不会停在画面之外的位置。
-        Logger::event(QStringLiteral("gif seek: frame %1 decode failed").arg(f));
+        Logger::event(QStringLiteral("anim seek: frame %1 decode failed").arg(f));
         gifSyncToFrame(m_gifFrameIdx);
         return;
     }

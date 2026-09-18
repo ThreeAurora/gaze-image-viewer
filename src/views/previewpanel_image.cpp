@@ -192,8 +192,11 @@ void PreviewPanel::showImage(const QString& path) {
     m_cmykAlt = false;
     updateCmykBtn();
 
-    // GIF 动画:几何与静态图同源(第一帧定尺寸,动画帧只换像素)
-    if (path.toLower().endsWith(".gif")) {
+    // 动画:几何与静态图同源(第一帧定尺寸,动画帧只换像素)
+    // 2026-09-18 用户令:不再按扩展名认 —— 动图 WebP / APNG 此前被当静态图,
+    // 只显示第一帧。改按 QImageReader 实际帧数判定(imageCount>1 即动画),
+    // GIF / 动图 WebP / APNG 一个判据全管。静态 webp 帧数=1,不受影响。
+    if (isAnimatedImage(path)) {
         showGif(path);
         return;
     }

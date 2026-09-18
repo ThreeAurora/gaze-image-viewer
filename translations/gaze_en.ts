@@ -116,6 +116,10 @@ Fetching images…</translation>
         <translation> ms</translation>
     </message>
     <message>
+        <source>%</source>
+        <translation>%</translation>
+    </message>
+    <message>
         <source>%1  %2%</source>
         <translation>%1  %2%</translation>
     </message>
@@ -2273,12 +2277,20 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
         <translation>Filter by file type (multiple picks in one dimension = any match)</translation>
     </message>
     <message>
+        <source>按时长百分比(从 N% 处)</source>
+        <translation>By duration percentage (from N%)</translation>
+    </message>
+    <message>
         <source>按时间</source>
         <translation>By time</translation>
     </message>
     <message>
         <source>按相关性</source>
         <translation>By relevance</translation>
+    </message>
+    <message>
+        <source>按秒数(从第 N 秒开始)</source>
+        <translation>By seconds (start at N s)</translation>
     </message>
     <message>
         <source>按颜色标记筛选(维度内多选=任一命中)</source>
@@ -3244,6 +3256,14 @@ Try a different selection (a bit larger and farther from the edges).</translatio
         <translation>Disable GIF/JIF/APNG/ANI animations</translation>
     </message>
     <message>
+        <source>禁用 GIF/JIF/APNG/ANI/动图 WebP 动画</source>
+        <translation>Disable GIF/JIF/APNG/ANI/animated WebP animations</translation>
+    </message>
+    <message>
+        <source>秒</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>移出搜索与索引</source>
         <translation></translation>
     </message>
@@ -3682,6 +3702,10 @@ Once set manually, thumbnails scale to the pane edge when resizing, but the colu
         <translation></translation>
     </message>
     <message>
+        <source>视频提取帧位置</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>视频提取帧位置(%,0=第 1 秒)</source>
         <translation>Video frame grab position (%, 0 = second 1)</translation>
     </message>
@@ -3788,6 +3812,14 @@ Continue?</translation>
     <message>
         <source>起始文件夹已不存在</source>
         <translation>The startup folder no longer exists</translation>
+    </message>
+    <message>
+        <source>起始百分比</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>起始秒数</source>
+        <translation></translation>
     </message>
     <message>
         <source>超过 %1 秒未完成,已终止</source>

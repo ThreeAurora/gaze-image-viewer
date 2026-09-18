@@ -95,7 +95,9 @@ private:
     QSize m_videoSize;          // 当前视频画面尺寸(首帧到达更新;按比例铺视频面)
     void syncVideoChildren();   // vw/cover 几何同步到 videoWidget(布局激活后必须重跑)
     void showImage(const QString &path);
-    void showGif(const QString &path);        // GIF:第一帧定几何,动画只换像素(#103/#96)
+    // 动画与否的唯一判据(按实际帧数,不看扩展名):GIF / 动图 WebP / APNG 一视同仁
+    static bool isAnimatedImage(const QString &path);
+    void showGif(const QString &path);        // 动画:第一帧定几何,后续帧只换像素(#103/#96)
     void blitGifFrame(const QImage& img);     // GIF 取帧唯一出口:当前帧缩到 label 尺寸
     // ── GIF 走视频那套形态(#97):同一条控制栏 + 时间轴 + 播放暂停 ──
     void buildGifTimeline();                  // 逐帧时长表 → 进度条范围 + 时长文本
