@@ -69,11 +69,11 @@ Fetching images…</translation>
     </message>
     <message>
         <source>  &lt;span style=&quot;background-color:%1;color:%2;&quot;&gt;&amp;nbsp;%3&amp;nbsp;&lt;/span&gt; ← %4&lt;br&gt;</source>
-        <translation></translation>
+        <translation>  &lt;span style=&quot;background-color:%1;color:%2;&quot;&gt;&amp;nbsp;%3&amp;nbsp;&lt;/span&gt; ← %4&lt;br&gt;</translation>
     </message>
     <message>
         <source>  ·  (另有 %1 条旧格式条目待重建后自动消失)</source>
-        <translation></translation>
+        <translation>  ·  (%1 legacy entries will disappear after rebuild)</translation>
     </message>
     <message>
         <source>  ·  已选 %1 项 · [%2]</source>
@@ -81,11 +81,11 @@ Fetching images…</translation>
     </message>
     <message>
         <source> [已移出]</source>
-        <translation></translation>
+        <translation> [excluded]</translation>
     </message>
     <message>
         <source> [索引已暂停]</source>
-        <translation></translation>
+        <translation> [indexing paused]</translation>
     </message>
     <message>
         <source> · %1 %2</source>
@@ -129,15 +129,15 @@ Fetching images…</translation>
     </message>
     <message>
         <source>%1 B</source>
-        <translation></translation>
+        <translation>%1 B</translation>
     </message>
     <message>
         <source>%1 KB</source>
-        <translation></translation>
+        <translation>%1 KB</translation>
     </message>
     <message>
         <source>%1 MB</source>
-        <translation></translation>
+        <translation>%1 MB</translation>
     </message>
     <message>
         <source>%1 · %2 · %3 / %4</source>
@@ -182,7 +182,8 @@ Extracting embedded camera preview…</translation>
     <message>
         <source>%1%2
 已处理 %3 · 待处理 %4 · 失效 %5</source>
-        <translation></translation>
+        <translation>%1%2
+Processed %3 · Pending %4 · Stale %5</translation>
     </message>
     <message>
         <source>%1: %2</source>
@@ -246,7 +247,7 @@ Extracting embedded camera preview…</translation>
     </message>
     <message>
         <source>,已显示前 %1 </source>
-        <translation></translation>
+        <translation>, showing first %1 </translation>
     </message>
     <message>
         <source>1.00 正方形</source>
@@ -354,7 +355,27 @@ Ctrl+A — 全选  Ctrl+I — 反选  Ctrl+W — 关标签(全屏中=只退全�
 Ctrl+Shift+T — 恢复刚关的标签页
 Esc — 查看器/G全屏:退全屏+回浏览器+关当前标签(浏览器全屏:退全屏)
 拖放 — 移动到文件夹  Ctrl+拖放 — 复制(设置→文件操作可关确认弹窗)</source>
-        <translation></translation>
+        <translation>C / Left / Up — Previous
+V / Right / Down — Next
+Space — Play/Pause
+Ctrl+PgUp/PgDn — Switch left/right tab
+Shift+PgUp/PgDn — Rewind/Fast-forward (seconds in Settings → Keyboard)
+Hold right button + wheel — Zoom (same as Ctrl+wheel)
+Double-click preview — Browser: open viewer tab / Viewer: close tab back to browser
+F5 — Refresh  F11 — Fullscreen UI
+G — Fullscreen preview (image only; press G or ESC to fully restore the layout)
+Alt+Left/Right / B / F — Back/Forward  Backspace — Parent folder
+Home/End — First/last item (acts on the tree when the tree has focus, otherwise on the file pane)
+Ctrl+1~5 — Set color label (red orange yellow green blue)
+Ctrl+0 / D — Clear color label
+F2 — Rename (works in both tree and file pane, whichever has focus; changeable in Settings → Shortcuts)
+F3 — Open with default app (folder = Explorer)
+Del / S — Delete selected  X — New folder
+Enter — Toggle viewer/browser (Settings → Keyboard)
+Ctrl+A — Select all  Ctrl+I — Invert selection  Ctrl+W — Close tab (in fullscreen: exit fullscreen only)
+Ctrl+Shift+T — Reopen just-closed tab
+Esc — Viewer/G-fullscreen: exit fullscreen + back to browser + close current tab (browser fullscreen: exit fullscreen)
+Drag &amp; drop — Move to folder  Ctrl+drag &amp; drop — Copy (confirmation dialog can be disabled in Settings → File operations)</translation>
     </message>
     <message>
         <source>C / ← / ↑ — 上一个
@@ -443,36 +464,44 @@ Check = direct numeric inversion (usually too bright), for comparison only; rese
         <translation>EXR image</translation>
     </message>
     <message>
+        <source>Everything 主程序 (Everything.exe);;所有程序 (*.exe)</source>
+        <translation>Everything executable (Everything.exe);;All programs (*.exe)</translation>
+    </message>
+    <message>
         <source>Everything 引擎</source>
-        <translation></translation>
+        <translation>Everything engine</translation>
     </message>
     <message>
         <source>Everything 引擎不可用,已改用内置 NTFS 索引</source>
-        <translation></translation>
+        <translation>Everything engine unavailable, switched to built-in NTFS index</translation>
     </message>
     <message>
         <source>Everything 引擎不可用,已用内置 NTFS 索引搜索</source>
-        <translation></translation>
+        <translation>Everything engine unavailable, searched with built-in NTFS index</translation>
     </message>
     <message>
         <source>Everything 引擎不可用,正在用内置 NTFS 索引(构建中)…</source>
-        <translation></translation>
+        <translation>Everything engine unavailable, using built-in NTFS index (building)…</translation>
     </message>
     <message>
         <source>Everything 引擎启动中,已先走内置 NTFS 索引</source>
-        <translation></translation>
+        <translation>Everything engine is starting; using built-in NTFS index for now</translation>
     </message>
     <message>
         <source>Everything 引擎就绪,输入关键词回车搜索</source>
-        <translation></translation>
+        <translation>Everything engine ready — type a keyword and press Enter</translation>
     </message>
     <message>
         <source>Everything 搜索中…</source>
-        <translation></translation>
+        <translation>Searching with Everything…</translation>
     </message>
     <message>
         <source>Everything 查询失败,已改用内置 NTFS 索引搜索</source>
-        <translation></translation>
+        <translation>Everything query failed, searched with built-in NTFS index</translation>
+    </message>
+    <message>
+        <source>Everything 路径</source>
+        <translation>Everything path</translation>
     </message>
     <message>
         <source>Excel 表格</source>
@@ -680,7 +709,7 @@ Version 1.0 — C++ + Qt6</translation>
     </message>
     <message>
         <source>▲</source>
-        <translation></translation>
+        <translation>▲</translation>
     </message>
     <message>
         <source>▼</source>
@@ -712,7 +741,7 @@ Version 1.0 — C++ + Qt6</translation>
     </message>
     <message>
         <source>✕</source>
-        <translation></translation>
+        <translation>✕</translation>
     </message>
     <message>
         <source>✗ 无法连接(服务未运行)</source>
@@ -913,6 +942,10 @@ Current settings were copied there (existing files are not overwritten).</transl
         <translation>Copies</translation>
     </message>
     <message>
+        <source>优先使用系统已安装的 Everything(免重建索引)</source>
+        <translation>Prefer the system-installed Everything (no index rebuild)</translation>
+    </message>
+    <message>
         <source>优化数据库(处理时间长)</source>
         <translation>Optimize database (takes a while)</translation>
     </message>
@@ -945,6 +978,10 @@ Current settings were copied there (existing files are not overwritten).</transl
     <message>
         <source>使用 Gamma 纠正</source>
         <translation>Use gamma correction</translation>
+    </message>
+    <message>
+        <source>使用 Gaze 自带的 Everything 独立实例(与你自己的 Everything 互不干扰)。</source>
+        <translation>Using Gaze&apos;s bundled standalone Everything instance (independent of your own Everything).</translation>
     </message>
     <message>
         <source>使用alpha通道</source>
@@ -1046,7 +1083,7 @@ Next start will restore:
     </message>
     <message>
         <source>停止失败:%1</source>
-        <translation></translation>
+        <translation>Failed to stop: %1</translation>
     </message>
     <message>
         <source>偶数页</source>
@@ -1162,12 +1199,13 @@ Next start will restore:
     </message>
     <message>
         <source>内置 NTFS 索引</source>
-        <translation></translation>
+        <translation>Built-in NTFS index</translation>
     </message>
     <message>
         <source>写回副本失败:
 </source>
-        <translation></translation>
+        <translation>Failed to write back the copy:
+</translation>
     </message>
     <message>
         <source>写回文件失败:
@@ -1218,7 +1256,8 @@ Next start will restore:
     <message>
         <source>创建副本失败:
 </source>
-        <translation></translation>
+        <translation>Failed to create the copy:
+</translation>
     </message>
     <message>
         <source>创建失败:
@@ -1264,7 +1303,7 @@ Next start will restore:
     </message>
     <message>
         <source>删除后服务端会自动清理该目录的索引数据。继续?</source>
-        <translation></translation>
+        <translation>The server will automatically clean up this folder&apos;s index data after removal. Continue?</translation>
     </message>
     <message>
         <source>删除含文件夹时确认(不受上一项影响)</source>
@@ -1272,7 +1311,7 @@ Next start will restore:
     </message>
     <message>
         <source>删除失败(HTTP %1)</source>
-        <translation></translation>
+        <translation>Delete failed (HTTP %1)</translation>
     </message>
     <message>
         <source>删除失败:
@@ -1310,11 +1349,11 @@ Next start will restore:
     </message>
     <message>
         <source>删除目录</source>
-        <translation></translation>
+        <translation>Remove folder</translation>
     </message>
     <message>
         <source>删除索引目录</source>
-        <translation></translation>
+        <translation>Remove index folder</translation>
     </message>
     <message>
         <source>删除该目录的全部缓存条目?
@@ -1332,7 +1371,7 @@ Next start will restore:
     </message>
     <message>
         <source>删除选中</source>
-        <translation></translation>
+        <translation>Delete selected</translation>
     </message>
     <message>
         <source>删除选中目录条目</source>
@@ -1418,7 +1457,7 @@ Unchecked: reuse the pane switches from the last exit (requires a saved layout o
     </message>
     <message>
         <source>参与排序</source>
-        <translation></translation>
+        <translation>Include in sorting</translation>
     </message>
     <message>
         <source>双击</source>
@@ -1494,7 +1533,7 @@ e.g. psd, ai, raw, cr2, nef</translation>
     </message>
     <message>
         <source>右键目录:纳入/移出搜索、暂停/恢复索引、删除目录(服务端自动清理)</source>
-        <translation></translation>
+        <translation>Right-click a folder: include/exclude from search, pause/resume indexing, remove folder (server cleans up automatically)</translation>
     </message>
     <message>
         <source>右键菜单</source>
@@ -1516,11 +1555,11 @@ e.g. psd, ai, raw, cr2, nef</translation>
     </message>
     <message>
         <source>同步</source>
-        <translation></translation>
+        <translation>Sync</translation>
     </message>
     <message>
         <source>同步(移除已不存在的目录)</source>
-        <translation></translation>
+        <translation>Sync (remove folders that no longer exist)</translation>
     </message>
     <message>
         <source>同步文件夹</source>
@@ -1583,7 +1622,8 @@ e.g. psd, ai, raw, cr2, nef</translation>
     <message>
         <source>启动/停止万象图搜服务。停止=结束监听该端口的服务进程
 (冷启动需加载模型约 2 秒;空闲 30 分钟服务会自动卸载模型)</source>
-        <translation></translation>
+        <translation>Start/stop the Wanxiang Image Search service. Stopping = terminate the process listening on this port
+(cold start takes ~2 s to load models; after 30 min idle the service unloads models automatically)</translation>
     </message>
     <message>
         <source>启动时打开文件列表和预览框</source>
@@ -1607,15 +1647,15 @@ e.g. psd, ai, raw, cr2, nef</translation>
     </message>
     <message>
         <source>命中 %1 项%2(双击在 Gaze 打开)</source>
-        <translation></translation>
+        <translation>%1 hits%2 (double-click to open in Gaze)</translation>
     </message>
     <message>
         <source>命中 %1 项(双击在 Gaze 打开)</source>
-        <translation></translation>
+        <translation>%1 hits (double-click to open in Gaze)</translation>
     </message>
     <message>
         <source>命中至少 %1 项,已显示前 500(双击在 Gaze 打开)</source>
-        <translation></translation>
+        <translation>At least %1 hits, showing first 500 (double-click to open in Gaze)</translation>
     </message>
     <message>
         <source>命中这些词的结果被排除(同样的词法规则)</source>
@@ -1777,7 +1817,7 @@ Click once to select the whole path, click again to place the caret</translation
     </message>
     <message>
         <source>失效键(mtime)</source>
-        <translation></translation>
+        <translation>Stale key (mtime)</translation>
     </message>
     <message>
         <source>奇数页</source>
@@ -1789,7 +1829,7 @@ Click once to select the whole path, click again to place the caret</translation
     </message>
     <message>
         <source>媒体文件</source>
-        <translation></translation>
+        <translation>Media files</translation>
     </message>
     <message>
         <source>子串或通配 * ?;多个词用空格分隔,任一命中即算</source>
@@ -1801,15 +1841,15 @@ Click once to select the whole path, click again to place the caret</translation
     </message>
     <message>
         <source>定位</source>
-        <translation></translation>
+        <translation>Locate</translation>
     </message>
     <message>
         <source>定位当前文件夹</source>
-        <translation></translation>
+        <translation>Locate current folder</translation>
     </message>
     <message>
         <source>实际大小 (100%)</source>
-        <translation></translation>
+        <translation>Actual size (100%)</translation>
     </message>
     <message>
         <source>宽</source>
@@ -1821,7 +1861,7 @@ Click once to select the whole path, click again to place the caret</translation
     </message>
     <message>
         <source>对永久失败条目按阶段重跑</source>
-        <translation></translation>
+        <translation>Re-run permanently failed entries by stage</translation>
     </message>
     <message>
         <source>导出清单</source>
@@ -1850,7 +1890,10 @@ Click once to select the whole path, click again to place the caret</translation
 
 全部设置回到默认,收藏夹与最近的文件也会一并清空,且无法恢复。
 确定继续吗?</source>
-        <translation></translation>
+        <translation>This will erase the entire Gaze.ini config file:
+
+All settings return to defaults, and favorites and recent files are cleared as well, with no way to recover.
+Continue?</translation>
     </message>
     <message>
         <source>将视频拆帧保存到当前目录？</source>
@@ -1954,7 +1997,7 @@ or in system Settings → Apps → Default apps → Gaze → &apos;Set default&a
     </message>
     <message>
         <source>已添加目录</source>
-        <translation></translation>
+        <translation>Folder added</translation>
     </message>
     <message>
         <source>已清除失效缩略图 %1 条、失效标记 %2 条。</source>
@@ -1966,7 +2009,7 @@ or in system Settings → Apps → Default apps → Gaze → &apos;Set default&a
     </message>
     <message>
         <source>已移除 %1 条失效目录缓存。</source>
-        <translation></translation>
+        <translation>Removed %1 stale folder cache entries.</translation>
     </message>
     <message>
         <source>已移除 %1 条孤立条目。</source>
@@ -1982,7 +2025,7 @@ or in system Settings → Apps → Default apps → Gaze → &apos;Set default&a
     </message>
     <message>
         <source>已触发扫描</source>
-        <translation></translation>
+        <translation>Scan triggered</translation>
     </message>
     <message>
         <source>已达 %1 个目录上限(可能遇到链接环),其余未扫</source>
@@ -1991,6 +2034,10 @@ or in system Settings → Apps → Default apps → Gaze → &apos;Set default&a
     <message>
         <source>已达 %1 条命中上限,其余未扫</source>
         <translation>Reached the %1-match limit; the rest was not scanned</translation>
+    </message>
+    <message>
+        <source>已连上系统安装的 Everything,输入关键词回车搜索</source>
+        <translation>Connected to the system-installed Everything — type a keyword and press Enter</translation>
     </message>
     <message>
         <source>已送印 %1 页 · %2 张图片。</source>
@@ -2002,7 +2049,7 @@ or in system Settings → Apps → Default apps → Gaze → &apos;Set default&a
     </message>
     <message>
         <source>已重置 %1 条失败项(%2)</source>
-        <translation></translation>
+        <translation>Reset %1 failed entries (%2)</translation>
     </message>
     <message>
         <source>布局</source>
@@ -2043,6 +2090,16 @@ or in system Settings → Apps → Default apps → Gaze → &apos;Set default&a
         <translation>Application</translation>
     </message>
     <message>
+        <source>开:Gaze 会连接你系统里正在运行的 Everything,直接使用它已建好的全盘索引;
+    没装或没在运行时,退回 Gaze 自带的索引引擎。
+关:Gaze 只使用自带的独立实例,不探测也不影响你自己的 Everything。
+改动下次启动生效。</source>
+        <translation>On: Gaze connects to the Everything running on your system and uses its already-built全盘 index directly;
+    if not installed or not running, it falls back to Gaze&apos;s own index engine.
+Off: Gaze only uses its own standalone instance, never probing or touching your own Everything.
+Change takes effect on next launch.</translation>
+    </message>
+    <message>
         <source>开:切换查看器标签、以及退回浏览器时,把文件列表的选中项挪到那个文件上,
 于是退回后高亮的就是刚才最后看的那张,标题栏与预览也都跟着它。
 关(默认):退回浏览器后列表仍停在你进查看器前的那一行。</source>
@@ -2064,7 +2121,7 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
     </message>
     <message>
         <source>开始扫描</source>
-        <translation></translation>
+        <translation>Start scan</translation>
     </message>
     <message>
         <source>开源致谢</source>
@@ -2072,7 +2129,7 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
     </message>
     <message>
         <source>引擎</source>
-        <translation></translation>
+        <translation>Engine</translation>
     </message>
     <message>
         <source>引擎默认</source>
@@ -2132,7 +2189,7 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
     </message>
     <message>
         <source>恢复索引处理</source>
-        <translation></translation>
+        <translation>Resume indexing</translation>
     </message>
     <message>
         <source>恢复默认</source>
@@ -2208,7 +2265,7 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
     </message>
     <message>
         <source>扫描中</source>
-        <translation></translation>
+        <translation>Scanning</translation>
     </message>
     <message>
         <source>扫描文件头</source>
@@ -2222,7 +2279,7 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
     </message>
     <message>
         <source>把一个目录加入索引(服务端自动扫描其中的图片)</source>
-        <translation></translation>
+        <translation>Add a folder to the index (the server scans its images automatically)</translation>
     </message>
     <message>
         <source>把目录 %1 的缓存记录搬到新路径:</source>
@@ -2386,7 +2443,7 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
     </message>
     <message>
         <source>数据库:%1  ·  目录:%2  ·  缓存条目:%3  ·  标记:%4  ·  缩略图合计:%5%6</source>
-        <translation></translation>
+        <translation>Database: %1  ·  Folders: %2  ·  Cache entries: %3  ·  Labels: %4  ·  Thumbnails total: %5%6</translation>
     </message>
     <message>
         <source>数据库:%1  ·  缓存条目:%2  ·  缩略图合计:%3</source>
@@ -2394,7 +2451,7 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
     </message>
     <message>
         <source>数据库:%1  ·  缓存目录:%2  ·  合计:%3</source>
-        <translation></translation>
+        <translation>Database: %1  ·  Cache folder: %2  ·  Total: %3</translation>
     </message>
     <message>
         <source>数据库引擎的内存占用(MB)</source>
@@ -2416,7 +2473,7 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
     </message>
     <message>
         <source>文件共 %1，仅读取前 %2</source>
-        <translation></translation>
+        <translation>%1 files total, reading only the first %2</translation>
     </message>
     <message>
         <source>文件关联</source>
@@ -2480,15 +2537,15 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
     </message>
     <message>
         <source>文件夹在排序中的位置</source>
-        <translation></translation>
+        <translation>Position of folders when sorting</translation>
     </message>
     <message>
         <source>文件夹大小数据库维护</source>
-        <translation></translation>
+        <translation>Folder size database maintenance</translation>
     </message>
     <message>
         <source>文件夹大小数据库维护...</source>
-        <translation></translation>
+        <translation>Folder size database maintenance...</translation>
     </message>
     <message>
         <source>文件夹总是按字母序排列</source>
@@ -2505,7 +2562,8 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
     <message>
         <source>文件当前不存在(可能已被移动或删除):
 %1</source>
-        <translation></translation>
+        <translation>The file no longer exists (it may have been moved or deleted):
+%1</translation>
     </message>
     <message>
         <source>文件操作</source>
@@ -2517,11 +2575,11 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
     </message>
     <message>
         <source>文件极速搜索 (NTFS 全盘索引)</source>
-        <translation></translation>
+        <translation>Instant file search (NTFS full-disk index)</translation>
     </message>
     <message>
         <source>文件极速搜索...</source>
-        <translation></translation>
+        <translation>Instant file search...</translation>
     </message>
     <message>
         <source>文件树左键按住拖动</source>
@@ -2610,7 +2668,8 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
     <message>
         <source>无法为副本取名(重名过多):
 </source>
-        <translation></translation>
+        <translation>Could not name the copy (too many duplicates):
+</translation>
     </message>
     <message>
         <source>无法写入文件。</source>
@@ -2662,7 +2721,7 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     </message>
     <message>
         <source>无法读取文件内容(可能正被其他程序占用,或没有读取权限)</source>
-        <translation></translation>
+        <translation>Could not read the file contents (it may be in use by another program, or you lack read permission)</translation>
     </message>
     <message>
         <source>无法读取该图片</source>
@@ -2692,7 +2751,7 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     </message>
     <message>
         <source>显示/隐藏其他类型</source>
-        <translation></translation>
+        <translation>Show/hide other types</translation>
     </message>
     <message>
         <source>显示/隐藏图片</source>
@@ -2752,7 +2811,7 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     </message>
     <message>
         <source>暂停索引处理(保留搜索)</source>
-        <translation></translation>
+        <translation>Pause indexing (search stays available)</translation>
     </message>
     <message>
         <source>最近的文件</source>
@@ -2780,11 +2839,11 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     </message>
     <message>
         <source>服务已停止</source>
-        <translation></translation>
+        <translation>Service stopped</translation>
     </message>
     <message>
         <source>服务已启动</source>
-        <translation></translation>
+        <translation>Service started</translation>
     </message>
     <message>
         <source>服务无响应(连接失败或超时)</source>
@@ -2792,7 +2851,7 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     </message>
     <message>
         <source>服务未在运行</source>
-        <translation></translation>
+        <translation>Service not running</translation>
     </message>
     <message>
         <source>服务未运行时,搜索前自动启动万象图搜服务</source>
@@ -2801,15 +2860,16 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     <message>
         <source>服务状态:%1 · %2 张/秒
 待处理 缩略图 %3 / 文字 %4 · 失败 %5/%6 · 库内 %7 张</source>
-        <translation></translation>
+        <translation>Service status: %1 · %2 items/s
+Pending thumbnails %3 / text %4 · Failed %5/%6 · In library %7 items</translation>
     </message>
     <message>
         <source>服务状态:—</source>
-        <translation></translation>
+        <translation>Service status: —</translation>
     </message>
     <message>
         <source>服务状态:离线(设置 → 以文搜图 可开自动启动,或手动运行 main.py)</source>
-        <translation></translation>
+        <translation>Service status: offline (enable auto-start in Settings → Text image search, or run main.py manually)</translation>
     </message>
     <message>
         <source>服务生命周期</source>
@@ -2827,11 +2887,19 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     </message>
     <message>
         <source>未列出的格式:&lt;span style=&quot;background-color:%1;color:%2;&quot;&gt;&amp;nbsp;%3&amp;nbsp;&lt;/span&gt;(上面总开关关掉时一律不上底色)</source>
-        <translation></translation>
+        <translation>Unlisted formats: &lt;span style=&quot;background-color:%1;color:%2;&quot;&gt;&amp;nbsp;%3&amp;nbsp;&lt;/span&gt; (no background when the master switch above is off)</translation>
+    </message>
+    <message>
+        <source>未找到 Everything 组件,全盘快搜将使用 Gaze 内置的 NTFS 索引。</source>
+        <translation>No Everything components found; full-disk instant search will use Gaze&apos;s built-in NTFS index.</translation>
     </message>
     <message>
         <source>未找到万象图搜项目:%1/main.py —— 可在 设置 → 以文搜图 改目录</source>
         <translation>ImageSeek project not found: %1/main.py — change the folder in Settings → Image search by text</translation>
+    </message>
+    <message>
+        <source>未检测到可用的 Everything;若你需要它,请自行安装,或使用上方内置 NTFS 索引。</source>
+        <translation>No usable Everything detected; install it yourself if you need it, or use the built-in NTFS index above.</translation>
     </message>
     <message>
         <source>本地媒体查看器与文件浏览器 —— 图片、视频、RAW、PDF，一个窗口全搞定。</source>
@@ -2881,7 +2949,7 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     </message>
     <message>
         <source>标签颜色(扩展名 → 文件名底色,当前生效表):&lt;br&gt;</source>
-        <translation></translation>
+        <translation>Label colors (extension → filename background, currently in effect):&lt;br&gt;</translation>
     </message>
     <message>
         <source>标记</source>
@@ -2898,6 +2966,10 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     <message>
         <source>根据 EXIF 方向标签旋转图像</source>
         <translation>Rotate images according to the EXIF orientation tag</translation>
+    </message>
+    <message>
+        <source>检测到系统已安装的 Everything 正在运行,将直接使用它的索引。</source>
+        <translation>Detected a running system-installed Everything; its index will be used directly.</translation>
     </message>
     <message>
         <source>横向</source>
@@ -2917,7 +2989,7 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     </message>
     <message>
         <source>正在停止服务…</source>
-        <translation></translation>
+        <translation>Stopping service…</translation>
     </message>
     <message>
         <source>正在准备打印…</source>
@@ -2929,7 +3001,7 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     </message>
     <message>
         <source>正在启动 Everything 索引引擎…</source>
-        <translation></translation>
+        <translation>Starting the Everything index engine…</translation>
     </message>
     <message>
         <source>正在唤醒服务…(冷启动需加载模型,约 2 秒)</source>
@@ -2945,7 +3017,7 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     </message>
     <message>
         <source>正在读取目录…</source>
-        <translation></translation>
+        <translation>Reading folder…</translation>
     </message>
     <message>
         <source>正在连接…</source>
@@ -2982,6 +3054,16 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     <message>
         <source>没有匹配结果</source>
         <translation>No matches</translation>
+    </message>
+    <message>
+        <source>没有找到 Everything。
+
+已按注册表、运行中的进程、常见安装目录三种方式查找。
+若你的 Everything 装在非常规位置,请用「浏览…」手动指定。</source>
+        <translation>Everything was not found.
+
+Searched via the registry, running processes, and common install folders.
+If your Everything is in an unusual location, specify it manually with &quot;Browse…&quot;.</translation>
     </message>
     <message>
         <source>波形不可用</source>
@@ -3081,19 +3163,19 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     </message>
     <message>
         <source>添加目录:%1</source>
-        <translation></translation>
+        <translation>Add folder: %1</translation>
     </message>
     <message>
         <source>添加目录…</source>
-        <translation></translation>
+        <translation>Add folder…</translation>
     </message>
     <message>
         <source>添加目录失败(HTTP %1)</source>
-        <translation></translation>
+        <translation>Failed to add folder (HTTP %1)</translation>
     </message>
     <message>
         <source>添加索引目录</source>
-        <translation></translation>
+        <translation>Add index folder</translation>
     </message>
     <message>
         <source>添加颜色标记</source>
@@ -3105,11 +3187,11 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     </message>
     <message>
         <source>清空</source>
-        <translation></translation>
+        <translation>Clear</translation>
     </message>
     <message>
         <source>清空全部文件夹大小缓存?(选中目录时会自动重新统计)</source>
-        <translation></translation>
+        <translation>Clear the entire folder-size cache? (Selected folders will be re-measured automatically)</translation>
     </message>
     <message>
         <source>清空收藏夹</source>
@@ -3137,11 +3219,11 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     </message>
     <message>
         <source>激活模型:%1</source>
-        <translation></translation>
+        <translation>Active model: %1</translation>
     </message>
     <message>
         <source>激活模型:—</source>
-        <translation></translation>
+        <translation>Active model: —</translation>
     </message>
     <message>
         <source>瀑布流</source>
@@ -3204,16 +3286,20 @@ Try a different selection (a bit larger and farther from the edges).</translatio
         <translation>The UI language will be applied after a restart. Restart now?</translation>
     </message>
     <message>
+        <source>留空 = 自动检测(自动连接系统版 Everything)</source>
+        <translation>Leave blank = auto-detect (connect to the system Everything automatically)</translation>
+    </message>
+    <message>
         <source>白色</source>
         <translation>White</translation>
     </message>
     <message>
         <source>目录</source>
-        <translation></translation>
+        <translation>Folder</translation>
     </message>
     <message>
         <source>目录已删除</source>
-        <translation></translation>
+        <translation>Folder removed</translation>
     </message>
     <message>
         <source>目标名已存在:
@@ -3261,11 +3347,11 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     </message>
     <message>
         <source>秒</source>
-        <translation></translation>
+        <translation>s</translation>
     </message>
     <message>
         <source>移出搜索与索引</source>
-        <translation></translation>
+        <translation>Exclude from search and index</translation>
     </message>
     <message>
         <source>移动</source>
@@ -3313,7 +3399,7 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     </message>
     <message>
         <source>空闲</source>
-        <translation></translation>
+        <translation>Idle</translation>
     </message>
     <message>
         <source>窗口适应到图像</source>
@@ -3385,23 +3471,27 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     </message>
     <message>
         <source>索引:%1 条</source>
-        <translation></translation>
+        <translation>Index: %1 entries</translation>
     </message>
     <message>
         <source>索引:未建</source>
-        <translation></translation>
+        <translation>Index: not built</translation>
     </message>
     <message>
         <source>索引中… 已读 %1 条记录</source>
-        <translation></translation>
+        <translation>Indexing… %1 records read</translation>
     </message>
     <message>
         <source>索引就绪,输入关键词回车搜索</source>
-        <translation></translation>
+        <translation>Index ready — type a keyword and press Enter</translation>
+    </message>
+    <message>
+        <source>索引引擎</source>
+        <translation>Index engine</translation>
     </message>
     <message>
         <source>索引目录</source>
-        <translation></translation>
+        <translation>Index folders</translation>
     </message>
     <message>
         <source>红</source>
@@ -3417,7 +3507,7 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     </message>
     <message>
         <source>纳入搜索与索引</source>
-        <translation></translation>
+        <translation>Include in search and index</translation>
     </message>
     <message>
         <source>纵向</source>
@@ -3457,7 +3547,7 @@ Try a different selection (a bit larger and farther from the edges).</translatio
     </message>
     <message>
         <source>缓存大小</source>
-        <translation></translation>
+        <translation>Cache size</translation>
     </message>
     <message>
         <source>缓存数据库</source>
@@ -3543,7 +3633,7 @@ Once set manually, thumbnails scale to the pane edge when resizing, but the colu
     </message>
     <message>
         <source>缩略图条目</source>
-        <translation></translation>
+        <translation>Thumbnail entries</translation>
     </message>
     <message>
         <source>缩略图缩放</source>
@@ -3551,11 +3641,11 @@ Once set manually, thumbnails scale to the pane edge when resizing, but the colu
     </message>
     <message>
         <source>置底</source>
-        <translation></translation>
+        <translation>Move to bottom</translation>
     </message>
     <message>
         <source>置顶</source>
-        <translation></translation>
+        <translation>Move to top</translation>
     </message>
     <message>
         <source>背景</source>
@@ -3588,6 +3678,10 @@ Once set manually, thumbnails scale to the pane edge when resizing, but the colu
     <message>
         <source>自动播放音频伴侣文件</source>
         <translation>Autoplay audio sidecar files</translation>
+    </message>
+    <message>
+        <source>自动检测</source>
+        <translation>Auto-detect</translation>
     </message>
     <message>
         <source>自动缩放</source>
@@ -3699,11 +3793,11 @@ Once set manually, thumbnails scale to the pane edge when resizing, but the colu
     </message>
     <message>
         <source>视频抽帧并发数(机械盘建议 2,SSD 可调高)</source>
-        <translation></translation>
+        <translation>Video frame-extraction concurrency (2 recommended for HDDs, higher for SSDs)</translation>
     </message>
     <message>
         <source>视频提取帧位置</source>
-        <translation></translation>
+        <translation>Video frame extraction position</translation>
     </message>
     <message>
         <source>视频提取帧位置(%,0=第 1 秒)</source>
@@ -3723,11 +3817,11 @@ Once set manually, thumbnails scale to the pane edge when resizing, but the colu
     </message>
     <message>
         <source>触发扫描失败(HTTP %1)</source>
-        <translation></translation>
+        <translation>Failed to trigger scan (HTTP %1)</translation>
     </message>
     <message>
         <source>触发服务端全量/增量扫描(缩略图/OCR/语义向量)</source>
-        <translation></translation>
+        <translation>Trigger a full/incremental server scan (thumbnails/OCR/semantic vectors)</translation>
     </message>
     <message>
         <source>警告!
@@ -3743,7 +3837,7 @@ Continue?</translation>
     </message>
     <message>
         <source>记住上次会话的排序(关闭则始终按上面的启动默认排序)</source>
-        <translation></translation>
+        <translation>Remember the sorting of the last session (when off, always use the startup default above)</translation>
     </message>
     <message>
         <source>记录选择的文件名</source>
@@ -3751,7 +3845,7 @@ Continue?</translation>
     </message>
     <message>
         <source>记账时间</source>
-        <translation></translation>
+        <translation>Accounted time</translation>
     </message>
     <message>
         <source>设为白色</source>
@@ -3815,11 +3909,11 @@ Continue?</translation>
     </message>
     <message>
         <source>起始百分比</source>
-        <translation></translation>
+        <translation>Start percentage</translation>
     </message>
     <message>
         <source>起始秒数</source>
-        <translation></translation>
+        <translation>Start seconds</translation>
     </message>
     <message>
         <source>超过 %1 秒未完成,已终止</source>
@@ -3859,7 +3953,7 @@ Continue?</translation>
     </message>
     <message>
         <source>输入关键词回车搜索;Everything 引擎支持语法: 空格 与 | 或 ! 非 ext:jpg size:&gt;1mb dm:today 通配符 *.?</source>
-        <translation></translation>
+        <translation>Type a keyword and press Enter; the Everything engine supports: space = AND, | = OR, ! = NOT, ext:jpg, size:&gt;1mb, dm:today, wildcards *.?</translation>
     </message>
     <message>
         <source>输入扩展名:</source>
@@ -3962,6 +4056,10 @@ Continue?</translation>
         <translation>Selected</translation>
     </message>
     <message>
+        <source>选择 Everything.exe</source>
+        <translation>Select Everything.exe</translation>
+    </message>
+    <message>
         <source>选择 Python 解释器</source>
         <translation>Select Python interpreter</translation>
     </message>
@@ -4035,23 +4133,23 @@ Continue?</translation>
     </message>
     <message>
         <source>重试失败</source>
-        <translation></translation>
+        <translation>Retry failed</translation>
     </message>
     <message>
         <source>重试失败(HTTP %1)</source>
-        <translation></translation>
+        <translation>Retry failed (HTTP %1)</translation>
     </message>
     <message>
         <source>重跑文字识别(ocr)</source>
-        <translation></translation>
+        <translation>Re-run text recognition (ocr)</translation>
     </message>
     <message>
         <source>重跑缩略图(thumb)</source>
-        <translation></translation>
+        <translation>Re-run thumbnails (thumb)</translation>
     </message>
     <message>
         <source>重跑语义向量(embed,当前模型)</source>
-        <translation></translation>
+        <translation>Re-run semantic vectors (embed, current model)</translation>
     </message>
     <message>
         <source>锐化缩略图</source>
@@ -4147,7 +4245,7 @@ Continue?</translation>
     </message>
     <message>
         <source>预览 Markdown 文件(渲染样式展示,超长自动截断)</source>
-        <translation></translation>
+        <translation>Preview Markdown files (rendered, long content truncated automatically)</translation>
     </message>
     <message>
         <source>预览 PDF 文档(内置 Ghostscript 渲染)</source>
@@ -4207,7 +4305,7 @@ Continue?</translation>
     </message>
     <message>
         <source>默认音量(%)</source>
-        <translation></translation>
+        <translation>Default volume (%)</translation>
     </message>
     <message>
         <source>默认颜色</source>
