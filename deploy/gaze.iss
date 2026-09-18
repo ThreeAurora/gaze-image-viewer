@@ -10,6 +10,10 @@
 #ifndef AppVersion
 #define AppVersion "1.0.0"
 #endif
+; 产物名后缀:轻量版发版时由 make_installer.ps1 以 /DAppFlavor=_Lite 注入
+#ifndef AppFlavor
+#define AppFlavor ""
+#endif
 
 [Setup]
 AppId={{7C1E9A42-3D5B-4F68-8A0C-91E2B3D4F5A6}
@@ -27,7 +31,7 @@ WizardStyle=modern
 Compression=lzma2/max
 SolidCompression=yes
 OutputDir=..\dist
-OutputBaseFilename=Gaze_{#AppVersion}_Setup
+OutputBaseFilename=Gaze_{#AppVersion}{#AppFlavor}_Setup
 SetupIconFile=..\src\gaze.ico
 UninstallDisplayIcon={app}\Gaze.exe
 CloseApplications=yes

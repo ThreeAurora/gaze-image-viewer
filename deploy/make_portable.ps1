@@ -1,7 +1,8 @@
 # ═══════════════════════════════════════════════════════
 # 便携版 Portable 打包:build_qt68 运行期集合 -> dist/GazePortable/ + zip
-# 用法: powershell -ExecutionPolicy Bypass -File deploy/make_portable.ps1 [-Version X.Y.Z]
+# 用法: powershell -ExecutionPolicy Bypass -File deploy/make_portable.ps1 [-Version X.Y.Z] [-Lite]
 #       不传 -Version 时,版本号取自 src/constants.h 的 GAZE_VERSION(单一来源)
+#       -Lite:产轻量版(不带 Everything 本体,复用系统已装的 Everything)
 #
 # 打包口径(与安装版共用同一份"运行期集合"清单,见下方 $Excludes):
 #   带什么: Gaze.exe + Qt/ffmpeg/msvcrt dll + plugins(imageformats/platforms/…)
@@ -10,7 +11,14 @@
 #            Gaze.ini、探针 exe、librawdec.a、rel_avif.json)——
 #            首次运行自动重建 Gaze.ini/thumbnails.db,保证干净首启。
 # ═══════════════════════════════════════════════════════
-param([string]$Version = "")
+param(
+    [string]$Version = "",
+    # 轻量版:不带 Everything 本体(Everything.exe + 语言包,约 6.4MB),只留
+    # es.exe(IPC 客户端,~257KB)。启动时连你系统里已装的 Everything 用它的
+    # 索引;系统没有 Everything 就退回 Gaze 内置的 NTFS 扫描。
+    # 好处:包更小、不重复建索引、不占额外几百 MB 数据库;代价:依赖本机已装。
+    [switch]$Lite
+)
 
 $ErrorActionPreference = "Stop"
 $root   = Split-Path $PSScriptRoot -Parent
@@ -59,8 +67,14 @@ foreach ($f in $files) {
         # 引擎只带本体:Everything.exe/es.exe/语言/许可。绝不打包本机的
         # Everything-gaze.db / backup.db(全盘 NTFS 索引库,可 300MB+)与
         # 实例 ini/session —— 那是运行时状态,带走既是隐私也是体积炸弹。
+        # -Lite:只保留 es.exe(License 随附);本体由用户系统的 Everything 充当。
         New-Item -ItemType Directory -Force -Path (Join-Path $out "everything") | Out-Null
-        foreach ($keep in @("Everything.exe", "es.exe", "Everything.lng", "License.txt")) {
+        $keepList = if ($Lite) {
+            @("es.exe", "License.txt")
+        } else {
+            @("Everything.exe", "es.exe", "Everything.lng", "License.txt")
+        }
+        foreach ($keep in $keepList) {
             $src = Join-Path $f.FullName $keep
             if (Test-Path $src) { Copy-Item -Force $src (Join-Path $out "everything") }
         }
@@ -89,9 +103,11 @@ foreach ($pat in @("avcodec-*.dll", "avformat-*.dll", "avutil-*.dll",
     }
 }
 
-$zip = Join-Path $dist "Gaze_${Version}_Portable.zip"
+$tag = if ($Lite) { "_Lite" } else { "" }
+$zip = Join-Path $dist "Gaze_${Version}${tag}_Portable.zip"
 if (Test-Path $zip) { Remove-Item -Force $zip }
 Compress-Archive -Path "$out/*" -DestinationPath $zip -CompressionLevel Optimal
 
 $sz = [math]::Round((Get-Item $zip).Length / 1MB, 1)
-Write-Host "Portable OK: $zip ($sz MB)  [条目数: $((Get-ChildItem $out -Recurse -File).Count)]"
+$flavor = if ($Lite) { "Lite(无内置 Everything)" } else { "Full(内置 Everything)" }
+Write-Host "Portable OK: $zip ($sz MB)  [$flavor  条目数: $((Get-ChildItem $out -Recurse -File).Count)]"

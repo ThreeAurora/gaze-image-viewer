@@ -1,15 +1,16 @@
 # ═══════════════════════════════════════════════════════
 # 安装版 Setup.exe 打包:Inno Setup 6(ISCC)编译 deploy/gaze.iss。
-#   用法: powershell -ExecutionPolicy Bypass -File deploy/make_installer.ps1 [-Version X.Y.Z]
-#         不传 -Version 时,版本号取自 src/constants.h 的 GAZE_VERSION(单一来源)
+# 用法: powershell -ExecutionPolicy Bypass -File deploy/make_installer.ps1 [-Version X.Y.Z] [-Lite]
+#       不传 -Version 时,版本号取自 src/constants.h 的 GAZE_VERSION(单一来源)
+#       -Lite:产轻量版安装包(需先跑 make_portable.ps1 -Lite 生成 dist\GazePortable)
 #
 # 产物链: dist/GazePortable(便携集合,由 make_portable.ps1 生成)
 #         + deploy/bootstrap.ini([Integration] iniLocation=1 引导)
-#      ->  ISCC 压成 dist/Gaze_<ver>_Setup.exe
+#      ->  ISCC 压成 dist/Gaze_<ver>[_Lite]_Setup.exe
 # 安装语义: 装进 Program Files\Gaze(管理员一次到位);exe 旁只留引导 ini,
 #           用户配置/缓存落 %APPDATA%(卸载保留,与便携版 exe 相对存放分流)。
 # ═══════════════════════════════════════════════════════
-param([string]$Version = "")
+param([string]$Version = "", [switch]$Lite)
 
 $ErrorActionPreference = "Stop"
 $root  = Split-Path $PSScriptRoot -Parent
@@ -25,7 +26,8 @@ if ([string]::IsNullOrWhiteSpace($Version)) {
     $Version = $verMatch.Matches[0].Groups[1].Value
 }
 
-$setup = Join-Path $dist "Gaze_${Version}_Setup.exe"
+$setup = if ($Lite) { Join-Path $dist "Gaze_${Version}_Lite_Setup.exe" }
+         else       { Join-Path $dist "Gaze_${Version}_Setup.exe" }
 
 if (!(Test-Path (Join-Path $base "Gaze.exe"))) {
     Write-Host "dist\GazePortable 不存在,先跑 deploy/make_portable.ps1"
@@ -41,9 +43,12 @@ $iscc = $isccCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
 if (!$iscc) { Write-Error "找不到 ISCC.exe,请安装 Inno Setup 6" }
 
 # ISCC 编译(版本经 /DAppVersion 注入 gaze.iss,包名随之 Gaze_<ver>_Setup)
-& $iscc "/DAppVersion=$Version" (Join-Path $PSScriptRoot "gaze.iss")
+# -Lite 时另注 /DAppFlavor=_Lite 到产物名上(装出来的内容一模一样,只是包小)
+$flavorDef = if ($Lite) { "/DAppFlavor=_Lite" } else { "/DAppFlavor=" }
+& $iscc "/DAppVersion=$Version" $flavorDef (Join-Path $PSScriptRoot "gaze.iss")
 # 成败以"产物在不在"为准:$LASTEXITCODE 在本机某些非交互宿主里取不到值(会误报
 # "exit "),而 ISCC 其实已经成功 —— 曾据此误判过失败。产物才是硬事实。
 if (!(Test-Path $setup)) { Write-Error "ISCC 未产出 $setup(exit $LASTEXITCODE),检查 gaze.iss" }
 $sz = [math]::Round((Get-Item $setup).Length / 1MB, 1)
-Write-Host "Installer OK: $setup ($sz MB)"
+$flavor = if ($Lite) { "Lite(无内置 Everything)" } else { "Full(内置 Everything)" }
+Write-Host "Installer OK: $setup ($sz MB)  [$flavor]"
