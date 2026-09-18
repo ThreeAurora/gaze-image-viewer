@@ -66,10 +66,16 @@ public:
     void updateTabBarVis();   // 标签栏显隐总闸(2026-09-03:浏览器态有图签也显示)
     void closeViewerTab(int index);              // 关闭按钮/标签右键菜单/中键
     Q_INVOKABLE void toggleViewer();   // 浏览器 ↔ 查看器(单图模式)
+    // 2026-09-13:从 toggleViewer 拆出的两半,好让 ESC 复用同一段"进/出查看器"
+    // 逻辑而不重复代码(enterViewerState/leaveViewerState 都不碰 m_viewerMode 以外
+    // 的调用方职责;exitViewerToBrowser 是"只离开查看器、不碰标签表"的收口)
+    void enterViewerState();
+    void leaveViewerState();
+    void exitViewerToBrowser();
     Q_INVOKABLE void toggleFullView();   // G(#154):全屏预览=只铺画面,不进查看器不碰标签
     void exitFullView();           // G/ESC/F11/浮动工具条退出:精确还原进前布局
     void applyFullViewChrome();    // 菜单栏/标签条随全屏形态收放
-    Q_INVOKABLE void viewerBack();     // ESC:查看器退回浏览器(幂等)
+    Q_INVOKABLE void viewerBack();     // ESC:退全屏+退查看器+关当前标签(Ctrl+W 同款收尾)
     Q_INVOKABLE void refresh();        // 重载当前目录(F5/工具栏/布局菜单)
     Q_INVOKABLE void reloadAfterDelete(const QString& deletedPath);  // 删除后重载并选中下一项
     Q_INVOKABLE void releaseFileLocks(const QStringList& paths);  // #214:删/移/改名前放掉预览握着的句柄

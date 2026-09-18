@@ -330,7 +330,7 @@ void MainWindow::createMenubar() {
             "Enter — 切换查看器/浏览器(设置→键盘)\n"
             "Ctrl+A — 全选  Ctrl+I — 反选  Ctrl+W — 关标签(全屏中=只退全屏)\n"
             "Ctrl+Shift+T — 恢复刚关的标签页\n"
-            "Esc — 退出全屏\n"
+            "Esc — 查看器/G全屏:退全屏+回浏览器+关当前标签(浏览器全屏:退全屏)\n"
             "拖放 — 移动到文件夹  Ctrl+拖放 — 复制(设置→文件操作可关确认弹窗)"),
             QMessageBox::Ok, this);
         connect(mb, &QDialog::finished, mb, &QDialog::deleteLater);

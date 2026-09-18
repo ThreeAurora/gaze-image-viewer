@@ -473,75 +473,102 @@ void MainWindow::toggleViewer() {
     applyPaneVisibility();             // 树/网格/预览标题条统一按"意图+模式"重算
     m_preview->setViewerMode(m_viewerMode);   // 让面板按 Viewer/* 还是 Fullscreen/* 取设置
     if (m_viewerMode) {
-        m_preview->setMinimumWidth(400);
-        // 快照只信可见态:构造期直进查看器(独立双击图片启动)时窗口还没 show,
-        // sizes() 是布局前的假值 —— 快照它,退出就会把浏览器拖回假布局(真存档
-        // 已在构造期 applyLastLayout 应用过)。构造期进入=没有"进入前布局"可言,
-        // 清空让退出走存档恢复(见退出分支)
-        if (isVisible()) m_savedSplitter = m_splitter->sizes();
-        else             m_savedSplitter.clear();
-        QList<int> sz { 0, width() };
-        m_splitter->setSizes(sz);
-        // 进查看器:标签表跨退出保留,先丢掉文件已经不在的那几张(在浏览器里删过的)。
-        // #105:索引 0 的「浏览器」标签常驻,点它回标准模式。
-        // 2026-09-03 用户令:进查看器不再就地覆写已有标签(旧 syncViewerTab 路径会把
-        // 当前标签改成新文件,用户体感就是"标签被关了")—— 改走 openViewerTab:
-        // 该文件已有标签就激活,没有才追加。查看器内部导航(方向键/列表选中)仍走
-        // syncViewerTab 就地覆写,"翻 500 张不留 500 张标签"的规矩不变。
-        if (m_viewerTabs) {
-            pruneDeadViewerTabs();
-            ensureBrowserTab();
-            if (!m_viewerNoSync && !m_currentFile.isEmpty())
-                openViewerTab(m_currentFile);
-            updateTabBarVis();
-        }
+        enterViewerState();
     } else {
-        m_preview->setMinimumWidth(200);
-        if (m_viewerTabs) {
-            // Interface/syncBrowser:关视图时把浏览器选中项同步到最后那个标签
-            // (#105:当前落在「浏览器」标签上时没有可同步的路径,跳过)
-            const int curTab = m_viewerTabs->currentIndex();
-            if (AppSettings::instance().get("Interface/syncBrowser", false).toBool()
-                && !isBrowserTab(curTab)) {
-                const QString p = tabPath(curTab);
-                if (!p.isEmpty()) m_fileGrid->selectByPath(p);
-            }
-            // 只藏不清表:退回浏览器再进来,那几张标签还在。2026-09-03:退到浏览器后
-            // 标签栏不再无条件消失 —— 还有图片标签就继续显示(显隐只归总闸管)。
-            updateTabBarVis();
-            // 当前高亮挪回「浏览器」标签:浏览器态里高亮停在图片标签上会让人以为
-            // 还停在查看器。currentChanged 里浏览器态点浏览器标签是 no-op,不会绕圈
-            if (!isBrowserTab(m_viewerTabs->currentIndex()))
-                m_viewerTabs->setCurrentIndex(0);
-        }
-        // 恢复进入前的实际布局(硬编码重置会让用户拖好的分栏变掉)。
-        // 没有可信快照(构造期直进查看器,见进入分支)时不落硬编码默认:
-        // 按启动时会选的同一份存档恢复(followLast=Layout/last,否则 active 布局),
-        // 独立双击图片退回浏览器,分栏就是用户保存的那套
-        if (m_savedSplitter.size() == 2) {
-            m_splitter->setSizes(m_savedSplitter);
-        } else {
-            QSettings s = mw_impl::appSettings();
-            const bool followLast = s.value("Layout/followLast", true).toBool();
-            const QString active = s.value("Layout/active").toString();
-            const QStringList names = s.value("Layout/names").toStringList();
-            const bool useNamed = !followLast && !active.isEmpty()
-                                  && names.contains(active);
-            const QList<int> sz = mw_impl::parseSplitterSizes(s.value(
-                useNamed ? "Layout/" + active + "/splitter"
-                         : "Layout/last/splitter").toString());
-            if (mw_impl::splitterArchiveUsable(sz))
-                m_splitter->setSizes(sz);
-            else
-                m_splitter->setSizes(mw_impl::defaultSplitterSizes());
-        }
-        // 焦点必须显式还给网格:实测(cache/tmp/focus_probe.cpp)面板即使被 hide 过、
-        // 即使策略降回 NoFocus，focusWidget 仍记在它身上 —— 不补这一句，
-        // 退回浏览器后键还往面板送，方向键/空格看起来直接坏了(同 navigateTo 的纪律)
-        if (!QApplication::activeModalWidget()) m_fileGrid->setFocus();
+        leaveViewerState();
     }
     applyTitle();
     applyFullViewChrome();   // 模式切换不动窗口状态,changeEvent 不会来:这里主动算一遍
+}
+
+// 2026-09-13 从 toggleViewer 的进入分支抽出:ESC(#108 起要一步退回浏览器)与
+// Ctrl+W/双击/Enter 走的是同一段"进查看器"逻辑,不再各写一份
+void MainWindow::enterViewerState() {
+    m_preview->setMinimumWidth(400);
+    // 快照只信可见态:构造期直进查看器(独立双击图片启动)时窗口还没 show,
+    // sizes() 是布局前的假值 —— 快照它,退出就会把浏览器拖回假布局(真存档
+    // 已在构造期 applyLastLayout 应用过)。构造期进入=没有"进入前布局"可言,
+    // 清空让退出走存档恢复(见退出分支)
+    if (isVisible()) m_savedSplitter = m_splitter->sizes();
+    else             m_savedSplitter.clear();
+    QList<int> sz { 0, width() };
+    m_splitter->setSizes(sz);
+    // 进查看器:标签表跨退出保留,先丢掉文件已经不在的那几张(在浏览器里删过的)。
+    // #105:索引 0 的「浏览器」标签常驻,点它回标准模式。
+    // 2026-09-03 用户令:进查看器不再就地覆写已有标签(旧 syncViewerTab 路径会把
+    // 当前标签改成新文件,用户体感就是"标签被关了")—— 改走 openViewerTab:
+    // 该文件已有标签就激活,没有才追加。查看器内部导航(方向键/列表选中)仍走
+    // syncViewerTab 就地覆写,"翻 500 张不留 500 张标签"的规矩不变。
+    if (m_viewerTabs) {
+        pruneDeadViewerTabs();
+        ensureBrowserTab();
+        if (!m_viewerNoSync && !m_currentFile.isEmpty())
+            openViewerTab(m_currentFile);
+        updateTabBarVis();
+    }
+}
+
+// 2026-09-13 从 toggleViewer 的退出分支抽出(原样搬运,不改行为):离开查看器
+// 状态、精确还原进前布局、焦点还给网格。**不碰标签表**、不改 m_viewerMode ——
+// 后者由调用方负责,好让 ESC 那条路能先关签(closeViewerTab 关光了会自己
+// toggleViewer)再收口。ESC 的 G 全屏第 2 层直接调它:那里必须绕开 toggleViewer
+// 的"toggleViewer 退出分支用此刻尺寸覆盖进前分栏"的收尾(见 m_savedSplitter)。
+void MainWindow::leaveViewerState() {
+    m_preview->setMinimumWidth(200);
+    if (m_viewerTabs) {
+        // Interface/syncBrowser:关视图时把浏览器选中项同步到最后那个标签
+        // (#105:当前落在「浏览器」标签上时没有可同步的路径,跳过)
+        const int curTab = m_viewerTabs->currentIndex();
+        if (AppSettings::instance().get("Interface/syncBrowser", false).toBool()
+            && !isBrowserTab(curTab)) {
+            const QString p = tabPath(curTab);
+            if (!p.isEmpty()) m_fileGrid->selectByPath(p);
+        }
+        // 只藏不清表:退回浏览器再进来,那几张标签还在。2026-09-03:退到浏览器后
+        // 标签栏不再无条件消失 —— 还有图片标签就继续显示(显隐只归总闸管)。
+        updateTabBarVis();
+        // 当前高亮挪回「浏览器」标签:浏览器态里高亮停在图片标签上会让人以为
+        // 还停在查看器。currentChanged 里浏览器态点浏览器标签是 no-op,不会绕圈
+        if (!isBrowserTab(m_viewerTabs->currentIndex()))
+            m_viewerTabs->setCurrentIndex(0);
+    }
+    // 恢复进入前的实际布局(硬编码重置会让用户拖好的分栏变掉)。
+    // 没有可信快照(构造期直进查看器,见进入分支)时不落硬编码默认:
+    // 按启动时会选的同一份存档恢复(followLast=Layout/last,否则 active 布局),
+    // 独立双击图片退回浏览器,分栏就是用户保存的那套
+    if (m_savedSplitter.size() == 2) {
+        m_splitter->setSizes(m_savedSplitter);
+    } else {
+        QSettings s = mw_impl::appSettings();
+        const bool followLast = s.value("Layout/followLast", true).toBool();
+        const QString active = s.value("Layout/active").toString();
+        const QStringList names = s.value("Layout/names").toStringList();
+        const bool useNamed = !followLast && !active.isEmpty()
+                              && names.contains(active);
+        const QList<int> sz = mw_impl::parseSplitterSizes(s.value(
+            useNamed ? "Layout/" + active + "/splitter"
+                     : "Layout/last/splitter").toString());
+        if (mw_impl::splitterArchiveUsable(sz))
+            m_splitter->setSizes(sz);
+        else
+            m_splitter->setSizes(mw_impl::defaultSplitterSizes());
+    }
+    // 焦点必须显式还给网格:实测(cache/tmp/focus_probe.cpp)面板即使被 hide 过、
+    // 即使策略降回 NoFocus，focusWidget 仍记在它身上 —— 不补这一句，
+    // 退回浏览器后键还往面板送，方向键/空格看起来直接坏了(同 navigateTo 的纪律)
+    if (!QApplication::activeModalWidget()) m_fileGrid->setFocus();
+}
+
+// 2026-09-13:只"离开查看器",不碰标签表(ESC 的 G 全屏第 2 层用)。m_viewerMode
+// 的翻转在这里收口 —— 上面的 leaveViewerState 刻意不碰它,两条路各自决定何时翻。
+void MainWindow::exitViewerToBrowser() {
+    if (!m_viewerMode) return;
+    m_viewerMode = false;
+    if (m_slideshow) toggleSlideshow();   // 退出查看器停幻灯片(与 toggleViewer 同款)
+    leaveViewerState();
+    applyPaneVisibility();
+    m_preview->setViewerMode(false);
+    applyTitle();
 }
 
 // ── #154:G = 全屏预览(2026-09-01 用户最终定义)──
@@ -598,16 +625,47 @@ void MainWindow::viewerBack() {
     // ESC 行为按设置:查看器受 escCloseViewer 控,浏览器(含全屏)受 escCloseBrowser 控;
     // 两者都关时 ESC 什么都不做
     AppSettings& st = AppSettings::instance();
-    // #154:全屏预览里 ESC = 退回进前布局(与再按 G 等效)
-    if (m_fullView) { exitFullView(); return; }
+    // 2026-09-13 用户令:ESC = 退全屏 + 退查看器 + 关掉当前标签页,一次按到底
+    // (与 Ctrl+W 同款收尾)。旧行为每层都要多按一次 —— "全屏里 ESC 先退全屏、
+    // 停在看图状态,想关签还得再按一次";用户明令改成一步到位。
+    // 开关:整段只认 escCloseViewer —— "查看器/G 全屏下的 ESC"属查看器语义;
+    // escCloseBrowser 照旧只管"浏览器 F11 全屏里 ESC 退全屏"。
+    // G 全屏那 3 层里第 2 层(退出查看器)恒无条件做,原因有二:
+    //   ① 它精确还原进前布局(entry mode + 分栏 + 面板),按 escCloseViewer 跳过
+    //      会留下"全屏退了、查看器还在"的错层;按 toggleViewer 收尾又会用
+    //      "此刻"的尺寸覆盖进前分栏(见 toggleViewer 退出分支的 m_savedSplitter)。
+    //   ② 用户的动词是"关闭",不是"切换"(用户令原文:关闭查看器状态和 G 全屏状态)。
+    //      "ESC 关闭查看器"关掉 ≠"不许离开查看器",只是"不要因此关掉模式"。
+    const bool escViewer = st.get("Keyboard/escCloseViewer", true).toBool();
+
+    // ── G 全屏预览(#154):3 层一次落到位 ──
+    if (m_fullView) {
+        if (!escViewer) { exitFullView(); return; }   // 开关关着:只退全屏,不碰标签
+        // 顺序要紧:先退全屏拿回标签条,再摘签,最后统一算 chrome
+        exitFullView();
+        if (m_viewerMode) exitViewerToBrowser();     // 精确还原进前布局,不碰标签表
+        const int i = m_viewerTabs ? m_viewerTabs->currentIndex() : -1;
+        if (i >= 0 && !isBrowserTab(i)) closeViewerTab(i);   // 关签;关光了它自己退浏览器
+        applyFullViewChrome();
+        return;
+    }
     if (m_viewerMode) {
-        // #108:全屏里 ESC 先退全屏,停在看图状态 —— 一步跳回浏览器会让人以为图丢了
-        if (isFullScreen()) { exitFullscreen(); return; }
-        if (st.get("Keyboard/escCloseViewer", true).toBool()) toggleViewer();
+        // #108(2026-09-13 起):全屏(查看器 F11)里 ESC 直接回浏览器 —— 旧写法
+        // 先只退全屏、要再按一次才退查看器,用户明令一步到位
+        if (!escViewer) { if (isFullScreen()) exitFullscreen(); return; }
+        if (isFullScreen()) exitFullscreen();
+        // 不按 escCloseViewer 跳步:ESC 的语义就是"离开查看器"。旧写法若开关
+        // 关着,这里会停在全屏退掉、人却还在查看器的中间态,与"关掉"不符。
+        // 标签:当前标签是文件签才关(浏览器签没得关);关光了 closeViewerTab
+        // 自己 toggleViewer 回浏览器
+        const int i = m_viewerTabs ? m_viewerTabs->currentIndex() : -1;
+        if (i >= 0 && !isBrowserTab(i)) closeViewerTab(i);
+        else                            toggleViewer();   // 当前落在「浏览器」签:只退模式
         return;
     }
     // 2026-09-08 用户令:浏览器 F11 全屏 ESC 退全屏成为默认(与查看器全屏同款
-    // "先退全屏不跳层"),设置仍可关掉
+    // "先退全屏不跳层"),设置仍可关掉。浏览器态没有查看器/标签页可关,不受
+    // escCloseViewer 影响 —— 这里只管"退出全屏"
     if (isFullScreen() && st.get("Keyboard/escCloseBrowser", true).toBool())
         exitFullscreen();
 }
