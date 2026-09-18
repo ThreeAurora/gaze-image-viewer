@@ -355,4 +355,11 @@ private slots:
 public:
     // 设置页修改后刷新缓存。设置页不 include 本头文件,靠元调用通知 → 必须 Q_INVOKABLE
     Q_INVOKABLE void reloadViewerHotkeys();
+
+    // 退出收口(2026-09-18):关窗时立刻掐掉声音。与 teardownPlayer 的区别是
+    // **同步销毁**——退出路径上事件循环正在停,deleteLater 排的队永远不执行,
+    // 音频后端要等进程退出才放掉缓冲(用户听到"关掉后还响 2 秒")。
+    // 只该在确认真的要退出时调用(MainWindow::closeEvent);正常切文件仍走
+    // teardownPlayer。
+    void shutdownPlayback();
 };

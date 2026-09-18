@@ -754,6 +754,57 @@ void PreviewPanel::setupPlayer() {
     });
 }
 
+// 退出收口(2026-09-18):关窗时把声音立刻掐死。
+// 用户报"gaze 关闭之后,预览区还有声音,可能持续 2 秒才停"。根因是关窗
+// 路径上没人主动停播放器:closeEvent → aboutToQuit(停缩略图/Everything,
+// 耗时 2~3s)→ app.exec() 返回 → 栈上对象析构才轮到 ~PreviewPanel →
+// teardownPlayer。日志实锤两处 2.9/3.0 秒的时差:
+//     session end(aboutToQuit 打的) ... 2.9s ... teardownPlayer
+// 而 teardownPlayer 内部是 deleteLater —— 那时事件循环已经停了,排的销毁
+// 永不执行,音频设备要等进程退出才放缓冲,就是那 2 秒的尾巴。
+// 所以这里必须**同步**销毁:stop() + 清 source 让后端当场卸媒体,再同步
+// delete 音频输出放掉设备。退出期没有"信号槽内同步 delete sender"的风险
+// (我们马上就不转事件循环了),这条路径也只在关闭时走一次。
+void PreviewPanel::shutdownPlayback() {
+    // 动画时钟先停:GIF/动图 WebP 的定时器同样能在退出期继续跑
+    // (波形线程的收尾仍由析构里的 teardownWave 统一做,这里不重复插一脚)
+    stopMovie();
+    if (!m_player && !m_audioOutput) return;
+    Logger::event(QStringLiteral("shutdownPlayback src='%1'")
+                      .arg(m_player ? m_player->source().toLocalFile() : QString()));
+    if (m_player) {
+        // 遮罩布防连的是 player 的 QVideoSink,不受下面 disconnect(m_player,...)
+        // 管辖 → 必须在删 player **之前**断,否则连接悬空
+        disconnect(m_coverConn);
+        m_coverArmed = false;
+        if (m_vw) {
+            m_player->setVideoOutput(static_cast<QVideoWidget*>(nullptr));
+            m_videoOutAttached = false;
+        }
+        disconnect(m_player, nullptr, this, nullptr);
+        m_player->stop();
+        m_player->setSource(QUrl());     // 后端当场卸载媒体(与 teardownPlayer 同因)
+        m_player->setAudioOutput(nullptr);   // 先摘挂:否则同步 delete 输出时播放器还引用着
+    }
+    // 同步销毁音频输出:这是"还在响"的直接源头。不 deleteLater —— 退出期
+    // 事件循环将停,deleteLater 不会执行。
+    if (m_audioOutput) {
+        m_audioOutput->setVolume(0.0);   // 保险:销毁前先归零,消除最后一点余音
+        delete m_audioOutput;
+        m_audioOutput = nullptr;
+    }
+    if (m_player) {
+        delete m_player;
+        m_player = nullptr;
+    }
+    if (m_vw) {
+        m_vw->hide();
+        delete m_vw;
+        m_vw = nullptr;
+    }
+    if (m_videoCover) m_videoCover->hide();
+}
+
 void PreviewPanel::teardownPlayer() {
     if (!m_player) return;
     Logger::event(QStringLiteral("teardownPlayer src='%1'").arg(m_player->source().toLocalFile()));

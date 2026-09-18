@@ -710,6 +710,11 @@ void MainWindow::addFavorite(const QString& path) {
 }
 
 void MainWindow::closeEvent(QCloseEvent* event) {
+    // 退出即静音(2026-09-18,用户报"关掉后还响 2 秒"):必须在这里停,不能等
+    // 析构。关窗走到析构之间还夹着 aboutToQuit(停缩略图+Everything,实测
+    // 2.9~3.0s),期间播放器一直没被叫停,声音就拖着。这里同步掐死。
+    // 放在最前:后面那些存档/统计收尾动辄几百 ms,声音不该陪着它们等。
+    if (m_preview) m_preview->shutdownPlayback();
     // 退出即取消后台文件夹统计(2026-09-05):统计任务可能还要跑几分钟(G 盘
     // 大目录),而 m_dirSizePool 是本窗口子对象,析构时 waitForDone 会陪任务
     // 等到底 —— 主线程卡在析构里,进程"活着但无窗无响应"(WATCHDOG 实锤:
