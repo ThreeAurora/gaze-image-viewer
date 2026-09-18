@@ -6,6 +6,7 @@
 #include "dbprefix.h"
 #include "viewerhotkeys.h"
 #include "imgsearch.h"
+#include "everything_engine.h"   // 索引引擎分组:如实回报当前用的是哪套索引
 #include "i18n.h"
 
 #include <QHBoxLayout>
@@ -370,6 +371,96 @@ QWidget* SettingsDialog::pageIntegration() {
     });
     fAssoc->addRow(mediaBtn);
     root->addWidget(group(gazeTr("文件关联"), fAssoc));
+
+    // 分组"索引引擎"(2026-09-18 用户令:复用系统已装的 Everything)
+    // Gaze 的"文件夹大小瞬间统计"和"全盘文件名快搜"都靠一份全盘文件名索引。
+    // 用户机器上若已装 Everything,那份索引早就在跑 —— 直接连上去用,不必再建
+    // 一份(也省一份内存)。关掉此开关即回到老语义:只用自己的实例,不碰系统版。
+    auto* fEngine = new QFormLayout;
+    fEngine->setVerticalSpacing(6);
+    auto* reuseChk = chk("Integration/reuseSystemEverything",
+        gazeTr("优先使用系统已安装的 Everything(免重建索引)"), true);
+    reuseChk->setToolTip(gazeTr(
+        "开:Gaze 会连接你系统里正在运行的 Everything,直接使用它已建好的全盘索引;\n"
+        "    没装或没在运行时,退回 Gaze 自带的索引引擎。\n"
+        "关:Gaze 只使用自带的独立实例,不探测也不影响你自己的 Everything。\n"
+        "改动下次启动生效。"));
+    fEngine->addRow(reuseChk);
+
+    // Everything 位置(2026-09-18 用户令:要"自动检测键"+ 让用户自己选)
+    // 为什么需要:es.exe 不带 -instance 时连"默认实例",这在"系统版已装且在跑"
+    // 时够用;但绿色版/装了从来没跑过/改了实例名的情况,默认实例并不存在,
+    // 光是"有 es.exe"是接不上的 —— 得知道 Everything.exe 在哪、由 Gaze 亲自
+    // 拉起它。所以给一条手填路径 + 一个自动检测按钮(注册表 → 运行中的进程 →
+    // 常见目录,三路都试)。
+    auto* pathEdit = new QLineEdit(ev_impl::manualEverythingExe());
+    pathEdit->setPlaceholderText(gazeTr("留空 = 自动检测(自动连接系统版 Everything)"));
+    pathEdit->setClearButtonEnabled(true);
+    auto* browseBtn = new QPushButton(gazeTr("浏览…"));
+    auto* detectBtn = new QPushButton(gazeTr("自动检测"));
+    auto* pathRow = new QHBoxLayout;
+    pathRow->setContentsMargins(0, 0, 0, 0);
+    pathRow->setSpacing(6);
+    pathRow->addWidget(pathEdit, 1);
+    pathRow->addWidget(detectBtn);
+    pathRow->addWidget(browseBtn);
+    {
+        auto* pathWrap = new QWidget;
+        pathWrap->setLayout(pathRow);
+        fEngine->addRow(gazeTr("Everything 路径"), pathWrap);
+    }
+    connect(browseBtn, &QPushButton::clicked, this, [pathEdit]() {
+        const QString start = QFileInfo(ev_impl::everythingExe()).absolutePath();
+        const QString f = QFileDialog::getOpenFileName(
+            nullptr, gazeTr("选择 Everything.exe"), start,
+            gazeTr("Everything 主程序 (Everything.exe);;所有程序 (*.exe)"));
+        if (f.isEmpty()) return;   // 取消:不写键
+        const QString native = QDir::toNativeSeparators(f);
+        AppSettings::instance().set(QStringLiteral("Integration/everythingPath"), native);
+        ev_impl::invalidateManualEverythingExe();
+        pathEdit->setText(native);
+    });
+    connect(detectBtn, &QPushButton::clicked, this, [pathEdit]() {
+        // 清掉手填路径 → 强制走探测;探到就写回框里,让用户看得见结果
+        AppSettings::instance().set(QStringLiteral("Integration/everythingPath"), QString());
+        ev_impl::invalidateManualEverythingExe();
+        const QString found = ev_impl::probeEverythingExe();
+        pathEdit->setText(found);
+        if (found.isEmpty())
+            QMessageBox::information(nullptr, gazeTr("自动检测"),
+                gazeTr("没有找到 Everything。\n\n已按注册表、运行中的进程、常见安装目录三种方式查找。\n"
+                       "若你的 Everything 装在非常规位置,请用「浏览…」手动指定。"));
+    });
+    connect(pathEdit, &QLineEdit::editingFinished, this, [pathEdit]() {
+        const QString v = QDir::toNativeSeparators(pathEdit->text().trimmed());
+        AppSettings::instance().set(QStringLiteral("Integration/everythingPath"), v);
+        ev_impl::invalidateManualEverythingExe();
+        pathEdit->setText(v);
+    });
+
+    // 现状说明:如实告诉用户此刻用的是什么,免得"搜到的盘和我 Everything 里
+    // 设的不一样"变成疑问
+    {
+        auto* stateLbl = new QLabel;
+        stateLbl->setWordWrap(true);
+        stateLbl->setObjectName(QStringLiteral("settingsEngineState"));
+        QString desc;
+        if (!ev_impl::esDeployed()) {
+            desc = gazeTr("未找到 Everything 组件,全盘快搜将使用 Gaze 内置的 NTFS 索引。");
+        } else {
+            const bool sysUp = ev_impl::instanceRunningFor(ev_impl::IndexSource::System);
+            const bool bundleExe = ev_impl::bundledEverythingDeployed();
+            if (reuseChk->isChecked() && sysUp)
+                desc = gazeTr("检测到系统已安装的 Everything 正在运行,将直接使用它的索引。");
+            else if (bundleExe)
+                desc = gazeTr("使用 Gaze 自带的 Everything 独立实例(与你自己的 Everything 互不干扰)。");
+            else
+                desc = gazeTr("未检测到可用的 Everything;若你需要它,请自行安装,或使用上方内置 NTFS 索引。");
+        }
+        stateLbl->setText(desc);
+        fEngine->addRow(stateLbl);
+    }
+    root->addWidget(group(gazeTr("索引引擎"), fEngine));
 
     // 分组"配置文件"
     auto* fIni = new QFormLayout;

@@ -287,7 +287,13 @@ private:
             if (!self) return;
             if (ok) {
                 self->m_evReady = true;
-                self->m_status->setText(gazeTr("Everything 引擎就绪,输入关键词回车搜索"));
+                // 2026-09-18:复用系统版时如实说明索引来自哪里 —— 用户得知道
+                // 这份结果是他自己那套 Everything 给的(也才能解释"为什么搜得到
+                // 的盘和我 Everything 里设的一样")
+                if (ev_impl::resolveSource() == ev_impl::IndexSource::System)
+                    self->m_status->setText(gazeTr("已连上系统安装的 Everything,输入关键词回车搜索"));
+                else
+                    self->m_status->setText(gazeTr("Everything 引擎就绪,输入关键词回车搜索"));
             } else {
                 self->m_evFailed = true;
                 self->m_engineCombo->setCurrentIndex(1);   // 自动落回内置索引
