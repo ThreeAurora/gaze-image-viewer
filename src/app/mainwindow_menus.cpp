@@ -343,16 +343,18 @@ void MainWindow::createMenubar() {
     });
 
     // ── 语言(2026-09-03 国际化)──
-    // 2026-09-04 用户令:「语言」要排在「帮助」左边(insertMenu),不再最右;
-    // 后建的布局菜单照旧追加在末尾。切换写入 General/language 并征询重启;
-    // 重启用 --restart 自启动(绕过单实例握手,见 main.cpp)。
+    // 顺序沿革:2026-09-04 用户令「语言」排在「帮助」左边(不再最右);
+    // 2026-09-18 用户令再左移一格 —— 排到「工具」左边。现顺序:
+    // 文件 编辑 查看 布局 视图 语言 工具 帮助。
+    // 切换写入 General/language 并征询重启;重启用 --restart 自启动(绕过单实例握手,见 main.cpp)。
     // 2026-09-05 用户令:打勾恢复——三项重新 checkable+互斥组,当前语言打勾
     // (2026-09-04 曾令去勾改加粗提示,加粗随勾恢复一并退场);语言切换必须重启,
     // 构造期定稿一次即可,无需动态刷新。
     {
         auto *langMenu = new QMenu(gazeTr("语言"), this);
         langMenu->setToolTip(gazeTr("界面语言(切换后重启生效)"));
-        mb->insertMenu(helpMenu->menuAction(), langMenu);
+        // 插入锚点用 toolMenu:insertMenu 插在该 action 之前 → 语言落在工具左侧
+        mb->insertMenu(toolMenu->menuAction(), langMenu);
         // 菜单项文字直接以字面量出现在 gazeTr() 里(提取器只认字面量,
         // "间接传变量"的串扫不到);简体中文/English 两语言恒等,无需译文。
         struct { QString key; QString label; } langs[] = {
