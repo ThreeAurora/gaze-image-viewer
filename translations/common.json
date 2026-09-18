@@ -45,5 +45,9 @@
   "已移除 Gaze 的全部文件关联登记。": "All Gaze file association entries removed.",
   "移除失败(注册表写入被拒)。": "Removal failed (registry write denied).",
   "语言": "Language",
-  "显示隐藏文件": "Show hidden files"
+  "显示隐藏文件": "Show hidden files",
+  "%": "%",
+  "按秒数(从第 N 秒开始)": "By seconds (start at N s)",
+  "按时长百分比(从 N% 处)": "By duration percentage (from N%)",
+  "禁用 GIF/JIF/APNG/ANI/动图 WebP 动画": "Disable GIF/JIF/APNG/ANI/animated WebP animations"
 }
