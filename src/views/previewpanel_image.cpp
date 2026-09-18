@@ -328,9 +328,9 @@ void PreviewPanel::onFullDecoded(std::shared_ptr<QImage> img, const QString& pat
     }
 
     // 解码期间又切过文件 → 自动补发最新期望的任务。
-    // 仅当最新期望仍是"待后台解码的静态图"时补发(切到 GIF/视频/音频则不作数)
+    // 仅当最新期望仍是"待后台解码的静态图"时补发(切到动画/视频/音频则不作数)
     if (m_issuedGen != m_imgReqGen && m_mode == "image"
-        && !m_filePath.toLower().endsWith(".gif"))
+        && !isAnimatedImage(m_filePath))
         decodeFullAsync(m_filePath, m_imgReqGen);
     else
         preloadNext();              // 空闲了 → 预读相邻文件(方向键切换零等待)
@@ -352,6 +352,11 @@ void PreviewPanel::preloadNext() {
         preloadNext();
         return;
     }
+    // 动画文件(GIF / 动图 WebP / APNG)不走静态解码,预读了也没人取(见
+    // showImage 的早退分支)。邻居里混着动图时,这里挡掉才不白烧一次解码。
+    // 判定只读文件头帧数,相对随后的整帧解码可忽略;跳过该邻居不是错误,
+    // 只是这一张没有预读收益。
+    if (isAnimatedImage(path)) { preloadNext(); return; }
     m_preloadBusy = true;
     const bool exifRotate = pp_impl::s_bool("General/exifRotate", true);   // GUI 线程取值
     QPointer<PreviewPanel> self(this);
@@ -383,7 +388,11 @@ void PreviewPanel::preloadNext() {
 // 还是空串,preloadNext 的同路径跳过不会误伤。
 void PreviewPanel::preloadStartup(const QString& path) {
     const QString ext = QFileInfo(path).suffix().toLower();
-    if (!IMAGE_EXTS.count("." + ext) || ext == QLatin1String("gif")) return;
+    if (!IMAGE_EXTS.count("." + ext)) return;
+    // 动画(GIF / 动图 WebP / APNG)不走静态解码管线,预热了也白热 —— 它们
+    // 由 showGif 自己的 QImageReader 出第一帧,预读缓存里的结果没人取。
+    // 原先这里只排 .gif,动图 WebP 会白白预解一帧(冷启动是敏感路径)。
+    if (isAnimatedImage(path)) return;
     Logger::event(QStringLiteral("preloadStartup: '%1'").arg(path));
     m_preloadQueue.clear();
     m_preloadQueue << path;
