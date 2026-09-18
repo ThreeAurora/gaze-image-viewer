@@ -48,7 +48,13 @@ private:
         int  dbCacheMB   = 64;     // Cache/dbCacheMB → SQLite page cache
         int  blobCodec   = 4;      // Cache/compression:0/1=png 2/3=jpg 4=webp
         bool highQuality = true;   // Thumbs/highQuality:关闭=快速缩放
-        int  framePct    = 0;      // Thumbs/videoFramePct:0=固定取第 1 秒
+        // ── 视频取帧位置(2026-09-18 用户令:二选一) ──
+        // videoFrameMode:0=按秒数(从第 N 秒开始,默认第 1 秒) 1=按时长百分比(从 N% 处)
+        // 旧 ini 只有 videoFramePct(0=第 1 秒,>0=百分比):迁移时 pct>0 视为
+        // mode=1 + pct,否则 mode=0 + 默认第 1 秒 —— 见 snapshotPrefs。
+        int  videoFrameMode = 0;   // Thumbs/videoFrameMode
+        int  videoFrameSec  = 1;   // Thumbs/videoFrameSec:mode=0 时从第几秒开始(>=1)
+        int  framePct       = 0;   // Thumbs/videoFramePct:mode=1 时的百分位(0~100)
         // ── 设置→缩略图(创建/处理) ──
         bool useEmbedded   = true;  // Thumbs/useEmbedded:优先取现成缩略图
         bool embedFallback = true;  // Thumbs/embedFallback:现成图偏小则从原图重做
@@ -72,7 +78,8 @@ private:
     QImage imageThumb(const QString& filePath, int size);
 
     // ── 视频缩略图（FFmpeg C API）──
-    // pctOverride >= 0 时忽略 Thumbs/videoFramePct,取指定百分比处(4 帧拼图用)
+    // pctOverride >= 0 时忽略取帧设置,按指定百分比取(4 帧拼图用);
+    // 传 -1 = 用全局设置(秒数 / 百分比二选一,见 Prefs::videoFrameMode)
     QImage videoThumbFFmpeg(const QString& filePath, int size, int pctOverride = -1);
     // 回退方案：QProcess fork ffmpeg。pct 语义同上,由 videoThumbFFmpeg 统一算好后传下来
     // #121:HDR(PQ/HLG)源自动多跑一遍 zscale+tonemap 链,SDR 源不付这笔开销

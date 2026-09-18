@@ -53,35 +53,7 @@ extern "C" {
 
 // ── 本编译单元(#129 从 thumbnailer.cpp 拆出):视频缩略图:ffmpeg C API / QProcess 回退(含 #121 HDR tonemap) / 四帧拼图 ──
 
-// ═══════════════════════════════════════════
-// 视频四帧拼图(Thumbs/video4)
-//   从 Thumbs/videoFramePct 指定的位置起,在剩余时长内均匀取 4 帧
-// ═══════════════════════════════════════════
-QImage Thumbnailer::videoContactSheet(const QString& filePath, int size) {
-    const int start = prefs().framePct;
-    const int gap = 2;
-    const int cell = (size - gap) / 2;
-    QImage sheet(size, size, QImage::Format_RGB32);
-    sheet.fill(0xFF000000);
-    QPainter pt(&sheet);
-    int drawn = 0;
-    for (int i = 0; i < 4; ++i) {
-        const int pct = start + (100 - start) * i / 4;
-        QImage f = videoThumbFFmpeg(filePath, cell, pct);
-        if (f.isNull()) continue;
-        f = f.scaled(cell, cell, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
-        // 居中裁切到格框:固定从左上角取会让竖版视频只剩画面顶部一条
-        const int cx = qMax(0, (f.width() - cell) / 2);
-        const int cy = qMax(0, (f.height() - cell) / 2);
-        const int ox = (i % 2) * (cell + gap);
-        const int oy = (i / 2) * (cell + gap);
-        pt.drawImage(ox, oy, f.copy(cx, cy, qMin(cell, f.width() - cx),
-                                    qMin(cell, f.height() - cy)));
-        ++drawn;
-    }
-    pt.end();
-    return drawn ? postProcess(sheet, size) : QImage();
-}
+// 视频四帧拼图(Thumbs/video4):见文件末尾(需用到 seekMsForPct / probeDurationSec)
 
 // ═══════════════════════════════════════════
 // 视频缩略图 — 外部 ffmpeg 定位(#112)
@@ -146,28 +118,83 @@ double probeDurationSec(const QString& filePath) {
     return dur;
 }
 
-// Thumbs/videoFramePct:0=默认取第 1 秒(原行为),>0=取全长的百分比处。
-// 只有非默认值才付 ffprobe 这笔开销(实测单次约 110ms),默认路径一次都不探。
-int seekMsForPct(const QString& filePath, int pct, double knownDurSec = -1.0) {
-    if (pct <= 0) return 1000;
+// 视频取帧位置(2026-09-18 用户令:秒数/百分比二选一)
+//   videoFrameMode=0 按秒数  → 从第 videoFrameSec 秒开始(默认 1)
+//   videoFrameMode=1 按百分比 → 从全长的 framePct% 处
+// 返回毫秒。pctOverride >= 0 时忽略全局设置、按给定百分比取(四帧拼图用)。
+// 百分比模式才付 ffprobe 那笔开销(实测单次约 110ms);秒数模式一次都不探。
+// 取帧位置换算:调用方把设置值传进来(Thumbnailer::Prefs 与 prefs() 是私有的,
+// 这个匿名命名空间里的自由函数够不着;C++ 访问控制按名字查,不按调用者身份,
+// 只有类成员函数里才能用裸 prefs())。
+//   mode=0 按秒数 → 直接返回秒数*1000(不探时长,零开销)
+//   mode=1 按百分比 → 用 framePct;探不到时长就退回第 secFallback 秒
+// pctOverride >= 0:四帧拼图按给定百分比取,忽略 mode。
+int seekMsForPct(const QString& filePath, int pctOverride,
+                 int mode, int framePct, int secFallback,
+                 double knownDurSec = -1.0) {
+    if (pctOverride < 0) {
+        if (mode == 0) return secFallback * 1000;   // 秒数模式:无需 probe
+        pctOverride = framePct;
+    }
+    // 百分比(0% 视同"从头",但第 0 秒常是黑场/无 I 帧 → 钳到 1 秒)
     double dur = knownDurSec;
     if (dur <= 0) dur = probeDurationSec(filePath);
-    if (dur <= 0) return 1000;   // 探不到时长就退回默认位置,不瞎猜
-    const qint64 ms = qint64(dur * 1000.0) * pct / 100;
-    return int(qBound(qint64(0), ms, qint64(dur * 1000.0) - 1));
+    if (dur <= 0) return secFallback * 1000;   // 探不到时长:退回秒数,不瞎猜
+    const qint64 ms = qint64(dur * 1000.0) * pctOverride / 100;
+    return int(qBound(qint64(1000), ms, qint64(dur * 1000.0) - 1));
 }
 
 } // namespace
 
 // ═══════════════════════════════════════════
+// 视频四帧拼图(Thumbs/video4)
+//   从取帧位置(秒数或百分比,见 seekMsForPct)起,在剩余时长内均匀取 4 帧
+// ═══════════════════════════════════════════
+QImage Thumbnailer::videoContactSheet(const QString& filePath, int size) {
+    // 拼图要在"剩余时长内"均分四段,起点用百分比表达最省事:
+    // 秒数模式在这里换算一次(探不到时长就从头 0% 起,总比整张空掉好)
+    const Prefs p = prefs();
+    int start = p.framePct;
+    if (p.videoFrameMode == 0) {
+        const double dur = probeDurationSec(filePath);
+        start = dur > 0
+              ? qBound(0, int(qint64(p.videoFrameSec) * 100 / qint64(dur)), 99)
+              : 0;
+    }
+    const int gap = 2;
+    const int cell = (size - gap) / 2;
+    QImage sheet(size, size, QImage::Format_RGB32);
+    sheet.fill(0xFF000000);
+    QPainter pt(&sheet);
+    int drawn = 0;
+    for (int i = 0; i < 4; ++i) {
+        const int pct = start + (100 - start) * i / 4;
+        QImage f = videoThumbFFmpeg(filePath, cell, pct);
+        if (f.isNull()) continue;
+        f = f.scaled(cell, cell, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
+        // 居中裁切到格框:固定从左上角取会让竖版视频只剩画面顶部一条
+        const int cx = qMax(0, (f.width() - cell) / 2);
+        const int cy = qMax(0, (f.height() - cell) / 2);
+        const int ox = (i % 2) * (cell + gap);
+        const int oy = (i / 2) * (cell + gap);
+        pt.drawImage(ox, oy, f.copy(cx, cy, qMin(cell, f.width() - cx),
+                                    qMin(cell, f.height() - cy)));
+        ++drawn;
+    }
+    pt.end();
+    return drawn ? postProcess(sheet, size) : QImage();
+}
+
+// ═══════════════════════════════════════════
 // 视频缩略图 — FFmpeg C API（优先）
 // ═══════════════════════════════════════════
 QImage Thumbnailer::videoThumbFFmpeg(const QString& filePath, int size, int pctOverride) {
-    // 取帧位置 Thumbs/videoFramePct:0=默认取第 1 秒,>0=取全长的百分比处
-    // pctOverride >= 0:四帧拼图按各自位置取帧,不使用全局设置。
+    // 取帧位置:按设置二选一(秒数 / 百分比),换算统一在 seekMsForPct 里。
+    // pctOverride >= 0:四帧拼图按各自百分比位置取帧,不使用全局设置。
+    // 传 -1 表示"用全局模式"(秒数模式可能压根不涉及百分比)。
     // 两条管线(内置 libavcodec / 外部 ffmpeg.exe)共用这一个换算:
     // 以前 pctOverride 到了 #else 分支就被丢掉,四帧拼图于是把同一帧画满四格
-    const int pct = pctOverride >= 0 ? pctOverride : prefs().framePct;
+    const int pct = pctOverride >= 0 ? pctOverride : -1;
     // #7 磁盘开销归因打点(2026-09-05 用户报"生成视频缩略图变慢+硬盘异响"):
     // 每次真解码都留一条耗时/尺寸/取帧位置日志,perf.log / gaze.log 末尾
     // 连起来看就是抽帧的 I/O 时间线;缓存命中不打点(不碰盘)
@@ -215,7 +242,9 @@ QImage Thumbnailer::videoThumbFFmpeg(const QString& filePath, int size, int pctO
     // 容器自己报了时长就不必再叫 ffprobe 探一次(缩略图取帧位置不是精度活)
     const double durSec = fmtCtx->duration > 0
                         ? static_cast<double>(fmtCtx->duration) / AV_TIME_BASE : -1.0;
-    const int64_t posUs = static_cast<int64_t>(seekMsForPct(filePath, pct, durSec)) * 1000;
+    const int64_t posUs = static_cast<int64_t>(seekMsForPct(
+        filePath, pct, prefs().videoFrameMode, prefs().framePct,
+        prefs().videoFrameSec, durSec)) * 1000;
     int64_t seekTarget = av_rescale_q(posUs, AV_TIME_BASE_Q,
                                       fmtCtx->streams[videoStream]->time_base);
     av_seek_frame(fmtCtx, videoStream, seekTarget, AVSEEK_FLAG_BACKWARD);
@@ -287,9 +316,13 @@ QImage Thumbnailer::videoThumbFFmpeg(const QString& filePath, int size, int pctO
 
     if (result.isNull())
         return videoThumbFallback(filePath, size, pct);
-    Logger::event(QStringLiteral("videoThumb: %1 ms %2x%3 pct=%4 '%5'")
+    Logger::event(QStringLiteral("videoThumb: %1 ms %2x%3 pos=%4 '%5'")
                       .arg(vtClock.elapsed()).arg(result.width()).arg(result.height())
-                      .arg(pct).arg(QFileInfo(filePath).fileName()));
+                      .arg(pct < 0 ? (prefs().videoFrameMode == 0
+                                      ? QStringLiteral("%1s").arg(prefs().videoFrameSec)
+                                      : QStringLiteral("%1%").arg(prefs().framePct))
+                                   : QStringLiteral("%1%").arg(pct))
+                      .arg(QFileInfo(filePath).fileName()));
     return result;
 #else
     Q_UNUSED(vtClock);
@@ -352,7 +385,8 @@ QImage Thumbnailer::videoThumbFallback(const QString& filePath, int size, int pc
     };
 
     bool finished = false;
-    const int seekMs = seekMsForPct(filePath, pct);
+    const int seekMs = seekMsForPct(filePath, pct, prefs().videoFrameMode,
+                                    prefs().framePct, prefs().videoFrameSec);
     QString out;
     QImage img = grab(seekMs, finished, scalePart, &out);
     // HDR 的判据不必再开一次进程去 probe:第一次 ffmpeg 的流信息行里就写着传输函数

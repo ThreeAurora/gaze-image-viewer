@@ -98,7 +98,15 @@ void Thumbnailer::snapshotPrefs() {
     p.dbCacheMB   = qBound(8, st.get("Cache/dbCacheMB", 64).toInt(), 8192);
     p.blobCodec   = qBound(0, st.get("Cache/compression", 4).toInt(), 4);
     p.highQuality = st.get("Thumbs/highQuality", true).toBool();
-    p.framePct    = qBound(0, st.get("Thumbs/videoFramePct", 0).toInt(), 100);
+    // ── 视频取帧位置(2026-09-18 用户令:秒数/百分比二选一) ──
+    // 旧版只有 Thumbs/videoFramePct 一个框(0=第 1 秒,>0=百分比处)。迁移:
+    // 若新键 videoFrameMode 从未写过而旧 pct>0,按"百分比模式"接续,老用户
+    // 的既有设置不丢;否则默认按秒数、从第 1 秒开始(与旧默认行为一致)。
+    p.framePct      = qBound(0, st.get("Thumbs/videoFramePct", 0).toInt(), 100);
+    p.videoFrameMode = qBound(0, st.get("Thumbs/videoFrameMode",
+        p.framePct > 0 ? 1 : 0).toInt(), 1);
+    // 秒数下限 1:第 0 秒常是黑场/无 I 帧(旧版注释亦记此坑),1 秒起更稳
+    p.videoFrameSec = qBound(1, st.get("Thumbs/videoFrameSec", 1).toInt(), 86400);
     // ── 设置→缩略图(创建) ──
     p.useEmbedded   = st.get("Thumbs/useEmbedded", true).toBool();
     p.embedFallback = st.get("Thumbs/embedFallback", true).toBool();

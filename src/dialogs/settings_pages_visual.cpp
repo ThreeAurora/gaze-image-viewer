@@ -55,8 +55,59 @@ QWidget* SettingsDialog::pageThumbs() {
     fCreate->addRow(chk("Thumbs/useEmbedded", gazeTr("使用嵌入缩略图"), true));
     fCreate->addRow(chk("Thumbs/embedFallback", gazeTr("当内嵌缩略图尺寸小于缩略图尺寸时从原图创建"), true));
     fCreate->addRow(chk("Thumbs/wholeFolder", gazeTr("为整个文件夹创建缩略图"), false));
-    fCreate->addRow(gazeTr("视频提取帧位置(%,0=第 1 秒)"),
-        spin("Thumbs/videoFramePct", 0, 100, 0));
+    // 视频取帧位置(2026-09-18 用户令:秒数 / 百分比二选一)。
+    // 旧版是一个"0=第 1 秒,>0=百分比"的混合框 —— 语义靠 0 这个哨兵兼职,
+    // 用户没法一眼看出自己在按哪种口径给值,也没法既填秒数又表达"从头 0%"。
+    // 现在拆成:模式下拉(二选一) + 两个输入框,选哪个亮哪个。
+    {
+        auto* modeRow = new QHBoxLayout;
+        modeRow->setSpacing(6);
+        auto* mode = combo("Thumbs/videoFrameMode",
+            {gazeTr("按秒数(从第 N 秒开始)"),
+             gazeTr("按时长百分比(从 N% 处)")}, 0);
+        modeRow->addWidget(mode, 1);
+        fCreate->addRow(gazeTr("视频提取帧位置"), modeRow);
+
+        // 两个输入框都建出来但按当前模式显隐:切模式时只是换显示,不留半截行
+        auto* secBox = spin("Thumbs/videoFrameSec", 1, 86400, 1);
+        auto* secRow = new QWidget;
+        {
+            auto* l = new QHBoxLayout(secRow);
+            l->setContentsMargins(0, 0, 0, 0);
+            l->setSpacing(6);
+            l->addWidget(secBox, 1);
+            l->addWidget(new QLabel(gazeTr("秒")));
+        }
+        const int secLabelRow = fCreate->rowCount();
+        fCreate->addRow(gazeTr("起始秒数"), secRow);
+
+        auto* pctBox = spin("Thumbs/videoFramePct", 0, 100, 0);
+        auto* pctRow = new QWidget;
+        {
+            auto* l = new QHBoxLayout(pctRow);
+            l->setContentsMargins(0, 0, 0, 0);
+            l->setSpacing(6);
+            l->addWidget(pctBox, 1);
+            l->addWidget(new QLabel(gazeTr("%")));
+        }
+        const int pctLabelRow = fCreate->rowCount();
+        fCreate->addRow(gazeTr("起始百分比"), pctRow);
+
+        // 显隐收敛:只按模式亮对应那行(标签 + 控件一起),另一行整行收起
+        auto applyMode = [fCreate, mode, secLabelRow, pctLabelRow](int m) {
+            const bool bySec = (m == 0);
+            if (auto* it = fCreate->itemAt(secLabelRow, QFormLayout::LabelRole))
+                if (auto* w = it->widget()) w->setVisible(bySec);
+            if (auto* it = fCreate->itemAt(secLabelRow, QFormLayout::FieldRole))
+                if (auto* w = it->widget()) w->setVisible(bySec);
+            if (auto* it = fCreate->itemAt(pctLabelRow, QFormLayout::LabelRole))
+                if (auto* w = it->widget()) w->setVisible(!bySec);
+            if (auto* it = fCreate->itemAt(pctLabelRow, QFormLayout::FieldRole))
+                if (auto* w = it->widget()) w->setVisible(!bySec);
+        };
+        applyMode(mode->currentIndex());
+        connect(mode, &QComboBox::currentIndexChanged, this, applyMode);
+    }
     // 2026-09-05:抽帧并发可调。机械盘实测对照:2 路=单卡 63~913ms,4 路=
     // 2126~2716ms(4 路互抢寻道/写锁,总吞吐不升反致单卡变慢)——默认 2。
     fCreate->addRow(gazeTr("视频抽帧并发数(机械盘建议 2,SSD 可调高)"),

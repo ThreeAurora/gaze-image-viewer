@@ -180,11 +180,18 @@ QString Thumbnailer::cacheKey(const QString& filePath, int size, bool isVideo) c
     if (QFileInfo(path).isDir()) src += "|f7";
     // 视频:取帧位置与四帧拼图决定画面内容,但不吃 key 的话改设置只影响新生成的条目,
     // 老库里永远是旧那一帧 —— 看起来就像设置没接线(#106 那批死设置的同一种病)。
-    // 只在取非默认值时追加:默认(pct=0/单帧)与既有库逐字节一致,不改设置的人
-    // 不必为这次接线重解一遍全库
+    // 只在取非默认值时追加:默认(第 1 秒/单帧)与既有库逐字节一致,不改设置的人
+    // 不必为这次接线重解一遍全库。
+    // 2026-09-18:取帧位置改二选一(秒数/百分比),两种模式的"非默认"各自入 key。
+    //   秒数模式非默认 = 不是第 1 秒;百分比模式非默认 = framePct > 0。
+    // 两个记法前缀不同(fp vs fs),模式互切不会撞键。
     if (isVideo) {
-        if (p.framePct > 0) src += "|fp" + QString::number(p.framePct);
-        if (p.video4)       src += "|v4";
+        if (p.videoFrameMode == 0) {
+            if (p.videoFrameSec != 1) src += "|fs" + QString::number(p.videoFrameSec);
+        } else if (p.framePct > 0) {
+            src += "|fp" + QString::number(p.framePct);
+        }
+        if (p.video4) src += "|v4";
     }
     return QString::fromLatin1(
         QCryptographicHash::hash(src.toUtf8(), QCryptographicHash::Md5).toHex());
