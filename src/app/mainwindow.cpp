@@ -686,6 +686,13 @@ void MainWindow::applyThemeSurfaces() {
     if (m_fileGrid)   m_fileGrid->refreshThemeColors();
     if (m_preview)    m_preview->refreshThemeColors();
     if (m_folderTree) m_folderTree->refreshThemeColors();
+
+    // 缩略图的内存 LRU 也得倒:透明格子的基色跟随主题(C_CONTENT 深黑/浅白),
+    // 格色是烤进 QImage 的,换主题后内存里那批就过期了。磁盘侧有 cacheKey 的
+    // |g1l/|g1 分代兜着,但内存表没有钥匙可比 —— 整袋倒掉最省事。
+    // 顺序要紧:先倒缓存再重载目录,否则重灌时又把旧色图读回内存。
+    Thumbnailer::instance().dropMemoryCache();
+    if (m_fileGrid)   m_fileGrid->refreshCurrentDir();
 }
 
 // ── #243 收藏夹:数据真源 = m_favPaths,改动即写 Favorites/paths ──

@@ -27,6 +27,11 @@ public:
     QImage generate(const QString& filePath, int size, bool isVideo);
     // 缓存完整性校验(Cache/checkOnStartup):丢掉读不出来的坏条目
     void verifyCache();
+    // 丢弃内存 LRU(不动 SQLite)。2026-09-19:透明格子基色改为跟随主题
+    // (C_CONTENT 深黑/浅白),格色是**烤进图里**的 —— 换主题时内存里那批
+    // 缩略图就过期了。磁盘侧靠 cacheKey 里的 |g1l/|g1 天然分代,内存表没有
+    // 钥匙可比,只能整袋倒掉重灌(代价 = 当前屏重算一遍,可接受)。
+    void dropMemoryCache();
 
     // Windows Shell 缩略图(供 PDF 等外部格式的预览回退使用)
     static QImage shellThumbFor(const QString& filePath, int size);

@@ -115,14 +115,35 @@ inline QImage sharpen(const QImage& src, double amount) {
     return dst;
 }
 
-// 透明区域的棋盘格底纹(8px 两色,深色主题配色)
-inline QImage checkerBg(int w, int h) {
+// 透明区域的棋盘格底纹。
+// 2026-09-19 用户令:预览框与缩略图必须**同一套观感** —— 两处格子的大小与
+// 配色公式统一(此前这里是 8px 硬编码深灰,浅色主题下与预览框对不上)。
+//
+// 【配色坑,2026-09-19 实测定案】格色不能写 lighter(160)/darker(140):
+// QColor 的 lighter()/darker() 是**按比例朝白/朝黑缩放**,乘数再大也到不了
+// 对面 —— #000000.lighter(160) 仍是 #000000,#FFFFFF.darker(140) 仍是 #FFFFFF。
+// 换言之深色主题(基色=C_CONTENT 纯黑)整块变纯黑方块,浅色主题整块纯白,
+// 格子一格都看不见(与预览框同病,探针图实锤)。正解:按与黑白两端的**绝对
+// 距离**取色,对比量恒定(±0x30 ≈ 19% 亮度差),两端都不会退化。
+// 公式必须与 PreviewPanel::checkerInk 保持一致。
+inline QColor checkerInk(const QColor& base) {
+    const int l = base.lightness();
+    const int target = (l > 128) ? l - 0x30 : l + 0x30;
+    const int v = target < 0 ? 0 : (target > 255 ? 255 : target);
+    return QColor(v, v, v);
+}
+
+inline QImage checkerBg(int w, int h, const QColor& base = QColor(0x26, 0x26, 0x2B)) {
     QImage bg(w, h, QImage::Format_RGB32);
     const int cell = 8;
-    for (int y = 0; y < h; ++y)
-        for (int x = 0; x < w; ++x)
-            bg.setPixel(x, y, (((x / cell) + (y / cell)) & 1)
-                                  ? 0xFF3A3A40 : 0xFF26262B);
+    const QRgb a = base.rgb();
+    const QRgb b = checkerInk(base).rgb();
+    for (int y = 0; y < h; ++y) {
+        const int ry = y / cell;
+        for (int x = 0; x < w; ++x) {
+            bg.setPixel(x, y, ((x / cell) + ry) & 1 ? b : a);
+        }
+    }
     return bg;
 }
 

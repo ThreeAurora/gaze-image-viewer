@@ -71,12 +71,17 @@ QImage Thumbnailer::postProcess(QImage img, int size) const {
 
     // Thumbs/gamma:线性光降采样(已在 imageThumb 内按此开关处理,这里只兜底裁剪)
     // ── 透明处理 ──
+    // 2026-09-19 用户令:缩略图的透明格子要与预览框**同一观感**。基色取内容区
+    // 底色(C_CONTENT,深色纯黑/浅色纯白),与预览框 backdropColor() 同源 ——
+    // 此前这里是硬编码深灰 #26262B/#3A3A40,浅色主题下缩略图是深格、预览框是
+    // 浅格,两处对不上。传递基色由 checkerBg 自己按明度派生格色,公式与
+    // PreviewPanel::checkerTile 一致。
     const bool hasAlpha = img.hasAlphaChannel();
     if (hasAlpha && !p.alpha) {
         QImage flat(img.size(), QImage::Format_RGB32);
-        flat.fill(p.transGrid ? 0xFF000000 : 0xFF2A2A2E);
+        flat.fill(p.transGrid ? QColor(C_CONTENT) : QColor(0x2A, 0x2A, 0x2E));
         if (p.transGrid) {
-            QImage bg = ImgProc::checkerBg(img.width(), img.height());
+            QImage bg = ImgProc::checkerBg(img.width(), img.height(), QColor(C_CONTENT));
             QPainter pt(&flat);
             pt.drawImage(0, 0, bg);
             pt.drawImage(0, 0, img);
@@ -88,7 +93,7 @@ QImage Thumbnailer::postProcess(QImage img, int size) const {
         }
         img = flat;
     } else if (hasAlpha && p.transGrid) {
-        QImage flat = ImgProc::checkerBg(img.width(), img.height());
+        QImage flat = ImgProc::checkerBg(img.width(), img.height(), QColor(C_CONTENT));
         QPainter pt(&flat);
         pt.drawImage(0, 0, img);
         pt.end();
@@ -178,6 +183,14 @@ QString Thumbnailer::cacheKey(const QString& filePath, int size, bool isVideo) c
     // f7 = 画布底色换代:C_CONTENT 近黑改 rgb(33,33,38),与普通文件夹卡底一致;
     //      旧条目四角烤着黑底,不换代看不出来
     if (QFileInfo(path).isDir()) src += "|f7";
+    // g1 = 透明格子换代(2026-09-19 用户令):格子基色改为跟随主题(C_CONTENT
+    //      深黑/浅白),与预览框同观感。格色是**烤进缓存 blob** 的,主题一变
+    //      旧条目就是错的 —— 所以把主题入 key:浅色主题下多一个 "|g1l",深色
+    //      沿用 "|g1"。只对开了格子的库生效(transGrid 关时透明区是纯色,与
+    //      主题无关,不必换代)。
+    //      旧库(无 g1 段)自然失配 → 首次滚动时按当前主题重生成,与逐代
+    //      换 key 的老做法一致。
+    if (p.transGrid) src += Theme::light() ? "|g1l" : "|g1";
     // 视频:取帧位置与四帧拼图决定画面内容,但不吃 key 的话改设置只影响新生成的条目,
     // 老库里永远是旧那一帧 —— 看起来就像设置没接线(#106 那批死设置的同一种病)。
     // 只在取非默认值时追加:默认(第 1 秒/单帧)与既有库逐字节一致,不改设置的人

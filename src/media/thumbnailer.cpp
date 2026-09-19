@@ -172,6 +172,15 @@ void Thumbnailer::clearQueue() {
     m_pending.clear();
 }
 
+// 内存 LRU 清空(2026-09-19):透明格子的基色跟随主题,而格色烤进 QImage 本身,
+// 换主题后内存里已缓的条目全错 → 整袋倒掉。只清内存,SQLite 不动(那边由
+// cacheKey 的 |g1l/|g1 分代,不会串味)。
+void Thumbnailer::dropMemoryCache() {
+    QMutexLocker lk(&m_cacheMutex);
+    m_memCache.clear();
+    m_memCacheBytes = 0;
+}
+
 // 退出收口(2026-09-05):由 main.cpp 的 aboutToQuit 钩子调用——此刻
 // QCoreApplication 仍存活,在跑任务(≤4 个,各自秒级)的收尾(写库/读设置)
 // 才是安全的。若放任到静态析构才收,工作线程会在 app 死后继续跑并使用
