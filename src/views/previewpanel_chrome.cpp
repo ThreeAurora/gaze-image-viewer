@@ -89,10 +89,12 @@ QColor PreviewPanel::backdropColor() const {
 //
 // 【配色坑二,用户实测"你没修好"定案】绝对量取 0x30 也**不够** —— 48/255 ≈ 19%
 // 的亮度差在纯黑底上肉眼几乎不可辨,用户看到的就是"还是纯黑"。并排渲染实测
-// (cache/tmp/checker_contrast_compare.png)后定为 **0x60**(96/255 ≈ 38%):
-// 一眼可辨是格子,又不抢画面。公式与 ImgProc::checkerInk 逐字一致。
+// (cache/tmp/checker_contrast_compare.png)后提到 **0x60**(96/255 ≈ 38%)。
+//
+// 【2026-09-19 用户令"背景稍微再浅点"】0x60 之后用户要求再浅一档 → 定 **0x50**
+// (80/255 ≈ 31%):格子仍一眼可辨,又比 0x60 柔和。公式与 ImgProc::checkerInk 逐字一致。
 static QColor checkerInk(const QColor& base) {
-    constexpr int kAbs = 0x60;               // 固定对比量(与缩略图侧一致)
+    constexpr int kAbs = 0x50;               // 固定对比量(与缩略图侧一致)
     const int l = base.lightness();          // 0..255
     const int target = (l > 128) ? l - kAbs : l + kAbs;
     return QColor(qBound(0, target, 255), qBound(0, target, 255),
