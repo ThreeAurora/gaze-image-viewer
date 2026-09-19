@@ -4084,6 +4084,10 @@ Continue?</translation>
         <translation>Select color</translation>
     </message>
     <message>
+        <source>透明背景显示为格子底(关闭则露出上面的背景色)</source>
+        <translation>Transparent areas shown as checkerboard (off = show the background color behind it)</translation>
+    </message>
+    <message>
         <source>部分项目未能%1</source>
         <translation>%1: some items failed</translation>
     </message>

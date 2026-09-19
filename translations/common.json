@@ -181,5 +181,6 @@
   "%1 KB": "%1 KB",
   "%1 MB": "%1 MB",
   "▲": "▲",
-  "✕": "✕"
+  "✕": "✕",
+  "透明背景显示为格子底(关闭则露出上面的背景色)": "Transparent areas shown as checkerboard (off = show the background color behind it)"
 }
