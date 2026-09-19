@@ -569,6 +569,33 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
                     if (ke->key() == Qt::Key_D) { applyColorLabel(0); return true; }
                     // G=全屏预览(#154)的触发检查已上提到 !forText 块头:键位由
                     // 查看器热键表驱动,需支持带修饰键的自定义组合
+                    if (ke->key() == Qt::Key_Return || ke->key() == Qt::Key_Enter) {
+                        // 2026-09-19 用户令:查看器形态(含"桌面双击图片直进查看器"
+                        // 那种启动)里,Enter = **关掉当前标签页**,与 Ctrl+W 同款收尾。
+                        // 旧行为是掉到下面的 requestSwitchMode → cycleMode(1) →
+                        // toggleViewer() —— 那是"取反模式":本是查看器态就被翻回
+                        // 浏览器,标签页一张不少地留着。用户的动词是"关",不是"切"。
+                        //
+                        // 桌面双击图片启动时 Start/withFile 默认 0(=查看器),构造期
+                        // 就 toggleViewer() 进来了,所以"刚双击打开的那张"正好是当前
+                        // 标签 → Enter 关签 = 关掉"这个实例的这张图"。
+                        //
+                        // 只在"回车键=浏览器↔查看器"(spec 1,默认)时接管 —— 那是
+                        // 用户抱怨的那档;其余档位(全屏/什么都不做/系统程序打开)
+                        // 是用户显式配过的语义,不许这里越权改写。取 spec 的口径与
+                        // requestSwitchMode 一致(见 mainwindow_ops.cpp)。
+                        const int enterSpec = AppSettings::instance()
+                            .get("SwitchMode/enterKey", 1).toInt();
+                        if (!forActivation
+                            && enterSpec == 1
+                            && !m_fullView
+                            && (m_viewerMode || m_viewerTabs)
+                            && m_viewerTabs
+                            && !isBrowserTab(m_viewerTabs->currentIndex())) {
+                            closeViewerTab(m_viewerTabs->currentIndex());
+                            return true;
+                        }
+                    }
                     // 回车:按 SwitchMode/enterKey 切换模式
                     if ((ke->key() == Qt::Key_Return || ke->key() == Qt::Key_Enter)
                         && !forActivation) {
