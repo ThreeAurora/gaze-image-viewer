@@ -81,15 +81,20 @@ QColor PreviewPanel::backdropColor() const {
 // 理由:铺满视口时,图片四周的留白也变成格子,看起来像"整块画布是透明的";
 // 而用户要表达的是"这张图有透明区域"。XnView MP 亦然(留白仍是背景色)。
 //
-// 【配色坑,2026-09-19 实测定案】格色不能写 lighter(160)/darker(140):
+// 【配色坑一,2026-09-19 实测定案】格色不能写 lighter(160)/darker(140):
 // QColor 的 lighter()/darker() 是**按比例朝白/朝黑缩放**,乘数再大也永远到不了
 // 对面 —— #000000.lighter(160) 仍是 #000000,#FFFFFF.darker(140) 仍是 #FFFFFF。
 // 于是深色主题(基色纯黑)整块变成纯黑方块、浅色主题整块纯白,格子根本看不见。
-// 正解:按与黑白两端的**绝对距离**取色,保证对比度恒定(±0x30 ≈ 19% 亮度差)。
+// 正解:按与黑白两端的**绝对距离**取色。
+//
+// 【配色坑二,用户实测"你没修好"定案】绝对量取 0x30 也**不够** —— 48/255 ≈ 19%
+// 的亮度差在纯黑底上肉眼几乎不可辨,用户看到的就是"还是纯黑"。并排渲染实测
+// (cache/tmp/checker_contrast_compare.png)后定为 **0x60**(96/255 ≈ 38%):
+// 一眼可辨是格子,又不抢画面。公式与 ImgProc::checkerInk 逐字一致。
 static QColor checkerInk(const QColor& base) {
+    constexpr int kAbs = 0x60;               // 固定对比量(与缩略图侧一致)
     const int l = base.lightness();          // 0..255
-    const int d = 0x30;                      // 固定对比量
-    const int target = (l > 128) ? l - d : l + d;
+    const int target = (l > 128) ? l - kAbs : l + kAbs;
     return QColor(qBound(0, target, 255), qBound(0, target, 255),
                   qBound(0, target, 255));
 }

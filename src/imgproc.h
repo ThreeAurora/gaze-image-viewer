@@ -119,16 +119,21 @@ inline QImage sharpen(const QImage& src, double amount) {
 // 2026-09-19 用户令:预览框与缩略图必须**同一套观感** —— 两处格子的大小与
 // 配色公式统一(此前这里是 8px 硬编码深灰,浅色主题下与预览框对不上)。
 //
-// 【配色坑,2026-09-19 实测定案】格色不能写 lighter(160)/darker(140):
+// 【配色坑一,2026-09-19 实测定案】格色不能写 lighter(160)/darker(140):
 // QColor 的 lighter()/darker() 是**按比例朝白/朝黑缩放**,乘数再大也到不了
 // 对面 —— #000000.lighter(160) 仍是 #000000,#FFFFFF.darker(140) 仍是 #FFFFFF。
 // 换言之深色主题(基色=C_CONTENT 纯黑)整块变纯黑方块,浅色主题整块纯白,
-// 格子一格都看不见(与预览框同病,探针图实锤)。正解:按与黑白两端的**绝对
-// 距离**取色,对比量恒定(±0x30 ≈ 19% 亮度差),两端都不会退化。
-// 公式必须与 PreviewPanel::checkerInk 保持一致。
+// 格子一格都看不见。正解:按与黑白两端的**绝对距离**取色。
+//
+// 【配色坑二,用户实测"你没修好"定案】绝对量取 0x30 也**不够**。48/255 ≈ 19%
+// 的亮度差在纯黑底上肉眼几乎不可辨,放大看才知道有格子 —— 用户看到的就是
+// "还是纯黑"。实测并排图(checker_contrast_compare.png)后定为 **0x60**
+// (96/255 ≈ 38%):格子一眼可辨,又不至于抢画面。浅色主题同理。
+// 公式必须与 PreviewPanel::checkerInk 保持一致(两处逐字相同)。
 inline QColor checkerInk(const QColor& base) {
+    constexpr int kAbs = 0x60;               // 固定对比量(与预览框一致)
     const int l = base.lightness();
-    const int target = (l > 128) ? l - 0x30 : l + 0x30;
+    const int target = (l > 128) ? l - kAbs : l + kAbs;
     const int v = target < 0 ? 0 : (target > 255 ? 255 : target);
     return QColor(v, v, v);
 }
