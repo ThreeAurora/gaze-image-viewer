@@ -78,7 +78,10 @@ QWidget* SettingsDialog::pageViewer() {
     fUI->setVerticalSpacing(6);
     fUI->addRow(gazeTr("背景色"),
                 colorPick("Viewer/backColor", Theme::T("#000000", "#FFFFFF")));
-    fUI->addRow(chk("Viewer/checkerMode", gazeTr("背景以挡板模式显示"), false));
+    // 2026-09-19:默认改开,文案改成说人话 —— 老文案「背景以挡板模式显示」没人
+    // 看得出它就是"透明背景的格子底"。关掉则透明处直接露出上面的背景色。
+    fUI->addRow(chk("Viewer/checkerMode",
+        gazeTr("透明背景显示为格子底(关闭则露出上面的背景色)"), true));
     fUI->addRow(chk("Viewer/showBorder", gazeTr("显示边框"), false));
     fUI->addRow(chk("Viewer/panTool", gazeTr("显示平移工具"), true));
     fUI->addRow(chk("Viewer/showRating", gazeTr("显示颜色标记"), true));

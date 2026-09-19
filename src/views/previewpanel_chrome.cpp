@@ -76,14 +76,31 @@ QColor PreviewPanel::backdropColor() const {
 }
 
 // 透明像素下的挡板底纹(Viewer/checkerMode):16px 两色方格
+// 2026-09-19 用户令:透明背景图必须显示为"透明专属格子",不能是纯黑。
+// 口径统一为**只铺在图片所占的那块矩形里** —— 不是铺满整个视口。
+// 理由:铺满视口时,图片四周的留白也变成格子,看起来像"整块画布是透明的";
+// 而用户要表达的是"这张图有透明区域"。XnView MP 亦然(留白仍是背景色)。
+//
+// 【配色坑,2026-09-19 实测定案】格色不能写 lighter(160)/darker(140):
+// QColor 的 lighter()/darker() 是**按比例朝白/朝黑缩放**,乘数再大也永远到不了
+// 对面 —— #000000.lighter(160) 仍是 #000000,#FFFFFF.darker(140) 仍是 #FFFFFF。
+// 于是深色主题(基色纯黑)整块变成纯黑方块、浅色主题整块纯白,格子根本看不见。
+// 正解:按与黑白两端的**绝对距离**取色,保证对比度恒定(±0x30 ≈ 19% 亮度差)。
+static QColor checkerInk(const QColor& base) {
+    const int l = base.lightness();          // 0..255
+    const int d = 0x30;                      // 固定对比量
+    const int target = (l > 128) ? l - d : l + d;
+    return QColor(qBound(0, target, 255), qBound(0, target, 255),
+                  qBound(0, target, 255));
+}
+
 static QImage checkerTile(const QColor& base) {
     const int cell = 8;
     QImage img(cell * 2, cell * 2, QImage::Format_ARGB32_Premultiplied);
     img.fill(base);
     QPainter p(&img);
-    QColor ink = base.lightness() > 128 ? base.darker(140) : base.lighter(160);
     p.setPen(Qt::NoPen);
-    p.setBrush(ink);
+    p.setBrush(checkerInk(base));
     p.drawRect(0, 0, cell, cell);
     p.drawRect(cell, cell, cell, cell);
     p.end();
@@ -94,10 +111,19 @@ void PreviewPanel::paintEvent(QPaintEvent* event) {
     Q_UNUSED(event);
     QPainter p(this);
     p.fillRect(rect(), backdropColor());
-    if (pp_impl::s_bool("Viewer/checkerMode", false)) {
-        QBrush tile(checkerTile(backdropColor()));
-        tile.setStyle(Qt::TexturePattern);
-        p.fillRect(rect(), tile);
+
+    // 挡板只画在图片矩形内:先让图片位置稳定(自由定位的 label 几何),再铺格子。
+    // 纹理相位对齐 label 左上角,拖动/缩放时格子跟着画面走而不是"窗口不动格子动"。
+    if (pp_impl::s_bool("Viewer/checkerMode", true)
+        && m_mode == "image" && m_imgLabel && m_imgLabel->isVisible()
+        && !m_imgLabel->pixmap().isNull()) {
+        const QRect r = m_imgLabel->geometry().intersected(rect());
+        if (!r.isEmpty()) {
+            QBrush tile(checkerTile(backdropColor()));
+            tile.setStyle(Qt::TexturePattern);
+            p.setBrushOrigin(r.topLeft());
+            p.fillRect(r, tile);
+        }
     }
 
     // Viewer/selectedOverlay:画面构图辅助线(0 正常=不画 1 三分法 2 黄金分割)
