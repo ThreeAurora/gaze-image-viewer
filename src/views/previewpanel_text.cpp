@@ -57,7 +57,7 @@ void PreviewPanel::showMarkdown(const QString& path) {
     if (m_player) m_player->stop();
     m_placeholder->hide();
     m_imgLabel->hide();
-    m_videoWidget->hide();
+    leaveVideoTransit();   // 视频→Markdown:先把原生窗缓存定格成黑再藏
     setAudioChrome(false);
     m_controlBar->hide();
     if (m_imgSpace) m_imgSpace->hide();
@@ -78,7 +78,7 @@ void PreviewPanel::showPdf(const QString& path) {
     m_mode = "pdf";
     if (m_player) m_player->stop();
     m_placeholder->hide();
-    m_videoWidget->hide();
+    leaveVideoTransit();   // 视频→PDF:先把原生窗缓存定格成黑再藏
     setAudioChrome(false);
     m_textEdit->hide();
     m_controlBar->hide();
@@ -171,7 +171,7 @@ void PreviewPanel::showText(const QString& path) {
     if (m_player) m_player->stop();
     m_placeholder->hide();
     m_imgLabel->hide();
-    m_videoWidget->hide();
+    leaveVideoTransit();   // 视频→文本:先把原生窗缓存定格成黑再藏
     setAudioChrome(false);
     m_controlBar->hide();
     m_imgSpace->hide();

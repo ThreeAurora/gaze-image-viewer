@@ -483,7 +483,39 @@ void PreviewPanel::revealVideo() {
     disconnect(m_coverConn);
     m_coverArmed = false;
     if (m_videoCover) m_videoCover->hide();
-    if (m_vw) m_vw->show();
+    if (m_vw) {
+        m_vw->show();
+        // show() 的第一拍 DWM 合成的是原生窗的合成缓存 —— 正常情况下离开视频态
+        // 时缓存已被定格成黑(leaveVideoTransit),这一拍与底色无异,肉眼无感。
+        // 这里趁可见补投 sink 当前帧(本路真实画面),把缓存泄漏的最后一扇窗也
+        // 关上:即使某条兜底路径没赶上离场黑帧,揭开的至多是本路自己的画面,
+        // 绝不会是上一路的残帧。
+        if (auto* vs = m_vw->videoSink()) {
+            const QVideoFrame f = vs->videoFrame();
+            if (f.isValid()) vs->setVideoFrame(f);
+        }
+    }
+}
+
+// 离开视频形态(切往图片/音频/文本/RAW/无预览/清空)的统一出口,替代裸
+// m_videoWidget->hide()。为什么不能直接藏:QVideoWidget 内部是原生子窗口,
+// hide 期间 DWM 的合成缓存不清空,缓存里定格的是离开那一刻的画面;而藏着的
+// 窗口 present 是空操作,想趁藏的时候换帧换不进去(2026-10-01 定案)。
+// 于是下次任何形态切回视频,showVideo 里 m_videoWidget->show() 会把这份缓存
+// 原样重新上屏 —— 实测(用户 OBS 四帧实录,图片→视频):上一轮播过的视频
+// 残帧先叠在图片上一拍,推黑又叠一拍,图片最后才消失,全是泄漏。
+// 解法:趁 m_vw 还可见,把画面换成同尺寸纯黑并等 DWM 合成一拍(50ms)再藏,
+// 合成缓存从此恒为黑,下次揭开的"第一拍缓存"与底色无异,肉眼无感。
+void PreviewPanel::leaveVideoTransit() {
+    if (!m_videoWidget->isVisible() || !m_vw || !m_vw->isVisible()) {
+        m_videoWidget->hide();   // 本来就没在放视频:行为与旧的直接藏完全一致
+        return;
+    }
+    raiseVideoCover();   // 同尺寸推黑 + 升遮罩 + 50ms 后藏 m_vw(黑必须先合成进缓存)
+    QTimer::singleShot(60, this, [this]() {
+        // 60ms 内又切回视频(m_mode 已是 "video")就不拆台:容器必须保持上屏
+        if (m_videoWidget && m_mode != "video") m_videoWidget->hide();
+    });
 }
 
 // Viewer/inZoomFilter / outZoomFilter:索引 0 = "无"(快速最近邻)。

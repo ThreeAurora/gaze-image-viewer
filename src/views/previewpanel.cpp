@@ -570,7 +570,7 @@ void PreviewPanel::showNoPreview() {
     if (m_liveBadge) m_liveBadge->hide();
     m_placeholder->show();
     m_imgLabel->hide();
-    m_videoWidget->hide();
+    leaveVideoTransit();   // 视频→无预览:先把原生窗缓存定格成黑再藏
     setAudioChrome(false);
     m_textEdit->hide();
     m_controlBar->hide();
@@ -900,7 +900,7 @@ void PreviewPanel::clear() {
     m_preloadOrder.clear();
     m_imgLabel->clear();
     m_imgLabel->hide();
-    m_videoWidget->hide();
+    leaveVideoTransit();   // 播放器已拆但 m_vw 常驻:同样要黑帧定格缓存再藏
     setAudioChrome(false);
     m_controlBar->hide();
     m_imgSpace->hide();

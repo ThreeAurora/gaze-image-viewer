@@ -66,7 +66,7 @@ void PreviewPanel::showRawPlaceholder(const QString& path) {
     if (m_liveBadge) m_liveBadge->hide();
     m_placeholder->hide();
     m_imgLabel->hide();
-    m_videoWidget->hide();
+    leaveVideoTransit();   // 视频→RAW:先把原生窗缓存定格成黑再藏
     setAudioChrome(false);   // 顺带收起 raw 占位(见 setAudioChrome 注);随后再亮
     m_textEdit->hide();
     m_controlBar->hide();

@@ -149,6 +149,7 @@ void PreviewPanel::showVideo(const QString& path) {
     setAudioChrome(false);
     m_textEdit->hide();
     if (m_pdfBar) m_pdfBar->hide();   // pdf 页导航条只属于 pdf 形态,别漏进来
+    const bool wasVideo = m_videoWidget->isVisible();   // show 之前记:上一态是不是视频
     m_videoWidget->show();
 
     // Live Photo：自动播放的几秒短片，无需控制栏，仅显示 LIVE 徽章
@@ -159,6 +160,13 @@ void PreviewPanel::showVideo(const QString& path) {
     if (!live && playbar) updateGFullPlaybar(nullptr);   // G 全屏视频:进场先藏,光标到底部才出(2026-09-08)
     m_imgSpace->hide();
     syncVideoChildren();   // videoWidget 刚 show,布局尚未激活,先把当下矩形铺上
+    // 图片/音频/文本→视频:m_videoWidget->show() 会把 m_vw 的原生窗连同它的
+    // DWM 合成缓存(上一轮视频残帧)一并重新上屏 —— 残帧先叠在图片上一拍,
+    // 推黑又叠一拍,图片最后才消失(2026-10-01 用户 OBS 四帧实录)。
+    // show+hide 都在本事件循环内完成,原生窗从未被合成,残帧无从露出;
+    // 本路第 2 帧到达才由 revealVideo 放出来,揭那一拍的缓存是离场时定格的
+    // 黑(leaveVideoTransit),与底色无异。
+    if (!wasVideo && m_vw && m_vw->isVisible()) m_vw->hide();
     updateLiveBadge();     // 播放 live 视频时徽章照常亮在面板右上角(与静态态同位)
 
     setupPlayer();
@@ -327,7 +335,7 @@ void PreviewPanel::showAudio(const QString& path) {
     m_mode = "audio";
     m_placeholder->hide();
     m_imgLabel->hide();
-    m_videoWidget->hide();
+    leaveVideoTransit();   // 视频→音频:先把原生窗缓存定格成黑再藏(残帧缓存会漏到下次切回视频)
     m_textEdit->hide();
     if (m_pdfBar) m_pdfBar->hide();   // pdf 页导航条只属于 pdf 形态,别漏进来
     m_controlBar->show();
@@ -582,7 +590,7 @@ void PreviewPanel::finishLivePhoto() {
     // 仅停止播放并隐藏视频区切回静态图;下次播放复用同一实例
     Logger::event("finishLivePhoto: back to static");
     m_player->stop();
-    m_videoWidget->hide();
+    // 容器藏匿交给下面的 showImage → leaveVideoTransit(趁可见推黑定格缓存再藏)
 
     QString orig = m_livePhotoOriginalPath;
     m_livePhotoOriginalPath.clear();

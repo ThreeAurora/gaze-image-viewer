@@ -179,7 +179,7 @@ void PreviewPanel::showImage(const QString& path) {
     m_mode = "image";
     if (m_player) m_player->stop();   // 切到静态图:停媒体(播放器实例保留复用)
     m_placeholder->hide();
-    m_videoWidget->hide();
+    leaveVideoTransit();   // 视频→图片:先把原生窗缓存定格成黑再藏(残帧缓存会漏到下次切回视频)
     setAudioChrome(false);
     m_textEdit->hide();
     m_controlBar->hide();

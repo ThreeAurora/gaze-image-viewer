@@ -91,6 +91,7 @@ private:
     void raiseVideoCover();     // #104:切源期间藏起视频控件(+升起遮罩),首帧到达才露出
     void armCoverUntilFirstFrame();  // #104:改由"本路源第一帧"收回遮罩,而非 PlayingState
     void revealVideo();         // #104:首帧到达/兜底出口 → 收遮罩 + 露出视频控件
+    void leaveVideoTransit();   // 离开视频形态统一出口:趁可见推黑帧定格原生窗缓存再藏容器
     void applyVideoBackdrop();  // 视频面/遮罩底色唯一写入口(随主题,全屏恒黑)
     QSize m_videoSize;          // 当前视频画面尺寸(首帧到达更新;按比例铺视频面)
     void syncVideoChildren();   // vw/cover 几何同步到 videoWidget(布局激活后必须重跑)
