@@ -394,18 +394,56 @@ void PreviewPanel::updateSelectionHighlight() {
 // vw_screen_probe.cpp,Windows 合成器下 BitBlt 截屏):断输出后视频面还会把上一路
 // 的末帧继续呈现约 50~100ms,这段正是用户看到的"闪回上一张";而 hides 掉的
 // m_vw 让屏幕上只剩父窗口的 #0A0A0C 深色底,var=0,一帧残影都没有。
+//
+// 但 2026-10-01 实机复测(vw_wheel_probe,修复"第 2 帧才揭开"后)发现光藏起来
+// 不够:隐藏期间 sink 照常收到新帧,却**不会刷进交换链**(隐藏时 present 是
+// 空操作),于是 show() 的第一拍 DWM 合成的还是换源前最后呈现的旧帧 ——
+// 帧序列:暗底数拍 → 精确复现旧画面签名一拍 → 新视频。数到第 N 帧都挡不住。
+// 解法:**换掉残帧本身** —— 趁 m_vw 还可见,往它自己的 videoSink 推一帧纯黑,
+// 呈现链上的"最后一帧"由此变成黑色;此后无论哪一拍漏出来,亮的都是与
+// 深色底无差的黑,而不是上一路视频。
 void PreviewPanel::raiseVideoCover() {
     ensureVideoWidget();
+    // 上一次布防的回调还挂着的话先摘掉:下面推黑帧会触发 videoFrameChanged,
+    // 不能让它被旧回调当成"新源首帧"拿去揭遮罩
+    disconnect(m_coverConn);
+    if (m_vw) {
+        if (auto* vs = m_vw->videoSink()) {
+            // 黑帧必须用**旧视频的真实帧尺寸**(sink 里的末帧),不能用随手
+            // 造的小尺寸:syncVideoChildren 按 m_videoSize 的宽高比收缩视频面,
+            // 尺寸一变,此刻还可见的画面先缩一下再被藏住(实测:16×16 注入帧
+            // 让视频面缩成小方块,新视频首帧到达才复原 —— 用户见到的
+            // "视频突然变小再变大")。同尺寸则 previewpanel.cpp 里的帧监听
+            // (f.size()==m_videoSize 直接短路)与几何都纹丝不动。
+            QSize sz = vs->videoFrame().size();
+            if (sz.isEmpty()) sz = m_videoSize;
+            if (sz.isEmpty()) sz = m_vw->size();
+            if (sz.isEmpty()) sz = QSize(16, 16);
+            QImage black(sz.width(), sz.height(), QImage::Format_RGB32);
+            black.fill(0);
+            vs->setVideoFrame(QVideoFrame(black));
+        }
+    }
     m_videoCover->setGeometry(m_videoWidget->rect());
     m_videoCover->raise();
     m_videoCover->show();
-    if (m_vw) m_vw->hide();     // ← 真正挡住原生视频窗的那一刀
     m_coverArmed = true;
+    // 推黑后必须留 50ms(约 3 个刷新周期)再藏窗口:同步藏的话 hide 早于
+    // vsync,黑帧从未被 DWM 合成,子窗口的合成缓存仍是旧视频末帧,show()
+    // 第一拍漏出来的就是它(实测两轮,连"第 2 帧才揭开"都拦不住这一拍)。
+    // 已揭开(revealVideo)就不再藏,防止把正在播的视频按回去。
+    QTimer::singleShot(50, this, [this]() {
+        if (m_vw && m_coverArmed) m_vw->hide();
+    });
 }
 
-// #104:遮罩的收回权交给"本路源的第一帧"。
-// 原先由 playbackStateChanged(PlayingState) 收回 —— 但 PlayingState 比首帧早到,
-// 那一刻 QVideoWidget 的表面里还是上一段视频的末帧,于是露出"闪回上一张"。
+// #104:遮罩的收回权交给"本路源的有效帧",且必须数到第 2 帧。
+// 实测(2026-09-19 cache/tmp/vw_wheel_probe.cpp,BitBlt 帧序列):首帧送达
+// QVideoSink ≠ 首帧已在 D3D 表面呈现 —— 第 1 帧就揭开 m_vw,窗口复用的
+// swapchain 里还压着上一路视频的残帧,DWM 先合成出一拍旧画面(~25-50ms)
+// 才进新视频,正是用户看到的"滚轮切换闪回上一张"。序列:暗底数拍 →
+// 闪一拍旧画面(签名与切源前完全一致)→ 新视频。数到第 2 帧再揭开,
+// 代价只是多 1~2 拍深色底,肉眼无感。
 // 必须在 attach 之后调用(此前 player->videoSink() 不属于 m_vw)。
 void PreviewPanel::armCoverUntilFirstFrame() {
     if (!m_player) return;
@@ -418,10 +456,22 @@ void PreviewPanel::armCoverUntilFirstFrame() {
         return;
     }
     disconnect(m_coverConn);
-    m_coverArmed = true;
+    m_coverArmed  = true;
+    m_coverFrames = 0;
+    const int gen = ++m_coverGen;   // 本轮布防的代际号
     m_coverConn = connect(vs, &QVideoSink::videoFrameChanged, this,
-                          [this](const QVideoFrame& f) {
+                          [this, gen](const QVideoFrame& f) {
         if (!f.isValid()) return;
+        if (gen != m_coverGen || !m_coverArmed) return;   // 旧轮次的帧,不看
+        if (++m_coverFrames < 2) return;   // 第 1 帧只代表送达,还没呈现
+        revealVideo();
+    });
+    // 兜底:有的流只送一帧就停(极端短素材),不许"藏起来却没人放出来"。
+    // 代际号保证旧定时器伤不到新一轮遮罩;一帧都没来时宁黑勿闪 —— 此时
+    // 揭开必然露出 swapchain 里的旧残帧,继续等首帧或 InvalidMedia 兜底。
+    QTimer::singleShot(150, this, [this, gen]() {
+        if (gen != m_coverGen || !m_coverArmed || m_coverFrames < 1) return;
+        Logger::event(QStringLiteral("#104 safety reveal (single-frame stream)"));
         revealVideo();
     });
 }

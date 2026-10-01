@@ -185,11 +185,17 @@ void PreviewPanel::showVideo(const QString& path) {
             // 只盖遮罩防残帧,attach+play 交给 LoadedMedia 的延迟 attach 统一处理
             const bool deferLoad = !m_pendingPlay.isEmpty();
             if (deferLoad) {
+                // switch 刚落下(pendingPlay 未消费)时的重复触发(启动恢复/
+                // warmUp 双发):第一轮的遮罩+布防还在飞,这里绝不能再走
+                // raiseVideoCover —— 再布防会作废第一轮的帧计数,推迟藏窗的
+                // 定时器还会在首轮揭开之后把窗口二次藏回去(实测揭开数拍后
+                // 又闪一拍黑)。什么都不做,交给第一轮的 LoadedMedia 统一
+                // attach+布防+揭晓。
                 Logger::event(QStringLiteral("showVideo: same src while loading, defer"));
-            } else {
-                m_pendingPlay.clear();
+                return;
             }
-            if (!deferLoad && !m_videoOutAttached) {
+            m_pendingPlay.clear();
+            if (!m_videoOutAttached) {
                 // 上一次 switch 断开了输出而延迟 attach 被旧源的迟到事件破坏:
                 // 不接回输出就 play 会"只出声不出画"
                 Logger::event(QStringLiteral("showVideo: same src, re-attach output"));
@@ -201,14 +207,12 @@ void PreviewPanel::showVideo(const QString& path) {
             // 回零重播前的"上一轮末帧"因此完全没有曝光窗口。
             raiseVideoCover();
             armCoverUntilFirstFrame();
-            if (!deferLoad) {
-                m_player->setPosition(0);
-                if (live || pp_impl::s_bool("Viewer/autoPlayVideo", true)) {
-                    m_player->play();
-                    m_btnPlay->setIcon(pp_impl::themeIcon(style()->standardIcon(QStyle::SP_MediaPause)));
-                } else {
-                    m_btnPlay->setIcon(pp_impl::themeIcon(style()->standardIcon(QStyle::SP_MediaPlay)));
-                }
+            m_player->setPosition(0);
+            if (live || pp_impl::s_bool("Viewer/autoPlayVideo", true)) {
+                m_player->play();
+                m_btnPlay->setIcon(pp_impl::themeIcon(style()->standardIcon(QStyle::SP_MediaPause)));
+            } else {
+                m_btnPlay->setIcon(pp_impl::themeIcon(style()->standardIcon(QStyle::SP_MediaPlay)));
             }
         } else {
             Logger::event(QStringLiteral("showVideo: switch '%1' (was '%2', deferred attach)")

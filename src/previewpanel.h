@@ -283,9 +283,12 @@ private:
     QString m_pendingPlay;     // 已 setSource、待就绪 attach+play 的源
     bool m_videoOutAttached = false;   // 视频输出当前是否已接到 m_vw
                                        // (same-src 重播若输出已断必须接回,否则只出声不出画)
-    // #104:遮罩收回的归属权。armed 期间只有"本路源送出的第一帧"能收回遮罩
+    // #104:遮罩收回的归属权。armed 期间只有"本路源送出的有效帧"能收回遮罩;
+    // 数到第 2 帧才揭(首帧送达 sink ≠ 首帧已呈现,揭开太早会漏一拍旧画面)
     bool m_coverArmed = false;
     QMetaObject::Connection m_coverConn;
+    int m_coverFrames = 0;   // armed 期间累计的有效帧数
+    int m_coverGen   = 0;    // 布防代际号:再布防后,旧定时器/旧帧回调全部作废
     QWidget *m_controlBar;
     QWidget *m_imgSpace;   // 图片/GIF 形态的空间吸收器:没有它 40px 的控制栏会被布局垂直居中
 
