@@ -66,15 +66,15 @@ namespace {
 
 QString ffmpegExe() {
     static const QString exe = locateFfmpegTool(QStringLiteral("ffmpeg"));
-    if (exe.isEmpty()) {
-        // 只报一次:这是逐条目热路径,每条都写日志就成了新的性能问题
-        static const bool warned = [] {
-            Logger::event(QStringLiteral(
-                "THUMB ffmpeg 未找到(exe旁 ffmpeg/ 与 PATH 均无)→ 视频缩略图降级为 Shell 缩略图"));
-            return true;
-        }();
-        Q_UNUSED(warned);
-    }
+    // 2026-10-01:解析结果落一条日志 —— PATH 上若有别的 ffmpeg(如 ImageMagick
+    // 的假 ffmpeg),解析到哪个必须可见,否则降级链路查无可查
+    static const bool logged = [&exe] {
+        Logger::event(exe.isEmpty()
+            ? QStringLiteral("THUMB ffmpeg 未找到(exe旁 ffmpeg/ 与 PATH 均无)→ 视频缩略图降级为 Shell 缩略图")
+            : QStringLiteral("videoThumb: ffmpeg exe = %1").arg(exe));
+        return true;
+    }();
+    Q_UNUSED(logged);
     return exe;
 }
 
@@ -351,36 +351,65 @@ QImage Thumbnailer::videoThumbFallback(const QString& filePath, int size, int pc
                        "format=yuv420p,") + scalePart;
 
     // finished=false 表示进程没正常跑完(超时被杀);这种情况不该再试第二个位置,
-    // 否则坏文件的代价从一次超时变成两次。log 非空时回收 ffmpeg 的输出文本。
+    // 否则坏文件的代价从一次超时变成两次。
+    // 【2026-10-01 重写:PNG 走 stdout 管道,不再落 %TEMP% 临时文件】
+    // 用户报"视频缩略图全没了",加日志实测:QTemporaryFile 在
+    // %TEMP% 逐条"拒绝访问"(10 个视频 24ms 全灭,每条 ~2ms 瞬间失败)——
+    // Qt 临时文件带 FILE_ATTRIBUTE_HIDDEN,本机不知何时起拒收这种创建方式
+    // (普通 touch 同目录却成功)。抽帧本来就该是纯内存操作:ffmpeg 把单帧
+    // PNG 写 stdout,这里从管道读字节 QImage::fromData,临时文件、清理、
+    // "0 字节文件"三类问题一起消失。日志只留失败痕。
     auto grab = [&](int seekMs, bool& finished, const QString& filter,
                     QString* log) -> QImage {
         finished = false;
-        QTemporaryFile tmp(QDir::tempPath() + "/xnn_thumb_XXXXXX.png");
-        tmp.setAutoRemove(false);
-        if (!tmp.open()) return {};
-        const QString tmpName = tmp.fileName();
-        tmp.close();
-
         QProcess proc;
         hideConsoleWindow(proc);   // 同上:视频缩略图抽帧的 ffmpeg 也得静默起
-        proc.setProcessChannelMode(QProcess::MergedChannels);
+        // stderr=ffmpeg 的进度/流信息(供 HDR 判定),stdout=纯 PNG 字节流
+        proc.setProcessChannelMode(QProcess::SeparateChannels);
         proc.start(exe, {
             "-ss", QString::number(seekMs / 1000.0, 'f', 3), "-i", filePath,
             "-vframes", "1",
             "-vf", filter,
-            "-q:v", "5", "-y", tmpName
+            "-q:v", "5",
+            "-f", "image2pipe", "-vcodec", "png", "-"
         });
-
-        if (!proc.waitForFinished(5000)) {
-            proc.kill();
-            proc.waitForFinished(500);
-            QFile::remove(tmpName);
+        if (proc.state() == QProcess::NotRunning
+            && proc.error() != QProcess::UnknownError) {
+            Logger::event(QStringLiteral("videoThumb: 进程启动失败(%1) exe=%2 '%3'")
+                              .arg(proc.errorString()).arg(exe)
+                              .arg(QFileInfo(filePath).fileName()));
             return {};
         }
+        // 一帧 PNG 可达数百 KB,超过管道缓冲就要边跑边排空,否则 ffmpeg
+        // 写 stdout 被背压卡住、waitForFinished 必超时
+        QElapsedTimer clock;
+        clock.start();
+        QByteArray png;
+        while (!proc.waitForFinished(120)) {
+            png += proc.readAllStandardOutput();
+            if (clock.elapsed() > 5000) {
+                Logger::event(QStringLiteral("videoThumb: 5s 超时被杀 '%1'")
+                                  .arg(QFileInfo(filePath).fileName()));
+                proc.kill();
+                proc.waitForFinished(500);
+                return {};
+            }
+        }
+        png += proc.readAllStandardOutput();
         finished = true;
-        if (log) *log = QString::fromUtf8(proc.readAll());
-        QImage img(tmpName);
-        QFile::remove(tmpName);
+        if (log) *log = QString::fromUtf8(proc.readAllStandardError());
+        if (proc.exitCode() != 0) {
+            Logger::event(QStringLiteral("videoThumb: ffmpeg 退出码 %1: %2")
+                              .arg(proc.exitCode())
+                              .arg(QString::fromUtf8(proc.readAllStandardError())
+                                       .right(300).trimmed()));
+        }
+        const QImage img = png.isEmpty() ? QImage()
+                                         : QImage::fromData(png);
+        if (img.isNull())
+            Logger::event(QStringLiteral("videoThumb: 输出解码为空(管道 %1 字节) '%2'")
+                              .arg(png.size())
+                              .arg(QFileInfo(filePath).fileName()));
         return img;
     };
 
