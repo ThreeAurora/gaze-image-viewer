@@ -75,39 +75,32 @@ QColor PreviewPanel::backdropColor() const {
     return c.isValid() ? c : def;
 }
 
-// 透明像素下的挡板底纹(Viewer/checkerMode):16px 两色方格
+// 透明像素下的挡板底纹(Viewer/checkerMode):8px 两色方格
 // 2026-09-19 用户令:透明背景图必须显示为"透明专属格子",不能是纯黑。
 // 口径统一为**只铺在图片所占的那块矩形里** —— 不是铺满整个视口。
 // 理由:铺满视口时,图片四周的留白也变成格子,看起来像"整块画布是透明的";
 // 而用户要表达的是"这张图有透明区域"。XnView MP 亦然(留白仍是背景色)。
 //
-// 【配色坑一,2026-09-19 实测定案】格色不能写 lighter(160)/darker(140):
-// QColor 的 lighter()/darker() 是**按比例朝白/朝黑缩放**,乘数再大也永远到不了
-// 对面 —— #000000.lighter(160) 仍是 #000000,#FFFFFF.darker(140) 仍是 #FFFFFF。
-// 于是深色主题(基色纯黑)整块变成纯黑方块、浅色主题整块纯白,格子根本看不见。
-// 正解:按与黑白两端的**绝对距离**取色。
-//
-// 【配色坑二,用户实测"你没修好"定案】绝对量取 0x30 也**不够** —— 48/255 ≈ 19%
-// 的亮度差在纯黑底上肉眼几乎不可辨,用户看到的就是"还是纯黑"。并排渲染实测
-// (cache/tmp/checker_contrast_compare.png)后提到 **0x60**(96/255 ≈ 38%)。
-//
-// 【2026-09-19 用户令"背景稍微再浅点"】0x60 之后用户要求再浅一档 → 定 **0x50**
-// (80/255 ≈ 31%):格子仍一眼可辨,又比 0x60 柔和。公式与 ImgProc::checkerInk 逐字一致。
-static QColor checkerInk(const QColor& base) {
-    constexpr int kAbs = 0x50;               // 固定对比量(与缩略图侧一致)
-    const int l = base.lightness();          // 0..255
-    const int target = (l > 128) ? l - kAbs : l + kAbs;
-    return QColor(qBound(0, target, 255), qBound(0, target, 255),
-                  qBound(0, target, 255));
-}
+// 【配色,2026-09-19 用户给参考图后定案 —— 别再造轮子】
+// 用户明确说过"我不是给过你配色的样式吗"。参考即 XnView MP 的截图
+// (cache/tmp/xnv_ref.png)。用采样探针(cache/tmp/sample_xnv.cpp)量出:
+//     两种格色 = #FFFFFF / #F0F0F0,格子 = 8px(周期 16px),铺满图片矩形。
+// 之前几轮我做错的地方:想"从背景色推导格色"(先 lighter/darker,再 ±0x30,
+// 再 ±0x60,再 ±0x50)——**方向就是错的**。那套做法产出的永远是"背景色附近"
+// 的灰,深色主题下就是几种黑,所以用户怎么看都说"还是纯黑"。
+// 参考里的棋盘根本不是"背景色的变体",而是一对**固定的浅灰**,与背景色无关;
+// 它的对比度来自"浅底 vs 深色笔迹",不是"黑底 vs 深灰格"。
+// 修法:两种格色写死成常量,不再吃 backdropColor()。
+static constexpr QRgb kCheckerA = 0xFFFFFFFF;   // #FFFFFF
+static constexpr QRgb kCheckerB = 0xFFF0F0F0;   // #F0F0F0
 
-static QImage checkerTile(const QColor& base) {
+static QImage checkerTile() {
     const int cell = 8;
     QImage img(cell * 2, cell * 2, QImage::Format_ARGB32_Premultiplied);
-    img.fill(base);
+    img.fill(QColor::fromRgba(kCheckerA));
     QPainter p(&img);
     p.setPen(Qt::NoPen);
-    p.setBrush(checkerInk(base));
+    p.setBrush(QColor::fromRgba(kCheckerB));
     p.drawRect(0, 0, cell, cell);
     p.drawRect(cell, cell, cell, cell);
     p.end();
@@ -126,7 +119,8 @@ void PreviewPanel::paintEvent(QPaintEvent* event) {
         && !m_imgLabel->pixmap().isNull()) {
         const QRect r = m_imgLabel->geometry().intersected(rect());
         if (!r.isEmpty()) {
-            QBrush tile(checkerTile(backdropColor()));
+            // 相位对齐 label 左上角(与上面注释一致),与背景色无关
+            QBrush tile(checkerTile());
             tile.setStyle(Qt::TexturePattern);
             p.setBrushOrigin(r.topLeft());
             p.fillRect(r, tile);

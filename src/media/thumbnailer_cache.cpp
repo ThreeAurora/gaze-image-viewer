@@ -71,29 +71,24 @@ QImage Thumbnailer::postProcess(QImage img, int size) const {
 
     // Thumbs/gamma:线性光降采样(已在 imageThumb 内按此开关处理,这里只兜底裁剪)
     // ── 透明处理 ──
-    // 2026-09-19 用户令:缩略图的透明格子要与预览框**同一观感**。基色取内容区
-    // 底色(C_CONTENT,深色纯黑/浅色纯白),与预览框 backdropColor() 同源 ——
-    // 此前这里是硬编码深灰 #26262B/#3A3A40,浅色主题下缩略图是深格、预览框是
-    // 浅格,两处对不上。传递基色由 checkerBg 自己按明度派生格色,公式与
-    // PreviewPanel::checkerTile 一致。
+    // 2026-09-19 用户令:缩略图的透明格子要与预览框**同一观感**。
+    // 【配色定案,用户给了参考图】格色 = 固定 #FFFFFF / #F0F0F0,8px 格,与
+    // 预览框 PreviewPanel::checkerTile 同源(两处都用 ImgProc 的 kCheckerColor* 常量)。
+    // 以前这里传 C_CONTENT 当基色再派生格色,方向就是错的 —— 深色主题下派生出来
+    // 永远是几种黑,用户怎么看都是"纯黑"。棋盘不是背景色的变体,是一对固定浅灰。
+    // 注意:格色已与主题无关,缓存键里的主题标记(见下方 src += "|g1l"/"|g1")
+    // 其实可以去掉,但留着无害(旧缓存会因键不同而自然失效,不用手动清)。
     const bool hasAlpha = img.hasAlphaChannel();
     if (hasAlpha && !p.alpha) {
         QImage flat(img.size(), QImage::Format_RGB32);
-        flat.fill(p.transGrid ? QColor(C_CONTENT) : QColor(0x2A, 0x2A, 0x2E));
-        if (p.transGrid) {
-            QImage bg = ImgProc::checkerBg(img.width(), img.height(), QColor(C_CONTENT));
-            QPainter pt(&flat);
-            pt.drawImage(0, 0, bg);
-            pt.drawImage(0, 0, img);
-            pt.end();
-        } else {
-            QPainter pt(&flat);
-            pt.drawImage(0, 0, img);
-            pt.end();
-        }
+        flat.fill(QColor(0x2A, 0x2A, 0x2E));
+        QPainter pt(&flat);
+        if (p.transGrid) pt.drawImage(0, 0, ImgProc::checkerBg(img.width(), img.height()));
+        pt.drawImage(0, 0, img);
+        pt.end();
         img = flat;
     } else if (hasAlpha && p.transGrid) {
-        QImage flat = ImgProc::checkerBg(img.width(), img.height(), QColor(C_CONTENT));
+        QImage flat = ImgProc::checkerBg(img.width(), img.height());
         QPainter pt(&flat);
         pt.drawImage(0, 0, img);
         pt.end();
