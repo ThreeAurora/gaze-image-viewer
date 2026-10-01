@@ -618,12 +618,12 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
                     // QAction shortcut 不经过 forText 三道闸,菜单裸键会吞文本框的照删键。
                     if (ke->key() == Qt::Key_F2) { renameFocused(); return true; }
                     // #245(2026-09-04 用户令):F3 = 用默认应用打开;文件夹=资源
-                    // 管理器打开该目录(QDesktopServices 对目录本就落 Explorer)。
-                    // 原「预览面板开关」让位,面板显隐仍走视图菜单。
+                    // 管理器打开该目录。openWithDefaultApp 兜住了 openUrl 在
+                    // 本机静默失效的坑(见 shelldelete.h 通路口径)。
                     if (ke->key() == Qt::Key_F3 && !m_viewerMode && !m_fullView) {
                         const auto sel = m_fileGrid->selectedPaths();
                         if (!sel.isEmpty()) {
-                            QDesktopServices::openUrl(QUrl::fromLocalFile(sel.first()));
+                            openWithDefaultApp(sel.first());
                             return true;
                         }
                     }

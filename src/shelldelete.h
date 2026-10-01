@@ -15,7 +15,11 @@
 #include "settings.h"
 #include "constants.h"
 #include "i18n.h"
+#include "logger.h"
 #include "filelockrelease.h"   // #214:动文件前放掉预览握着的句柄
+
+#include <QDesktopServices>
+#include <QUrl>
 
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -161,4 +165,46 @@ inline void showShellProperties(const QString& path) {
     sei.lpFile = reinterpret_cast<LPCWSTR>(path.utf16());
     sei.nShow = SW_SHOWNORMAL;
     ShellExecuteExW(&sei);
+}
+
+// ── 用系统默认程序打开 + 在资源管理器中定位 ──
+// 2026-09-19 主人机:右键"打开"/"在资源管理器中显示"一律无作用,而同一菜单里
+// 走 ShellExecuteExW 的"属性"可用。QDesktopServices::openUrl 底层同样调
+// ShellExecute,但中间夹了 QUrl 编解码/工作目录参数,这台机器上静默失效
+// (返回 false 也不留痕)。两处动作统一收口到与"属性"同一条实测可用的
+// 直调通路;失败回落 openUrl 并留日志 —— 若个别场景仍不行,日志见分晓。
+
+// 用系统默认关联打开文件或目录。返回 true = 调用已被 Shell 接受。
+inline bool openWithDefaultApp(const QString& path) {
+    if (path.isEmpty()) return false;
+    const QString native = QDir::toNativeSeparators(QFileInfo(path).absoluteFilePath());
+    // lpVerb 用 nullptr(默认动词):比 "open" 更稳,个别 ProgID 没注册 open
+    const HINSTANCE r = ShellExecuteW(nullptr, nullptr,
+                                      reinterpret_cast<LPCWSTR>(native.utf16()),
+                                      nullptr, nullptr, SW_SHOWNORMAL);
+    // ShellExecute 约定:>32 成功,否则为 SE_ERR_* 错误码
+    if (reinterpret_cast<INT_PTR>(r) > 32) return true;
+    Logger::event(QStringLiteral("shell: open fail(%1) -> openUrl fallback: %2")
+                      .arg(reinterpret_cast<INT_PTR>(r)).arg(native));
+    return QDesktopServices::openUrl(QUrl::fromLocalFile(path));
+}
+
+// 在资源管理器中显示并**选中**该条目(explorer /select,XnView 同款语义)。
+// 直接拉起 explorer.exe,不走"打开目录"的关联 —— 走关联的那条路在本机
+// 静默失效(这次报的"无作用");直调还有个好处:资源管理器就是菜单文案
+// 说的资源管理器,不会被第三方文件管理器接管成打不开的样子。
+inline bool showInExplorer(const QString& path) {
+    if (path.isEmpty()) return false;
+    QString native = QDir::toNativeSeparators(QFileInfo(path).absoluteFilePath());
+    // 盘根("E:\")结尾的反斜杠会吞掉参数里的引号,先去掉
+    if (native.size() <= 3 && native.endsWith(QLatin1Char('\\'))) native.chop(1);
+    const QString params = QStringLiteral("/select,\"%1\"").arg(native);
+    const HINSTANCE r = ShellExecuteW(nullptr, L"open", L"explorer.exe",
+                                      reinterpret_cast<LPCWSTR>(params.utf16()),
+                                      nullptr, SW_SHOWNORMAL);
+    if (reinterpret_cast<INT_PTR>(r) > 32) return true;
+    Logger::event(QStringLiteral("shell: explorer /select fail(%1): %2")
+                      .arg(reinterpret_cast<INT_PTR>(r)).arg(native));
+    // 兜底:至少把所在目录打开(不选中)
+    return QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo(path).absolutePath()));
 }

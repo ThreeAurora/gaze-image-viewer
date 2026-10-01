@@ -17,6 +17,7 @@
 #include <QFont>
 #include "constants.h"
 #include "i18n.h"
+#include "shelldelete.h"   // showInExplorer:右键"在资源管理器中显示"
 
 class FavoritesPanel : public QWidget {
     Q_OBJECT
@@ -48,8 +49,7 @@ public:
             menu.addAction(gazeTr("打开"), this, [this, p]() { emit openRequested(p); });
             menu.addAction(gazeTr("在浏览器中定位"), this, [this, p]() { emit locateRequested(p); });
             menu.addAction(gazeTr("在资源管理器中显示"), this, [p]() {
-                QDesktopServices::openUrl(QUrl::fromLocalFile(
-                    QFileInfo(p).isDir() ? p : QFileInfo(p).absolutePath()));
+                showInExplorer(p);
             });
             menu.addSeparator();
             menu.addAction(gazeTr("从收藏夹移除"), this, [this, p]() { emit removeRequested(p); });

@@ -297,7 +297,7 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
 
     // ── 打开组 ──
     addAction(IconLib::appIcon("cmd_open"), gazeTr("打开"), this, [this]() {
-        QDesktopServices::openUrl(QUrl::fromLocalFile(m_filePath));
+        openWithDefaultApp(m_filePath);
     });
     addAction(gazeTr("全屏"), this, [this]() {
         // 通知主窗口:导航到该文件所在目录并进入全屏
@@ -311,15 +311,14 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
     addAction(IconLib::appIcon("cmd_openWith"), gazeTr("打开方式"), this, [this]() {
         openWithDialog(m_filePath);
     });
-    // 用系统默认文件管理器打开所在目录(尊重 Directory Opus 等接管:
-    // ShellExecute "open" 目录会走注册的 open command,不用写死 explorer)
+    // 在资源管理器中显示并选中文件(explorer /select)。原先 openUrl(所在目录)
+    // 在部分机器上静默失效,而且从不选中文件;见 shelldelete.h 里的通路口径
     addAction(gazeTr("在资源管理器中显示"), this, [this]() {
-        QDesktopServices::openUrl(QUrl::fromLocalFile(
-            QFileInfo(m_filePath).absolutePath()));
+        showInExplorer(m_filePath);
     });
     addAction(gazeTr("打开全部选中文件"), this, [sel]() {
         for (const auto& p : sel)
-            QDesktopServices::openUrl(QUrl::fromLocalFile(p));
+            openWithDefaultApp(p);
     });
     // 查看器标签:浏览器侧唯一"另起一张标签"的入口。没有它,标签表永远只有一张,
     // Interface/multiViewerTabs 与 oneViewerTab 两个开关就没有任何可观测差别。
@@ -677,7 +676,7 @@ FileContextMenu::FileContextMenu(FileGrid* grid, int index, QWidget* parent)
         addAction(gazeTr("播放实况视频"), this, [this]() {
             QString vp = m_liveInfo.value("video_path").toString();
             if (!vp.isEmpty())
-                QDesktopServices::openUrl(QUrl::fromLocalFile(vp));
+                openWithDefaultApp(vp);
         });
     }
     if (m_isLive) {

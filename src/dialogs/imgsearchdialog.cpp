@@ -2,6 +2,7 @@
 #include "imgsearch.h"
 #include "constants.h"
 #include "i18n.h"
+#include "shelldelete.h"   // openWithDefaultApp / showInExplorer
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -239,10 +240,9 @@ ImageSearchDialog::ImageSearchDialog(QWidget* parent) : QDialog(parent) {
         if (chosen == aReveal) {
             revealInGaze(path);
         } else if (chosen == aOpen) {
-            QDesktopServices::openUrl(QUrl::fromLocalFile(path));
+            openWithDefaultApp(path);
         } else if (chosen == aShow) {
-            QProcess::startDetached("explorer",
-                {"/select,", QDir::toNativeSeparators(path)});
+            showInExplorer(path);   // 与全项目同一通路(含失败日志/兜底)
         } else if (chosen == aCopy) {
             QApplication::clipboard()->setText(QDir::toNativeSeparators(path));
         }

@@ -313,7 +313,7 @@ void PreviewPanel::contextMenuEvent(QContextMenuEvent* event) {
     }
     menu.addSeparator();
     menu.addAction(gazeTr("用系统默认程序打开"), this, [this]() {
-        QDesktopServices::openUrl(QUrl::fromLocalFile(m_filePath));
+        openWithDefaultApp(m_filePath);
     });
     // 进查看器后网格是隐藏的,浏览器那份右键菜单够不着:另起标签要有本地入口
     menu.addAction(gazeTr("在新标签卡中打开"), this, [this]() {

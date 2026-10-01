@@ -283,7 +283,7 @@ void MainWindow::rebuildRecentMenu(QMenu* menu) {
 
 void MainWindow::openWithSystem(const QString& path) {
     if (!path.isEmpty())
-        QDesktopServices::openUrl(QUrl::fromLocalFile(path));
+        openWithDefaultApp(path);   // openUrl 在本机静默失效,收口见 shelldelete.h
 }
 
 void MainWindow::cycleRedFilter() {

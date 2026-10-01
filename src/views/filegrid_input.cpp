@@ -496,7 +496,7 @@ void FileGrid::onCanvasDblClick(int index) {
     if (info) {
         if (!info->embedded) {
             Logger::event(QStringLiteral("dblClick: open companion '%1'").arg(info->videoPath));
-            QDesktopServices::openUrl(QUrl::fromLocalFile(info->videoPath));
+            openWithDefaultApp(info->videoPath);
             return;
         }
         Logger::event(QStringLiteral("dblClick: async extract+open '%1'").arg(path));
@@ -504,7 +504,7 @@ void FileGrid::onCanvasDblClick(int index) {
             const QString vp = LivePhoto::extractEmbeddedVideo(path, *info);
             if (vp.isEmpty()) return;
             QMetaObject::invokeMethod(qApp, [vp]() {
-                QDesktopServices::openUrl(QUrl::fromLocalFile(vp));
+                openWithDefaultApp(vp);
             }, Qt::QueuedConnection);
         });
         return;
@@ -517,7 +517,7 @@ void FileGrid::onCanvasDblClick(int index) {
     // RAW(#140)也归查看器:预览面板有专门的 RAW 形态(占位+按需全解按钮)
     if (!IMAGE_EXTS.count(ext) && !VIDEO_EXTS.count(ext) && !RAW_EXTS.count(ext)) {
         Logger::event(QStringLiteral("dblClick: system open '%1'").arg(path));
-        QDesktopServices::openUrl(QUrl::fromLocalFile(path));
+        openWithDefaultApp(path);
         return;
     }
 
@@ -542,7 +542,7 @@ void FileGrid::onCanvasMenu(int index, const QPoint& globalPos) {
         menu.addAction(IconLib::appIcon("cmd_open"), gazeTr("在资源管理器中显示"),
                        this, [this]() {
                            if (!m_currentDir.isEmpty())
-                               QDesktopServices::openUrl(QUrl::fromLocalFile(m_currentDir));
+                               showInExplorer(m_currentDir);
                        });
         menu.addAction(gazeTr("全选"), this, [this]() { selectAllEntries(); });
         menu.addAction(IconLib::appIcon("cmd_openProperties"), gazeTr("属性"),

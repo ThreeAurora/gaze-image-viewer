@@ -821,11 +821,11 @@ void FolderTree::showContextMenu(const QPoint& pos) {
                    this, [this, base]() {
         (new SearchDialog(base, window()))->show();
     });
-    // ── 用资源管理器打开:交给 Shell,尊重第三方文件管理器的接管 ──
+    // ── 用资源管理器打开:收口 openWithDefaultApp(openUrl 在本机静默失效) ──
     menu.addAction(IconLib::appIcon("cmd_browse"),
                    gazeTr("用资源管理器打开文件"), this, [paths]() {
         for (const auto& p : paths)
-            QDesktopServices::openUrl(QUrl::fromLocalFile(p));
+            openWithDefaultApp(p);
     });
     menu.addAction(IconLib::appIcon("cmd_openProperties"), gazeTr("属性"),
                    this, [base]() { showShellProperties(base); });
