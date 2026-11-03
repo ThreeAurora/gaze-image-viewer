@@ -26,6 +26,7 @@
 #include <QLocale>
 #include <QLibraryInfo>
 #include <QDateTime>
+#include <QImageReader>
 #include <QAbstractNativeEventFilter>
 #include <functional>
 #include <windows.h>
@@ -282,6 +283,15 @@ int main(int argc, char *argv[]) {
     app.setApplicationName("Gaze");
     app.setApplicationDisplayName("Gaze");
     app.setWindowIcon(QIcon(":/Gaze.png"));
+
+    // QImageReader 分配上限:Qt 默认 256MB,按"解码后位图字节数"拒绝整帧读取。
+    // 8742x11656 的 JPEG 解出 RGB32 是 407MB(实测 sizeInBytes),默认上限下
+    // QImageReader::read() 直接返回空图 —— 查看器显示"无法加载图片",日志里是
+    // "Rejecting image as it exceeds the current allocation limit of 256 megabytes"。
+    // 百万级像素的手机原图/扫描件/长截图都在这个量级之上,按默认值等于把这类
+    // 文件一律判死。提到 2048MB:覆盖 ~2 亿像素的 32bpp 位图(本机 40GB 内存,
+    // 单张峰值仍是可控的);插件加载后再设置同样生效(实测:先枚举格式再设,读图成功)。
+    QImageReader::setAllocationLimit(2048);
 
     // 旧版配置迁移: gaze.ini -> Gaze.ini (仅当新名不存在而旧名存在时一次性改名)。
     // 必须先于任何 AppSettings/QSettings 的使用:单例首次构造会把 Gaze.ini 的
