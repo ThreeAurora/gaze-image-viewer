@@ -5,6 +5,7 @@
 #include "constants.h"
 #include "dbprefix.h"
 #include "viewerhotkeys.h"
+#include "bigimage.h"
 #include "i18n.h"
 
 #include <QHBoxLayout>
@@ -113,6 +114,37 @@ QWidget* SettingsDialog::pageViewerOther() {
     fPlay->addRow(chk("Viewer/disableAnimation", gazeTr("禁用 GIF/JIF/APNG/ANI/动图 WebP 动画"), false));
     fPlay->addRow(chk("Viewer/gamma", gazeTr("使用 Gamma 纠正"), false));
     fPlay->addRow(chk("Viewer/sharpen", gazeTr("使用锐化 50%"), false));
+
+    // ── 超大图:允许展示的最大像素(默认 5.37 亿) ──
+    // 超过此值不是拒绝,而是解码前弹窗询问(确定/取消/始终允许),见
+    // previewpanel_image.cpp 的 confirmOversizeImage。控件以"万像素"为单位
+    // 录入(直接填 5.37 亿对人不友好),旁边的标签实时把像素换算成 32bpp
+    // 位图内存 —— 用户看到的就是"这个设置会吃多少内存"。
+    {
+        auto* pxRow = new QHBoxLayout;
+        auto* pxSpin = new QSpinBox;
+        pxSpin->setRange(1, 2000000);                 // 1 万 ~ 200 亿像素
+        pxSpin->setSuffix(gazeTr(" 万像素"));
+        pxSpin->setKeyboardTracking(false);           // 输完再写,别每敲一键写一次
+        const qint64 curPx = AppSettings::instance()
+            .get(BigImage::kKeyMaxPixels, BigImage::kDefaultMaxPixels).toLongLong();
+        pxSpin->setValue(int(qBound<qint64>(qint64(1), curPx / 10000, qint64(2000000))));
+        auto* memLabel = new QLabel;
+        auto refreshMem = [memLabel](int wan) {
+            memLabel->setText(gazeTr("≈ %1 内存").arg(
+                BigImage::formatBytes(BigImage::bytesForPixels(qint64(wan) * 10000))));
+        };
+        refreshMem(pxSpin->value());
+        pxRow->addWidget(pxSpin);
+        pxRow->addWidget(memLabel);
+        pxRow->addStretch(1);
+        connect(pxSpin, &QSpinBox::valueChanged, this, [refreshMem](int wan) {
+            AppSettings::instance().set(BigImage::kKeyMaxPixels, qint64(wan) * 10000);
+            refreshMem(wan);
+        });
+        markPending(pxSpin, BigImage::kKeyMaxPixels);
+        fPlay->addRow(gazeTr("允许展示的最大像素"), pxRow);
+    }
 
     auto* root = new QVBoxLayout;
     root->setSpacing(6);   // 分组框页:组间距收紧(组框自身已有边距)

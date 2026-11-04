@@ -286,5 +286,15 @@
  "服务返回错误(HTTP %1)": "Service returned an error (HTTP %1)",
  "未列出的格式:%1\n(上面总开关关掉时一律不上底色)": "Formats not listed: %1\n(no background color while the master switch above is off)",
  "工具": "Tools",
- "布局": "Layout"
+ "布局": "Layout",
+ " 万": " ten thousand",
+ " 万像素": " ×10k px",
+ " 亿": " hundred million",
+ "≈ %1 内存": "≈ %1 memory",
+ "允许展示的最大像素": "Maximum pixels to display",
+ "可在「设置 → 查看 → 其他 → 允许展示的最大像素」中调整该上限(当前 %1,约 %2)。": "You can change this limit in Settings → Viewer → Other → Maximum pixels to display (currently %1, about %2).",
+ "始终允许": "Always allow",
+ "已跳过超大图片": "Oversized image skipped",
+ "当前图片像素为 %1(%2 × %3),解码约需 %4 内存,可能有较大性能消耗,是否展示?": "This image is %1 pixels (%2 × %3) and needs about %4 of memory to decode. It may cause significant performance load. Display it?",
+ "超大图片": "Oversized image"
 }

@@ -13,6 +13,7 @@
 #include <QTimer>
 #include <QImage>
 #include <QHash>
+#include <QSet>
 #include <QKeySequence>
 #include <memory>
 
@@ -96,6 +97,10 @@ private:
     QSize m_videoSize;          // 当前视频画面尺寸(首帧到达更新;按比例铺视频面)
     void syncVideoChildren();   // vw/cover 几何同步到 videoWidget(布局激活后必须重跑)
     void showImage(const QString &path);
+    // 超大图确认:像素数超过 Viewer/maxPixels 时弹窗询问(确定/取消/始终允许)。
+    // 返回 true = 继续展示。主窗双击与桌面双击(单窗/单实例转交)都汇到
+    // loadFile,故只在这一处拦。始终允许 = 把该值写回设置并记入本次允许集。
+    bool confirmOversizeImage(const QString &path);
     // 动画与否的唯一判据(按实际帧数,不看扩展名):GIF / 动图 WebP / APNG 一视同仁
     static bool isAnimatedImage(const QString &path);
     void showGif(const QString &path);        // 动画:第一帧定几何,后续帧只换像素(#103/#96)
@@ -353,6 +358,10 @@ private:
     QMap<QString, QImage> m_preloadCache;  // 预载结果
     QStringList m_preloadOrder;            // 插入序(逐出最旧)
     bool m_preloadBusy = false;
+
+    // 超大图:用户本次会话已明确允许展示的文件(取消后切走再切回会再问;
+    // 确定/始终允许后记入这里,不再重复打扰)。只记路径,不随像素上限变化。
+    QSet<QString> m_oversizeAllowed;
 
 private slots:
     void onWaveSnapshot(Audiowave::Snapshot snap);   // worker 快照到货(跨线程 queued)

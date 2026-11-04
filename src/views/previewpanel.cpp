@@ -535,6 +535,14 @@ void PreviewPanel::loadFile(const QString& path) {
     }
 
     if (IMAGE_EXTS.count("." + ext)) {
+        // 超大图先问再解:超过 Viewer/maxPixels 的图在解码前弹窗(确定/取消/
+        // 始终允许)。判据只读文件头,不解码 —— 拒绝时一张几百 MB 的位图
+        // 根本不会被分配。取消后预览区留一行提示,不沿用上一张的画面。
+        if (!confirmOversizeImage(path)) {
+            m_mode = "image";
+            showImageHint(gazeTr("已跳过超大图片"));
+            return;
+        }
         showImage(path);
         // Viewer/autoPlayAudioCompanion:同名音频伴侣文件自动播放(默认关)
         playAudioCompanion(path);

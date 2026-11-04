@@ -36,6 +36,7 @@
 #include "settings.h"
 #include "thumbnailer.h"
 #include "logger.h"
+#include "bigimage.h"
 #include "everything_engine.h"   // #251:退出清理自带 Everything 实例(es -instance gaze -exit)
 
 // 全局对话框键盘语义:Space → 确认(Yes/OK/确定),Yes/No 框的 Esc → No,
@@ -288,10 +289,10 @@ int main(int argc, char *argv[]) {
     // 8742x11656 的 JPEG 解出 RGB32 是 407MB(实测 sizeInBytes),默认上限下
     // QImageReader::read() 直接返回空图 —— 查看器显示"无法加载图片",日志里是
     // "Rejecting image as it exceeds the current allocation limit of 256 megabytes"。
-    // 百万级像素的手机原图/扫描件/长截图都在这个量级之上,按默认值等于把这类
-    // 文件一律判死。提到 2048MB:覆盖 ~2 亿像素的 32bpp 位图(本机 40GB 内存,
-    // 单张峰值仍是可控的);插件加载后再设置同样生效(实测:先枚举格式再设,读图成功)。
-    QImageReader::setAllocationLimit(2048);
+    // 上限由用户设置 Viewer/maxPixels 换算(见 bigimage.h):默认 5.37 亿像素
+    // ≈ 2048MB。超出该像素数的图由查看器弹窗询问(确定/取消/始终允许),
+    // 而不是静默判死。插件加载后再设置同样生效(实测:先枚举格式再设,读图成功)。
+    BigImage::applyAllocationLimit();
 
     // 旧版配置迁移: gaze.ini -> Gaze.ini (仅当新名不存在而旧名存在时一次性改名)。
     // 必须先于任何 AppSettings/QSettings 的使用:单例首次构造会把 Gaze.ini 的
@@ -419,6 +420,10 @@ int main(int argc, char *argv[]) {
     Logger::boot("single-listen");
     QObject::connect(&AppSettings::instance(), &AppSettings::changed,
                      &w, [applySingleInstance]() { applySingleInstance(); });
+    // Viewer/maxPixels 改动立刻生效:QImageReader 的全局上限跟着设置重算。
+    // 弹窗里的「始终允许」也是经 AppSettings::set 走这条链路(见 bigimage.h)。
+    QObject::connect(&AppSettings::instance(), &AppSettings::changed,
+                     &app, []() { BigImage::applyAllocationLimit(); });
 
     // 启动防闪:主窗口首帧整体透明,show 落位后再恢复不透明;
     // 同一拍里恢复上次选中文件的预览 —— QVideoWindow(FFmpeg 后端的顶层

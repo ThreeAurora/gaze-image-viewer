@@ -100,8 +100,20 @@ Fetching images…</translation>
         <translation> —— </translation>
     </message>
     <message>
+        <source> 万</source>
+        <translation> ten thousand</translation>
+    </message>
+    <message>
+        <source> 万像素</source>
+        <translation> ×10k px</translation>
+    </message>
+    <message>
         <source> 个项目</source>
         <translation> items</translation>
+    </message>
+    <message>
+        <source> 亿</source>
+        <translation> hundred million</translation>
     </message>
     <message>
         <source> 份</source>
@@ -708,6 +720,10 @@ Version 1.0 — C++ + Qt6</translation>
         <translation>&quot;%1&quot; is a reserved layout name; choose another</translation>
     </message>
     <message>
+        <source>≈ %1 内存</source>
+        <translation>≈ %1 memory</translation>
+    </message>
+    <message>
         <source>▲</source>
         <translation>▲</translation>
     </message>
@@ -1092,6 +1108,10 @@ Next start will restore:
     <message>
         <source>像素比</source>
         <translation>Pixel ratio</translation>
+    </message>
+    <message>
+        <source>允许展示的最大像素</source>
+        <translation>Maximum pixels to display</translation>
     </message>
     <message>
         <source>允许缓存缩略图</source>
@@ -1512,6 +1532,10 @@ e.g. psd, ai, raw, cr2, nef</translation>
         <translation>It can be restored from the Recycle Bin.</translation>
     </message>
     <message>
+        <source>可在「设置 → 查看 → 其他 → 允许展示的最大像素」中调整该上限(当前 %1,约 %2)。</source>
+        <translation>You can change this limit in Settings → Viewer → Other → Maximum pixels to display (currently %1, about %2).</translation>
+    </message>
+    <message>
         <source>可执行</source>
         <translation>Executable</translation>
     </message>
@@ -1828,6 +1852,10 @@ Click once to select the whole path, click again to place the caret</translation
         <translation>Always</translation>
     </message>
     <message>
+        <source>始终允许</source>
+        <translation>Always allow</translation>
+    </message>
+    <message>
         <source>媒体文件</source>
         <translation>Media files</translation>
     </message>
@@ -2028,6 +2056,10 @@ or in system Settings → Apps → Default apps → Gaze → &apos;Set default&a
         <translation>Scan triggered</translation>
     </message>
     <message>
+        <source>已跳过超大图片</source>
+        <translation>Oversized image skipped</translation>
+    </message>
+    <message>
         <source>已达 %1 个目录上限(可能遇到链接环),其余未扫</source>
         <translation>Reached the %1-folder limit (possible link loop); the rest was not scanned</translation>
     </message>
@@ -2138,6 +2170,10 @@ Off (default): &quot;Open in new tab&quot; adds one tab per file, bounded by the
     <message>
         <source>当内嵌缩略图尺寸小于缩略图尺寸时从原图创建</source>
         <translation>Create from the original image when the embedded thumbnail is smaller than the thumbnail size</translation>
+    </message>
+    <message>
+        <source>当前图片像素为 %1(%2 × %3),解码约需 %4 内存,可能有较大性能消耗,是否展示?</source>
+        <translation>This image is %1 pixels (%2 × %3) and needs about %4 of memory to decode. It may cause significant performance load. Display it?</translation>
     </message>
     <message>
         <source>当前文件</source>
@@ -3914,6 +3950,10 @@ Continue?</translation>
     <message>
         <source>起始秒数</source>
         <translation>Start seconds</translation>
+    </message>
+    <message>
+        <source>超大图片</source>
+        <translation>Oversized image</translation>
     </message>
     <message>
         <source>超过 %1 秒未完成,已终止</source>

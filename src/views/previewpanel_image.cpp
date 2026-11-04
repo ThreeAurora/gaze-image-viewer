@@ -9,6 +9,7 @@
 #include "pdfrender.h"
 #include "textlimit.h"
 #include "imgproc.h"
+#include "bigimage.h"
 #include "constants.h"
 #include "viewerhotkeys.h"
 #include "shelldelete.h"
@@ -49,6 +50,9 @@
 #include <QMenu>
 #include <QVideoFrame>
 #include <QVideoSink>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QAbstractButton>
 #include "previewpanel_internal.h"
 
 // Viewer/pixelRatio:非正方形像素的显示宽高比
@@ -173,6 +177,63 @@ void PreviewPanel::zoomAnchored(double newScale, const QPoint& anchor) {
     m_dragLabelPos = m_imgLabel->pos();   // 拖动基线跟着走,否则下一次拖动图片跳位
     updateOverlayScrollbars();
     updatePanTool();
+}
+
+// ── 超大图确认(像素数超过 Viewer/maxPixels 时询问) ──
+// 主窗双击与桌面双击(含单实例转交)全部汇到 loadFile,故只在这一处拦。
+// 判据是**像素数**(与设置项同一口径),不是字节数 —— 设置页把像素换算成
+// 内存展示,用户看到的和这里判断的永远是同一件事。
+//
+// 三个出口:
+//   确定     = 本次允许:临时抬高 QImageReader 全局上限到这张图够用,不写设置
+//   取消     = 不展示,预览区留一行提示(切走再切回会再问)
+//   始终允许 = 把设置里的最大像素改成这张图的像素数并落盘,重启后仍生效
+// 「确定」也必须抬全局上限:解码器那边只认 allocationLimit,不认我们的弹窗,
+// 不抬的话用户点了确定还是"无法加载图片"——这正是修复前那张 1.02 亿像素图的坑。
+bool PreviewPanel::confirmOversizeImage(const QString& path) {
+    if (m_oversizeAllowed.contains(path)) return true;
+    qint64 px = 0;
+    if (!BigImage::exceedsLimit(path, &px)) return true;
+
+    const QSize sz = BigImage::imagePixelSize(path);
+    const qint64 needBytes = BigImage::bytesForPixels(px);
+    const qint64 limitPx = BigImage::maxPixels();
+
+    QMessageBox box(this);
+    box.setIcon(QMessageBox::Warning);
+    box.setWindowTitle(gazeTr("超大图片"));
+    box.setText(gazeTr("当前图片像素为 %1(%2 × %3),解码约需 %4 内存,可能有较大性能消耗,是否展示?")
+                    .arg(BigImage::formatPixels(px),
+                         QString::number(sz.width()), QString::number(sz.height()),
+                         BigImage::formatBytes(needBytes)));
+    box.setInformativeText(
+        gazeTr("可在「设置 → 查看 → 其他 → 允许展示的最大像素」中调整该上限"
+               "(当前 %1,约 %2)。")
+            .arg(BigImage::formatPixels(limitPx),
+                 BigImage::formatBytes(BigImage::bytesForPixels(limitPx))));
+    QAbstractButton* okBtn = box.addButton(gazeTr("确定"), QMessageBox::AcceptRole);
+    QAbstractButton* cancelBtn = box.addButton(gazeTr("取消"), QMessageBox::RejectRole);
+    QAbstractButton* alwaysBtn = box.addButton(gazeTr("始终允许"), QMessageBox::YesRole);
+    box.setDefaultButton(qobject_cast<QPushButton*>(okBtn));
+    box.exec();
+
+    QAbstractButton* clicked = box.clickedButton();
+    if (!clicked || clicked == cancelBtn) {
+        Logger::event(QStringLiteral("oversize: declined '%1' px=%2").arg(path).arg(px));
+        return false;
+    }
+    // 不论确定还是始终允许,解码器都必须能分配这张图:记入本会话允许额度
+    // 再重算全局上限(「确定」不落盘,但整个会话内有效 —— 见 bigimage.h)。
+    BigImage::noteSessionAllowance(px);
+    BigImage::applyAllocationLimit();
+    if (clicked == alwaysBtn) {
+        AppSettings::instance().set(BigImage::kKeyMaxPixels, px);
+        Logger::event(QStringLiteral("oversize: always allow -> maxPixels=%1 '%2'").arg(px).arg(path));
+    } else {
+        Logger::event(QStringLiteral("oversize: allow once '%1' px=%2").arg(path).arg(px));
+    }
+    m_oversizeAllowed.insert(path);
+    return true;
 }
 
 void PreviewPanel::showImage(const QString& path) {
@@ -357,6 +418,9 @@ void PreviewPanel::preloadNext() {
     // 判定只读文件头帧数,相对随后的整帧解码可忽略;跳过该邻居不是错误,
     // 只是这一张没有预读收益。
     if (isAnimatedImage(path)) { preloadNext(); return; }
+    // 超大图不预读:用户还没确认展示,后台就先为它付几百 MB 内存不值。
+    // 真打开时 loadFile 会弹窗询问并按需解码(不经过这条预读缓存)。
+    if (BigImage::exceedsLimit(path)) { preloadNext(); return; }
     m_preloadBusy = true;
     const bool exifRotate = pp_impl::s_bool("General/exifRotate", true);   // GUI 线程取值
     QPointer<PreviewPanel> self(this);
